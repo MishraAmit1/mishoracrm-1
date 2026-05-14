@@ -1,0 +1,20 @@
+/* ═══════════════════════════════════════════════════════════════
+   CRM SaaS — Main CSS Entry Point
+   Import order matters. Do not reorder.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* 1. Design tokens — must be first */
+@import 'base/_variables.css';
+
+/* 2. Reset & base elements */
+@import 'base/_reset.css';
+
+/* 3. Layout */
+@import 'layout/_sidebar.css';
+@import 'layout/_navbar.css';
+
+/* 4. Component library */
+@import 'components/_components.css';
+
+/* 5. Page-level styles */
+@import 'pages/_dashboard.css';

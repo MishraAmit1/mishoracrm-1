@@ -1,0 +1,104 @@
+/* ═══════════════════════════════════════════════════════════════
+   CRM SaaS — Reset & Base
+   ═══════════════════════════════════════════════════════════════ */
+
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    font-weight: var(--weight-normal);
+    line-height: var(--leading-normal);
+    color: var(--text-primary);
+    background-color: var(--bg-page);
+    min-height: 100vh;
+}
+
+a {
+    color: var(--text-link);
+    text-decoration: none;
+    transition: var(--transition-fast);
+}
+
+a:hover {
+    color: var(--color-primary-dark);
+}
+
+img, svg, video {
+    display: block;
+    max-width: 100%;
+}
+
+button, input, textarea, select {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+    border: none;
+    background: none;
+}
+
+ul, ol {
+    list-style: none;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: var(--weight-semibold);
+    line-height: var(--leading-tight);
+    color: var(--text-primary);
+}
+
+p {
+    line-height: var(--leading-relaxed);
+}
+
+hr {
+    border: none;
+    border-top: 1px solid var(--border-color);
+    margin: var(--space-6) 0;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: var(--color-slate-300);
+    border-radius: var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-slate-400);
+}
+
+/* Selection */
+::selection {
+    background: var(--color-primary-subtle);
+    color: var(--color-primary-dark);
+}
+
+/* Focus ring — only for keyboard nav */
+:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+}
+:focus:not(:focus-visible) {
+    outline: none;
+}
