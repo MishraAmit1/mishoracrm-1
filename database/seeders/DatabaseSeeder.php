@@ -23,9 +23,9 @@ class DatabaseSeeder extends Seeder
 
 
         $this->call([
-         RolesAndPermissionsSeeder::class,
-         PlanSeeder::class,
-         SuperAdminSeeder::class,
+        //  RolesAndPermissionsSeeder::class,
+        //  PlanSeeder::class,
+        //  SuperAdminSeeder::class,
          MessageTemplateSeeder::class,
          NotificationSeeder::class,
          CustomFieldSeeder::class,
@@ -33,7 +33,7 @@ class DatabaseSeeder extends Seeder
          LeadSeeder::class,
          DealSeeder::class,
          TaskSeeder::class,
-         RolesAndPermissionsSeeder::class
+        //  RolesAndPermissionsSeeder::class
         ]);
     }
 }
