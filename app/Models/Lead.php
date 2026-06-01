@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\BelongsToTenant;
-use Illuminate\Database\Eloquent\Model;
+use App\HasCustomFields;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -11,7 +11,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Lead extends TenantModel
 {
-    use SoftDeletes, BelongsToTenant;
+    use SoftDeletes, BelongsToTenant, HasCustomFields;
+
+    public static string $customFieldModule = 'lead';
 
     protected $fillable = [
         'tenant_id',
@@ -57,6 +59,11 @@ class Lead extends TenantModel
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
+    }
+
+    public function deal(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Deal::class);
     }
 
     public function followups(): HasMany
@@ -105,21 +112,30 @@ class Lead extends TenantModel
     {
         return $query->where(function ($q) use ($search) {
             $q->where('name', 'like', "%{$search}%")
-              ->orWhere('phone', 'like', "%{$search}%")
-              ->orWhere('email', 'like', "%{$search}%")
-              ->orWhere('company', 'like', "%{$search}%");
+                ->orWhere('phone', 'like', "%{$search}%")
+                ->orWhere('email', 'like', "%{$search}%")
+                ->orWhere('company', 'like', "%{$search}%");
         });
     }
 
     public function scopeThisMonth($query)
     {
         return $query->whereMonth('created_at', now()->month)
-                     ->whereYear('created_at', now()->year);
+            ->whereYear('created_at', now()->year);
     }
 
     public function scopeToday($query)
     {
         return $query->whereDate('created_at', today());
+    }
+
+    public function scopeConverted($query)
+    {
+        return $query->where('status', 'converted');
+    }
+    public function scopeActive($query)
+    {
+        return $query->whereNotIn('status', ['converted', 'lost']);
     }
 
     // ── Helpers ───────────────────────────────────────────────────
@@ -141,7 +157,7 @@ class Lead extends TenantModel
 
     public function getStatusColorAttribute(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             'new'         => 'blue',
             'contacted'   => 'amber',
             'qualified'   => 'purple',
@@ -155,7 +171,7 @@ class Lead extends TenantModel
 
     public function getPriorityColorAttribute(): string
     {
-        return match($this->priority) {
+        return match ($this->priority) {
             'high'   => 'red',
             'medium' => 'amber',
             'low'    => 'green',
@@ -174,11 +190,15 @@ class Lead extends TenantModel
     public static function sources(): array
     {
         return [
-            'facebook'   => 'Facebook',
+            'facebook'   => 'Facebook / Meta Ads',
             'instagram'  => 'Instagram',
             'google'     => 'Google Ads',
             'website'    => 'Website',
             'whatsapp'   => 'WhatsApp',
+            'indiamart'  => 'IndiaMART',
+            'justdial'   => 'JustDial',
+            'tradeindia' => 'TradeIndia',
+            'sulekha'    => 'Sulekha',
             'referral'   => 'Referral',
             'cold_call'  => 'Cold Call',
             'email'      => 'Email',
@@ -187,16 +207,27 @@ class Lead extends TenantModel
         ];
     }
 
+    // public static function statuses(): array
+    // {
+    //     return [
+    //         'new'         => 'New',
+    //         'contacted'   => 'Contacted',
+    //         'qualified'   => 'Qualified',
+    //         'proposal'    => 'Proposal',
+    //         'negotiation' => 'Negotiation',
+    //         'converted'   => 'Converted',
+    //         'lost'        => 'Lost',
+    //     ];
+    // }
+
     public static function statuses(): array
     {
         return [
-            'new'         => 'New',
-            'contacted'   => 'Contacted',
-            'qualified'   => 'Qualified',
-            'proposal'    => 'Proposal',
-            'negotiation' => 'Negotiation',
-            'converted'   => 'Converted',
-            'lost'        => 'Lost',
+            'new'       => ['label' => 'New',       'color' => 'accent', 'bg' => 'accent-dim', 'dot' => '#378ADD'],
+            'contacted' => ['label' => 'Contacted',  'color' => 'amber',  'bg' => 'amber-dim',  'dot' => '#EF9F27'],
+            'qualified' => ['label' => 'Qualified',  'color' => 'purple', 'bg' => 'purple-dim', 'dot' => '#534AB7'],
+            'converted' => ['label' => 'Converted',  'color' => 'green',  'bg' => 'green-dim',  'dot' => '#1D9E75'],
+            'lost'      => ['label' => 'Lost',       'color' => 'red',    'bg' => 'red-dim',    'dot' => '#E05252'],
         ];
     }
 

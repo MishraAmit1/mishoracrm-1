@@ -144,7 +144,7 @@
 
     {{-- Quick actions --}}
     <div class="quick-grid">
-        {{-- <a href="{{ route('leads.create') }}" --}} <a href="#" class="quick-card">
+         <a href="{{ route('tenant.leads.create') }}" class="quick-card">
             <div class="quick-card-icon" style="background:var(--accent-dim);color:var(--accent)">
                 <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -153,7 +153,7 @@
             </div>
             <span class="quick-card-text">Add Lead</span>
         </a>
-        {{-- <a href="{{ route('deals.create') }}" --}} <a href="#" class="quick-card">
+        <a href="{{ route('tenant.deals.create') }}" class="quick-card">
             <div class="quick-card-icon" style="background:var(--green-dim);color:var(--green)">
                 <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -161,7 +161,7 @@
             </div>
             <span class="quick-card-text">New Deal</span>
         </a>
-        {{-- <a href="{{ route('tasks.create') }}" --}} <a href="#" class="quick-card">
+      <a href="{{ route('tenant.tasks.create') }}" class="quick-card">
             <div class="quick-card-icon" style="background:var(--amber-dim);color:var(--amber)">
                 <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -170,8 +170,7 @@
             </div>
             <span class="quick-card-text">Create Task</span>
         </a>
-        {{-- <a href="{{ route('quotations.create') }}" --}}  <a href="#"
-         class="quick-card">
+       <a href="{{ route('tenant.quotations.create') }}" class="quick-card">
             <div class="quick-card-icon" style="background:var(--purple-dim);color:var(--purple)">
                 <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round"

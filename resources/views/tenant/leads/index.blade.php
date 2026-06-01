@@ -3,631 +3,678 @@
 
 @push('styles')
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');
+/* ── VIEW TOGGLE ─────────────────────────────────────────────── */
+.view-toggle{display:flex;align-items:center;background:var(--bg-elevated);border:1.5px solid var(--border-default);border-radius:var(--r-sm);padding:3px;gap:2px}
+.vt-btn{padding:6px 14px;border-radius:5px;border:none;background:none;cursor:pointer;color:var(--text-300);display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;font-family:var(--font);transition:all .15s;white-space:nowrap}
+.vt-btn svg{width:14px;height:14px;flex-shrink:0}
+.vt-btn.active{background:var(--bg-surface);color:var(--text-100);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.vt-btn:hover:not(.active){color:var(--text-200)}
 
-.li-page { font-family: 'DM Sans', var(--font), sans-serif; }
+/* ── STAT STRIP ──────────────────────────────────────────────── */
+.stat-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:20px}
+.stat-pill{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 16px;background:var(--bg-surface);border:1px solid var(--border-default);border-radius:18px;text-decoration:none;transition:transform .15s,border-color .15s,background .15s,box-shadow .15s;min-width:150px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.stat-pill:hover{transform:translateY(-1px);border-color:var(--accent);background:var(--bg-elevated)}
+.stat-pill.active{border-color:var(--accent);background:var(--accent-dim);box-shadow:0 10px 30px rgba(56,138,221,.08)}
+.stat-pill .stat-info{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0}
+.stat-num{font-size:18px;font-weight:800;font-family:var(--mono);color:var(--text-100);line-height:1}
+.stat-pill.active .stat-num{color:var(--accent)}
+.stat-lbl{font-size:11.5px;color:var(--text-300);font-weight:600;line-height:1;text-transform:uppercase;letter-spacing:.08em;white-space:nowrap}
+.stat-pill.active .stat-lbl{color:var(--text-200)}
+.stat-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;box-shadow:0 0 0 5px rgba(255,255,255,.06)}
 
-/* ── Stats ── */
-.li-stats {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 10px;
-    margin-bottom: 16px;
-}
-@media(max-width:900px) { .li-stats { grid-template-columns: repeat(3,1fr); } }
-@media(max-width:560px) { .li-stats { grid-template-columns: repeat(2,1fr); } }
+/* ── FILTER BAR ──────────────────────────────────────────────── */
+.filter-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.fi{padding:7px 11px;height:34px;background:var(--bg-input);border:1.5px solid var(--border-default);border-radius:var(--r-sm);color:var(--text-100);font-family:var(--font);font-size:13px;outline:none;transition:border-color .15s;-webkit-appearance:none}
+.fi:focus{border-color:var(--accent)}
+.search-wrap{position:relative;flex:1;min-width:180px;max-width:260px}
+.search-wrap svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--text-300);pointer-events:none}
+.search-wrap .fi{width:100%;padding-left:32px}
 
-.li-stat {
-    background: var(--bg-surface);
-    border: 1px solid var(--border-default);
-    border-radius: 10px;
-    padding: 14px 16px;
-    cursor: pointer;
-    transition: all .15s;
-    text-decoration: none;
-    display: block;
-    position: relative;
-    overflow: hidden;
-}
-.li-stat:hover { border-color: var(--border-hover, var(--accent)); }
-.li-stat.active { border-color: var(--accent); background: #E6F1FB; }
-.li-stat-num {
-    font-size: 22px; font-weight: 600;
-    color: var(--text-100); font-family: 'DM Mono', monospace;
-    letter-spacing: -1px;
-}
-.li-stat.active .li-stat-num { color: #185FA5; }
-.li-stat-lbl { font-size: 11px; color: var(--text-300); margin-top: 2px; font-weight: 500; }
-.li-stat-bar { position: absolute; bottom: 0; left: 0; height: 2.5px; border-radius: 0 2px 0 0; }
+/* ── LIST TABLE ──────────────────────────────────────────────── */
+.data-table{width:100%;border-collapse:collapse}
+.data-table th{padding:9px 14px;text-align:left;font-size:10.5px;font-weight:700;color:var(--text-400);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border-subtle);white-space:nowrap;background:var(--bg-elevated)}
+.data-table td{padding:11px 14px;font-size:13px;color:var(--text-100);border-bottom:1px solid var(--border-subtle);vertical-align:middle}
+.data-table tbody tr{transition:background .12s;cursor:pointer}
+.data-table tbody tr:hover td{background:var(--bg-elevated)}
+.data-table tbody tr:last-child td{border-bottom:none}
+.sort-link{display:inline-flex;align-items:center;gap:3px;color:inherit;text-decoration:none;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.sort-link:hover{color:var(--text-100)}
+.lead-av{width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff}
+.prio-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.prio-dot.high{background:var(--red)}
+.prio-dot.medium{background:var(--amber)}
+.prio-dot.low{background:var(--green)}
+.s-badge{font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:100px;white-space:nowrap;letter-spacing:.02em}
+.row-acts{display:flex;align-items:center;gap:3px;opacity:0;transition:opacity .15s}
+.data-table tbody tr:hover .row-acts{opacity:1}
+.pag-wrap{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--border-subtle);font-size:12.5px;color:var(--text-300)}
+.pag-links{display:flex;gap:4px}
+.pg-btn{padding:4px 9px;border-radius:var(--r-sm);border:1px solid var(--border-default);color:var(--text-200);text-decoration:none;font-size:12.5px;transition:all .15s}
+.pg-btn:hover{border-color:var(--accent);color:var(--accent)}
+.pg-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.pg-btn.disabled{opacity:.4;pointer-events:none}
 
-/* ── Filters ── */
-.li-filters {
-    display: flex; align-items: center; gap: 8px;
-    flex-wrap: wrap; margin-bottom: 14px;
-}
-.li-fi {
-    padding: 8px 11px;
-    background: var(--bg-surface);
-    border: 1px solid var(--border-default);
-    border-radius: 8px; font-size: 12.5px;
-    color: var(--text-100); font-family: 'DM Sans', var(--font), sans-serif;
-    outline: none; transition: border-color .15s;
-    -webkit-appearance: none; cursor: pointer;
-}
-.li-fi:focus { border-color: var(--accent); }
-.li-search-wrap { position: relative; flex: 1; min-width: 180px; }
-.li-search-ico {
-    position: absolute; left: 11px; top: 50%;
-    transform: translateY(-50%); pointer-events: none;
-}
-.li-fi-search { width: 100%; padding-left: 34px; }
-
-/* ── Table Card ── */
-.li-card {
-    background: var(--bg-surface);
-    border: 1px solid var(--border-default);
-    border-radius: 12px; overflow: hidden;
-}
-.li-card-head {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 14px 18px; border-bottom: 1px solid var(--border-subtle);
-}
-.li-count { font-size: 12px; color: var(--text-300); }
-.li-count strong { color: var(--text-100); font-weight: 600; }
-
-/* ── Table ── */
-.li-table-wrap { overflow-x: auto; }
-.li-table { width: 100%; border-collapse: collapse; table-layout: fixed; min-width: 780px; }
-.li-table thead tr { background: var(--bg-elevated); }
-.li-table th {
-    padding: 10px 14px; text-align: left;
-    font-size: 11px; font-weight: 600;
-    color: var(--text-300); text-transform: uppercase;
-    letter-spacing: .5px; border-bottom: 1px solid var(--border-subtle);
-    white-space: nowrap; user-select: none;
-}
-.li-table th a {
-    color: inherit; text-decoration: none;
-    display: inline-flex; align-items: center; gap: 3px;
-}
-.li-table th a:hover { color: var(--text-100); }
-.li-table td {
-    padding: 12px 14px; font-size: 13px;
-    color: var(--text-100);
-    border-bottom: 1px solid var(--border-subtle);
-    vertical-align: middle;
-}
-.li-table tr:last-child td { border-bottom: none; }
-.li-table tbody tr:hover td { background: var(--bg-elevated); }
-
-/* ── Lead Cell ── */
-.li-lead-name { font-weight: 600; font-size: 13.5px; color: var(--text-100); }
-.li-lead-sub  { font-size: 11.5px; color: var(--text-300); margin-top: 1px; }
-
-.li-avatar {
-    width: 32px; height: 32px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 11px; font-weight: 600; flex-shrink: 0;
-    background: #E6F1FB; color: #185FA5;
+/* ── KANBAN BOARD ────────────────────────────────────────────── */
+.kanban-wrap{width:100%;overflow-x:auto;padding-bottom:8px}
+.kanban-board{
+    display:grid;
+    grid-template-columns:repeat(5,minmax(220px,1fr));
+    gap:12px;
+    min-width:1000px;
+    width:100%;
 }
 
-/* ── Badges ── */
-.li-badge {
-    display: inline-flex; align-items: center; gap: 4px;
-    padding: 3px 9px; border-radius: 20px;
-    font-size: 11px; font-weight: 600; white-space: nowrap;
+/* Column */
+.k-col{
+    display:flex;flex-direction:column;
+    border-radius:var(--r-md);
+    background:var(--bg-elevated);
+    border:1px solid var(--border-default);
+    overflow:hidden;
+    min-height:400px;
 }
-.s-new         { background: #E6F1FB; color: #185FA5; }
-.s-contacted   { background: #E1F5EE; color: #0F6E56; }
-.s-qualified   { background: #EAF3DE; color: #3B6D11; }
-.s-proposal    { background: #FAEEDA; color: #854F0B; }
-.s-negotiation { background: #EEEDFE; color: #3C3489; }
-.s-converted   { background: #E1F5EE; color: #085041; }
-.s-lost        { background: #FCEBEB; color: #A32D2D; }
-.p-low         { background: #EAF3DE; color: #3B6D11; }
-.p-medium      { background: #FAEEDA; color: #854F0B; }
-.p-high        { background: #FCEBEB; color: #A32D2D; }
 
-/* ── Action Buttons ── */
-.li-actions {
-    display: flex; align-items: center; gap: 4px;
-    opacity: 0; transition: opacity .15s;
+/* Column header */
+.k-head{
+    padding:11px 14px;
+    background:var(--bg-elevated);
+    display:flex;align-items:center;justify-content:space-between;
+    border-bottom:1px solid var(--border-subtle);
+    flex-shrink:0;
 }
-.li-table tbody tr:hover .li-actions { opacity: 1; }
-.li-act-btn {
-    width: 28px; height: 28px;
-    display: flex; align-items: center; justify-content: center;
-    border-radius: 6px; border: 1px solid var(--border-subtle);
-    background: transparent; cursor: pointer; transition: all .15s;
-    color: var(--text-300);
+.k-head-left{display:flex;align-items:center;gap:8px}
+.k-title{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.k-count{
+    font-size:11px;font-weight:700;font-family:var(--mono);
+    padding:2px 8px;border-radius:100px;
+    background:var(--bg-surface);color:var(--text-300);
+    border:1px solid var(--border-subtle);
+    min-width:24px;text-align:center;
 }
-.li-act-btn:hover { background: var(--bg-elevated); color: var(--text-100); border-color: var(--border-default); }
-.li-act-btn.danger:hover { background: #FCEBEB; border-color: #F09595; color: #A32D2D; }
 
-/* ── Empty State ── */
-.li-empty { text-align: center; padding: 60px 24px; }
-.li-empty-icon {
-    width: 48px; height: 48px; border-radius: 12px;
-    background: var(--bg-elevated);
-    display: flex; align-items: center; justify-content: center;
-    margin: 0 auto 14px;
+/* Column body — droppable zone */
+.k-body{
+    flex:1;
+    padding:10px 8px;
+    background:var(--bg-elevated);
+    display:flex;flex-direction:column;gap:8px;
+    min-height:300px;
+    transition:background .2s,outline .2s;
 }
-.li-empty-title { font-size: 15px; font-weight: 600; color: var(--text-100); margin-bottom: 6px; }
-.li-empty-sub   { font-size: 13px; color: var(--text-300); }
+.k-body.drag-over{
+    background:color-mix(in srgb, var(--accent) 6%, var(--bg-elevated));
+    outline:2px dashed var(--accent);
+    outline-offset:-5px;
+    border-radius:0 0 var(--r-md) var(--r-md);
+}
 
-/* ── Pagination ── */
-.li-pag {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 14px 18px;
-    border-top: 1px solid var(--border-subtle);
-    background: var(--bg-elevated);
-    flex-wrap: wrap; gap: 10px;
+/* Kanban card */
+.k-card{
+    background:var(--bg-surface);
+    border:1px solid var(--border-subtle);
+    border-radius:var(--r-sm);
+    padding:12px 13px;
+    cursor:pointer;
+    transition:border-color .15s,box-shadow .15s,transform .12s,opacity .15s;
+    user-select:none;
+    position:relative;
 }
-.li-pag-info { font-size: 12px; color: var(--text-300); }
-.li-pag-btns { display: flex; gap: 4px; align-items: center; }
-.li-pg-btn {
-    min-width: 32px; height: 32px; padding: 0 8px;
-    display: flex; align-items: center; justify-content: center; gap: 4px;
-    border-radius: 7px; border: 1px solid var(--border-default);
-    background: var(--bg-surface); font-size: 13px; font-weight: 500;
-    cursor: pointer; color: var(--text-200);
-    font-family: 'DM Sans', var(--font), sans-serif;
-    transition: all .15s; text-decoration: none;
+.k-card:hover{
+    border-color:rgba(var(--accent-rgb),.45);
+    box-shadow:0 3px 12px rgba(0,0,0,.08);
+    transform:translateY(-1px);
 }
-.li-pg-btn:hover { background: var(--bg-elevated); color: var(--text-100); }
-.li-pg-btn.active { background: #185FA5; border-color: #185FA5; color: #fff; }
-.li-pg-btn[aria-disabled="true"] { opacity: .35; pointer-events: none; }
-.li-pg-dot { border: none; background: transparent; }
+/* SortableJS classes */
+.k-card.sortable-ghost{
+    opacity:.3;
+    background:color-mix(in srgb, var(--accent) 12%, var(--bg-surface));
+    border:1.5px dashed var(--accent);
+    transform:none !important;
+    box-shadow:none !important;
+}
+.k-card.sortable-chosen{
+    box-shadow:0 8px 24px rgba(0,0,0,.18);
+    border-color:var(--accent);
+    transform:scale(1.02);
+    z-index:100;
+}
+.k-card.sortable-drag{
+    opacity:.85;
+    transform:scale(1.03) rotate(1deg);
+    box-shadow:0 12px 32px rgba(0,0,0,.22);
+    cursor:grabbing;
+}
+/* Drag handle */
+.k-drag-handle{
+    position:absolute;top:8px;right:8px;
+    color:var(--border-default);
+    font-size:13px;opacity:0;
+    transition:opacity .15s;
+    pointer-events:none;
+    line-height:1;
+}
+.k-card:hover .k-drag-handle{opacity:.7}
 
-/* ── Sort Arrow ── */
-.sort-asc  .sort-icon { transform: rotate(180deg); }
-.sort-icon { display: inline-block; transition: transform .15s; }
+.k-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:6px;margin-bottom:6px}
+.k-card-name{font-size:13px;font-weight:700;color:var(--text-100);line-height:1.35;word-break:break-word;padding-right:16px}
+.k-card-co{font-size:11px;color:var(--text-400);margin-top:2px}
+.k-card-badges{display:flex;align-items:center;gap:5px;flex-shrink:0;position:absolute;top:12px;right:13px}
+.k-card-prio{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.k-card-av{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0}
+.k-card-phone{font-size:11.5px;color:var(--text-300);font-family:var(--mono);margin-bottom:9px;margin-top:4px}
+.k-card-footer{display:flex;align-items:center;justify-content:space-between;gap:6px;padding-top:8px;border-top:1px solid var(--border-subtle)}
+.k-tag{font-size:10.5px;padding:2px 8px;border-radius:100px;background:var(--bg-elevated);color:var(--text-300);border:1px solid var(--border-subtle);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px}
+.k-time{font-size:10.5px;color:var(--text-400);white-space:nowrap}
+.k-empty{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:28px 12px;gap:6px;opacity:.4;flex:1;text-align:center;
+    pointer-events:none;
+}
+.k-empty-ico{font-size:22px}
+.k-empty-txt{font-size:11.5px;color:var(--text-400)}
+
+/* Drop status toast */
+#drop-toast{
+    position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--ink,#1c1c22);color:#fff;
+    padding:11px 22px;border-radius:var(--r-md);font-size:13px;font-weight:600;
+    box-shadow:0 8px 28px rgba(0,0,0,.22);
+    opacity:0;transition:opacity .22s,transform .22s;pointer-events:none;z-index:9999;white-space:nowrap;
+}
+#drop-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#drop-toast.success{background:var(--green,#1D9E75)}
+#drop-toast.error{background:var(--red,#E05252)}
 </style>
 @endpush
 
 @section('content')
-
 @php
-/* ── Helper: sort chevron ── */
-$sortDir = request('dir', 'desc');
-$sortCol = request('sort', 'created_at');
-$nextDir = fn(string $col) => ($sortCol === $col && $sortDir === 'asc') ? 'desc' : 'asc';
-$isActive = fn(string $col) => $sortCol === $col;
-
-/* ── Badge helpers ── */
-$statusClass = [
-    'new'=>'s-new','contacted'=>'s-contacted','qualified'=>'s-qualified',
-    'proposal'=>'s-proposal','negotiation'=>'s-negotiation',
-    'converted'=>'s-converted','lost'=>'s-lost',
+$statusCfg=[
+    'new'        =>['label'=>'New',        'color'=>'var(--accent)', 'bg'=>'var(--accent-dim)', 'dot'=>'#378ADD'],
+    'contacted'  =>['label'=>'Contacted',  'color'=>'var(--amber)',  'bg'=>'var(--amber-dim)',  'dot'=>'#EF9F27'],
+    'qualified'  =>['label'=>'Qualified',  'color'=>'var(--purple)', 'bg'=>'var(--purple-dim)', 'dot'=>'#534AB7'],
+    'proposal'   =>['label'=>'Proposal',   'color'=>'var(--accent)', 'bg'=>'var(--accent-dim)', 'dot'=>'#185FA5'],
+    'negotiation'=>['label'=>'Negotiation','color'=>'var(--amber)',  'bg'=>'var(--amber-dim)',  'dot'=>'#854F0B'],
+    'converted'  =>['label'=>'Converted',  'color'=>'var(--green)',  'bg'=>'var(--green-dim)',  'dot'=>'#1D9E75'],
+    'lost'       =>['label'=>'Lost',       'color'=>'var(--red)',    'bg'=>'var(--red-dim)',    'dot'=>'#E05252'],
 ];
-$priorityClass = ['low'=>'p-low','medium'=>'p-medium','high'=>'p-high'];
-$avatarColors  = [
-    ['#E6F1FB','#185FA5'],['#E1F5EE','#0F6E56'],
-    ['#FAEEDA','#854F0B'],['#EEEDFE','#3C3489'],
-];
-$statBars = [
-    'all'=>['100%','#378ADD'],'new'=>['31%','#378ADD'],
-    'contacted'=>['23%','#1D9E75'],'qualified'=>['17%','#639922'],
-    'converted'=>['15%','#085041'],'lost'=>['15%','#E24B4A'],
-];
+$AVC=['#378ADD','#534AB7','#1D9E75','#EF9F27','#E05252','#185FA5','#3B6D11'];
+function avc(string $n,array $c):string{return $c[ord($n[0]??'A')%count($c)];}
+function ini(string $n):string{$p=explode(' ',trim($n));return strtoupper(substr($p[0],0,1).(isset($p[1])?substr($p[1],0,1):''));}
+// $kanbanCols=['new','contacted','qualified','proposal','negotiation','converted','lost'];
+$kanbanCols=['new','contacted','qualified','converted','lost'];
+$byStatus=$leads->groupBy('status');
+$currentStatus=request('status','');
+$currentView=session('lead_view','list');
 @endphp
 
-<div class="li-page">
-
-    {{-- Page Header --}}
-    <div class="page-head">
-        <div>
-            <div class="page-title">Leads</div>
-            <div style="font-size:12px;color:var(--text-300);margin-top:2px">
-                Manage and track all your sales leads
-            </div>
+{{-- Page head --}}
+<div class="page-head">
+    <div>
+        <div class="page-title">Leads</div>
+        <div class="page-sub">{{ number_format($counts['all']) }} leads in pipeline</div>
+    </div>
+    <div class="page-actions" style="display:flex;align-items:center;gap:10px">
+        <div class="view-toggle" role="group" aria-label="View mode">
+            <button type="button" class="vt-btn" id="btn-list" aria-pressed="false">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5M3.75 6.75h16.5M3.75 17.25h16.5"/></svg>
+                List
+            </button>
+            <button type="button" class="vt-btn" id="btn-kanban" aria-pressed="false">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>
+                Kanban
+            </button>
         </div>
         <a href="{{ route('tenant.leads.create') }}" class="btn btn-primary">
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
             Add Lead
         </a>
     </div>
+</div>
 
-    {{-- Flash Messages --}}
-    @if(session('success'))
-    <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:#E1F5EE;border:1px solid #9FE1CB;border-radius:8px;margin-bottom:14px;font-size:13px;color:#0F6E56;font-weight:500">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        {{ session('success') }}
+{{-- Stat strip --}}
+<div class="stat-strip">
+@php
+$strips=[
+    ''          =>['label'=>'All',       'num'=>$counts['all'],       'dot'=>'var(--text-300)'],
+    'new'       =>['label'=>'New',       'num'=>$counts['new'],       'dot'=>$statusCfg['new']['dot']],
+    'contacted' =>['label'=>'Contacted', 'num'=>$counts['contacted'], 'dot'=>$statusCfg['contacted']['dot']],
+    'qualified' =>['label'=>'Qualified', 'num'=>$counts['qualified'], 'dot'=>$statusCfg['qualified']['dot']],
+    'converted' =>['label'=>'Converted', 'num'=>$counts['converted'], 'dot'=>$statusCfg['converted']['dot']],
+    'lost'      =>['label'=>'Lost',      'num'=>$counts['lost'],      'dot'=>$statusCfg['lost']['dot']],
+];
+@endphp
+@foreach($strips as $val=>$tab)
+<a href="{{ route('tenant.leads.index', array_merge(request()->except('status','page'),$val?['status'=>$val]:[])) }}"
+   class="stat-pill {{ $currentStatus===$val?'active':'' }}">
+    <div class="stat-dot" style="background:{{ $tab['dot'] }}"></div>
+    <div class="stat-info">
+        <div class="stat-num">{{ $tab['num'] }}</div>
+        <div class="stat-lbl">{{ $tab['label'] }}</div>
     </div>
-    @endif
+</a>
+@endforeach
+</div>
 
-    {{-- Status Stats --}}
-    <div class="li-stats">
-        @php
-        $statItems = [
-            ['key'=>'',           'label'=>'All Leads',  'count'=>$counts['all'],       'bar'=>$statBars['all']],
-            ['key'=>'new',        'label'=>'New',        'count'=>$counts['new'],        'bar'=>$statBars['new']],
-            ['key'=>'contacted',  'label'=>'Contacted',  'count'=>$counts['contacted'],  'bar'=>$statBars['contacted']],
-            ['key'=>'qualified',  'label'=>'Qualified',  'count'=>$counts['qualified'],  'bar'=>$statBars['qualified']],
-            ['key'=>'converted',  'label'=>'Converted',  'count'=>$counts['converted'],  'bar'=>$statBars['converted']],
-            ['key'=>'lost',       'label'=>'Lost',       'count'=>$counts['lost'],       'bar'=>$statBars['lost']],
-        ];
-        $currentStatus = request('status', '');
-        @endphp
-        @foreach($statItems as $stat)
-        <a href="{{ route('tenant.leads.index', array_merge(request()->except(['status','page']), $stat['key'] ? ['status'=>$stat['key']] : [])) }}"
-           class="li-stat {{ $currentStatus === $stat['key'] ? 'active' : '' }}">
-            <div class="li-stat-num">{{ $stat['count'] }}</div>
-            <div class="li-stat-lbl">{{ $stat['label'] }}</div>
-            <div class="li-stat-bar" style="width:{{ $stat['bar'][0] }};background:{{ $stat['bar'][1] }}"></div>
-        </a>
-        @endforeach
-    </div>
-
-    {{-- Filters --}}
-    <form method="GET" action="{{ route('tenant.leads.index') }}" id="filterForm">
-        <div class="li-filters">
-            <div class="li-search-wrap">
-                <span class="li-search-ico">
-                    <svg width="14" height="14" fill="none" stroke="var(--text-300)" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/></svg>
-                </span>
-                <input type="text" name="search" class="li-fi li-fi-search"
-                       placeholder="Search name, phone, company..."
-                       value="{{ request('search') }}"
-                       autocomplete="off" />
-            </div>
-
-            <select name="source" class="li-fi" style="min-width:130px" onchange="this.form.submit()">
-                <option value="">All Sources</option>
-                @foreach($sources as $val => $label)
-                <option value="{{ $val }}" {{ request('source') === $val ? 'selected' : '' }}>{{ $label }}</option>
-                @endforeach
-            </select>
-
-            <select name="priority" class="li-fi" style="min-width:120px" onchange="this.form.submit()">
-                <option value="">All Priorities</option>
-                @foreach($priorities as $val => $label)
-                <option value="{{ $val }}" {{ request('priority') === $val ? 'selected' : '' }}>{{ $label }}</option>
-                @endforeach
-            </select>
-
-            <select name="assigned_to" class="li-fi" style="min-width:130px" onchange="this.form.submit()">
-                <option value="">All Assignees</option>
-                @foreach($staffList as $staff)
-                <option value="{{ $staff->id }}" {{ request('assigned_to') == $staff->id ? 'selected' : '' }}>
-                    {{ $staff->name }}
-                </option>
-                @endforeach
-            </select>
-
-            <input type="date" name="date_from" class="li-fi"
-                   value="{{ request('date_from') }}" title="From date"
-                   onchange="this.form.submit()" />
-
-            <input type="date" name="date_to" class="li-fi"
-                   value="{{ request('date_to') }}" title="To date"
-                   onchange="this.form.submit()" />
-
-            {{-- Preserve status & sort --}}
-            @if(request('status'))  <input type="hidden" name="status"  value="{{ request('status') }}">  @endif
-            @if(request('sort'))    <input type="hidden" name="sort"    value="{{ request('sort') }}">    @endif
-            @if(request('dir'))     <input type="hidden" name="dir"     value="{{ request('dir') }}">     @endif
-
-            <button type="submit" class="btn btn-secondary">
-                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/></svg>
-                Search
-            </button>
-
-            @if(request()->hasAny(['search','source','priority','assigned_to','date_from','date_to','status']))
-            <a href="{{ route('tenant.leads.index') }}" class="btn btn-secondary">
-                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                Reset
-            </a>
-            @endif
+{{-- Filter bar --}}
+<form method="GET" action="{{ route('tenant.leads.index') }}" id="filterForm">
+    @if(request('status'))<input type="hidden" name="status" value="{{ request('status') }}"/>@endif
+    <div class="filter-bar">
+        <div class="search-wrap">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+            <input type="text" name="search" class="fi" placeholder="Search name, phone..." value="{{ request('search') }}" style="width:100%;padding-left:32px"/>
         </div>
-    </form>
-
-    {{-- Table Card --}}
-    <div class="li-card">
-        <div class="li-card-head">
-            <div class="li-count">
-                Showing
-                <strong>{{ $leads->firstItem() ?? 0 }}–{{ $leads->lastItem() ?? 0 }}</strong>
-                of <strong>{{ $leads->total() }}</strong> leads
-            </div>
-            <div style="display:flex;align-items:center;gap:6px">
-                <span style="font-size:12px;color:var(--text-300)">Sort by</span>
-                <form method="GET" style="display:inline">
-                    @foreach(request()->except(['sort','dir']) as $k => $v)
-                    <input type="hidden" name="{{ $k }}" value="{{ $v }}">
-                    @endforeach
-                    <select name="sort" class="li-fi" style="padding:6px 10px;font-size:12px" onchange="this.form.submit()">
-                        <option value="created_at" {{ $sortCol==='created_at' ? 'selected':'' }}>Newest first</option>
-                        <option value="name"       {{ $sortCol==='name'       ? 'selected':'' }}>Name A–Z</option>
-                        <option value="lead_value" {{ $sortCol==='lead_value' ? 'selected':'' }}>Value: High–Low</option>
-                        <option value="priority"   {{ $sortCol==='priority'   ? 'selected':'' }}>Priority</option>
-                        <option value="status"     {{ $sortCol==='status'     ? 'selected':'' }}>Status</option>
-                    </select>
-                    <input type="hidden" name="dir" value="{{ $sortDir === 'asc' ? 'desc' : 'asc' }}">
-                </form>
-            </div>
-        </div>
-
-        <div class="li-table-wrap">
-            <table class="li-table">
-                <thead>
-                    <tr>
-                        <th style="width:36px;padding:10px 8px 10px 18px">
-                            <input type="checkbox" id="selectAll" style="width:14px;height:14px;cursor:pointer" />
-                        </th>
-                        <th style="width:220px">
-                            <a href="{{ route('tenant.leads.index', array_merge(request()->query(), ['sort'=>'name','dir'=>$nextDir('name')])) }}"
-                               class="{{ $isActive('name') ? 'sort-'.$sortDir : '' }}">
-                                Lead
-                                <svg class="sort-icon" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
-                            </a>
-                        </th>
-                        <th style="width:110px">Status</th>
-                        <th style="width:90px">Priority</th>
-                        <th style="width:110px">Source</th>
-                        <th style="width:130px">
-                            <a href="{{ route('tenant.leads.index', array_merge(request()->query(), ['sort'=>'lead_value','dir'=>$nextDir('lead_value')])) }}"
-                               class="{{ $isActive('lead_value') ? 'sort-'.$sortDir : '' }}">
-                                Value
-                                <svg class="sort-icon" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
-                            </a>
-                        </th>
-                        <th style="width:130px">Assigned To</th>
-                        <th style="width:105px">
-                            <a href="{{ route('tenant.leads.index', array_merge(request()->query(), ['sort'=>'created_at','dir'=>$nextDir('created_at')])) }}"
-                               class="{{ $isActive('created_at') ? 'sort-'.$sortDir : '' }}">
-                                Created
-                                <svg class="sort-icon" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
-                            </a>
-                        </th>
-                        <th style="width:80px"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($leads as $i => $lead)
-                    @php
-                        $initials = collect(explode(' ', $lead->name))->map(fn($p)=>strtoupper($p[0]??''))->join('');
-                        $initials = substr($initials, 0, 2);
-                        [$avBg, $avTx] = $avatarColors[$i % 4];
-                        $sc = $statusClass[$lead->status ?? 'new'] ?? 's-new';
-                        $pc = $priorityClass[$lead->priority ?? 'medium'] ?? 'p-medium';
-                        $statusLabel = $statuses[$lead->status ?? 'new'] ?? ucfirst($lead->status ?? '');
-                        $sourceLabel = $sources[$lead->source ?? 'other'] ?? ucfirst($lead->source ?? '');
-                        $priorityLabel = $priorities[$lead->priority ?? 'medium'] ?? ucfirst($lead->priority ?? '');
-
-                        /* Assignee initials */
-                        $assInit = '';
-                        if ($lead->assignedTo) {
-                            $assInit = collect(explode(' ', $lead->assignedTo->name))
-                                ->map(fn($p) => strtoupper($p[0]??''))->join('');
-                            $assInit = substr($assInit, 0, 2);
-                        }
-                        [$assBg, $assTx] = $avatarColors[($i+1) % 4];
-                    @endphp
-                    <tr>
-                        <td style="padding:12px 8px 12px 18px">
-                            <input type="checkbox" class="row-check" value="{{ $lead->id }}"
-                                   style="width:14px;height:14px;cursor:pointer" />
-                        </td>
-
-                        {{-- Lead Name --}}
-                        <td>
-                            <div style="display:flex;align-items:center;gap:10px">
-                                <div class="li-avatar" style="background:{{ $avBg }};color:{{ $avTx }}">
-                                    {{ $initials }}
-                                </div>
-                                <div>
-                                    <div class="li-lead-name">
-                                        <a href="{{ route('tenant.leads.show', ['tenant'=>auth()->user()->tenant->subdomain,'id'=>$lead->id]) }}"
-                                           style="color:inherit;text-decoration:none">
-                                            {{ $lead->name }}
-                                        </a>
-                                    </div>
-                                    <div class="li-lead-sub">
-                                        @if($lead->company) {{ $lead->company }} · @endif
-                                        {{ $lead->phone }}
-                                    </div>
-                                </div>
-                            </div>
-                        </td>
-
-                        {{-- Status --}}
-                        <td>
-                            <span class="li-badge {{ $sc }}">
-                                <span style="width:5px;height:5px;border-radius:50%;background:currentColor;display:inline-block"></span>
-                                {{ $statusLabel }}
-                            </span>
-                        </td>
-
-                        {{-- Priority --}}
-                        <td>
-                            <span class="li-badge {{ $pc }}">{{ $priorityLabel }}</span>
-                        </td>
-
-                        {{-- Source --}}
-                        <td style="font-size:12.5px;color:var(--text-300)">{{ $sourceLabel }}</td>
-
-                        {{-- Value --}}
-                        <td>
-                            @if($lead->lead_value)
-                            <span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--text-100)">
-                                ₹{{ number_format($lead->lead_value) }}
-                            </span>
-                            @else
-                            <span style="color:var(--text-400);font-size:12px">—</span>
-                            @endif
-                        </td>
-
-                        {{-- Assigned To --}}
-                        <td>
-                            @if($lead->assignedTo)
-                            <div style="display:flex;align-items:center;gap:7px">
-                                <div style="width:24px;height:24px;border-radius:50%;background:{{ $assBg }};color:{{ $assTx }};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0">
-                                    {{ $assInit }}
-                                </div>
-                                <span style="font-size:12.5px;color:var(--text-200)">
-                                    {{ \Illuminate\Support\Str::limit($lead->assignedTo->name, 14) }}
-                                </span>
-                            </div>
-                            @else
-                            <span style="font-size:12px;color:var(--text-400);font-style:italic">Unassigned</span>
-                            @endif
-                        </td>
-
-                        {{-- Created At --}}
-                        <td>
-                            <span style="font-size:12px;color:var(--text-300);font-family:'DM Mono',monospace">
-                                {{ $lead->created_at->format('M d, Y') }}
-                            </span>
-                        </td>
-
-                        {{-- Actions --}}
-                        <td>
-                            <div class="li-actions">
-                                <a href="{{ route('tenant.leads.show', ['tenant'=>auth()->user()->tenant->subdomain,'id'=>$lead->id]) }}"
-                                   class="li-act-btn" title="View">
-                                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                                </a>
-                                <a href="{{ route('tenant.leads.edit', ['tenant'=>auth()->user()->tenant->subdomain,'id'=>$lead->id]) }}"
-                                   class="li-act-btn" title="Edit">
-                                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                </a>
-                                <form method="POST"
-                                      action="{{ route('tenant.leads.destroy', ['tenant'=>auth()->user()->tenant->subdomain,'id'=>$lead->id]) }}"
-                                      onsubmit="return confirm('Delete lead \'{{ addslashes($lead->name) }}\'? This cannot be undone.')">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" class="li-act-btn danger" title="Delete">
-                                        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                    </button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="9">
-                            <div class="li-empty">
-                                <div class="li-empty-icon">
-                                    <svg width="22" height="22" fill="none" stroke="var(--text-300)" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                                </div>
-                                <div class="li-empty-title">No leads found</div>
-                                <div class="li-empty-sub">
-                                    @if(request()->hasAny(['search','source','priority','assigned_to','status']))
-                                        Try adjusting your filters or
-                                        <a href="{{ route('tenant.leads.index') }}" style="color:var(--accent)">clear all filters</a>
-                                    @else
-                                        Get started by <a href="{{ route('tenant.leads.create') }}" style="color:var(--accent)">adding your first lead</a>
-                                    @endif
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
-        {{-- Pagination --}}
-        @if($leads->hasPages())
-        <div class="li-pag">
-            <div class="li-pag-info">
-                Page {{ $leads->currentPage() }} of {{ $leads->lastPage() }}
-                · {{ number_format($leads->total()) }} total leads
-            </div>
-            <div class="li-pag-btns">
-
-                {{-- Previous --}}
-                @if($leads->onFirstPage())
-                <span class="li-pg-btn" aria-disabled="true">
-                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-                    Prev
-                </span>
-                @else
-                <a href="{{ $leads->previousPageUrl() }}" class="li-pg-btn">
-                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-                    Prev
-                </a>
-                @endif
-
-                {{-- Page numbers --}}
-                @php
-                $window    = 2;
-                $current   = $leads->currentPage();
-                $last      = $leads->lastPage();
-                $from      = max(1, $current - $window);
-                $to        = min($last, $current + $window);
-                @endphp
-
-                @if($from > 1)
-                <a href="{{ $leads->url(1) }}" class="li-pg-btn">1</a>
-                @if($from > 2)
-                <span class="li-pg-btn li-pg-dot" style="min-width:24px">…</span>
-                @endif
-                @endif
-
-                @for($p = $from; $p <= $to; $p++)
-                @if($p === $current)
-                <span class="li-pg-btn active">{{ $p }}</span>
-                @else
-                <a href="{{ $leads->url($p) }}" class="li-pg-btn">{{ $p }}</a>
-                @endif
-                @endfor
-
-                @if($to < $last)
-                @if($to < $last - 1)
-                <span class="li-pg-btn li-pg-dot" style="min-width:24px">…</span>
-                @endif
-                <a href="{{ $leads->url($last) }}" class="li-pg-btn">{{ $last }}</a>
-                @endif
-
-                {{-- Next --}}
-                @if($leads->hasMorePages())
-                <a href="{{ $leads->nextPageUrl() }}" class="li-pg-btn">
-                    Next
-                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-                </a>
-                @else
-                <span class="li-pg-btn" aria-disabled="true">
-                    Next
-                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-                </span>
-                @endif
-            </div>
-        </div>
+        <select name="source" class="fi" onchange="this.form.submit()">
+            <option value="">All Sources</option>
+            @foreach($sources as $val=>$cfg)
+            <option value="{{ $val }}" {{ request('source')===$val?'selected':'' }}>{{ is_array($cfg)?$cfg['label']:$cfg }}</option>
+            @endforeach
+        </select>
+        <select name="priority" class="fi" onchange="this.form.submit()">
+            <option value="">All Priority</option>
+            <option value="high"   {{ request('priority')==='high'   ?'selected':'' }}>High</option>
+            <option value="medium" {{ request('priority')==='medium' ?'selected':'' }}>Medium</option>
+            <option value="low"    {{ request('priority')==='low'    ?'selected':'' }}>Low</option>
+        </select>
+        <select name="assigned_to" class="fi" onchange="this.form.submit()">
+            <option value="">All Staff</option>
+            @foreach($staffList as $staff)
+            <option value="{{ $staff->id }}" {{ request('assigned_to')==$staff->id?'selected':'' }}>{{ $staff->name }}</option>
+            @endforeach
+        </select>
+        <input type="date" name="date_from" class="fi" value="{{ request('date_from') }}" onchange="this.form.submit()"/>
+        <input type="date" name="date_to"   class="fi" value="{{ request('date_to') }}"   onchange="this.form.submit()"/>
+        <button type="submit" class="btn btn-secondary" style="height:34px;padding:0 14px;font-size:13px">Filter</button>
+        @if(request()->hasAny(['search','source','priority','assigned_to','date_from','date_to']))
+        <a href="{{ route('tenant.leads.index',request()->only('status')) }}" class="btn btn-secondary" style="height:34px;padding:0 12px;font-size:13px">✕ Clear</a>
         @endif
-    </div>{{-- /li-card --}}
+    </div>
+</form>
+
+{{-- ════════════════════════════════════════════════════════════
+     LIST VIEW
+════════════════════════════════════════════════════════════ --}}
+<div id="view-list" style="display:none">
+<div class="card">
+@if($leads->isEmpty())
+<div style="padding:60px 20px;text-align:center">
+    <div style="font-size:34px;margin-bottom:10px">🎯</div>
+    <div style="font-size:15px;font-weight:700;color:var(--text-100);margin-bottom:6px">No leads found</div>
+    <div style="font-size:13px;color:var(--text-300);margin-bottom:16px">
+        {{ request()->hasAny(['search','source','priority','status','assigned_to'])?'Try adjusting your filters':'Add your first lead to get started' }}
+    </div>
+    <a href="{{ route('tenant.leads.create') }}" class="btn btn-primary">Add Lead</a>
+</div>
+@else
+<div style="overflow-x:auto">
+<table class="data-table">
+<thead>
+<tr>
+    <th style="width:32px"></th>
+    <th><a class="sort-link" href="{{ route('tenant.leads.index',array_merge(request()->all(),['sort'=>'name','dir'=>request('sort')==='name'&&request('dir')==='asc'?'desc':'asc'])) }}">Name {{ request('sort')==='name'?(request('dir')==='asc'?'↑':'↓'):'' }}</a></th>
+    <th>Contact</th>
+    <th>Source</th>
+    <th><a class="sort-link" href="{{ route('tenant.leads.index',array_merge(request()->all(),['sort'=>'status','dir'=>request('sort')==='status'&&request('dir')==='asc'?'desc':'asc'])) }}">Status</a></th>
+    <th><a class="sort-link" href="{{ route('tenant.leads.index',array_merge(request()->all(),['sort'=>'priority','dir'=>request('sort')==='priority'&&request('dir')==='asc'?'desc':'asc'])) }}">Priority</a></th>
+    <th>Assigned</th>
+    <th><a class="sort-link" href="{{ route('tenant.leads.index',array_merge(request()->all(),['sort'=>'created_at','dir'=>request('sort')==='created_at'&&request('dir')==='asc'?'desc':'asc'])) }}">Added</a></th>
+    <th style="width:96px"></th>
+</tr>
+</thead>
+<tbody>
+@foreach($leads as $lead)
+@php
+$sc=$statusCfg[$lead->status]??['label'=>ucfirst($lead->status),'color'=>'var(--text-300)','bg'=>'var(--bg-elevated)'];
+$av=avc($lead->name,$AVC);
+$in=ini($lead->name);
+$priC=$lead->priority==='high'?'var(--red)':($lead->priority==='medium'?'var(--amber)':'var(--green)');
+$src=$sources[$lead->source]??null;
+$srcL=is_array($src)?($src['label']??ucfirst($lead->source)):($src??ucfirst($lead->source));
+@endphp
+<tr onclick="window.location='{{ route('tenant.leads.show',$lead->id) }}'">
+    <td style="padding:11px 6px 11px 14px">
+        <div class="prio-dot {{ $lead->priority }}"></div>
+    </td>
+    <td style="padding-left:4px">
+        <div style="display:flex;align-items:center;gap:9px">
+            <div class="lead-av" style="background:{{ $av }}">{{ $in }}</div>
+            <div>
+                <div style="font-weight:700;font-size:13px;color:var(--text-100)">{{ $lead->name }}</div>
+                @if($lead->company??null)<div style="font-size:11px;color:var(--text-400);margin-top:1px">{{ $lead->company }}</div>@endif
+            </div>
+        </div>
+    </td>
+    <td>
+        <div style="font-size:12.5px;font-family:var(--mono);color:var(--text-200)">{{ $lead->phone }}</div>
+        @if($lead->email)<div style="font-size:11px;color:var(--text-400);margin-top:2px">{{ $lead->email }}</div>@endif
+    </td>
+    <td><span style="font-size:12px;color:var(--text-300)">{{ $srcL }}</span></td>
+    <td><span class="s-badge" style="background:{{ $sc['bg'] }};color:{{ $sc['color'] }}">{{ $sc['label'] }}</span></td>
+    <td><span style="font-size:12px;font-weight:700;color:{{ $priC }};text-transform:capitalize">{{ $lead->priority }}</span></td>
+    <td>
+        @if($lead->assignedTo)
+        <div style="display:flex;align-items:center;gap:7px">
+            <div style="width:24px;height:24px;border-radius:50%;background:{{ avc($lead->assignedTo->name,$AVC) }};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0">{{ ini($lead->assignedTo->name) }}</div>
+            <span style="font-size:12.5px;color:var(--text-200)">{{ $lead->assignedTo->name }}</span>
+        </div>
+        @else<span style="font-size:12px;color:var(--text-400)">—</span>@endif
+    </td>
+    <td><span style="font-size:11.5px;color:var(--text-400);font-family:var(--mono)">{{ $lead->created_at->diffForHumans() }}</span></td>
+    <td onclick="event.stopPropagation()">
+        <div class="row-acts">
+            <a href="{{ route('tenant.leads.show',$lead->id) }}" class="btn btn-secondary btn-sm btn-icon" title="View">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </a>
+            <a href="{{ route('tenant.leads.edit',$lead->id) }}" class="btn btn-secondary btn-sm btn-icon" title="Edit">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/></svg>
+            </a>
+            <form method="POST" action="{{ route('tenant.leads.destroy',$lead->id) }}" onsubmit="return confirm('Delete {{ addslashes($lead->name) }}?')">
+                @csrf @method('DELETE')
+                <button type="submit" class="btn btn-secondary btn-sm btn-icon" style="color:var(--red)" title="Delete">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+                </button>
+            </form>
+        </div>
+    </td>
+</tr>
+@endforeach
+</tbody>
+</table>
+</div>
+@if($leads->hasPages())
+<div class="pag-wrap">
+    <span>{{ $leads->firstItem() }}–{{ $leads->lastItem() }} of {{ $leads->total() }}</span>
+    <div class="pag-links">
+        <a href="{{ $leads->previousPageUrl()??'#' }}" class="pg-btn {{ !$leads->previousPageUrl()?'disabled':'' }}">←</a>
+        @foreach($leads->getUrlRange(max(1,$leads->currentPage()-2),min($leads->lastPage(),$leads->currentPage()+2)) as $page=>$url)
+        <a href="{{ $url }}" class="pg-btn {{ $page==$leads->currentPage()?'active':'' }}">{{ $page }}</a>
+        @endforeach
+        <a href="{{ $leads->nextPageUrl()??'#' }}" class="pg-btn {{ !$leads->nextPageUrl()?'disabled':'' }}">→</a>
+    </div>
+</div>
+@endif
+@endif
+</div>
+</div>
+
+{{-- ════════════════════════════════════════════════════════════
+     KANBAN VIEW
+════════════════════════════════════════════════════════════ --}}
+<div id="view-kanban" style="display:none">
+
+@if($leads->total() > $leads->perPage())
+<div style="margin-bottom:12px;padding:9px 14px;background:var(--amber-dim);border:1px solid rgba(239,159,39,.25);border-radius:var(--r-sm);font-size:12.5px;color:var(--amber);display:flex;align-items:center;gap:7px">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:14px;height:14px;flex-shrink:0"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg>
+    Kanban shows current page only ({{ $leads->count() }} leads). Use List view for full pipeline.
+</div>
+@endif
+
+<div class="kanban-wrap">
+<div class="kanban-board" id="kanbanBoard">
+
+@foreach($kanbanCols as $colStatus)
+@php
+$colLeads=$byStatus->get($colStatus,collect());
+$sc=$statusCfg[$colStatus];
+@endphp
+<div class="k-col" data-status="{{ $colStatus }}">
+
+    <div class="k-head">
+        <div class="k-head-left">
+            <div style="width:8px;height:8px;border-radius:50%;background:{{ $sc['dot'] }}"></div>
+            <span class="k-title" style="color:{{ $sc['color'] }}">{{ $sc['label'] }}</span>
+        </div>
+        <span class="k-count" id="count-{{ $colStatus }}">{{ $colLeads->count() }}</span>
+    </div>
+
+    <div class="k-body" id="col-{{ $colStatus }}" data-status="{{ $colStatus }}">
+        @forelse($colLeads as $lead)
+        @php
+            $av=avc($lead->name,$AVC);
+            $in=ini($lead->name);
+            $priC=$lead->priority==='high'?'#E05252':($lead->priority==='medium'?'#EF9F27':'#1D9E75');
+            $src=$sources[$lead->source]??null;
+            $srcL=is_array($src)?($src['label']??ucfirst($lead->source)):($src??ucfirst($lead->source));
+        @endphp
+        <div class="k-card"
+             data-id="{{ $lead->id }}"
+             data-status="{{ $lead->status }}"
+             data-name="{{ e($lead->name) }}"
+             data-url="{{ route('tenant.leads.show',$lead->id) }}">
+            <span class="k-drag-handle" aria-hidden="true">⠿</span>
+            <div class="k-card-top">
+                <div style="padding-right:52px">
+                    <div class="k-card-name">{{ $lead->name }}</div>
+                    @if($lead->company??null)<div class="k-card-co">{{ $lead->company }}</div>@endif
+                </div>
+                <div class="k-card-badges">
+                    <div class="k-card-prio" style="background:{{ $priC }}" title="{{ ucfirst($lead->priority) }} priority"></div>
+                    @if($lead->assignedTo)
+                    <div class="k-card-av" style="background:{{ avc($lead->assignedTo->name,$AVC) }}" title="{{ $lead->assignedTo->name }}">{{ ini($lead->assignedTo->name) }}</div>
+                    @endif
+                </div>
+            </div>
+            <div class="k-card-phone">{{ $lead->phone }}</div>
+            <div class="k-card-footer">
+                <span class="k-tag">{{ $srcL }}</span>
+                <span class="k-time">{{ $lead->created_at->diffForHumans(null,true) }}</span>
+            </div>
+        </div>
+        @empty
+        <div class="k-empty" data-empty>
+            <div class="k-empty-ico">◌</div>
+            <div class="k-empty-txt">No leads</div>
+        </div>
+        @endforelse
+    </div>
 
 </div>
+@endforeach
+
+</div>
+</div>
+
+@php $cv=$byStatus->get('converted',collect())->count(); $lv=$byStatus->get('lost',collect())->count(); @endphp
+@if($cv>0||$lv>0)
+<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+    @if($cv>0)
+    <a href="{{ route('tenant.leads.index',['status'=>'converted']) }}" style="display:inline-flex;align-items:center;gap:6px;padding:7px 13px;background:var(--green-dim);border:1px solid rgba(29,158,117,.2);border-radius:var(--r-sm);font-size:12px;color:var(--green);font-weight:600;text-decoration:none">
+        <span style="width:7px;height:7px;border-radius:50%;background:var(--green)"></span>
+        {{ $cv }} Converted →
+    </a>
+    @endif
+    @if($lv>0)
+    <a href="{{ route('tenant.leads.index',['status'=>'lost']) }}" style="display:inline-flex;align-items:center;gap:6px;padding:7px 13px;background:var(--red-dim);border:1px solid rgba(224,82,82,.18);border-radius:var(--r-sm);font-size:12px;color:var(--red);font-weight:600;text-decoration:none">
+        <span style="width:7px;height:7px;border-radius:50%;background:var(--red)"></span>
+        {{ $lv }} Lost →
+    </a>
+    @endif
+</div>
+@endif
+</div>{{-- /view-kanban --}}
+
+<div id="drop-toast"></div>
+
 @endsection
 
 @push('scripts')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
 <script>
 (function(){
-    /* Select All checkbox */
-    const selectAll = document.getElementById('selectAll');
-    if(selectAll){
-        selectAll.addEventListener('change', function(){
-            document.querySelectorAll('.row-check').forEach(cb => cb.checked = this.checked);
-        });
-        document.querySelectorAll('.row-check').forEach(cb => {
-            cb.addEventListener('change', function(){
-                const all   = document.querySelectorAll('.row-check');
-                const checked = document.querySelectorAll('.row-check:checked');
-                selectAll.indeterminate = checked.length > 0 && checked.length < all.length;
-                selectAll.checked = checked.length === all.length;
-            });
-        });
-    }
+/* ── Constants ──────────────────────────────────────────────── */
+const CSRF      = '{{ csrf_token() }}';
+const UPDATE_URL= '{{ route("tenant.leads.status.update", ["id"=>"__ID__"]) }}';
+const statusLabels = @json(array_combine($kanbanCols, array_map(fn($s)=>$statusCfg[$s]['label'], $kanbanCols)));
 
-    /* Auto-submit search on enter */
-    const searchInput = document.querySelector('.li-fi-search');
-    if(searchInput){
-        let timer;
-        searchInput.addEventListener('input', function(){
-            clearTimeout(timer);
-            timer = setTimeout(() => this.form.submit(), 500);
-        });
+/* ── View toggle ────────────────────────────────────────────── */
+const listEl    = document.getElementById('view-list');
+const kanbanEl  = document.getElementById('view-kanban');
+const btnList   = document.getElementById('btn-list');
+const btnKanban = document.getElementById('btn-kanban');
+
+function applyView(v) {
+    const isKanban = v === 'kanban';
+    listEl.style.display   = isKanban ? 'none'  : 'block';
+    kanbanEl.style.display = isKanban ? 'block' : 'none';
+    btnList.classList.toggle('active',  !isKanban);
+    btnKanban.classList.toggle('active', isKanban);
+    btnList.setAttribute('aria-pressed',   String(!isKanban));
+    btnKanban.setAttribute('aria-pressed', String(isKanban));
+    localStorage.setItem('lead_view', v);
+}
+
+function setView(v) {
+    applyView(v);
+    fetch('{{ route("tenant.leads.view") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+        body: JSON.stringify({ view: v })
+    }).catch(() => {});
+}
+
+btnList.addEventListener('click',   () => setView('list'));
+btnKanban.addEventListener('click', () => setView('kanban'));
+
+/* Apply saved or server-side view immediately */
+const savedView = localStorage.getItem('lead_view') || '{{ $currentView }}';
+applyView(savedView);
+
+/* ── Toast ──────────────────────────────────────────────────── */
+let toastTimer;
+function toast(msg, type) {
+    const el = document.getElementById('drop-toast');
+    el.textContent = msg;
+    el.className   = 'show ' + (type || '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { el.className = ''; }, 2600);
+}
+
+/* ── Kanban empty state helpers ─────────────────────────────── */
+function showEmpty(body) {
+    if (!body.querySelector('[data-empty]')) {
+        const el = document.createElement('div');
+        el.className = 'k-empty';
+        el.setAttribute('data-empty', '');
+        el.innerHTML = '<div class="k-empty-ico">◌</div><div class="k-empty-txt">No leads</div>';
+        body.appendChild(el);
     }
+}
+function hideEmpty(body) {
+    body.querySelectorAll('[data-empty]').forEach(e => e.remove());
+}
+function updateCount(status) {
+    const body  = document.getElementById('col-' + status);
+    const badge = document.getElementById('count-' + status);
+    if (!body || !badge) return;
+    const n = body.querySelectorAll('.k-card').length;
+    badge.textContent = n;
+    if (n === 0) showEmpty(body);
+    else         hideEmpty(body);
+}
+
+/* ── SortableJS — one instance per column ───────────────────── */
+let isDragging = false;
+
+document.querySelectorAll('.k-body').forEach(body => {
+    Sortable.create(body, {
+        group        : 'leads',
+        animation    : 160,
+        ghostClass   : 'sortable-ghost',
+        chosenClass  : 'sortable-chosen',
+        dragClass    : 'sortable-drag',
+        delay        : 0,
+        delayOnTouchOnly: false,
+        touchStartThreshold: 4,
+
+        onStart() {
+            isDragging = true;
+        },
+
+        onEnd(evt) {
+            /* Small async gap so the click after mouseup doesn't fire */
+            setTimeout(() => { isDragging = false; }, 10);
+
+            document.querySelectorAll('.k-body').forEach(c => c.classList.remove('drag-over'));
+
+            const card      = evt.item;
+            const toBody    = evt.to;
+            const fromBody  = evt.from;
+            const newStatus = toBody.dataset.status;
+            const oldStatus = card.dataset.status;   /* original status */
+
+            /* Remove any empty placeholders from target */
+            hideEmpty(toBody);
+
+            /* Update counts for both columns */
+            updateCount(newStatus);
+            updateCount(fromBody.dataset.status);
+
+            /* Same column — nothing to save */
+            if (newStatus === oldStatus) return;
+
+            /* Update card's data attribute optimistically */
+            card.dataset.status = newStatus;
+
+            /* Dim card while saving */
+            card.style.opacity       = '.5';
+            card.style.pointerEvents = 'none';
+
+            const url = UPDATE_URL.replace('__ID__', card.dataset.id);
+            fetch(url, {
+                method : 'PATCH',
+                headers: {
+                    'Content-Type' : 'application/json',
+                    'X-CSRF-TOKEN' : CSRF,
+                    'Accept'       : 'application/json',
+                },
+                body: JSON.stringify({ status: newStatus })
+            })
+            .then(r => {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            })
+            .then(data => {
+                if (data.redirect) {
+                    window.location.href = data.redirect;
+                    return;
+                }
+                card.style.opacity       = '';
+                card.style.pointerEvents = '';
+                const label = statusLabels[newStatus] || newStatus;
+                toast('"' + card.dataset.name + '" moved to ' + label, 'success');
+            })
+            .catch(err => {
+                /* Revert: put card back in original column at original index */
+                const origChildren = Array.from(fromBody.children).filter(c => !c.dataset.empty);
+                const insertBefore = origChildren[evt.oldIndex] || null;
+                fromBody.insertBefore(card, insertBefore);
+                card.dataset.status      = oldStatus;
+                card.style.opacity       = '';
+                card.style.pointerEvents = '';
+                updateCount(newStatus);
+                updateCount(oldStatus);
+                toast('Could not update status — please try again.', 'error');
+                console.error(err);
+            });
+        },
+
+        /* Highlight drop target column */
+        onMove(evt) {
+            document.querySelectorAll('.k-body').forEach(c => c.classList.remove('drag-over'));
+            evt.to.classList.add('drag-over');
+        },
+    });
+});
+
+/* ── Card click → open lead (only when NOT dragging) ────────── */
+document.querySelectorAll('.k-card').forEach(card => {
+    card.addEventListener('click', function() {
+        if (isDragging) return;
+        const url = this.dataset.url;
+        if (url) window.location.href = url;
+    });
+});
+
 })();
 </script>
 @endpush

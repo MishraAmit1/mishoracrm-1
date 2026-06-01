@@ -1,391 +1,236 @@
 @extends('layouts.app')
-
 @section('title', 'Invoices')
 
 @push('styles')
-<link rel="stylesheet" href="{{ asset('css/tenant/invoices/invoices.css') }}">
+<style>
+.stat-row { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
+@media(max-width:900px) { .stat-row { grid-template-columns:repeat(2,1fr); } }
+.stat-card { background:var(--bg-surface); border:1px solid var(--border-default); border-radius:var(--r-md); padding:16px 18px; }
+.stat-val   { font-size:22px; font-weight:800; font-family:var(--mono); color:var(--text-100); }
+.stat-lbl   { font-size:12px; color:var(--text-400); margin-top:3px; }
+
+.status-tabs { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:16px; }
+.s-tab { padding:7px 14px; border-radius:var(--r-sm); font-size:12.5px; font-weight:600; text-decoration:none; color:var(--text-300); border:1.5px solid transparent; transition:all .15s; }
+.s-tab:hover { color:var(--text-100); background:var(--bg-elevated); }
+.s-tab.active { background:var(--accent-dim); color:var(--accent); border-color:rgba(var(--accent-rgb),.25); }
+
+.filter-bar { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; }
+.fi { padding:8px 12px; height:36px; background:var(--bg-input); border:1.5px solid var(--border-default); border-radius:var(--r-sm); color:var(--text-100); font-family:var(--font); font-size:13px; outline:none; }
+.fi:focus { border-color:var(--accent); }
+.fi-search { flex:1; min-width:200px; }
+
+.data-table { width:100%; border-collapse:collapse; }
+.data-table th { padding:10px 16px; text-align:left; font-size:11px; font-weight:700; color:var(--text-400); text-transform:uppercase; letter-spacing:.5px; border-bottom:1px solid var(--border-subtle); white-space:nowrap; }
+.data-table td { padding:13px 16px; font-size:13.5px; color:var(--text-100); border-bottom:1px solid var(--border-subtle); }
+.data-table tr:last-child td { border-bottom:none; }
+.data-table tbody tr:hover td { background:var(--bg-elevated); cursor:pointer; }
+
+.badge { font-size:11.5px; font-weight:700; padding:3px 10px; border-radius:20px; }
+.pay-mini { height:4px; background:var(--bg-elevated); border-radius:2px; margin-top:4px; overflow:hidden; }
+.pay-mini-fill { height:100%; border-radius:2px; background:var(--green); }
+
+.pag { display:flex; align-items:center; justify-content:space-between; padding:14px 20px; border-top:1px solid var(--border-subtle); font-size:13px; color:var(--text-300); }
+.pag-links { display:flex; gap:4px; }
+.pg-btn { padding:5px 10px; border-radius:var(--r-sm); border:1px solid var(--border-default); color:var(--text-200); text-decoration:none; font-size:13px; }
+.pg-btn:hover { border-color:var(--accent); color:var(--accent); }
+.pg-btn.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+.pg-btn.disabled { opacity:.4; pointer-events:none; }
+
+.empty-state { padding:60px 20px; text-align:center; color:var(--text-300); font-size:13px; }
+</style>
 @endpush
 
 @section('content')
 
-{{-- ──────────────────────────────────────────────────────────
-     Header
-────────────────────────────────────────────────────────── --}}
-<div class="invoice-head">
+@php
+    $currentStatus = request('status', '');
+    $statusCfg = [
+        'draft'   => ['label'=>'Draft',   'color'=>'amber',  'bg'=>'amber-dim'],
+        'sent'    => ['label'=>'Sent',    'color'=>'accent', 'bg'=>'accent-dim'],
+        'paid'    => ['label'=>'Paid',    'color'=>'green',  'bg'=>'green-dim'],
+        'partial' => ['label'=>'Partial', 'color'=>'purple', 'bg'=>'purple-dim'],
+        'overdue' => ['label'=>'Overdue', 'color'=>'red',    'bg'=>'red-dim'],
+    ];
+@endphp
 
+<div class="page-head">
     <div>
-        <div class="invoice-title">
-            Invoices
-        </div>
-
-        <div class="invoice-sub">
-            Manage billing, collections & payment tracking
-        </div>
+        <div class="page-title">Invoices</div>
+        <div class="page-sub">Manage billing & payments</div>
     </div>
-
-    <div class="invoice-actions">
-
-        <a href="{{ route('tenant.invoices.create') }}"
-           class="btn btn-primary">
-            + Create Invoice
-        </a>
-
-        <button class="btn btn-secondary">
-            Export
-        </button>
-
-    </div>
-
+    <a href="{{ route('tenant.invoices.create') }}" class="btn btn-primary">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:15px;height:15px">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+        </svg>
+        New Invoice
+    </a>
 </div>
 
-{{-- ──────────────────────────────────────────────────────────
-     Summary
-────────────────────────────────────────────────────────── --}}
-<div class="invoice-summary">
-
-    <div class="summary-card total">
-        <div class="summary-label">Total Revenue</div>
-        <div class="summary-value">
-            ₹{{ number_format($summary['all']['amount'] ?? 0) }}
-        </div>
-        <div class="summary-sub">
-            {{ $summary['all']['count'] ?? 0 }} invoices
-        </div>
+{{-- Stats --}}
+<div class="stat-row">
+    <div class="stat-card">
+        <div class="stat-val" style="color:var(--green)">₹{{ number_format($revenue['total_paid'], 2) }}</div>
+        <div class="stat-lbl">Total Collected</div>
     </div>
-
-    <div class="summary-card paid">
-        <div class="summary-label">Collected</div>
-        <div class="summary-value">
-            ₹{{ number_format($summary['paid']['amount'] ?? 0) }}
-        </div>
-        <div class="summary-sub">
-            {{ $summary['paid']['count'] ?? 0 }} paid
-        </div>
+    <div class="stat-card">
+        <div class="stat-val" style="color:var(--accent)">₹{{ number_format($revenue['total_pending'], 2) }}</div>
+        <div class="stat-lbl">Pending</div>
     </div>
-
-    <div class="summary-card partial">
-        <div class="summary-label">Partial</div>
-        <div class="summary-value">
-            ₹{{ number_format($summary['partial']['amount'] ?? 0) }}
-        </div>
-        <div class="summary-sub">
-            Partial payments
-        </div>
+    <div class="stat-card">
+        <div class="stat-val" style="color:var(--red)">₹{{ number_format($revenue['total_overdue'], 2) }}</div>
+        <div class="stat-lbl">Overdue</div>
     </div>
-
-    <div class="summary-card overdue">
-        <div class="summary-label">Overdue</div>
-        <div class="summary-value">
-            ₹{{ number_format($summary['overdue']['amount'] ?? 0) }}
-        </div>
-        <div class="summary-sub">
-            Pending recovery
-        </div>
+    <div class="stat-card">
+        <div class="stat-val">{{ $counts['all'] }}</div>
+        <div class="stat-lbl">Total Invoices</div>
     </div>
-
-    <div class="summary-card pending">
-        <div class="summary-label">Outstanding</div>
-        <div class="summary-value">
-            ₹{{ number_format(
-                ($summary['all']['amount'] ?? 0)
-                -
-                ($summary['paid']['amount'] ?? 0)
-            ) }}
-        </div>
-        <div class="summary-sub">
-            Remaining receivable
-        </div>
-    </div>
-
 </div>
 
-{{-- ──────────────────────────────────────────────────────────
-     Filters
-────────────────────────────────────────────────────────── --}}
-<form method="GET">
+{{-- Status tabs --}}
+<div class="status-tabs">
+    <a href="{{ route('tenant.invoices.index') }}"
+       class="s-tab {{ !$currentStatus ? 'active':'' }}">
+       All ({{ $counts['all'] }})
+    </a>
+    @foreach($statusCfg as $key => $cfg)
+    <a href="{{ route('tenant.invoices.index', ['status'=>$key]) }}"
+       class="s-tab {{ $currentStatus === $key ? 'active':'' }}"
+       style="{{ $currentStatus === $key ? 'background:var(--'.$cfg['bg'].');color:var(--'.$cfg['color'].');border-color:rgba(0,0,0,.08)':'' }}">
+        {{ $cfg['label'] }}
+        <span style="opacity:.65">({{ $counts[$key] ?? 0 }})</span>
+    </a>
+    @endforeach
+</div>
 
-    <div class="filter-wrap">
-
-        <div class="filter-row">
-
-            <div class="filter-group">
-
-                <div class="search-box">
-
-                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-
-                    <input type="text"
-                           name="search"
-                           value="{{ request('search') }}"
-                           placeholder="Search invoice number or customer..."
-                           class="filter-input">
-
-                </div>
-
-            </div>
-
-            <div class="filter-group">
-                <select name="status"
-                        onchange="this.form.submit()"
-                        class="filter-input">
-
-                    <option value="">
-                        All Status
-                    </option>
-
-                    @foreach($statuses as $key => $label)
-                        <option value="{{ $key }}"
-                            {{ request('status') == $key ? 'selected' : '' }}>
-                            {{ $label }}
-                        </option>
-                    @endforeach
-
-                </select>
-            </div>
-
-            <div class="filter-group">
-                <input type="date"
-                       name="date_from"
-                       value="{{ request('date_from') }}"
-                       class="filter-input">
-            </div>
-
-            <div class="filter-group">
-                <input type="date"
-                       name="date_to"
-                       value="{{ request('date_to') }}"
-                       class="filter-input">
-            </div>
-
-            <div class="filter-group" style="max-width:140px">
-                <button type="submit"
-                        class="btn btn-primary"
-                        style="width:100%">
-                    Filter
-                </button>
-            </div>
-
-        </div>
-
+{{-- Filters --}}
+<form method="GET" action="{{ route('tenant.invoices.index') }}" id="filterForm">
+    @if(request('status'))<input type="hidden" name="status" value="{{ request('status') }}"/>@endif
+    <div class="filter-bar">
+        <input type="text" name="search" class="fi fi-search"
+               placeholder="Search invoice # or contact..."
+               value="{{ request('search') }}"
+               onchange="document.getElementById('filterForm').submit()"/>
+        <input type="date" name="date_from" class="fi" value="{{ request('date_from') }}"
+               onchange="this.form.submit()"/>
+        <input type="date" name="date_to" class="fi" value="{{ request('date_to') }}"
+               onchange="this.form.submit()"/>
+        @if(request()->hasAny(['search','date_from','date_to']))
+        <a href="{{ route('tenant.invoices.index', request('status') ? ['status'=>request('status')] : []) }}"
+           class="btn btn-secondary">Clear</a>
+        @endif
     </div>
-
 </form>
 
-{{-- ──────────────────────────────────────────────────────────
-     Table
-────────────────────────────────────────────────────────── --}}
-<div class="invoice-table-card">
-
-    @if($invoices->count())
-
-    <div style="overflow:auto">
-
-        <table class="invoice-table">
-
-            <thead>
-            <tr>
-                <th>Invoice</th>
-                <th>Customer</th>
-                <th>Due Date</th>
-                <th>Total</th>
-                <th>Paid</th>
-                <th>Status</th>
-                <th width="120"></th>
-            </tr>
-            </thead>
-
-            <tbody>
-
-            @foreach($invoices as $invoice)
-
-                <tr class="invoice-row">
-
-                    {{-- Invoice --}}
-                    <td>
-
-                        <a href="{{ route('tenant.invoices.show', $invoice->id) }}"
-                           class="invoice-number">
-
-                            {{ $invoice->number }}
-
-                        </a>
-
-                        <div class="invoice-date">
-                            {{ $invoice->date?->format('d M Y') }}
-                        </div>
-
-                    </td>
-
-                    {{-- Customer --}}
-                    <td>
-
-                        <div class="customer-name">
-                            {{ $invoice->contact?->name ?? '—' }}
-                        </div>
-
-                        <div class="customer-company">
-                            {{ $invoice->contact?->company ?? 'No company' }}
-                        </div>
-
-                    </td>
-
-                    {{-- Due --}}
-                    <td>
-
-                        <div class="amount"
-                             style="font-size:12px">
-
-                            {{ $invoice->due_date?->format('d M Y') ?? '—' }}
-
-                        </div>
-
-                    </td>
-
-                    {{-- Total --}}
-                    <td>
-
-                        <div class="amount">
-                            ₹{{ number_format($invoice->total, 2) }}
-                        </div>
-
-                    </td>
-
-                    {{-- Paid --}}
-                    <td>
-
-                        <div class="amount">
-                            ₹{{ number_format($invoice->paid_amount, 2) }}
-                        </div>
-
-                        <div class="amount-paid">
-                            Balance:
-                            ₹{{ number_format($invoice->total - $invoice->paid_amount, 2) }}
-                        </div>
-
-                    </td>
-
-                    {{-- Status --}}
-                    <td>
-
-                        <span class="status-badge status-{{ $invoice->status }}">
-                            {{ ucfirst($invoice->status) }}
-                        </span>
-
-                    </td>
-
-                    {{-- Actions --}}
-                    <td>
-
-                        <div class="table-actions">
-
-                            <a href="{{ route('tenant.invoices.show', $invoice->id) }}"
-                               class="icon-btn">
-
-                                <svg fill="none"
-                                     stroke="currentColor"
-                                     stroke-width="2"
-                                     viewBox="0 0 24 24">
-
-                                    <path stroke-linecap="round"
-                                          stroke-linejoin="round"
-                                          d="M2.458 12C3.732 7.943 7.523 5 12
-                                          5c4.478 0 8.268 2.943 9.542 7-1.274
-                                          4.057-5.064 7-9.542 7-4.477
-                                          0-8.268-2.943-9.542-7z"/>
-
-                                    <circle cx="12"
-                                            cy="12"
-                                            r="3"/>
-
-                                </svg>
-
-                            </a>
-
-                            <a href="{{ route('tenant.invoices.edit', $invoice->id) }}"
-                               class="icon-btn">
-
-                                <svg fill="none"
-                                     stroke="currentColor"
-                                     stroke-width="2"
-                                     viewBox="0 0 24 24">
-
-                                    <path stroke-linecap="round"
-                                          stroke-linejoin="round"
-                                          d="M11 5h2m-1-1v2m7.364
-                                          2.636l-1.414-1.414M5.636
-                                          18.364l-1.414-1.414M18
-                                          11h2m-1-1v2M5
-                                          11H3m8 8h2m-1-1v2"/>
-
-                                </svg>
-
-                            </a>
-
-                        </div>
-
-                    </td>
-
-                </tr>
-
-            @endforeach
-
-            </tbody>
-
-        </table>
-
-    </div>
-
-    {{-- Pagination --}}
-    <div class="pagination-wrap">
-
-        <div class="pagination-info">
-            Showing
-            {{ $invoices->firstItem() }}
-            to
-            {{ $invoices->lastItem() }}
-            of
-            {{ $invoices->total() }}
-        </div>
-
-        <div>
-            {{ $invoices->links() }}
-        </div>
-
-    </div>
-
-    @else
-
-    {{-- Empty --}}
+{{-- Table --}}
+<div style="background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--r-lg);overflow:hidden">
+    @if($invoices->isEmpty())
     <div class="empty-state">
-
-        <div class="empty-icon">
-            📄
-        </div>
-
-        <div class="empty-title">
-            No invoices found
-        </div>
-
-        <div class="empty-sub">
-            Create your first invoice to start billing customers
-        </div>
-
-        <div style="margin-top:18px">
-
-            <a href="{{ route('tenant.invoices.create') }}"
-               class="btn btn-primary">
-                Create Invoice
-            </a>
-
-        </div>
-
+        <div style="font-size:32px;margin-bottom:10px">🧾</div>
+        <div style="font-size:15px;font-weight:600;color:var(--text-200);margin-bottom:6px">No invoices yet</div>
+        <div>Create your first invoice to get started</div>
+        <a href="{{ route('tenant.invoices.create') }}" class="btn btn-primary" style="display:inline-flex;margin-top:14px">
+            New Invoice
+        </a>
+    </div>
+    @else
+    <div style="overflow-x:auto">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Invoice #</th>
+                    <th>Contact</th>
+                    <th>Date</th>
+                    <th>Due Date</th>
+                    <th style="text-align:right">Amount</th>
+                    <th style="text-align:right">Paid</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($invoices as $inv)
+                @php
+                    $sc      = $statusCfg[$inv->status] ?? ['label'=>ucfirst($inv->status),'color'=>'accent','bg'=>'accent-dim'];
+                    $isOD    = $inv->isOverdue();
+                    $paidPct = $inv->total > 0 ? min(100, round(($inv->paid_amount / $inv->total) * 100)) : 0;
+                @endphp
+                <tr onclick="window.location='{{ route('tenant.invoices.show', $inv->id) }}'">
+                    <td>
+                        <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent)">
+                            {{ $inv->number }}
+                        </div>
+                        @if($inv->quotation)
+                        <div style="font-size:11px;color:var(--text-400);margin-top:2px">
+                            From {{ $inv->quotation->number }}
+                        </div>
+                        @endif
+                    </td>
+                    <td>
+                        <div style="font-weight:600">{{ $inv->contact?->name ?? '—' }}</div>
+                        @if($inv->contact?->company)
+                        <div style="font-size:12px;color:var(--text-300)">{{ $inv->contact->company }}</div>
+                        @endif
+                    </td>
+                    <td style="color:var(--text-200);font-size:13px">
+                        {{ $inv->date?->format('d M Y') ?? '—' }}
+                    </td>
+                    <td style="color:{{ $isOD ? 'var(--red)':'var(--text-200)' }};font-size:13px;font-weight:{{ $isOD ? '700':'400' }}">
+                        {{ $inv->due_date?->format('d M Y') ?? '—' }}
+                        @if($isOD)
+                        <div style="font-size:11px">Overdue</div>
+                        @endif
+                    </td>
+                    <td style="text-align:right;font-family:var(--mono);font-weight:700">
+                        ₹{{ number_format($inv->total, 2) }}
+                    </td>
+                    <td style="text-align:right;min-width:100px">
+                        @if($inv->paid_amount > 0)
+                        <div style="font-family:var(--mono);font-size:13px;color:var(--green);font-weight:600">
+                            ₹{{ number_format($inv->paid_amount, 2) }}
+                        </div>
+                        <div class="pay-mini">
+                            <div class="pay-mini-fill" style="width:{{ $paidPct }}%"></div>
+                        </div>
+                        @else
+                        <span style="color:var(--text-400);font-size:12.5px">—</span>
+                        @endif
+                    </td>
+                    <td>
+                        <span class="badge" style="background:var(--{{ $sc['bg'] }});color:var(--{{ $sc['color'] }})">
+                            {{ $isOD ? 'Overdue' : $sc['label'] }}
+                        </span>
+                    </td>
+                    <td onclick="event.stopPropagation()">
+                        <div style="display:flex;gap:4px">
+                            <a href="{{ route('tenant.invoices.pdf', $inv->id) }}" target="_blank"
+                               class="btn btn-secondary btn-sm" title="PDF">📄</a>
+                            @if(!$inv->isPaid())
+                            <a href="{{ route('tenant.invoices.edit', $inv->id) }}"
+                               class="btn btn-secondary btn-sm" title="Edit">✎</a>
+                            @endif
+                        </div>
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
     </div>
 
+    @if($invoices->hasPages())
+    <div class="pag">
+        <span>{{ $invoices->firstItem() }}–{{ $invoices->lastItem() }} of {{ $invoices->total() }}</span>
+        <div class="pag-links">
+            <a href="{{ $invoices->previousPageUrl() ?? '#' }}"
+               class="pg-btn {{ !$invoices->previousPageUrl() ? 'disabled':'' }}">←</a>
+            @foreach($invoices->getUrlRange(max(1,$invoices->currentPage()-2), min($invoices->lastPage(),$invoices->currentPage()+2)) as $page => $url)
+            <a href="{{ $url }}" class="pg-btn {{ $page == $invoices->currentPage() ? 'active':'' }}">{{ $page }}</a>
+            @endforeach
+            <a href="{{ $invoices->nextPageUrl() ?? '#' }}"
+               class="pg-btn {{ !$invoices->nextPageUrl() ? 'disabled':'' }}">→</a>
+        </div>
+    </div>
     @endif
-
+    @endif
 </div>
 
 @endsection

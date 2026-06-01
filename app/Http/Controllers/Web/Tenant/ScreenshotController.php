@@ -42,7 +42,7 @@ class ScreenshotController extends Controller
 
         // Base64 → image file
         $base64 = $request->image;
-        return $base64;
+        // return $base64;
 
         // "data:image/png;base64,..." strip karo
         if (str_contains($base64, ',')) {
@@ -62,8 +62,11 @@ class ScreenshotController extends Controller
         $date      = now()->format('Y-m-d');
         $filename  = Str::uuid() . '.jpg';
         $path      = "screenshots/{$tenantId}/{$staffId}/{$date}/{$filename}";
-       
-        Storage::put($path, $imageData);
+
+        $disk = Storage::disk('public');
+        if (! $disk->put($path, $imageData, 'public')) {
+            return response()->json(['error' => 'Unable to save screenshot file'], 500);
+        }
 
         $screenshot = AttendanceScreenshot::create([
             'tenant_id'     => $tenantId,
@@ -75,7 +78,6 @@ class ScreenshotController extends Controller
             'captured_at'   => now(),
             'type'          => $request->type ?? 'auto',
         ]);
-
 
         return response()->json([
             'success' => true,
@@ -102,7 +104,7 @@ class ScreenshotController extends Controller
 
     public function destroy(AttendanceScreenshot $screenshot)
     {
-        Storage::delete($screenshot->path);
+        Storage::disk('public')->delete($screenshot->path);
         $screenshot->delete();
 
         return back()->with('success', 'Screenshot delete ho gaya!');

@@ -1,797 +1,481 @@
 @extends('layouts.app')
-
 @section('title', 'Create Invoice')
 
-@php
-    $statuses = [
-        'draft' => 'Draft',
-        'sent' => 'Sent',
-        'partial' => 'Partial',
-        'paid' => 'Paid',
-        'overdue' => 'Overdue',
-    ];
-@endphp
-
 @push('styles')
-<link rel="stylesheet" href="{{ asset('css/tenant/invoices/create.css') }}">
+<style>
+.inv-layout { display:grid; grid-template-columns:1fr 320px; gap:16px; align-items:start; }
+@media(max-width:1100px) { .inv-layout { grid-template-columns:1fr; } }
+
+.form-card  { background:var(--bg-surface); border:1px solid var(--border-default); border-radius:var(--r-lg); overflow:hidden; }
+.fc-section { padding:22px 24px; border-bottom:1px solid var(--border-subtle); }
+.fc-title   { font-size:12.5px; font-weight:700; color:var(--text-300); text-transform:uppercase; letter-spacing:.4px; margin-bottom:16px; }
+
+.field       { display:flex; flex-direction:column; gap:7px; }
+.field-label { font-size:12.5px; font-weight:600; color:var(--text-200); text-transform:uppercase; letter-spacing:.3px; }
+.req         { color:var(--red); margin-left:2px; }
+.field-input {
+    padding:10px 13px; background:var(--bg-input);
+    border:1.5px solid var(--border-default); border-radius:var(--r-sm);
+    color:var(--text-100); font-family:var(--font); font-size:14px; outline:none;
+    transition:border-color .15s, box-shadow .15s;
+    width:100%;
+}
+.field-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-dim); }
+.field-input::placeholder { color:var(--text-400); }
+.field-select { -webkit-appearance:none; cursor:pointer; }
+.field-error  { font-size:12px; color:var(--red); }
+.form-grid    { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.span-2       { grid-column:1/-1; }
+@media(max-width:640px) { .form-grid { grid-template-columns:1fr; } .span-2 { grid-column:1; } }
+
+/* Items table */
+.items-table  { width:100%; border-collapse:collapse; }
+.items-table th { padding:8px 10px; text-align:left; font-size:11px; font-weight:700; color:var(--text-400); text-transform:uppercase; letter-spacing:.4px; border-bottom:1px solid var(--border-subtle); white-space:nowrap; }
+.items-table th.right { text-align:right; }
+.items-table td { padding:6px 6px; vertical-align:middle; }
+.item-input { padding:8px 10px; background:var(--bg-input); border:1.5px solid var(--border-default); border-radius:var(--r-sm); color:var(--text-100); font-family:var(--font); font-size:13.5px; outline:none; transition:border-color .15s; width:100%; }
+.item-input:focus { border-color:var(--accent); }
+.item-input.right { text-align:right; }
+.item-amount { font-size:13.5px; font-weight:600; color:var(--text-100); text-align:right; padding-right:4px; font-family:var(--mono); white-space:nowrap; }
+.del-row { padding:6px 8px; border:none; background:var(--red-dim); color:var(--red); border-radius:var(--r-sm); cursor:pointer; font-size:13px; transition:background .15s; flex-shrink:0; }
+.del-row:hover { background:var(--red); color:#fff; }
+.add-row-btn { display:flex; align-items:center; gap:6px; padding:9px 14px; border:1.5px dashed var(--accent); background:none; color:var(--accent); border-radius:var(--r-sm); font-size:13px; font-weight:600; cursor:pointer; font-family:var(--font); transition:background .15s; margin-top:10px; }
+.add-row-btn:hover { background:var(--accent-dim); }
+
+/* Totals */
+.totals-box { background:var(--bg-elevated); border-radius:var(--r-sm); padding:16px; }
+.total-row  { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--border-subtle); font-size:13.5px; }
+.total-row:last-child { border-bottom:none; padding-top:10px; margin-top:4px; }
+.total-row.grand { font-size:16px; font-weight:800; color:var(--text-100); }
+.total-label { color:var(--text-200); }
+.total-value { font-family:var(--mono); font-weight:600; color:var(--text-100); }
+
+/* Summary sidebar */
+.summary-card { background:var(--bg-surface); border:1px solid var(--border-default); border-radius:var(--r-lg); overflow:hidden; position:sticky; top:80px; }
+.sc-head { padding:14px 18px; border-bottom:1px solid var(--border-subtle); font-size:13.5px; font-weight:700; color:var(--text-100); }
+.sc-body { padding:18px; }
+.sc-row  { display:flex; justify-content:space-between; font-size:13px; padding:7px 0; border-bottom:1px solid var(--border-subtle); }
+.sc-row:last-child { border-bottom:none; }
+.sc-total { font-size:18px; font-weight:800; color:var(--accent); font-family:var(--mono); margin-top:12px; text-align:right; }
+
+/* Contact preview */
+.contact-preview { background:var(--bg-elevated); border-radius:var(--r-sm); padding:12px 14px; margin-top:10px; display:none; font-size:12.5px; line-height:1.7; color:var(--text-200); }
+
+.form-footer { padding:16px 24px; background:var(--bg-elevated); border-top:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center; }
+</style>
 @endpush
 
 @section('content')
-    <div class="invoice-page">
 
-        <div class="invoice-top">
-            <div>
-                <div class="invoice-title">Create Invoice</div>
-                <div class="invoice-sub">
-                    Create GST compliant invoice with quotation conversion support
+@php
+    $defaultTerms = config('crm.quotation.terms_default', "1. Payment due within 30 days.\n2. Prices are inclusive of GST unless stated otherwise.");
+    $contactsJson = $contacts->mapWithKeys(fn($c) => [
+        $c->id => [
+            'name'    => $c->name,
+            'company' => $c->company,
+            'phone'   => $c->phone,
+            'email'   => $c->email,
+            'address' => trim(collect([$c->address, $c->city, $c->state])->filter()->implode(', ')),
+            'gst'     => $c->gst_number,
+        ]
+    ]);
+
+    // Pre-fill from quotation
+    $prefillItems = $quotation ? $quotation->items : [['description'=>'','quantity'=>1,'rate'=>'','amount'=>0]];
+    $prefillDiscount = $quotation ? $quotation->discount : 0;
+    $prefillTax = $quotation ? $quotation->tax_percent : 18;
+    $prefillNotes = $quotation ? $quotation->notes : '';
+    $prefillTerms = $quotation ? $quotation->terms : $defaultTerms;
+    $prefillContactId = $contact ? $contact->id : ($quotation?->contact_id ?? '');
+@endphp
+
+<div class="page-head">
+    <div>
+        <div style="font-size:13px;color:var(--text-300);margin-bottom:4px">
+            <a href="{{ route('tenant.invoices.index') }}" style="color:var(--text-300);text-decoration:none">Invoices</a>
+            <span style="margin:0 6px">›</span> Create
+        </div>
+        <div class="page-title">New Invoice</div>
+        @if($quotation)
+        <div class="page-sub">
+            From Quotation: <strong>{{ $quotation->number }}</strong>
+        </div>
+        @endif
+    </div>
+    <a href="{{ route('tenant.invoices.index') }}" class="btn btn-secondary">← Back</a>
+</div>
+
+@if($errors->any())
+<div style="padding:12px 16px;background:var(--red-dim);border:1px solid rgba(255,82,87,.25);border-radius:var(--r-sm);margin-bottom:16px;font-size:13px;color:var(--red)">
+    {{ $errors->first() }}
+</div>
+@endif
+
+<form method="POST" action="{{ route('tenant.invoices.store') }}" id="invForm">
+@csrf
+@if($quotation)
+<input type="hidden" name="quotation_id" value="{{ $quotation->id }}"/>
+@endif
+
+<div class="inv-layout">
+
+    {{-- ── Left: Main form ─────────────────────────────────────── --}}
+    <div style="display:flex;flex-direction:column;gap:0">
+        <div class="form-card">
+
+            {{-- Header info --}}
+            <div class="fc-section">
+                <div class="fc-title">Invoice Details</div>
+                <div class="form-grid">
+
+                    <div class="field span-2">
+                        <label class="field-label">Bill To <span class="req">*</span></label>
+                        <select name="contact_id" id="contactSelect"
+                                class="field-input field-select {{ $errors->has('contact_id') ? 'is-error':'' }}"
+                                onchange="loadContact(this.value)" required>
+                            <option value="">— Select Contact —</option>
+                            @foreach($contacts as $c)
+                            <option value="{{ $c->id }}"
+                                {{ (old('contact_id', $prefillContactId) == $c->id) ? 'selected':'' }}>
+                                {{ $c->name }}{{ $c->company ? ' ('.$c->company.')' : '' }}
+                            </option>
+                            @endforeach
+                        </select>
+                        <div id="contactPreview" class="contact-preview"></div>
+                    </div>
+
+                    <div class="field">
+                        <label class="field-label">Invoice Number</label>
+                        <input type="text" class="field-input" value="{{ $number }}" readonly
+                               style="background:var(--bg-elevated);color:var(--text-300);cursor:default"/>
+                    </div>
+
+                    <div class="field">
+                        <label class="field-label">Invoice Date <span class="req">*</span></label>
+                        <input type="date" name="date"
+                               class="field-input {{ $errors->has('date') ? 'is-error':'' }}"
+                               value="{{ old('date', now()->toDateString()) }}" required/>
+                        @error('date') <span class="field-error">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="field">
+                        <label class="field-label">Due Date <span class="req">*</span></label>
+                        <input type="date" name="due_date"
+                               class="field-input {{ $errors->has('due_date') ? 'is-error':'' }}"
+                               value="{{ old('due_date', now()->addDays(30)->toDateString()) }}" required/>
+                        @error('due_date') <span class="field-error">{{ $message }}</span> @enderror
+                    </div>
+
                 </div>
             </div>
 
-            <a href="{{ route('tenant.invoices.index') }}" class="btn btn-secondary">
-                Back
-            </a>
-        </div>
-
-        <form action="{{ route('tenant.invoices.store') }}" method="POST" id="invoiceForm">
-            @csrf
-
-            <div class="invoice-layout">
-
-                {{-- LEFT --}}
-                <div>
-
-                    {{-- BASIC --}}
-                    <div class="inv-card mb-4">
-
-                        <div class="inv-head">
-                            <div>
-                                <div class="inv-head-title">Invoice Information</div>
-                                <div class="inv-head-sub">
-                                    Customer, quotation and invoice metadata
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="inv-body">
-
-                            <div class="form-grid">
-
-                                <div class="field">
-                                    <label class="label">
-                                        <i class="ti ti-hash"></i>
-                                        Invoice Number
-                                    </label>
-
-                                    <input type="text" class="input" readonly value="{{ $nextInvoiceNumber }}">
-                                </div>
-
-                                <div class="field">
-                                    <label class="label">
-                                        <i class="ti ti-circle-check"></i>
-                                        Status
-                                    </label>
-
-                                    <select name="status" class="select2">
-                                        @foreach($statuses as $key => $value)
-                                            <option value="{{ $key }}" {{ old('status') == $key ? 'selected' : '' }}>
-                                                {{ trim($value) }}
-                                            </option>
-                                        @endforeach
-
-                                    </select>
-                                </div>
-
-                                <div class="field full">
-                                    <label class="label">
-                                        <i class="ti ti-user"></i>
-                                        Customer
-                                        <span class="required">*</span>
-                                    </label>
-
-                                    <select name="contact_id" id="customerSelect" class="select2" required>
-
-                                        <option value="">Search Customer</option>
-
-                                        @foreach($contacts as $contact)
-                                            <option value="{{ $contact->id }}" data-name="{{ $contact->name }}"
-                                                data-company="{{ $contact->company }}" data-phone="{{ $contact->phone }}"
-                                                data-email="{{ $contact->email }}">
-
-                                                {{ trim($contact->name) }}
-                                                @if($contact->company)
-                                                    — {{ trim($contact->company) }}
-                                                @endif
-                                            </option>
-                                        @endforeach
-                                    </select>
-
-                                    @error('contact_id')
-                                        <div class="error-text">{{ $message }}</div>
-                                    @enderror
-                                </div>
-
-
-
-                                <div class="field">
-                                    <label class="label">
-                                        <i class="ti ti-file-invoice"></i>
-                                        Linked Quotation
-                                    </label>
-
-                                    <select name="quotation_id" class="select2" id="quotationSelect">
-
-                                        <option value="">Select Quotation</option>
-
-                                        @foreach($quotations as $quotation)
-                                            <option value="{{ $quotation->id }}">
-                                                {{ $quotation->number }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
-                                <div class="field">
-                                    <label class="label">
-                                        <i class="ti ti-calendar"></i>
-                                        Invoice Date
-                                    </label>
-
-                                    <input type="date" name="date" class="input"
-                                        value="{{ old('date', now()->format('Y-m-d')) }}">
-                                </div>
-
-                                <div class="field">
-                                    <label class="label">
-                                        <i class="ti ti-calendar-due"></i>
-                                        Due Date
-                                    </label>
-
-                                    <input type="date" name="due_date" class="input"
-                                        value="{{ old('due_date', now()->addDays(7)->format('Y-m-d')) }}">
-                                </div>
-
-                                <div class="field">
-                                    <label class="label">
-                                        <i class="ti ti-cash"></i>
-                                        Paid Amount
-                                    </label>
-
-                                    <input type="number" step="0.01" name="paid_amount" class="input"
-                                        value="{{ old('paid_amount', 0) }}">
-                                </div>
-
-                            </div>
-
-                        </div>
-                    </div>
-
-                    {{-- ITEMS --}}
-                    <div class="inv-card mb-4">
-
-                        <div class="inv-head">
-                            <div>
-                                <div class="inv-head-title">Invoice Items</div>
-                                <div class="inv-head-sub">
-                                    Products or services billed in invoice
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="inv-body">
-
-                            <div class="items-table-wrap">
-
-                                <table class="items-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Description</th>
-                                            <th>HSN/SAC</th>
-                                            <th>Qty</th>
-                                            <th>Unit</th>
-                                            <th>Rate</th>
-                                            <th>Tax %</th>
-                                            <th>Total</th>
-                                            <th></th>
-                                        </tr>
-                                    </thead>
-
-                                    <tbody id="itemBody">
-
-                                        <tr class="item-row">
-
-                                            <td>
-                                                <textarea name="items[0][description]" class="item-input item-desc"
-                                                    placeholder="Product or service description"></textarea>
-                                            </td>
-
-                                            <td>
-                                                <input type="text" name="items[0][hsn]" class="item-input"
-                                                    placeholder="9983">
-                                            </td>
-
-                                            <td>
-                                                <input type="number" step="0.01" value="1" name="items[0][qty]"
-                                                    class="item-input qty">
-                                            </td>
-
-                                            <td>
-                                                <input type="text" name="items[0][unit]" class="item-input"
-                                                    placeholder="Nos">
-                                            </td>
-
-                                            <td>
-                                                <input type="number" step="0.01" value="0" name="items[0][rate]"
-                                                    class="item-input rate">
-                                            </td>
-
-                                            <td>
-                                                <input type="number" step="0.01" value="18" name="items[0][tax]"
-                                                    class="item-input tax">
-                                            </td>
-
-                                            <td>
-                                                <input type="text" readonly value="0.00"
-                                                    class="item-input amount-box amount">
-                                            </td>
-
-                                            <td>
-                                                <button type="button" class="remove-btn">
-                                                    ×
-                                                </button>
-                                            </td>
-
-                                        </tr>
-
-                                    </tbody>
-                                </table>
-
-                            </div>
-
-                            <button type="button" class="add-item-btn" id="addItemBtn">
-                                + Add Item
-                            </button>
-
-                        </div>
-                    </div>
-
-                    {{-- NOTES --}}
-                    <div class="inv-card">
-
-                        <div class="inv-head">
-                            <div>
-                                <div class="inv-head-title">Terms & Notes</div>
-                                <div class="inv-head-sub">
-                                    Customer communication and invoice terms
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="inv-body">
-
-                            <div class="form-grid">
-
-                                <div class="field full">
-                                    <label class="label">
-                                        <i class="ti ti-notes"></i>
-                                        Notes
-                                    </label>
-
-                                    <textarea name="notes" class="textarea"
-                                        placeholder="Additional instructions or notes">{{ old('notes') }}</textarea>
-                                </div>
-
-                                <div class="field full">
-                                    <label class="label">
-                                        <i class="ti ti-file-description"></i>
-                                        Terms & Conditions
-                                    </label>
-
-                                    <textarea name="terms" class="textarea">{{ old('terms', '1. Payment once made will not be refunded.
-                        2. Subject to Surat jurisdiction only.
-                        3. Goods once sold will not be taken back.') }}</textarea>
-                                </div>
-
-                            </div>
-
-                        </div>
-                    </div>
-
+            {{-- Items table --}}
+            <div class="fc-section">
+                <div class="fc-title">Line Items</div>
+                <div style="overflow-x:auto">
+                    <table class="items-table">
+                        <thead>
+                            <tr>
+                                <th style="min-width:240px">Description</th>
+                                <th style="width:90px">Qty</th>
+                                <th style="width:120px">Rate (₹)</th>
+                                <th class="right" style="width:120px">Amount</th>
+                                <th style="width:40px"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="itemsBody">
+                            {{-- Rows injected by JS --}}
+                        </tbody>
+                    </table>
                 </div>
-
-                {{-- RIGHT --}}
-                <div>
-
-                    <div class="inv-card summary-sticky">
-
-                        <div class="inv-head">
-                            <div>
-                                <div class="inv-head-title">Invoice Summary</div>
-                                <div class="inv-head-sub">
-                                    Auto calculated totals and GST
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="inv-body">
-
-                            <div class="summary-list">
-
-                                <div class="summary-row">
-                                    <div class="summary-label">Subtotal</div>
-                                    <div class="summary-value" id="subtotalText">₹0.00</div>
-                                </div>
-
-                                <div class="summary-row">
-                                    <div class="summary-label">GST</div>
-                                    <div class="summary-value" id="taxText">₹0.00</div>
-                                </div>
-
-                                <div class="summary-row">
-                                    <div class="summary-label">Discount</div>
-
-                                    <input type="number" name="discount" id="discountInput" class="input" value="0"
-                                        step="0.01">
-                                </div>
-
-                                <div class="summary-row summary-total">
-                                    <div class="summary-label">Grand Total</div>
-                                    <div class="summary-value" id="grandTotalText">₹0.00</div>
-                                </div>
-
-                            </div>
-
-                            <div class="action-stack">
-
-                                <button type="submit" name="action" value="save" class="btn-main">
-                                    Save Invoice
-                                </button>
-
-                                <button type="submit" name="action" value="send" class="btn-alt">
-                                    Save & Send Invoice
-                                </button>
-
-                            </div>
-
-                        </div>
-                    </div>
-
-                </div>
-
+                <button type="button" class="add-row-btn" onclick="addRow()">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:15px;height:15px">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                    </svg>
+                    Add Line Item
+                </button>
             </div>
 
-        </form>
+            {{-- Discount, Tax, Totals --}}
+            <div class="fc-section">
+                <div class="form-grid">
+                    <div class="field">
+                        <label class="field-label">Discount (₹)</label>
+                        <input type="number" name="discount" id="discount"
+                               class="field-input" min="0" step="0.01"
+                               value="{{ old('discount', $prefillDiscount) }}"
+                               oninput="calcTotals()" placeholder="0"/>
+                    </div>
+                    <div class="field">
+                        <label class="field-label">GST / Tax (%)</label>
+                        <input type="number" name="tax_percent" id="taxPercent"
+                               class="field-input" min="0" max="100" step="0.1"
+                               value="{{ old('tax_percent', $prefillTax) }}"
+                               oninput="calcTotals()" placeholder="18"/>
+                    </div>
+                </div>
 
+                <div class="totals-box" style="margin-top:16px">
+                    <div class="total-row">
+                        <span class="total-label">Subtotal</span>
+                        <span class="total-value" id="dispSubtotal">₹0.00</span>
+                    </div>
+                    <div class="total-row">
+                        <span class="total-label">Discount</span>
+                        <span class="total-value" id="dispDiscount" style="color:var(--red)">- ₹0.00</span>
+                    </div>
+                    <div class="total-row">
+                        <span class="total-label">GST (<span id="dispTaxPct">18</span>%)</span>
+                        <span class="total-value" id="dispTax">₹0.00</span>
+                    </div>
+                    <div class="total-row grand">
+                        <span>Total</span>
+                        <span id="dispTotal" style="color:var(--accent)">₹0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Notes & Terms --}}
+            <div class="fc-section">
+                <div class="form-grid">
+                    <div class="field">
+                        <label class="field-label">Notes</label>
+                        <textarea name="notes" class="field-input" rows="3"
+                                  style="resize:vertical" placeholder="Internal notes or message to client...">{{ old('notes', $prefillNotes) }}</textarea>
+                    </div>
+                    <div class="field">
+                        <label class="field-label">Terms & Conditions</label>
+                        <textarea name="terms" class="field-input" rows="3"
+                                  style="resize:vertical" placeholder="Payment terms...">{{ old('terms', $prefillTerms) }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-footer">
+                <a href="{{ route('tenant.invoices.index') }}" class="btn btn-secondary">Cancel</a>
+                <div style="display:flex;gap:10px">
+                    <button type="submit" class="btn btn-primary">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:15px;height:15px">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
+                        </svg>
+                        Create Invoice
+                    </button>
+                </div>
+            </div>
+
+        </div>
     </div>
-    <div class="customer-report">
 
-        {{-- NAV --}}
-        <div class="report-tabs">
+    {{-- ── Right: Summary ──────────────────────────────────────── --}}
+    <div class="summary-card">
+        <div class="sc-head">Invoice Summary</div>
+        <div class="sc-body">
+            <div class="sc-row">
+                <span style="color:var(--text-300)">Company</span>
+                <span style="font-weight:600;color:var(--text-100)">{{ $tenant->name }}</span>
+            </div>
+            <div class="sc-row">
+                <span style="color:var(--text-300)">Invoice #</span>
+                <span style="font-family:var(--mono);font-size:12px;color:var(--accent)">{{ $number }}</span>
+            </div>
+            <div class="sc-row">
+                <span style="color:var(--text-300)">Items</span>
+                <span id="sumItems" style="font-weight:600">0</span>
+            </div>
+            <div class="sc-row">
+                <span style="color:var(--text-300)">Subtotal</span>
+                <span id="sumSubtotal" style="font-family:var(--mono)">₹0.00</span>
+            </div>
+            <div class="sc-row">
+                <span style="color:var(--text-300)">GST</span>
+                <span id="sumTax" style="font-family:var(--mono)">₹0.00</span>
+            </div>
+            <div style="padding-top:12px;border-top:1px solid var(--border-subtle);margin-top:4px">
+                <div style="font-size:11px;color:var(--text-400);margin-bottom:4px">Total Amount</div>
+                <div class="sc-total" id="sumTotal">₹0.00</div>
+            </div>
 
-            <button class="report-tab active" data-tab="quotationTab">
-                Quotations
-            </button>
+            {{-- Due date hint --}}
+            <div style="margin-top:16px;padding:12px;background:var(--amber-dim);border-radius:var(--r-sm)">
+                <div style="font-size:11px;font-weight:700;color:var(--amber);margin-bottom:4px">DUE DATE</div>
+                <div id="sumDueDate" style="font-size:13px;font-weight:600;color:var(--text-100)">—</div>
+            </div>
 
-            <button class="report-tab" data-tab="dealTab">
-                Deals
-            </button>
-
-            <button class="report-tab" data-tab="invoiceTab">
-                Invoices
-            </button>
-
+            @if($quotation)
+            <div style="margin-top:12px;padding:12px;background:var(--green-dim);border-radius:var(--r-sm)">
+                <div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:4px">FROM QUOTATION</div>
+                <div style="font-size:13px;font-weight:600;color:var(--text-100)">{{ $quotation->number }}</div>
+            </div>
+            @endif
         </div>
-
-        {{-- QUOTATIONS --}}
-        <div class="report-pane active" id="quotationTab">
-
-            <table class="report-table">
-                <thead>
-                    <tr>
-                        <th>No.</th>
-                        <th>Status</th>
-                        <th>Total</th>
-                        <th>Date</th>
-                    </tr>
-                </thead>
-
-                <tbody id="quotationTableBody"></tbody>
-            </table>
-
-        </div>
-
-        {{-- DEALS --}}
-        <div class="report-pane" id="dealTab">
-
-            <table class="report-table">
-                <thead>
-                    <tr>
-                        <th>Deal</th>
-                        <th>Stage</th>
-                        <th>Value</th>
-                        <th>Expected Close</th>
-                    </tr>
-                </thead>
-
-                <tbody id="dealTableBody"></tbody>
-            </table>
-
-        </div>
-
-        {{-- INVOICES --}}
-        <div class="report-pane" id="invoiceTab">
-
-            <table class="report-table">
-                <thead>
-                    <tr>
-                        <th>No.</th>
-                        <th>Status</th>
-                        <th>Total</th>
-                        <th>Date</th>
-                    </tr>
-                </thead>
-
-                <tbody id="invoiceTableBody"></tbody>
-            </table>
-
-        </div>
-
     </div>
+
+</div>
+</form>
+
 @endsection
 
 @push('scripts')
-    <script>
-        let rowIndex = 1;
-
-        // $('#customerSelect').select2({
-        //     width: '100%',
-        //     placeholder: 'Search customer',
-        // });
-
-        function calculateInvoice() {
-
-            let subtotal = 0;
-            let totalTax = 0;
-
-            document.querySelectorAll('.item-row').forEach(row => {
-
-                const qty = parseFloat(row.querySelector('.qty').value || 0);
-                const rate = parseFloat(row.querySelector('.rate').value || 0);
-                const tax = parseFloat(row.querySelector('.tax').value || 0);
-
-                const amount = qty * rate;
-                const taxAmount = amount * tax / 100;
-
-                subtotal += amount;
-                totalTax += taxAmount;
-
-                row.querySelector('.amount').value =
-                    (amount + taxAmount).toFixed(2);
-
-            });
-
-            const discount = parseFloat(
-                document.getElementById('discountInput').value || 0
-            );
-
-            const grandTotal = subtotal + totalTax - discount;
-
-            document.getElementById('subtotalText').innerHTML =
-                '₹' + subtotal.toFixed(2);
-
-            document.getElementById('taxText').innerHTML =
-                '₹' + totalTax.toFixed(2);
-
-            document.getElementById('grandTotalText').innerHTML =
-                '₹' + grandTotal.toFixed(2);
-        }
-
-        calculateInvoice();
-
-        // add row
-        $('#addItemBtn').on('click', function () {
-
-            const row = `
-                                <tr class="item-row">
-
-                                    <td>
-                                        <textarea name="items[${rowIndex}][description]"
-                                                  class="item-input item-desc"></textarea>
-                                    </td>
-
-                                    <td>
-                                        <input type="text"
-                                               name="items[${rowIndex}][hsn]"
-                                               class="item-input">
-                                    </td>
-
-                                    <td>
-                                        <input type="number"
-                                               step="0.01"
-                                               value="1"
-                                               name="items[${rowIndex}][qty]"
-                                               class="item-input qty">
-                                    </td>
-
-                                    <td>
-                                        <input type="text"
-                                               name="items[${rowIndex}][unit]"
-                                               class="item-input">
-                                    </td>
-
-                                    <td>
-                                        <input type="number"
-                                               step="0.01"
-                                               value="0"
-                                               name="items[${rowIndex}][rate]"
-                                               class="item-input rate">
-                                    </td>
-
-                                    <td>
-                                        <input type="number"
-                                               step="0.01"
-                                               value="18"
-                                               name="items[${rowIndex}][tax]"
-                                               class="item-input tax">
-                                    </td>
-
-                                    <td>
-                                        <input type="text"
-                                               readonly
-                                               value="0.00"
-                                               class="item-input amount-box amount">
-                                    </td>
-
-                                    <td>
-                                        <button type="button" class="remove-btn">×</button>
-                                    </td>
-
-                                </tr>
-                            `;
-
-            $('#itemBody').append(row);
-
-            rowIndex++;
-
-            calculateInvoice();
-        });
-
-        // remove row
-        $(document).on('click', '.remove-btn', function () {
-
-            if ($('.item-row').length > 1) {
-                $(this).closest('.item-row').remove();
-                calculateInvoice();
-            }
-        });
-
-        // recalculate
-        $(document).on('input', '.qty,.rate,.tax,#discountInput', function () {
-            calculateInvoice();
-        });
-
-        // quotation autofill
-        $('#quotationSelect').on('change', async function () {
-
-            const quotationId = $(this).val();
-
-            if (!quotationId) return;
-
-            const response = await fetch(`/tenant/quotations/${quotationId}/data`);
-
-            const data = await response.json();
-
-            $('#customerSelect').val(data.contact_id).trigger('change');
-
-            $('[name="notes"]').val(data.notes || '');
-
-            $('[name="terms"]').val(data.terms || '');
-
-            $('#itemBody').html('');
-
-            rowIndex = 0;
-
-            data.items.forEach(item => {
-
-                const row = `
-                                    <tr class="item-row">
-
-                                        <td>
-                                            <textarea name="items[${rowIndex}][description]"
-                                                      class="item-input item-desc">${item.description ?? ''}</textarea>
-                                        </td>
-
-                                        <td>
-                                            <input type="text"
-                                                   name="items[${rowIndex}][hsn]"
-                                                   value="${item.hsn ?? ''}"
-                                                   class="item-input">
-                                        </td>
-
-                                        <td>
-                                            <input type="number"
-                                                   step="0.01"
-                                                   value="${item.qty ?? 1}"
-                                                   name="items[${rowIndex}][qty]"
-                                                   class="item-input qty">
-                                        </td>
-
-                                        <td>
-                                            <input type="text"
-                                                   value="${item.unit ?? ''}"
-                                                   name="items[${rowIndex}][unit]"
-                                                   class="item-input">
-                                        </td>
-
-                                        <td>
-                                            <input type="number"
-                                                   step="0.01"
-                                                   value="${item.rate ?? 0}"
-                                                   name="items[${rowIndex}][rate]"
-                                                   class="item-input rate">
-                                        </td>
-
-                                        <td>
-                                            <input type="number"
-                                                   step="0.01"
-                                                   value="${item.tax ?? 18}"
-                                                   name="items[${rowIndex}][tax]"
-                                                   class="item-input tax">
-                                        </td>
-
-                                        <td>
-                                            <input type="text"
-                                                   readonly
-                                                   value="0.00"
-                                                   class="item-input amount-box amount">
-                                        </td>
-
-                                        <td>
-                                            <button type="button" class="remove-btn">×</button>
-                                        </td>
-
-                                    </tr>
-                                `;
-
-                $('#itemBody').append(row);
-
-                rowIndex++;
-            });
-
-            calculateInvoice();
-        });
-
-        $(document).on('click', '.report-tab', function () {
-
-            $('.report-tab').removeClass('active');
-            $(this).addClass('active');
-
-            $('.report-pane').removeClass('active');
-
-            $('#' + $(this).data('tab')).addClass('active');
-
-        });
-
-        // customer report load
-        $('#customerSelect').on('change', async function () {
-
-            const selected = $(this).find(':selected');
-            let quotationHtml = '';
-            let dealHtml = '';
-            let invoiceHtml = '';
-
-            $('#customerOverview').show();
-
-            $('#overviewName').text(selected.data('name') || '-');
-            $('#overviewCompany').text(selected.data('company') || '-');
-            $('#overviewPhone').text(selected.data('phone') || '-');
-            $('#overviewEmail').text(selected.data('email') || '-');
-
-            const customerId = $(this).val();
-
-            if (!customerId) return;
-
-            const response = await fetch(`/contacts/${customerId}/report`);
-
-            const data = await response.json();
-
-            // let html = '';
-
-            // ── Quotations ─────────────────────────────
-            (data.quotations || []).forEach(item => {
-
-                quotationHtml += `
-                                <tr>
-                                    <td>
-                                        <span class="badge badge-warning">
-                                            Quotation
-                                        </span>
-                                    </td>
-
-                                    <td>${item.number ?? '-'}</td>
-
-                                    <td>${item.status ?? '-'}</td>
-
-                                    <td>₹${parseFloat(item.total || 0).toFixed(2)}</td>
-
-                                    <td>
-                                        ${item.date
-                        ? new Date(item.date).toLocaleDateString()
-                        : '-'}
-                                    </td>
-                                </tr>
-                            `;
-            });
-
-            // ── Deals ─────────────────────────────────
-            (data.deals || []).forEach(item => {
-
-                dealHtml += `
-                                <tr>
-                                    <td>
-                                        <span class="badge badge-info">
-                                            Deal
-                                        </span>
-                                    </td>
-
-                                    <td>${item.title ?? '-'}</td>
-
-                                    <td>${item.stage ?? '-'}</td>
-
-                                    <td>₹${parseFloat(item.value || 0).toFixed(2)}</td>
-
-                                    <td>
-                                        ${item.created_at
-                        ? new Date(item.created_at).toLocaleDateString()
-                        : '-'}
-                                    </td>
-                                </tr>
-                            `;
-            });
-
-            // ── Invoices ──────────────────────────────
-            (data.invoices || []).forEach(item => {
-
-                invoiceHtml += `
-                                <tr>
-                                    <td>
-                                        <span class="badge badge-success">
-                                            Invoice
-                                        </span>
-                                    </td>
-
-                                    <td>${item.number ?? '-'}</td>
-
-                                    <td>${item.status ?? '-'}</td>
-
-                                    <td>₹${parseFloat(item.total || 0).toFixed(2)}</td>
-
-                                    <td>
-                                        ${item.date
-                        ? new Date(item.date).toLocaleDateString()
-                        : '-'}
-                                    </td>
-                                </tr>
-                            `;
-            });
-
-            // ── Empty State ───────────────────────────
-            if (quotationHtml === '' && dealHtml === '' && invoiceHtml === '') {
-
-                html = `
-                                <tr>
-                                    <td colspan="5" style="text-align:center;padding:20px">
-                                        No records found
-                                    </td>
-                                </tr>
-                            `;
-            }
-
-            $('#quotationTableBody').html(quotationHtml);
-            $('#dealTableBody').html(dealHtml);
-            $('#invoiceTableBody').html(invoiceHtml);
-
-            // $('#customerActivityBody').html(quotationHtml + dealHtml + invoiceHtml);
-
-        });
-    </script>
+<script>
+// ── Data ──────────────────────────────────────────────────────────
+const CONTACTS     = @json($contactsJson);
+const PREFILL_ITEMS = @json($prefillItems);
+let rowCount = 0;
+
+// ── Contact load ──────────────────────────────────────────────────
+function loadContact(id) {
+    const c   = CONTACTS[id];
+    const box = document.getElementById('contactPreview');
+    if (!c || !id) { box.style.display = 'none'; return; }
+
+    box.innerHTML = `
+        <strong>${c.name}</strong>${c.company ? ' · ' + c.company : ''}<br/>
+        ${c.phone || ''} ${c.email ? '· ' + c.email : ''}<br/>
+        ${c.address || ''}
+        ${c.gst ? '<br/>GST: ' + c.gst : ''}
+    `;
+    box.style.display = 'block';
+}
+
+// ── Add row ───────────────────────────────────────────────────────
+function addRow(desc = '', qty = 1, rate = '') {
+    const tbody = document.getElementById('itemsBody');
+    const i     = rowCount++;
+    const tr    = document.createElement('tr');
+    tr.dataset.row = i;
+
+    const amount = (parseFloat(qty)||0) * (parseFloat(rate)||0);
+
+    tr.innerHTML = `
+        <td>
+            <input type="text"
+                   name="items[${i}][description]"
+                   class="item-input"
+                   placeholder="Item description"
+                   value="${escHtml(desc)}"
+                   required/>
+        </td>
+        <td>
+            <input type="number"
+                   name="items[${i}][quantity]"
+                   class="item-input right"
+                   min="0.01" step="0.01"
+                   value="${qty}"
+                   oninput="calcRow(${i}); calcTotals();"
+                   required/>
+        </td>
+        <td>
+            <input type="number"
+                   name="items[${i}][rate]"
+                   class="item-input right"
+                   min="0" step="0.01"
+                   placeholder="0.00"
+                   value="${rate}"
+                   oninput="calcRow(${i}); calcTotals();"
+                   required/>
+        </td>
+        <td>
+            <div class="item-amount" id="rowAmt_${i}">
+                ₹${fmt(amount)}
+            </div>
+            <input type="hidden" name="items[${i}][amount]" id="rowAmtHidden_${i}" value="${amount}"/>
+        </td>
+        <td style="text-align:center">
+            <button type="button" class="del-row" onclick="delRow(this)">✕</button>
+        </td>`;
+
+    tbody.appendChild(tr);
+    calcTotals();
+}
+
+// ── Delete row ────────────────────────────────────────────────────
+function delRow(btn) {
+    const tbody = document.getElementById('itemsBody');
+    if (tbody.rows.length <= 1) return;
+    btn.closest('tr').remove();
+    calcTotals();
+}
+
+// ── Calc row amount ───────────────────────────────────────────────
+function calcRow(i) {
+    const row  = document.querySelector(`[data-row="${i}"]`);
+    if (!row) return;
+    const qty  = parseFloat(row.querySelector('[name$="[quantity]"]')?.value) || 0;
+    const rate = parseFloat(row.querySelector('[name$="[rate]"]')?.value)     || 0;
+    const amt  = qty * rate;
+    const disp = document.getElementById(`rowAmt_${i}`);
+    const hid  = document.getElementById(`rowAmtHidden_${i}`);
+    if (disp) disp.textContent = '₹' + fmt(amt);
+    if (hid)  hid.value = amt;
+}
+
+// ── Calc totals ───────────────────────────────────────────────────
+function calcTotals() {
+    let subtotal = 0;
+
+    document.querySelectorAll('#itemsBody tr').forEach(tr => {
+        const qty  = parseFloat(tr.querySelector('[name$="[quantity]"]')?.value) || 0;
+        const rate = parseFloat(tr.querySelector('[name$="[rate]"]')?.value)     || 0;
+        subtotal  += qty * rate;
+    });
+
+    const discount   = parseFloat(document.getElementById('discount')?.value)   || 0;
+    const taxPct     = parseFloat(document.getElementById('taxPercent')?.value)  || 0;
+    const afterDisc  = Math.max(0, subtotal - discount);
+    const taxAmt     = afterDisc * taxPct / 100;
+    const total      = afterDisc + taxAmt;
+
+    // Update display
+    set('dispSubtotal', '₹' + fmt(subtotal));
+    set('dispDiscount', '- ₹' + fmt(discount));
+    set('dispTax',      '₹' + fmt(taxAmt));
+    set('dispTaxPct',   taxPct);
+    set('dispTotal',    '₹' + fmt(total));
+
+    // Update sidebar
+    const rows = document.querySelectorAll('#itemsBody tr').length;
+    set('sumItems',    rows);
+    set('sumSubtotal', '₹' + fmt(subtotal));
+    set('sumTax',      '₹' + fmt(taxAmt));
+    set('sumTotal',    '₹' + fmt(total));
+}
+
+// ── Helpers ───────────────────────────────────────────────────────
+function fmt(n) { return parseFloat(n || 0).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+function set(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ── Due date display ──────────────────────────────────────────────
+document.querySelector('[name="due_date"]')?.addEventListener('change', function () {
+    const d = new Date(this.value);
+    const el = document.getElementById('sumDueDate');
+    if (el && !isNaN(d)) {
+        el.textContent = d.toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'});
+    }
+});
+
+// ── Init ──────────────────────────────────────────────────────────
+(function () {
+    // Load prefill items
+    const items = PREFILL_ITEMS;
+    if (items && items.length) {
+        items.forEach(it => addRow(it.description || '', it.quantity || 1, it.rate || ''));
+    } else {
+        addRow();
+    }
+    calcTotals();
+
+    // Init contact preview
+    const sel = document.getElementById('contactSelect');
+    if (sel?.value) loadContact(sel.value);
+
+    // Init due date display
+    const due = document.querySelector('[name="due_date"]')?.value;
+    if (due) {
+        const d = new Date(due);
+        const el = document.getElementById('sumDueDate');
+        if (el && !isNaN(d)) el.textContent = d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+    }
+})();
+</script>
 @endpush

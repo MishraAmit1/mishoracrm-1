@@ -1,0 +1,476 @@
+<?php
+
+namespace App\Http\Controllers\Web\Tenant;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\LeadRequest;
+use App\Models\Contact;
+use App\Models\CustomFieldValue;
+use App\Models\Lead;
+use App\Models\TenantFieldAssignment;
+use App\Models\User;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
+
+class LeadController extends Controller
+{
+
+    // ── Sirf current tenant ke users ─────────────────────────────
+    private function getStaffList()
+    {
+        return User::where('tenant_id', auth()->user()->tenant_id)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+    }
+
+    // ── Find lead — tenant scope ke saath ────────────────────────
+    // Route::domain() use hone ki wajah se model injection
+    // kaam nahi karta — manually find karo
+    private function findLead(int|string $id): Lead
+    {
+        return Lead::where('id', $id)
+            ->where('tenant_id', auth()->user()->tenant_id)
+            ->firstOrFail();
+    }
+
+    private function tenantId(): int
+    {
+        return auth()->user()->tenant_id;
+    }
+
+    private function getCustomFields(): \Illuminate\Support\Collection
+    {
+        return TenantFieldAssignment::getActiveFields($this->tenantId(), 'lead');
+    }
+
+    private function getLeadViewData(Lead $lead = null): array
+    {
+        $data = [
+            'staffList'  => $this->getStaffList(),
+            'sources'    => Lead::sources(),
+            'statuses'   => Lead::statuses(),
+            'priorities' => Lead::priorities(),
+        ];
+
+        if ($lead) {
+            $data['lead'] = $lead;
+        }
+
+        return $data;
+    }
+
+    private function validateAssignee($assigneeId): ?int
+    {
+        if (empty($assigneeId)) {
+            return null;
+        }
+
+        $exists = User::where('id', $assigneeId)
+            ->where('tenant_id', auth()->user()->tenant_id)
+            ->exists();
+
+        return $exists ? $assigneeId : null;
+    }
+
+    // ── Index ─────────────────────────────────────────────────────
+    public function index(Request $request): View
+    {
+        $user  = auth()->user();
+        $query = Lead::with(['assignedTo'])->withCount(['tasks', 'followups'])->where('tenant_id', $user->tenant_id);
+
+        $isAdmin = $user->user_type === 'tenant_admin';
+
+        // Regular users see only leads assigned to them
+        if (! $isAdmin) {
+            $query->where('assigned_to', $user->id);
+        }
+
+        if ($request->filled('search'))      $query->search($request->search);
+        if ($request->filled('status'))      $query->where('status', $request->status);
+        if ($request->filled('source'))      $query->where('source', $request->source);
+        if ($request->filled('priority'))    $query->where('priority', $request->priority);
+        if ($request->filled('assigned_to')) $query->where('assigned_to', $request->assigned_to);
+        if ($request->filled('date_from'))   $query->whereDate('created_at', '>=', $request->date_from);
+        if ($request->filled('date_to'))     $query->whereDate('created_at', '<=', $request->date_to);
+
+        $sort    = $request->get('sort', 'created_at');
+        $dir     = $request->get('dir', 'desc');
+        $allowed = ['name', 'created_at', 'status', 'priority', 'lead_value', 'source'];
+        if (in_array($sort, $allowed)) {
+            $query->orderBy($sort, $dir === 'asc' ? 'asc' : 'desc');
+        }
+
+        $leads = $query->paginate(20)->withQueryString();
+
+        $baseWhere = fn() => Lead::where('tenant_id', $user->tenant_id)
+            ->when(! $isAdmin, fn($q) => $q->where('assigned_to', $user->id));
+
+        $counts = [
+            'all'       => $baseWhere()->count(),
+            'new'       => $baseWhere()->where('status', 'new')->count(),
+            'contacted' => $baseWhere()->where('status', 'contacted')->count(),
+            'qualified' => $baseWhere()->where('status', 'qualified')->count(),
+            'converted' => $baseWhere()->where('status', 'converted')->count(),
+            'lost'      => $baseWhere()->where('status', 'lost')->count(),
+        ];
+
+        $staffList  = $this->getStaffList();
+        $sources    = Lead::sources();
+        $statuses   = Lead::statuses();
+        $priorities = Lead::priorities();
+
+        return view('tenant.leads.index', compact(
+            'leads',
+            'counts',
+            'staffList',
+            'sources',
+            'statuses',
+            'priorities',
+            'isAdmin'
+        ));
+    }
+
+    // ── Create ────────────────────────────────────────────────────
+    public function create(): View
+    {
+        $staffList  = $this->getStaffList();
+        $sources    = Lead::sources();
+        $statuses   = Lead::statuses();
+        $priorities = Lead::priorities();
+        $customFields = $this->getCustomFields();
+
+        return view('tenant.leads.create', compact(
+            'staffList',
+            'sources',
+            'statuses',
+            'priorities',
+            'customFields'
+        ));
+    }
+
+    // ── Store ─────────────────────────────────────────────────────
+    public function store(LeadRequest $request): RedirectResponse
+    {
+        $data = $request->validated();
+        // $data['tenant_id']  = auth()->user()->tenant_id;
+        // $data['created_by'] = auth()->id();
+        // $data['assigned_to'] = $this->validateAssignee($data['assigned_to'] ?? null);
+
+        $lead = Lead::create(
+            array_merge($request->leadData(), [
+                'tenant_id'  => $this->tenantId(),
+                'created_by' => auth()->id(),
+                'assigned_to' => $this->validateAssignee($data['assigned_to'] ?? null),
+            ])
+        );
+
+        $this->saveCustomFields($lead, $request->input('custom_fields', []));
+        // $customFields = $this->getCustomFields();
+
+        // foreach ($customFields as $field) {
+        //     if ($field['is_required']) {
+        //         $rules["custom_fields.{$field['id']}"] = ['required'];
+        //     }
+        // }
+        // if ($request->filled('custom_fields')) {
+        //     $lead->saveCustomFields(
+        //         $request->custom_fields,
+        //         auth()->user()->tenant_id
+        //     );
+        // }
+
+        return redirect()
+            ->route('tenant.leads.show', [
+                'tenant' => auth()->user()->tenant->subdomain,
+                'id'     => $lead->id,
+            ])
+            ->with('success', "Lead '{$lead->name}' created successfully.");
+    }
+
+    // ── Show ──────────────────────────────────────────────────────
+    public function show(int|string $id): View
+    {
+        $lead = $this->findLead($id);
+        $lead->load([
+            'assignedTo',
+            'createdBy',
+            'followups.assignedTo',
+            'tasks.assignedTo',
+            'reminders',
+        ]);
+
+        $user       = auth()->user();
+        $isAdmin    = $user->user_type === 'tenant_admin';
+        $staffList  = $this->getStaffList();
+        $sources    = Lead::sources();
+        $statuses   = Lead::statuses();
+        $priorities = Lead::priorities();
+        $customFields = $this->getCustomFields();
+        $customValues = CustomFieldValue::getByIdForModel($lead);
+        return view('tenant.leads.show', compact(
+            'lead',
+            'staffList',
+            'sources',
+            'statuses',
+            'priorities',
+            'customFields',
+            'customValues',
+            'isAdmin'
+        ));
+    }
+
+    // ── Edit ──────────────────────────────────────────────────────
+    public function edit(int|string $id): View
+    {
+        $lead = $this->findLead($id);
+        // $this->authorize('update', $lead);
+        $customFields = $this->getCustomFields();
+        $customValues = CustomFieldValue::getByIdForModel($lead);
+
+        return view('tenant.leads.edit', [
+            'lead' => $lead,
+            'staffList'  => $this->getStaffList(),
+            'sources'    => Lead::sources(),
+            'statuses'   => Lead::statuses(),
+            'priorities' => Lead::priorities(),
+            'customFields' => $customFields,
+            'customValues' => $customValues,
+        ]);
+    }
+
+    // ── Update ────────────────────────────────────────────────────
+    public function update(LeadRequest $request, int|string $id)
+    {
+        $lead     = $this->findLead($id);
+        $leadData = $request->leadData();
+
+        // Assignee validate karo — dusre tenant ka user assign na ho sake
+        $leadData['assigned_to'] = $this->validateAssignee($leadData['assigned_to'] ?? null);
+
+        // Status change timestamps
+        if ($request->status === 'contacted' && $lead->status !== 'contacted') {
+            $leadData['contacted_at'] = now();
+        }
+
+        if ($request->status === 'converted' && $lead->status !== 'converted') {
+            $leadData['converted_at'] = now();
+        }
+
+        $lead->update($leadData);
+        return $request->input('custom_fields', []);
+        $this->saveCustomFields($lead, $request->input('custom_fields', []));
+
+        // Sirf status badla → same page pe wapas
+        if ($lead->wasChanged('status') && !$lead->wasChanged(['name', 'phone', 'email'])) {
+            return back()->with('success', 'Lead status updated.');
+        }
+
+        return redirect()
+            ->route('tenant.leads.show', $lead->id)
+            ->with('success', 'Lead updated successfully.');
+    }
+
+    // ── Destroy ───────────────────────────────────────────────────
+    public function destroy(int|string $id): RedirectResponse
+    {
+        $lead = $this->findLead($id);
+        // $this->authorize('delete', $lead);
+
+        $name = $lead->name;
+        $lead->customFieldValues()->delete();
+        $lead->delete();
+
+        return redirect()
+            ->route('tenant.leads.index', ['tenant' => auth()->user()->tenant->subdomain])
+            ->with('success', "Lead '{$name}' deleted successfully.");
+    }
+
+    // ── Assign ────────────────────────────────────────────────────
+    public function assign(Request $request, int|string $id): RedirectResponse
+    {
+        $request->validate([
+            'assigned_to' => ['required', 'exists:users,id'],
+        ]);
+
+        $lead  = $this->findLead($id);
+        $valid = User::where('id', $request->assigned_to)
+            ->where('tenant_id', auth()->user()->tenant_id)
+            ->exists();
+
+        if (!$valid) {
+            return back()->with('error', 'Invalid staff member.');
+        }
+
+        $lead->update(['assigned_to' => $request->assigned_to]);
+
+        return back()->with('success', 'Lead assigned.');
+    }
+
+    // ── Convert to Contact ────────────────────────────────────────
+    public function convert(int|string $id): RedirectResponse
+    {
+        $lead = $this->findLead($id);
+
+        if ($lead->isConverted()) {
+            return back()->with('error', 'Lead is already converted.');
+        }
+
+        $contact = Contact::create([
+            'tenant_id'   => $lead->tenant_id,
+            'lead_id'     => $lead->id,
+            'name'        => $lead->name,
+            'phone'       => $lead->phone,
+            'email'       => $lead->email,
+            'company'     => $lead->company,
+            'designation' => $lead->designation,
+            'city'        => $lead->city,
+            'state'       => $lead->state,
+        ]);
+
+        $lead->update([
+            'status'       => 'converted',
+            'converted_at' => now(),
+        ]);
+
+        return redirect()
+            ->route('tenant.leads.index', ['tenant' => auth()->user()->tenant->subdomain])
+            ->with('success', 'Lead converted to contact.');
+    }
+
+    // ── Update Status ─────────────────────────────────────────────
+    public function updateStatus(Request $request, int|string $id): RedirectResponse
+    {
+        $request->validate([
+            'status'      => ['required', 'in:new,contacted,qualified,proposal,negotiation,converted,lost'],
+            'lost_reason' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $lead = $this->findLead($id);
+        $data = ['status' => $request->status];
+
+        if ($request->status === 'contacted') $data['contacted_at'] = now();
+        if ($request->status === 'converted') $data['converted_at'] = now();
+        if ($request->status === 'lost' && $request->filled('lost_reason')) {
+            $data['lost_reason'] = $request->lost_reason;
+        }
+
+        $lead->update($data);
+
+        return back()->with('success', 'Status updated.');
+    }
+
+    public function bulkUpdateStatus(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'ids'         => ['required', 'array'],
+            'ids.*'       => ['exists:leads,id'],
+            'status'      => ['required', 'in:new,contacted,qualified,proposal,negotiation,converted,lost'],
+            'lost_reason' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $data = ['status' => $request->status];
+
+        if ($request->status === 'contacted') $data['contacted_at'] = now();
+        if ($request->status === 'converted') $data['converted_at'] = now();
+        if ($request->status === 'lost' && $request->filled('lost_reason')) {
+            $data['lost_reason'] = $request->lost_reason;
+        }
+
+        Lead::whereIn('id', $request->ids)
+            ->where('tenant_id', auth()->user()->tenant_id)
+            ->update($data);
+
+        return back()->with('success', 'Statuses updated.');
+    }
+
+    // ── Convert to Contact ────────────────────────────────────────
+    // public function convert(int|string $id): RedirectResponse
+    // {
+    //     $lead = $this->findLead($id); 
+    //     // write logic code to convert lead to contact — create contact record, update lead status, etc.
+
+    //     if ($lead->isConverted()) {
+    //         return back()->with('error', 'Lead is already converted.');     
+    //     }
+
+    //     $contact = Contact::create([
+    //         'tenant_id'   => $lead->tenant_id,
+    //         'lead_id'     => $lead->id,
+    //         'name'        => $lead->name,
+    //         'phone'       => $lead->phone,
+    //         'email'       => $lead->email,
+    //         'company'     => $lead->company,
+    //         'designation' => $lead->designation,
+    //         'city'        => $lead->city,
+    //         'state'       => $lead->state,
+    //     ]);
+
+    //     $lead->update([
+    //         'status'       => 'converted',
+    //         'converted_at' => now(),
+    //     ]); 
+
+    //     return redirect()
+    //         ->route('tenant.leads.index', ['tenant' => auth()->user()->tenant])
+    //         ->with('success', 'Lead converted to contact.'); 
+
+    // }
+
+    // lead data for contact form ke liye — jisse lead se contact create karte waqt lead ki details auto-fill ho jaye
+    public function leadData(int|string $id): JsonResponse
+    {
+        $lead = $this->findLead($id);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'name'        => $lead->name,
+                'phone'       => $lead->phone,
+                'email'       => $lead->email,
+                'company'     => $lead->company,
+                'designation' => $lead->designation,
+                'city'        => $lead->city,
+                'state'       => $lead->state,
+            ],
+        ]);
+    }
+
+    private function saveCustomFields(Lead $lead, array $data): void
+    {
+        if (empty($data)) return;
+
+        foreach ($data as $assignmentId => $value) {
+            $assignment = TenantFieldAssignment::where('id', $assignmentId)
+                ->where('tenant_id', $this->tenantId())
+                ->with(['globalTemplate', 'customField'])
+                ->get()
+                ->keyBy('id');
+
+
+            if (!$assignment) continue;
+
+            $type = $assignment->field_info['field_type'] ?? 'text';
+
+            $value = match ($type) {
+                'multi_select' => json_encode(is_array($value) ? array_values(array_filter($value)) : []),
+                'checkbox'     => $value ? '1' : '0',
+                default        => $value ?? '',
+            };
+
+            CustomFieldValue::updateOrCreate(
+                [
+                    'custom_field_id' => $assignmentId,
+                    'model_type'      => Lead::class,
+                    'model_id'        => $lead->id,
+                ],
+                [
+                    'tenant_id' => $this->tenantId(),
+                    'value'     => $value,
+                ]
+            );
+        }
+    }
+}

@@ -33,7 +33,7 @@
                     <option value="">— Select Staff —</option>
                     @foreach($staffList as $s)
                         <option value="{{ $s->id }}"
-                            @selected(old('staff_id', $attendance->staff_id ?? '') == $s->id)>
+                            @selected(old('staff_id', $attendance?->staff_id ?? '') == $s->id)>
                             {{ $s->name }}
                             @if($s->designation) ({{ $s->designation }}) @endif
                         </option>
@@ -50,7 +50,7 @@
                     Date *
                 </label>
                 <input type="date" name="date" class="filter-input" style="width:100%;height:40px"
-                    value="{{ old('date', $attendance->date?->toDateString() ?? today()->toDateString()) }}">
+                    value="{{ old('date', $attendance?->date?->toDateString() ?? today()->toDateString()) }}">
                 @error('date')
                 <div style="font-size:12px;color:var(--red);margin-top:4px">{{ $message }}</div>
                 @enderror
@@ -72,7 +72,7 @@
                     <label style="cursor:pointer">
                         <input type="radio" name="status" value="{{ $val }}" style="display:none"
                                class="status-radio"
-                               @checked(old('status', $attendance->status ?? 'present') == $val)>
+                               @checked(old('status', $attendance?->status ?? 'present') == $val)>
                         <span class="status-badge badge-{{ $color }} status-opt"
                               style="cursor:pointer;padding:6px 14px;font-size:12.5px">
                             {{ $label }}
@@ -89,14 +89,14 @@
                         Clock In
                     </label>
                     <input type="time" name="clock_in" class="filter-input" style="width:100%;height:40px"
-                        value="{{ old('clock_in', $attendance->clock_in?->format('H:i') ?? '') }}">
+                        value="{{ old('clock_in', $attendance?->clock_in?->format('H:i') ?? '') }}">
                 </div>
                 <div>
                     <label style="font-size:13px;font-weight:600;color:var(--text-200);display:block;margin-bottom:6px">
                         Clock Out
                     </label>
                     <input type="time" name="clock_out" class="filter-input" style="width:100%;height:40px"
-                        value="{{ old('clock_out', $attendance->clock_out?->format('H:i') ?? '') }}">
+                        value="{{ old('clock_out', $attendance?->clock_out?->format('H:i') ?? '') }}">
                 </div>
             </div>
 
@@ -107,7 +107,7 @@
                 </label>
                 <textarea name="notes" class="filter-input"
                     style="width:100%;height:90px;resize:vertical;padding-top:10px"
-                    placeholder="Optional notes...">{{ old('notes', $attendance->notes ?? '') }}</textarea>
+                    placeholder="Optional notes...">{{ old('notes', $attendance?->notes ?? '') }}</textarea>
             </div>
 
             <div style="display:flex;gap:10px">

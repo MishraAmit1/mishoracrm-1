@@ -73,8 +73,8 @@
 
         {{-- Image --}}
         <div style="position:relative;cursor:pointer"
-             onclick="openLightbox('{{ Storage::url($shot->path) }}')">
-            <img src="{{ Storage::url($shot->path) }}"
+             onclick="openLightbox('{{ $shot->url }}')">
+            <img src="{{ $shot->url }}"
                  alt="Screenshot"
                  style="width:100%;height:180px;object-fit:cover;display:block">
 

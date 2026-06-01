@@ -5,7 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Plan extends TenantModel
+// Plans are global — no tenant scope applied
+class Plan extends Model
 {
     protected $fillable = [
         'name',
@@ -13,6 +14,7 @@ class Plan extends TenantModel
         'description',
         'monthly_price',
         'yearly_price',
+        'discount_percentage',
         'razorpay_monthly_plan_id',
         'razorpay_yearly_plan_id',
         'features',
@@ -21,10 +23,11 @@ class Plan extends TenantModel
     ];
 
     protected $casts = [
-        'monthly_price' => 'decimal:2',
-        'yearly_price'  => 'decimal:2',
-        'features'      => 'array',
-        'is_active'     => 'boolean',
+        'monthly_price'       => 'decimal:2',
+        'yearly_price'        => 'decimal:2',
+        'discount_percentage' => 'integer',
+        'features'            => 'array',
+        'is_active'           => 'boolean',
     ];
 
     // ── Relationships ─────────────────────────────────────────────
@@ -80,5 +83,22 @@ class Plan extends TenantModel
         return $this->yearly_price == 0
             ? 'Free'
             : '₹' . number_format($this->yearly_price);
+    }
+
+    public function hasDiscount(): bool
+    {
+        return $this->discount_percentage > 0;
+    }
+
+    public function discountedMonthlyPrice(): float
+    {
+        if (!$this->hasDiscount()) return (float) $this->monthly_price;
+        return round($this->monthly_price * (1 - $this->discount_percentage / 100), 2);
+    }
+
+    public function discountedYearlyPrice(): float
+    {
+        if (!$this->hasDiscount()) return (float) $this->yearly_price;
+        return round($this->yearly_price * (1 - $this->discount_percentage / 100), 2);
     }
 }

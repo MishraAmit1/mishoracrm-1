@@ -2,7 +2,10 @@
 @section('title', 'Clock In/Out')
 
 @section('content')
-    @php $tenantSlug = auth()->user()->tenant->subdomain; @endphp
+    @php
+        $tenantSlug = auth()->user()->tenant->subdomain;
+        $currentStaffId = auth()->user()->staff?->id ?? 0;
+    @endphp
 
     <div class="page-head">
         <div>
@@ -128,7 +131,10 @@
                             </td>
 
                             <td style="text-align:center">
-                                @if(!$att || !$att->clock_in)
+                                @if($staff->id !== $currentStaffId)
+                                    <span style="font-size:12px;color:var(--text-400)">Not your account</span>
+
+                                @elseif(!$att || !$att->clock_in)
                                     {{-- Clock In Button --}}
                                     <button type="button" onclick="startClockIn({{ $staff->id }}, '{{ $staff->name }}')"
                                         class="btn btn-secondary" style="color:var(--green);border-color:var(--green);
@@ -175,8 +181,11 @@
 @push('scripts')
     <script>
         // ── Config ────────────────────────────────────────────────────────
-        const UPLOAD_URL = "{{ route('tenant.screenshots.upload', ['tenant' => $tenantSlug]) }}";
+        const UPLOAD_URL = "{{ route('tenant.screenshots.upload') }}";
+
+        const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         const CSRF_TOKEN = "{{ csrf_token() }}";
+        const CURRENT_STAFF_ID = {{ $currentStaffId }};
         const INTERVAL_MS = 0.1 * 60 * 1000; // 1 minute
         const PREVIEW_QUALITY = 0.7;            // JPEG quality
 
@@ -195,6 +204,11 @@
         // 4. Har 30 min pe auto capture start karo
         // ─────────────────────────────────────────────────────────────────
         async function startClockIn(staffId, staffName) {
+            if (staffId !== CURRENT_STAFF_ID) {
+                showToast('Aap sirf apna hi clock in kar sakte hain.', 'error');
+                return;
+            }
+
             // Step 1: Screen share permission
             const granted = await requestScreenShare();
             if (!granted) {
@@ -220,6 +234,11 @@
         // 3. Form submit karo
         // ─────────────────────────────────────────────────────────────────
         async function startClockOut(staffId, attendanceId) {
+            if (staffId !== CURRENT_STAFF_ID) {
+                showToast('Aap sirf apna hi clock out kar sakte hain.', 'error');
+                return;
+            }
+
             showToast('Final screenshot le raha hai...', 'info');
 
             // Final screenshot
@@ -380,6 +399,7 @@
                 // Upload to server
                 const res = await fetch(UPLOAD_URL, {
                     method: 'POST',
+                    credentials: 'same-origin',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': CSRF_TOKEN,

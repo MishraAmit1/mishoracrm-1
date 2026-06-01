@@ -11,54 +11,130 @@
 /* Summary */
 .di-summary {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 10px;
-    margin-bottom: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
 }
-@media(max-width:1100px){ .di-summary { grid-template-columns: repeat(3,1fr); } }
-@media(max-width:600px)  { .di-summary { grid-template-columns: repeat(2,1fr); } }
+@media(max-width:1000px){ .di-summary { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); } }
+@media(max-width:640px) { .di-summary { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); } }
 .di-sum {
-    background: var(--bg-surface); border: 1px solid var(--border-default);
-    border-radius: 10px; padding: 13px 15px; text-decoration: none; display: block;
-    position: relative; overflow: hidden; transition: border-color .15s, background .15s; cursor: pointer;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    border-radius: 18px;
+    padding: 18px 18px 14px;
+    text-decoration: none;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    row-gap: 8px;
+    position: relative;
+    overflow: hidden;
+    transition: transform .15s, border-color .15s, background .15s, box-shadow .15s;
 }
-.di-sum:hover              { border-color: var(--accent); }
-.di-sum.active             { border-color: var(--accent); background: #E6F1FB; }
-.di-sum-val  { font-size: 20px; font-weight: 600; color: var(--text-100); font-family: 'DM Mono', monospace; letter-spacing: -.5px; line-height: 1; }
+.di-sum:hover {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 22px rgba(0,0,0,.06);
+}
+.di-sum.active {
+    border-color: var(--accent);
+    background: rgba(56,138,221,.08);
+    box-shadow: 0 10px 28px rgba(56,138,221,.08);
+}
+.di-sum-val {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-100);
+    font-family: 'DM Mono', monospace;
+    letter-spacing: -.5px;
+    line-height: 1;
+}
 .di-sum.active .di-sum-val { color: #185FA5; }
-.di-sum-lbl  { font-size: 11px; color: var(--text-300); margin-top: 3px; font-weight: 500; }
-.di-sum-amt  { font-size: 11px; color: var(--text-400); font-family: 'DM Mono', monospace; margin-top: 2px; }
-.di-sum-bar  { position: absolute; bottom: 0; left: 0; height: 3px; border-radius: 0 2px 0 0; }
+.di-sum-lbl {
+    font-size: 11px;
+    color: var(--text-300);
+    margin-top: 2px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+}
+.di-sum.active .di-sum-lbl { color: var(--text-300); }
+.di-sum-amt {
+    font-size: 12px;
+    color: var(--text-400);
+    font-family: 'DM Mono', monospace;
+}
+.di-sum-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    border-radius: 0 0 18px 18px;
+}
 
 /* Toolbar */
-.di-toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.di-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+}
+.di-toolbar > * { min-width: 0; }
 .di-fi {
     padding: 8px 11px; height: 36px; background: var(--bg-surface);
     border: 1px solid var(--border-default); border-radius: 8px; font-size: 12.5px;
     color: var(--text-100); font-family: 'DM Sans', var(--font), sans-serif;
     outline: none; transition: border-color .15s, box-shadow .15s; -webkit-appearance: none; cursor: pointer;
+    min-width: 0;
 }
 .di-fi:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
-.di-sw  { position: relative; flex: 1; min-width: 180px; max-width: 260px; }
+.di-sw  { position: relative; flex: 1; min-width: 200px; max-width: 320px; }
 .di-sw svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; }
-.di-fi-s { width: 100%; padding-left: 32px; }
-.view-toggle { display: flex; border: 1px solid var(--border-default); border-radius: 8px; overflow: hidden; margin-left: auto; }
+.di-fi-s { width: 100%; padding-left: 34px; }
+.view-toggle { display: flex; border: 1px solid var(--border-default); border-radius: 10px; overflow: hidden; margin-left: auto; }
 .vt-btn {
-    padding: 7px 13px; background: transparent; border: none; cursor: pointer;
-    color: var(--text-300); transition: all .15s; display: flex; align-items: center; gap: 5px;
-    font-size: 12.5px; font-family: 'DM Sans', var(--font), sans-serif; font-weight: 500; text-decoration: none;
+    padding: 8px 14px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-300);
+    transition: all .15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 96px;
+    font-size: 12.5px;
+    font-family: 'DM Sans', var(--font), sans-serif;
+    font-weight: 500;
+    text-decoration: none;
 }
 .vt-btn.active { background: #185FA5; color: #fff; }
 .vt-btn:not(.active):hover { background: var(--bg-elevated); color: var(--text-100); }
 
 /* ── KANBAN ── */
-.kanban-scroll { overflow-x: auto; padding-bottom: 8px; -webkit-overflow-scrolling: touch; }
-.kanban-board  { display: flex; gap: 14px; min-width: max-content; padding: 2px 0 6px; align-items: flex-start; }
+.kanban-scroll {
+    width: 100%;
+    padding-bottom: 12px;
+}
+.kanban-board {
+    display: grid;
+    gap: 12px;
+    width: 100%;
+    padding: 2px 0 6px;
+    align-items: flex-start;
+}
 
 .k-col {
-    width: 290px; flex-shrink: 0; display: flex; flex-direction: column;
-    background: var(--bg-elevated); border: 1px solid var(--border-subtle);
-    border-radius: 12px; overflow: hidden;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    overflow: hidden;
 }
 .k-col-head {
     display: flex; align-items: center; justify-content: space-between;
@@ -81,11 +157,17 @@
 
 /* Deal Card */
 .deal-card {
-    background: var(--bg-surface); border: 1px solid var(--border-default);
-    border-radius: 10px; padding: 14px; cursor: grab;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    border-radius: 10px;
+    padding: 13px 14px;
+    cursor: grab;
     transition: border-color .15s, box-shadow .15s, opacity .2s, transform .15s;
-    display: block; user-select: none; position: relative;
+    display: block;
+    user-select: none;
+    position: relative;
     border-left: 3px solid transparent;
+    word-break: break-word;
 }
 .deal-card:hover { border-color: var(--border-strong); box-shadow: 0 2px 12px rgba(0,0,0,.08); }
 .deal-card.dragging { opacity: .35; cursor: grabbing; transform: scale(.97); }
@@ -307,7 +389,7 @@ $allTotal = $stageSummary->sum('total');
 {{-- ═══ KANBAN ═══ --}}
 @if($currentView === 'kanban')
 <div class="kanban-scroll">
-<div class="kanban-board" id="kanbanBoard">
+<div class="kanban-board" id="kanbanBoard" style="grid-template-columns: repeat({{ count($cfgStages) }}, 1fr)">
 @foreach($cfgStages as $slug => $stage)
 @php $colDeals=$kanbanDeals->get($slug,collect()); $colTotal=$colDeals->sum('value'); @endphp
 <div class="k-col" data-stage="{{ $slug }}">

@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
@@ -11,54 +10,161 @@ class RolesAndPermissionsSeeder extends Seeder
 {
     public function run(): void
     {
-        // Permissions reset
+        // ── Reset cached roles/permissions ────────────────────────
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
+        // ─────────────────────────────────────────────────────────
+        // PERMISSIONS — Developer define karta hai
+        // Format: "module.action"
+        // Tenant admin sirf inhe roles ko assign kar sakta hai
+        // Naye permissions add karna = developer ka kaam
+        // ─────────────────────────────────────────────────────────
         $permissions = [
-            // Leads
-            'leads.view', 'leads.create', 'leads.edit', 'leads.delete',
-            // Contacts
-            'contacts.view', 'contacts.create', 'contacts.edit', 'contacts.delete',
-            // Deals
-            'deals.view', 'deals.create', 'deals.edit', 'deals.delete',
-            // Tasks
-            'tasks.view', 'tasks.create', 'tasks.edit', 'tasks.delete',
-            // Invoices
-            'invoices.view', 'invoices.create', 'invoices.edit',
-            // Staff
-            'staff.view', 'staff.create', 'staff.edit', 'staff.delete',
-            // Reports
-            'reports.view',
-            // Settings
-            'settings.manage',
+
+            // ── Leads ─────────────────────────────────────────────
+            'leads.view_own',         // Sirf apne assigned leads
+            'leads.view_all',         // Sab tenant ke leads
+            'leads.create',
+            'leads.edit_own',         // Sirf apne assigned leads edit
+            'leads.edit_all',         // Koi bhi lead edit karo
+            'leads.delete',
+            'leads.assign',           // Kisi bhi staff ko assign karo
+            'leads.convert',          // Lead ko contact mein convert karo
+            'leads.export',
+
+            // ── Contacts ─────────────────────────────────────────
+            'contacts.view_own',
+            'contacts.view_all',
+            'contacts.create',
+            'contacts.edit_own',
+            'contacts.edit_all',
+            'contacts.delete',
+            'contacts.export',
+
+            // ── Deals ─────────────────────────────────────────────
+            'deals.view_own',
+            'deals.view_all',
+            'deals.create',
+            'deals.edit_own',
+            'deals.edit_all',
+            'deals.delete',
+            'deals.export',
+
+            // ── Follow-ups ────────────────────────────────────────
+            'followups.view_own',
+            'followups.view_all',
+            'followups.create',
+            'followups.edit_own',
+            'followups.edit_all',
+            'followups.delete',
+
+            // ── Tasks ─────────────────────────────────────────────
+            'tasks.view_own',
+            'tasks.view_all',
+            'tasks.create',
+            'tasks.edit_own',
+            'tasks.edit_all',
+            'tasks.delete',
+
+            // ── Quotations ────────────────────────────────────────
+            'quotations.view_own',
+            'quotations.view_all',
+            'quotations.create',
+            'quotations.edit',
+            'quotations.delete',
+            'quotations.send',
+            'quotations.export',
+
+            // ── Invoices ─────────────────────────────────────────
+            'invoices.view_own',
+            'invoices.view_all',
+            'invoices.create',
+            'invoices.edit',
+            'invoices.delete',
+            'invoices.send',
+            'invoices.record_payment',
+            'invoices.export',
+
+            // ── Staff ─────────────────────────────────────────────
+            'staff.view',
+            'staff.create',
+            'staff.edit',
+            'staff.delete',
+            'staff.activate_deactivate',
+
+            // ── Departments ───────────────────────────────────────
+            'departments.view',
+            'departments.create',
+            'departments.edit',
+            'departments.delete',
+
+            // ── WhatsApp ──────────────────────────────────────────
+            'whatsapp.send',
+            'whatsapp.bulk_send',
+            'whatsapp.view_logs',
+            'whatsapp.manage_templates',
+
+            // ── Email ─────────────────────────────────────────────
+            'email.send',
+            'email.bulk_send',
+            'email.view_logs',
+            'email.manage_templates',
+
+            // ── Reports ───────────────────────────────────────────
+            'reports.view_basic',     // Own stats
+            'reports.view_all',       // Full team reports
+            'reports.export',
+
+            // ── Settings ─────────────────────────────────────────
+            'settings.company',       // Company info, logo
+            'settings.billing',       // Plan & subscription
+            'settings.custom_fields', // Custom field config
+            'settings.roles',         // Roles management (view only for non-admin)
+
+            // ── Notifications ─────────────────────────────────────
+            'notifications.view',
+            'notifications.manage_preferences',
         ];
 
-        foreach ($permissions as $permission) {
-            Permission::firstOrCreate(['name' => $permission]);
+        foreach ($permissions as $perm) {
+            Permission::firstOrCreate(['name' => $perm, 'guard_name' => 'web']);
         }
 
-        // Roles banao
-        $superAdmin = Role::firstOrCreate(['name' => 'superadmin']);
-        $tenantAdmin = Role::firstOrCreate(['name' => 'tenant_admin']);
-        $manager     = Role::firstOrCreate(['name' => 'manager']);
-        $staff       = Role::firstOrCreate(['name' => 'staff']);
+        // ─────────────────────────────────────────────────────────
+        // SYSTEM ROLES — Fixed, not deletable by tenant
+        // ─────────────────────────────────────────────────────────
 
-        // Permissions assign karo
-        $tenantAdmin->givePermissionTo(Permission::all());
+        // SuperAdmin — everything (no permission check)
+        $superadmin = Role::firstOrCreate(['name' => 'superadmin', 'guard_name' => 'web']);
 
-        $manager->givePermissionTo([
-            'leads.view', 'leads.create', 'leads.edit',
-            'contacts.view', 'contacts.create', 'contacts.edit',
-            'deals.view', 'deals.create', 'deals.edit',
-            'tasks.view', 'tasks.create', 'tasks.edit',
-            'invoices.view', 'invoices.create',
-            'staff.view', 'reports.view',
+        // Tenant Admin — everything within their tenant
+        $tenantAdmin = Role::firstOrCreate(['name' => 'tenant_admin', 'guard_name' => 'web']);
+        $tenantAdmin->syncPermissions(Permission::all());
+
+        // Staff — basic access (tenant admin can create custom roles for more)
+        $staff = Role::firstOrCreate(['name' => 'staff', 'guard_name' => 'web']);
+        $staff->syncPermissions([
+            'leads.view_own',
+            'leads.create',
+            'leads.edit_own',
+            'contacts.view_own',
+            'contacts.create',
+            'contacts.edit_own',
+            'deals.view_own',
+            'followups.view_own',
+            'followups.create',
+            'followups.edit_own',
+            'tasks.view_own',
+            'tasks.create',
+            'tasks.edit_own',
+            'whatsapp.send',
+            'email.send',
+            'reports.view_basic',
+            'notifications.view',
+            'notifications.manage_preferences',
         ]);
 
-        $staff->givePermissionTo([
-            'leads.view', 'leads.create', 'leads.edit',
-            'contacts.view', 'contacts.create',
-            'deals.view', 'tasks.view', 'tasks.create',
-        ]);
+        $this->command->info('✅ Permissions seeded: ' . Permission::count());
+        $this->command->info('✅ Roles seeded: superadmin, tenant_admin, staff');
     }
 }

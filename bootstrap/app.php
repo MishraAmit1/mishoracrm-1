@@ -15,6 +15,14 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->statefulApi();
 
+        // Webhook routes CSRF se exempt — each has its own signature/token verification
+        $middleware->validateCsrfTokens(except: [
+            'webhook/razorpay',
+            'webhook/instagram',
+            'webhook/whatsapp',
+            'webhook/leads/*',   // Meta Lead Ads, JustDial, TradeIndia, Sulekha
+        ]);
+
         $middleware->alias([
             // Custom
             'tenant'       => \App\Http\Middleware\IdentifyTenant::class,

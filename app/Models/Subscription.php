@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Coupon;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Subscription extends Model
@@ -10,7 +11,13 @@ class Subscription extends Model
     protected $fillable = [
         'tenant_id',
         'plan_id',
+        'coupon_id',
+        'original_amount',
+        'discount_amount',
         'razorpay_subscription_id',
+        'razorpay_order_id',
+        'razorpay_payment_id',
+        'razorpay_signature',
         'status',
         'billing_cycle',
         'trial_ends_at',
@@ -36,6 +43,11 @@ class Subscription extends Model
     public function plan(): BelongsTo
     {
         return $this->belongsTo(Plan::class);
+    }
+
+    public function coupon(): BelongsTo
+    {
+        return $this->belongsTo(Coupon::class);
     }
 
     // ── Scopes ────────────────────────────────────────────────────

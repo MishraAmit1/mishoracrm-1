@@ -18,7 +18,7 @@ class CheckSubscription
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Subscription expired.'], 402);
             }
-            return redirect()->route('subscription.expired');
+            return redirect()->route('tenant.subscription.expired');
         }
 
         return $next($request);

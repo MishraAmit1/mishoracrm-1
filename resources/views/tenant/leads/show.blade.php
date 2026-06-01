@@ -85,8 +85,16 @@
 }
 .ls-pip-lbl { font-size: 10.5px; font-weight: 500; color: var(--text-300); }
 .ls-pip-active .ls-pip-lbl { color: #185FA5; font-weight: 600; }
-.ls-pip-line  { flex: 1; height: 2px; background: var(--border-subtle); margin-bottom: 20px; }
-.ls-pip-line.done { background: #1D9E75; }
+.ls-pip-line       { flex: 1; height: 2px; background: var(--border-subtle); margin-bottom: 20px; }
+.ls-pip-line.done  { background: #1D9E75; }
+.ls-pip-lost  .ls-pip-dot { background: #FCEBEB; color: #A32D2D; border: 2px solid #E24B4A; }
+.ls-pip-lost  .ls-pip-lbl { color: #A32D2D; font-weight: 600; }
+.ls-deal-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 500; color: var(--accent);
+    text-decoration: none; margin-top: 14px;
+}
+.ls-deal-link:hover { text-decoration: underline; }
 
 /* ── Info Grid ── */
 .ls-info-grid { display: grid; grid-template-columns: 1fr 1fr; }
@@ -238,11 +246,18 @@ $sourceLabel   = ucwords(str_replace('_',' ', $lead->source ?? 'other'));
 
 $daysActive = $lead->created_at ? (int) $lead->created_at->diffInDays(now()) : 0;
 
-/* Pipeline stages in order */
-$stages = ['new','contacted','qualified','proposal','negotiation','won'];
-$stageLabels = ['New','Contacted','Qualified','Proposal','Negotiation','Won'];
+/* Lead pipeline stages */
+$stages      = ['new', 'contacted', 'qualified', 'converted'];
+$stageLabels = ['New', 'Contacted', 'Qualified', 'Converted'];
 $currentStageIdx = array_search($lead->status, $stages);
 if ($currentStageIdx === false) $currentStageIdx = 0;
+
+/* Deal stage pipeline (only when converted) */
+$dealStages      = ['new', 'proposal', 'negotiation', 'won'];
+$dealStageLabels = ['New', 'Proposal', 'Negotiation', 'Won'];
+$deal            = $lead->deal;
+$dealStageIdx    = $deal ? array_search($deal->stage, $dealStages) : false;
+if ($dealStageIdx === false) $dealStageIdx = 0;
 
 /* Score: simple server-side calc */
 $score = 20;
@@ -285,14 +300,17 @@ if ($lead->assignee) {
             <div class="page-title">Lead Detail</div>
         </div>
         <div style="display:flex;gap:8px">
+            @if($isAdmin || $lead->assigned_to === auth()->id())
             <a href="{{ route('tenant.leads.edit', $lead) }}" class="btn btn-secondary">
                 <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                 Edit Lead
             </a>
+            @endif
             <button class="btn btn-primary" onclick="document.getElementById('logCallModal').classList.add('open')">
                 <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
                 Log Call
             </button>
+            @if($isAdmin || $lead->assigned_to === auth()->id())
             <form method="POST" action="{{ route('tenant.leads.destroy', $lead) }}"
                   onsubmit="return confirm('Are you sure you want to delete this lead?')" style="display:inline">
                 @csrf @method('DELETE')
@@ -300,6 +318,7 @@ if ($lead->assignee) {
                     <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                 </button>
             </form>
+            @endif
         </div>
     </div>
 
@@ -367,15 +386,22 @@ if ($lead->assignee) {
                 </div>
             </div>
 
-            {{-- Pipeline --}}
+            {{-- Lead Pipeline --}}
             <div class="ls-card">
                 <div class="ls-pipeline">
-                    <div class="ls-card-title">Pipeline Stage</div>
+                    <div class="ls-card-title">Lead Pipeline</div>
                     <div class="ls-pip-steps">
                         @foreach($stages as $i => $stage)
                         @php
-                            $cls = $i < $currentStageIdx ? 'ls-pip-done'
-                                 : ($i === $currentStageIdx ? 'ls-pip-active' : 'ls-pip-pending');
+                            if ($lead->status === 'lost' && $i === $currentStageIdx) {
+                                $cls = 'ls-pip-lost';
+                            } elseif ($i < $currentStageIdx) {
+                                $cls = 'ls-pip-done';
+                            } elseif ($i === $currentStageIdx) {
+                                $cls = 'ls-pip-active';
+                            } else {
+                                $cls = 'ls-pip-pending';
+                            }
                         @endphp
                         <div class="ls-pip-step {{ $cls }}">
                             <div class="ls-pip-dot">
@@ -394,6 +420,70 @@ if ($lead->assignee) {
                     </div>
                 </div>
             </div>
+
+            {{-- Deal Stage (only when lead is converted and deal exists) --}}
+            @if($lead->isConverted() && $deal)
+            <div class="ls-card">
+                <div class="ls-pipeline">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+                        <div class="ls-card-title">Deal Stage</div>
+                        @php
+                            $dealStageBadgeMap = [
+                                'new'         => ['bg'=>'#E6F1FB','color'=>'#185FA5'],
+                                'proposal'    => ['bg'=>'#FAEEDA','color'=>'#854F0B'],
+                                'negotiation' => ['bg'=>'#EEEDFE','color'=>'#3C3489'],
+                                'won'         => ['bg'=>'#E1F5EE','color'=>'#085041'],
+                                'lost'        => ['bg'=>'#FCEBEB','color'=>'#A32D2D'],
+                            ];
+                            $dsb = $dealStageBadgeMap[$deal->stage] ?? ['bg'=>'#F1EFE8','color'=>'#5F5E5A'];
+                        @endphp
+                        <span style="font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:20px;background:{{ $dsb['bg'] }};color:{{ $dsb['color'] }}">
+                            {{ \App\Models\Deal::stages()[$deal->stage] ?? ucfirst($deal->stage) }}
+                        </span>
+                    </div>
+
+                    <div class="ls-pip-steps" style="margin-top:16px">
+                        @foreach($dealStages as $i => $dStage)
+                        @php
+                            if ($deal->stage === 'lost' && $i === $dealStageIdx) {
+                                $dcls = 'ls-pip-lost';
+                            } elseif ($i < $dealStageIdx) {
+                                $dcls = 'ls-pip-done';
+                            } elseif ($i === $dealStageIdx) {
+                                $dcls = 'ls-pip-active';
+                            } else {
+                                $dcls = 'ls-pip-pending';
+                            }
+                        @endphp
+                        <div class="ls-pip-step {{ $dcls }}">
+                            <div class="ls-pip-dot">
+                                @if($i < $dealStageIdx)
+                                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                @else
+                                {{ $i + 1 }}
+                                @endif
+                            </div>
+                            <div class="ls-pip-lbl">{{ $dealStageLabels[$i] }}</div>
+                        </div>
+                        @if($i < count($dealStages) - 1)
+                        <div class="ls-pip-line {{ $i < $dealStageIdx ? 'done' : '' }}"></div>
+                        @endif
+                        @endforeach
+                    </div>
+
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid var(--border-subtle)">
+                        <div style="font-size:12px;color:var(--text-300)">
+                            Deal Value:
+                            <strong style="color:var(--text-100)">₹{{ number_format($deal->value) }}</strong>
+                        </div>
+                        <a href="{{ route('tenant.deals.show', $deal->id) }}" class="ls-deal-link">
+                            View Deal
+                            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            @endif
 
             {{-- Contact Info --}}
             <div class="ls-card">
@@ -485,6 +575,12 @@ if ($lead->assignee) {
                     </div>
                     @endforelse--}}
 
+                    {{-- custom fields --}}
+                         @include('components.custom-fields-display', [
+                             'customFields' => $customFields,
+                             'customValues' => $customValues,
+                         ])
+                    {{-- end custom fields --}}
                     {{-- Lead Created entry --}}
                     <div class="ls-tl-item" style="margin-top:{{-- $lead->activities()->count() ? '4px' : '0' --}}">
                         <div class="ls-tl-icon" style="background:#EAF3DE">
@@ -564,13 +660,17 @@ if ($lead->assignee) {
                         <div class="ls-assignee-name">{{ $lead->assignee->name }}</div>
                         <div class="ls-assignee-role">{{ $lead->assignee->designation ?? 'Sales Team' }}</div>
                     </div>
+                    @if($isAdmin || $lead->assigned_to === auth()->id())
                     <a href="{{ route('tenant.leads.edit', $lead) }}" style="margin-left:auto;font-size:12px;color:var(--accent);text-decoration:none">Change</a>
+                    @endif
                 </div>
                 @else
                 <div style="font-size:13px;color:var(--text-300);font-style:italic">Unassigned</div>
+                @if($isAdmin || $lead->assigned_to === auth()->id())
                 <a href="{{ route('tenant.leads.edit', $lead) }}" class="btn btn-secondary" style="margin-top:10px;justify-content:center;width:100%;font-size:12px">
                     Assign Now
                 </a>
+                @endif
                 @endif
             </div>
 

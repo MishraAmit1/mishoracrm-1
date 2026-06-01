@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Notification;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -22,10 +23,17 @@ class DatabaseSeeder extends Seeder
 
 
         $this->call([
-        // RolesAndPermissionsSeeder::class,  
-        // PlanSeeder::class,                 // phir plans
-         SuperAdminSeeder::class,           // phir superadmin user
-         MessageTemplateSeeder::class,      // phir message templates
+        // RolesAndPermissionsSeeder::class,
+        // PlanSeeder::class,
+         SuperAdminSeeder::class,
+         MessageTemplateSeeder::class,
+         NotificationSeeder::class,
+         CustomFieldSeeder::class,
+         GlobalFieldTemplateSeeder::class,
+         LeadSeeder::class,
+         DealSeeder::class,
+         TaskSeeder::class,
+         RolesAndPermissionsSeeder::class
         ]);
     }
 }

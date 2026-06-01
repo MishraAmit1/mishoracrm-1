@@ -395,7 +395,18 @@
                             <div class="lf-section-sub">Source, status aur assignment</div>
                         </div>
                     </div>
+{{-- custom fields --}}
 
+
+
+
+{{-- End mein, form close hone se pehle --}}
+@include('components.custom-fields.render', [
+    'fields' => \App\Models\CustomField::forModule('lead'),
+    'values' => [],
+])
+
+{{-- end custom fields --}}
                     <div class="lf-grid">
                         {{-- Source Pills --}}
                         <div class="lf-field span-2">
@@ -419,7 +430,7 @@
                                 <select name="status" class="lf-input lf-select" id="statusSelect">
                                     @foreach($statuses as $val => $label)
                                     <option value="{{ $val }}" {{ old('status','new') === $val ? 'selected' : '' }}>
-                                        {{ $label }}
+                                        {{ is_array($label) ? $label['label'] : $label }}
                                     </option>
                                     @endforeach
                                 </select>
@@ -538,7 +549,7 @@
                         @foreach($staffList->take(4) as $i => $staff)
                         @php
                             $c = $avatarColors[$i % count($avatarColors)];
-                            $initials = collect(explode(' ', $staff->name))->map(fn($p)=>strtoupper($p[0]))->join('');
+                            $initials = collect(explode(' ', $staff->name))->filter()->map(fn($p)=>strtoupper($p[0]))->join('');
                         @endphp
                         <div class="assign-option"
                              data-id="{{ $staff->id }}"

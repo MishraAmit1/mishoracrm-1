@@ -239,12 +239,12 @@ $secColors = [
                     — Unassigned —
                 </option>
 
-                @foreach($staffList as $id => $name)
+                @foreach($staffList as $staff)
 
-                <option value="{{ $id }}"
-                        {{ $fVal == $id ? 'selected' : '' }}>
+                <option value="{{ $staff->id }}"
+                        {{ $fVal == $staff->id ? 'selected' : '' }}>
 
-                    {{ $name }}
+                    {{ $staff->name }}
 
                 </option>
 

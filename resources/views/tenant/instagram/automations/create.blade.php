@@ -1,0 +1,131 @@
+@extends('layouts.app')
+@section('title', 'Create Automation')
+
+@push('styles')
+<style>
+.form-section { background:var(--bg-surface); border:1px solid var(--border-default); border-radius:var(--r-lg); padding:24px; margin-bottom:16px; }
+.form-section-title { font-size:14px; font-weight:700; color:var(--text-100); margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+.form-section-title span { width:24px; height:24px; border-radius:var(--r-sm); background:var(--accent); color:#fff; font-size:12px; display:flex; align-items:center; justify-content:center; font-weight:700; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+@media(max-width:600px){ .form-row { grid-template-columns:1fr; } }
+.action-field { display:none; }
+.action-field.visible { display:block; }
+</style>
+@endpush
+
+@section('content')
+<div class="page-header">
+    <div>
+        <h1 class="page-title">New Automation</h1>
+        <p class="page-sub">Automate replies to comments or DMs</p>
+    </div>
+    <a href="{{ route('tenant.instagram.automations') }}" class="btn btn-ghost">Cancel</a>
+</div>
+
+@if($errors->any())
+    <div class="alert alert-danger" style="margin-bottom:16px;">
+        @foreach($errors->all() as $err)<div>{{ $err }}</div>@endforeach
+    </div>
+@endif
+
+<form method="POST" action="{{ route('tenant.instagram.automations.store') }}">
+@csrf
+
+{{-- Basic info --}}
+<div class="form-section">
+    <div class="form-section-title"><span>1</span> Basic Info</div>
+    <div class="form-group">
+        <label class="form-label">Automation Name <span class="required">*</span></label>
+        <input type="text" name="name" class="form-input" value="{{ old('name') }}" placeholder="e.g. Price inquiry auto-DM" required>
+    </div>
+</div>
+
+{{-- Trigger --}}
+<div class="form-section">
+    <div class="form-section-title"><span>2</span> Trigger — When should this run?</div>
+    <div class="form-group">
+        <label class="form-label">Trigger Type <span class="required">*</span></label>
+        <select name="trigger_type" id="triggerType" class="form-input" onchange="updateTrigger(this.value)" required>
+            <option value="">Select trigger...</option>
+            <option value="any_post_comment" {{ old('trigger_type')==='any_post_comment'?'selected':'' }}>Comment on ANY post</option>
+            <option value="specific_post_comment" {{ old('trigger_type')==='specific_post_comment'?'selected':'' }}>Comment on SPECIFIC post</option>
+            <option value="dm_keyword" {{ old('trigger_type')==='dm_keyword'?'selected':'' }}>DM contains keyword</option>
+        </select>
+    </div>
+
+    <div id="postIdField" class="form-group action-field {{ old('trigger_type')==='specific_post_comment'?'visible':'' }}">
+        <label class="form-label">Post ID</label>
+        <input type="text" name="post_id" class="form-input" value="{{ old('post_id') }}" placeholder="Instagram Post ID">
+        <span class="form-hint">Get from Instagram Graph API or post URL</span>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label class="form-label">Trigger Keywords <span style="color:var(--text-300);font-weight:400;">(comma separated)</span></label>
+            <input type="text" name="trigger_keywords" class="form-input" value="{{ old('trigger_keywords') }}" placeholder="price, buy, info, cost">
+            <span class="form-hint">Leave empty to match ALL comments/messages</span>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Keyword Match</label>
+            <select name="keyword_match" class="form-input">
+                <option value="contains" {{ old('keyword_match','contains')==='contains'?'selected':'' }}>Contains</option>
+                <option value="exact" {{ old('keyword_match')==='exact'?'selected':'' }}>Exact match</option>
+                <option value="any" {{ old('keyword_match')==='any'?'selected':'' }}>Any word</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+{{-- Action --}}
+<div class="form-section">
+    <div class="form-section-title"><span>3</span> Action — What should happen?</div>
+    <div class="form-group">
+        <label class="form-label">Action Type <span class="required">*</span></label>
+        <select name="action_type" id="actionType" class="form-input" onchange="updateAction(this.value)" required>
+            <option value="">Select action...</option>
+            <option value="send_dm" {{ old('action_type')==='send_dm'?'selected':'' }}>Send DM to commenter</option>
+            <option value="reply_comment" {{ old('action_type')==='reply_comment'?'selected':'' }}>Reply to comment</option>
+            <option value="trigger_n8n" {{ old('action_type')==='trigger_n8n'?'selected':'' }}>Trigger n8n workflow</option>
+        </select>
+    </div>
+
+    <div id="dmField" class="form-group action-field {{ old('action_type')==='send_dm'?'visible':'' }}">
+        <label class="form-label">DM Message</label>
+        <textarea name="dm_message" class="form-input" rows="4" placeholder="Hi! Thanks for your interest. Here are our prices...">{{ old('dm_message') }}</textarea>
+        <span class="form-hint">This message will be sent as a Direct Message to the user who commented</span>
+    </div>
+
+    <div id="commentField" class="form-group action-field {{ old('action_type')==='reply_comment'?'visible':'' }}">
+        <label class="form-label">Comment Reply</label>
+        <textarea name="comment_reply" class="form-input" rows="3" placeholder="Thanks for commenting! Check your DMs for more info.">{{ old('comment_reply') }}</textarea>
+    </div>
+
+    <div id="n8nField" class="form-group action-field {{ old('action_type')==='trigger_n8n'?'visible':'' }}">
+        <label class="form-label">n8n Webhook URL</label>
+        <input type="url" name="n8n_webhook_url" class="form-input" value="{{ old('n8n_webhook_url') }}" placeholder="https://your-n8n.com/webhook/xxxx">
+        <span class="form-hint">n8n will receive the event payload and can run any complex workflow</span>
+    </div>
+</div>
+
+<div style="display:flex;justify-content:flex-end;gap:10px;">
+    <a href="{{ route('tenant.instagram.automations') }}" class="btn btn-ghost">Cancel</a>
+    <button type="submit" class="btn btn-primary">Create Automation</button>
+</div>
+</form>
+@endsection
+
+@push('scripts')
+<script>
+function updateTrigger(val) {
+    document.getElementById('postIdField').classList.toggle('visible', val === 'specific_post_comment');
+}
+function updateAction(val) {
+    document.getElementById('dmField').classList.toggle('visible', val === 'send_dm');
+    document.getElementById('commentField').classList.toggle('visible', val === 'reply_comment');
+    document.getElementById('n8nField').classList.toggle('visible', val === 'trigger_n8n');
+}
+// Init on page load for old() values
+updateTrigger(document.getElementById('triggerType').value);
+updateAction(document.getElementById('actionType').value);
+</script>
+@endpush

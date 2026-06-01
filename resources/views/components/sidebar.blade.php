@@ -131,7 +131,7 @@
         <div class="sb-section-label">Communication</div>
 
         <button type="button"
-                class="sb-item {{ request()->routeIs('whatsapp.*','email.*') ? 'sub-open' : '' }}"
+                class="sb-item {{ request()->routeIs('whatsapp.*','email.*','tenant.instagram.*') ? 'sub-open' : '' }}"
                 onclick="toggleSub('sub-comm', this)">
             <span class="sb-icon">
                 <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
@@ -146,10 +146,10 @@
             </span>
         </button>
 
-        <div class="sb-sub {{ request()->routeIs('whatsapp.*','email.*') ? 'open' : '' }}"
+        <div class="sb-sub {{ request()->routeIs('whatsapp.*','email.*','tenant.instagram.*') ? 'open' : '' }}"
              id="sub-comm">
-            <a href="{{ route('tenant.whatsapp.index') }}" 
-               class="sb-item {{ request()->routeIs('whatsapp.*') ? 'active' : '' }}">
+            <a href="{{ route('tenant.whatsapp.index') }}"
+               class="sb-item {{ request()->routeIs('whatsapp.*') && !request()->routeIs('whatsapp.chatbot*','whatsapp.api-settings*') ? 'active' : '' }}">
                 <span class="sb-icon">
                     <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z"/>
@@ -157,7 +157,16 @@
                 </span>
                 <span class="sb-label">WhatsApp</span>
             </a>
-            <a href="{{ route('tenant.email.index') }}" 
+            <a href="{{ route('tenant.whatsapp.chatbot') }}"
+               class="sb-item {{ request()->routeIs('tenant.whatsapp.chatbot*','tenant.whatsapp.api-settings*') ? 'active' : '' }}">
+                <span class="sb-icon">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155"/>
+                    </svg>
+                </span>
+                <span class="sb-label">WA Chatbot</span>
+            </a>
+            <a href="{{ route('tenant.email.index') }}"
                class="sb-item {{ request()->routeIs('tenant.email.*') ? 'active' : '' }}">
                 <span class="sb-icon">
                     <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
@@ -165,6 +174,16 @@
                     </svg>
                 </span>
                 <span class="sb-label">Email</span>
+            </a>
+            <a href="{{ route('tenant.instagram.index') }}"
+               class="sb-item {{ request()->routeIs('tenant.instagram.*') ? 'active' : '' }}">
+                <span class="sb-icon">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"/>
+                    </svg>
+                </span>
+                <span class="sb-label">Instagram</span>
             </a>
         </div>
 
@@ -205,7 +224,7 @@
         {{-- Analytics --}}
         <div class="sb-section-label">Analytics</div>
 
-        {{-- <a href="{{ route('reports') }}" --}} <a href="#"
+        <a href="{{ route('tenant.reports.overview') }}" 
            class="sb-item {{ request()->routeIs('reports*') ? 'active' : '' }}">
             <span class="sb-icon">
                 <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
@@ -218,8 +237,8 @@
         {{-- System --}}
         <div class="sb-section-label">System</div>
 
-        {{-- <a href="{{ route('settings') }}" --}}  <a href="#"
-           class="sb-item {{ request()->routeIs('settings*') ? 'active' : '' }}">
+        <a href="{{ route('tenant.settings.index') }}"  
+           class="sb-item {{ request()->routeIs('tenant.settings*') ? 'active' : '' }}">
             <span class="sb-icon">
                 <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/>
@@ -249,14 +268,14 @@
 
         {{-- User dropdown --}}
         <div class="drop-menu" id="userMenuDrop" style="bottom:72px; top:auto; left:8px; right:8px; min-width:auto;">
-            {{-- <a href="{{ route('settings') }}" --}}  <a href="#"
+            <a href="{{ route('tenant.profile.show') }}"
              class="drop-item">
                 <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
                 </svg>
                 My Profile
             </a>
-            {{-- <a href="{{ route('settings') }}"  --}} <a href="#"
+            <a href="{{ route('tenant.settings.index') }}" 
             class="drop-item">
                 <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/>

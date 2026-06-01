@@ -65,8 +65,9 @@ class AttendanceController extends Controller
 
     public function create()
     {
-        $staffList = Staff::with('user')->get();
-        return view('tenant.attendances.create', compact('staffList'));
+        $staffList  = Staff::with('user')->get();
+        $attendance = null;
+        return view('tenant.attendances.create', compact('staffList', 'attendance'));
     }
 
     public function store(AttendanceRequest $request)

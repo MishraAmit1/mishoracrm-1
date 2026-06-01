@@ -17,8 +17,86 @@ class DashboardController extends Controller
 {
     public function index(Request $request)
     {
-    
-        $userId = auth()->id();
+        $user   = auth()->user();
+        $userId = $user->id;
+
+        if ($user->user_type === 'staff') {
+            return $this->staffDashboard($request, $user);
+        }
+
+        return $this->adminDashboard($request, $userId);
+    }
+
+    private function staffDashboard(Request $request, $user): \Illuminate\View\View
+    {
+        $userId   = $user->id;
+        $tenantId = $user->tenant_id;
+
+        $myLeads = Lead::where('assigned_to', $userId)->where('tenant_id', $tenantId);
+        $myDeals = Deal::where('assigned_to', $userId)->where('tenant_id', $tenantId);
+
+        $stats = [
+            'my_leads_total'     => (clone $myLeads)->count(),
+            'my_leads_new'       => (clone $myLeads)->where('status', 'new')->count(),
+            'my_leads_today'     => (clone $myLeads)->whereDate('created_at', today())->count(),
+            'my_leads_converted' => (clone $myLeads)->where('status', 'converted')->whereMonth('converted_at', now()->month)->count(),
+
+            'my_deals_active'    => (clone $myDeals)->whereNotIn('stage', ['won', 'lost'])->count(),
+            'my_deals_won_month' => (clone $myDeals)->where('stage', 'won')->whereMonth('updated_at', now()->month)->count(),
+            'my_pipeline_value'  => (clone $myDeals)->whereNotIn('stage', ['won', 'lost'])->sum('value'),
+            'my_won_value_month' => (clone $myDeals)->where('stage', 'won')->whereMonth('updated_at', now()->month)->sum('value'),
+
+            'tasks_pending'      => Task::where('status', 'pending')
+                                        ->where(function ($q) use ($userId) {
+                                            $q->where('assigned_to', $userId)->orWhere('created_by', $userId);
+                                        })->where('tenant_id', $user->tenant_id)->count(),
+            'tasks_overdue'      => Task::where('status', 'pending')
+                                        ->whereNotNull('due_at')->where('due_at', '<', now())
+                                        ->where(function ($q) use ($userId) {
+                                            $q->where('assigned_to', $userId)->orWhere('created_by', $userId);
+                                        })->where('tenant_id', $user->tenant_id)->count(),
+        ];
+
+        $myRecentLeads = (clone $myLeads)->with('assignedTo')->latest()->limit(6)->get()
+            ->map(fn($l) => [
+                'id'     => $l->id,
+                'name'   => $l->name,
+                'phone'  => $l->phone,
+                'source' => $l->source ?? '—',
+                'status' => $l->status,
+                'time'   => $l->created_at->diffForHumans(),
+            ])->toArray();
+
+        $myTodayTasks = Task::where(function ($q) use ($userId) {
+                $q->where('assigned_to', $userId)->orWhere('created_by', $userId);
+            })
+            ->where('tenant_id', $user->tenant_id)
+            ->where(function ($q) { $q->whereDate('due_at', today())->orWhere('status', 'pending'); })
+            ->orderBy('due_at')
+            ->limit(7)
+            ->get()
+            ->map(fn($t) => [
+                'id'       => $t->id,
+                'text'     => $t->title,
+                'due'      => $t->due_at?->format('h:i A') ?? 'No time',
+                'done'     => $t->status === 'completed',
+                'priority' => $t->priority ?? 'medium',
+            ])->toArray();
+
+        $myDealsByStage = (clone $myDeals)->selectRaw('stage, COUNT(*) as count, SUM(value) as total')
+            ->groupBy('stage')->get()
+            ->map(fn($s) => [
+                'label'  => ucfirst($s->stage),
+                'value'  => $s->count,
+                'amount' => '₹' . number_format($s->total / 1000, 0) . 'K',
+                'stage'  => $s->stage,
+            ])->toArray();
+
+        return view('tenant.staff-dashboard', compact('user', 'stats', 'myRecentLeads', 'myTodayTasks', 'myDealsByStage'));
+    }
+
+    private function adminDashboard(Request $request, int $userId): \Illuminate\View\View|\Illuminate\Http\JsonResponse
+    {
 
         // ── Stats ─────────────────────────────────────────────────
         $stats = [

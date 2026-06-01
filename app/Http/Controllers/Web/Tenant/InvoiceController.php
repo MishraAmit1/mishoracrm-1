@@ -3,523 +3,305 @@
 namespace App\Http\Controllers\Web\Tenant;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\InvoiceRequest;
 use App\Models\Contact;
 use App\Models\Invoice;
 use App\Models\Quotation;
-use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class InvoiceController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Helpers
-    |--------------------------------------------------------------------------
-    */
-
     private function tenantId(): int
     {
         return auth()->user()->tenant_id;
     }
 
-    private function tenantSubdomain(): ?string
-    {
-        return auth()->user()?->tenant?->subdomain;
-    }
-
-    private function getInvoiceConfig(): array
-    {
-        return config('invoice_fields');
-    }
-
-    private function getStaffList()
-    {
-        return User::where('tenant_id', $this->tenantId())
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->get(['id', 'name']);
-    }
-
-    private function getContacts()
-    {
-        return Contact::where('tenant_id', $this->tenantId())
-            ->orderBy('name')
-            ->get(['id', 'name', 'company']);
-    }
-
-    private function getQuotations()
-    {
-        return Quotation::where('tenant_id', $this->tenantId())
-            ->latest()
-            ->get(['id', 'number']);
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Find Invoice
-    |--------------------------------------------------------------------------
-    */
-
     private function findInvoice(int|string $id): Invoice
     {
-        return Invoice::where('tenant_id', $this->tenantId())
-            ->with([
-                'contact',
-                'quotation',
-            ])
-            ->findOrFail($id);
+        return Invoice::where('id', $id)
+            ->where('tenant_id', $this->tenantId())
+            ->firstOrFail();
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Index
-    |--------------------------------------------------------------------------
-    */
-
+    // ── Index ─────────────────────────────────────────────────────
     public function index(Request $request): View
     {
-        $query = Invoice::query()
-            ->with(['contact'])
-            ->where('tenant_id', $this->tenantId());
+        $query = Invoice::with(['contact', 'quotation', 'createdBy'])
+            ->where('tenant_id', $this->tenantId())
+            ->latest();
 
-        // ── Search ────────────────────────────────────────────────
+        if ($request->filled('status'))    $query->where('status', $request->status);
         if ($request->filled('search')) {
-            $search = $request->search;
-
-            $query->where(function ($q) use ($search) {
-                $q->where('number', 'like', "%{$search}%")
-                    ->orWhereHas('contact', function ($c) use ($search) {
-                        $c->where('name', 'like', "%{$search}%")
-                            ->orWhere('company', 'like', "%{$search}%");
-                    });
-            });
+            $query->where(fn($q) =>
+                $q->where('number', 'like', "%{$request->search}%")
+                  ->orWhereHas('contact', fn($q) => $q->where('name', 'like', "%{$request->search}%"))
+            );
         }
+        if ($request->filled('date_from')) $query->whereDate('date', '>=', $request->date_from);
+        if ($request->filled('date_to'))   $query->whereDate('date', '<=', $request->date_to);
 
-        // ── Filters ───────────────────────────────────────────────
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
+        $invoices = $query->paginate(15)->withQueryString();
 
-        if ($request->filled('contact_id')) {
-            $query->where('contact_id', $request->contact_id);
-        }
-
-        if ($request->filled('date_from')) {
-            $query->whereDate('date', '>=', $request->date_from);
-        }
-
-        if ($request->filled('date_to')) {
-            $query->whereDate('date', '<=', $request->date_to);
-        }
-
-        // ── Sorting ───────────────────────────────────────────────
-        $sort = $request->get('sort', 'created_at');
-        $dir  = $request->get('dir', 'desc');
-
-        $allowed = [
-            'number',
-            'date',
-            'due_date',
-            'total',
-            'status',
-            'created_at',
+        $counts = [
+            'all'     => Invoice::where('tenant_id', $this->tenantId())->count(),
+            'draft'   => Invoice::where('tenant_id', $this->tenantId())->where('status', 'draft')->count(),
+            'sent'    => Invoice::where('tenant_id', $this->tenantId())->where('status', 'sent')->count(),
+            'paid'    => Invoice::where('tenant_id', $this->tenantId())->where('status', 'paid')->count(),
+            'partial' => Invoice::where('tenant_id', $this->tenantId())->where('status', 'partial')->count(),
+            'overdue' => Invoice::where('tenant_id', $this->tenantId())->overdue()->count(),
         ];
 
-        if (in_array($sort, $allowed)) {
-            $query->orderBy($sort, $dir === 'asc' ? 'asc' : 'desc');
-        }
-
-        $invoices = $query
-            ->paginate(20)
-            ->withQueryString();
-
-        // ── Summary ───────────────────────────────────────────────
-        $summary = [
-            'all' => [
-                'count' => Invoice::where('tenant_id', $this->tenantId())->count(),
-                'amount' => Invoice::where('tenant_id', $this->tenantId())->sum('total'),
-            ],
-
-            'paid' => [
-                'count' => Invoice::where('tenant_id', $this->tenantId())
-                    ->where('status', 'paid')
-                    ->count(),
-
-                'amount' => Invoice::where('tenant_id', $this->tenantId())
-                    ->where('status', 'paid')
-                    ->sum('total'),
-            ],
-
-            'partial' => [
-                'count' => Invoice::where('tenant_id', $this->tenantId())
-                    ->where('status', 'partial')
-                    ->count(),
-
-                'amount' => Invoice::where('tenant_id', $this->tenantId())
-                    ->where('status', 'partial')
-                    ->sum('total'),
-            ],
-
-            'overdue' => [
-                'count' => Invoice::where('tenant_id', $this->tenantId())
-                    ->where('status', 'overdue')
-                    ->count(),
-
-                'amount' => Invoice::where('tenant_id', $this->tenantId())
-                    ->where('status', 'overdue')
-                    ->sum('total'),
-            ],
+        $revenue = [
+            'total_paid'    => Invoice::where('tenant_id', $this->tenantId())->where('status', 'paid')->sum('total'),
+            'total_pending' => Invoice::where('tenant_id', $this->tenantId())->whereIn('status', ['sent', 'partial'])->sum('total'),
+            'total_overdue' => Invoice::where('tenant_id', $this->tenantId())->overdue()->sum('total'),
         ];
 
-        $statuses = $this->getInvoiceConfig()['statuses'] ?? [];
+        $statuses = Invoice::statuses();
 
         return view('tenant.invoices.index', compact(
-            'invoices',
-            'summary',
-            'statuses'
+            'invoices', 'counts', 'revenue', 'statuses'
         ));
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Create
-    |--------------------------------------------------------------------------
-    */
-
-
-    public function create(Request $request)
+    // ── Create ────────────────────────────────────────────────────
+    public function create(Request $request): View
     {
         $contacts = Contact::where('tenant_id', $this->tenantId())
             ->orderBy('name')
-            ->get();
+            ->get(['id', 'name', 'company', 'phone', 'email', 'address', 'city', 'state', 'gst_number']);
 
-        $quotations = Quotation::where('tenant_id', $this->tenantId())
-            ->latest()
-            ->get();
+        $contact = $request->filled('contact_id')
+            ? Contact::where('id', $request->contact_id)->where('tenant_id', $this->tenantId())->first()
+            : null;
 
-        $statuses = [
-            'draft'   => 'Draft',
-            'sent'    => 'Sent',
-            'partial' => 'Partial Paid',
-            'paid'    => 'Paid',
-            'overdue' => 'Overdue',
-        ];
-        $lastInvoice = Invoice::where('tenant_id', $this->tenantId())
-            ->latest('id')
-            ->first();
+        // Pre-fill from quotation if passed
+        $quotation = $request->filled('quotation_id')
+            ? Quotation::where('id', $request->quotation_id)->where('tenant_id', $this->tenantId())->first()
+            : null;
 
-        $nextNumber = 1;
+        $number   = Invoice::generateNumber();
+        $statuses = Invoice::statuses();
+        $tenant   = auth()->user()->tenant;
 
-        if ($lastInvoice && preg_match('/(\d+)$/', $lastInvoice->number, $match)) {
-            $nextNumber = ((int) $match[1]) + 1;
-        }
-        $nextInvoiceNumber =
-            'INV-' .
-            date('Y') .
-            '-' .
-            str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
         return view('tenant.invoices.create', compact(
-            'contacts',
-            'quotations',
-            'statuses',
-            'nextInvoiceNumber'
+            'contacts', 'contact', 'quotation',
+            'number', 'statuses', 'tenant'
         ));
     }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | Store
-    |--------------------------------------------------------------------------
-    */
-
-    public function store(InvoiceRequest $request): RedirectResponse
+    // ── Store ─────────────────────────────────────────────────────
+    public function store(Request $request): RedirectResponse
     {
-        DB::beginTransaction();
+        $request->validate([
+            'contact_id'  => ['required', 'exists:contacts,id'],
+            'date'        => ['required', 'date'],
+            'due_date'    => ['required', 'date', 'after_or_equal:date'],
+            'items'       => ['required', 'array', 'min:1'],
+            'items.*.description' => ['required', 'string'],
+            'items.*.quantity'    => ['required', 'numeric', 'min:0.01'],
+            'items.*.rate'        => ['required', 'numeric', 'min:0'],
+            'discount'    => ['nullable', 'numeric', 'min:0'],
+            'tax_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'notes'       => ['nullable', 'string'],
+            'terms'       => ['nullable', 'string'],
+        ]);
 
-        try {
+        $items  = $request->items;
+        $totals = Invoice::calculateTotals(
+            $items,
+            $request->discount ?? 0,
+            $request->tax_percent ?? 18
+        );
 
-            $data = $request->validated();
+        $invoice = Invoice::create(array_merge($totals, [
+            'tenant_id'    => $this->tenantId(),
+            'contact_id'   => $request->contact_id,
+            'quotation_id' => $request->quotation_id,
+            'number'       => Invoice::generateNumber(),
+            'date'         => $request->date,
+            'due_date'     => $request->due_date,
+            'items'        => $items,
+            'notes'        => $request->notes,
+            'terms'        => $request->terms,
+            'status'       => 'draft',
+            'paid_amount'  => 0,
+            'created_by'   => auth()->id(),
+        ]));
 
-            // ── Totals calculation ────────────────────────────────
-            $totals = $this->calculateTotals($data);
-
-            $invoice = Invoice::create([
-                'tenant_id'            => $this->tenantId(),
-                'contact_id'           => $data['contact_id'] ?? null,
-                'quotation_id'         => $data['quotation_id'] ?? null,
-                'number'               => $this->generateInvoiceNumber(),
-                'date'                 => $data['date'],
-                'due_date'             => $data['due_date'] ?? null,
-                'items'                => $data['items'],
-                'subtotal'             => $totals['subtotal'],
-                'tax_percent'          => $data['tax_percent'] ?? 0,
-                'tax_amount'           => $totals['tax_amount'],
-                'discount'             => $data['discount'] ?? 0,
-                'total'                => $totals['total'],
-                'paid_amount'          => $data['paid_amount'] ?? 0,
-                'status'               => $data['status'] ?? 'draft',
-                'razorpay_payment_id'  => $data['razorpay_payment_id'] ?? null,
-                'paid_at'              => ($data['status'] ?? null) === 'paid'
-                    ? now()
-                    : null,
-            ]);
-
-            DB::commit();
-
-            return redirect()
-                ->route('tenant.invoices.show', $invoice->id)
-                ->with('success', 'Invoice created successfully.');
-        } catch (\Throwable $e) {
-
-            DB::rollBack();
-
-            return back()
-                ->withInput()
-                ->with('error', $e->getMessage());
-        }
+        return redirect()
+            ->route('tenant.invoices.show', $invoice->id)
+            ->with('success', "Invoice {$invoice->number} created.");
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Show
-    |--------------------------------------------------------------------------
-    */
-
+    // ── Show ──────────────────────────────────────────────────────
     public function show(int|string $id): View
     {
         $invoice = $this->findInvoice($id);
+        $invoice->load(['contact', 'quotation', 'createdBy']);
 
-        return view('tenant.invoices.show', [
-            'invoice' => $invoice,
-            'config'  => $this->getInvoiceConfig(),
-        ]);
+        $tenant   = auth()->user()->tenant;
+        $statuses = Invoice::statuses();
+
+        return view('tenant.invoices.show', compact(
+            'invoice', 'tenant', 'statuses'
+        ));
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Edit
-    |--------------------------------------------------------------------------
-    */
-
+    // ── Edit ──────────────────────────────────────────────────────
     public function edit(int|string $id): View
     {
         $invoice = $this->findInvoice($id);
 
-        $config = $this->getInvoiceConfig();
-
-        return view('tenant.invoices.edit', [
-            'invoice'    => $invoice,
-            'config'     => $config,
-            'contacts'   => $this->getContacts(),
-            'quotations' => $this->getQuotations(),
-            'staffList'  => $this->getStaffList(),
-            'statuses'   => $config['statuses'] ?? [],
-            'taxes'      => $config['taxes'] ?? [],
-        ]);
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Update
-    |--------------------------------------------------------------------------
-    */
-
-    public function update(
-        InvoiceRequest $request,
-        string $tenant,
-        int|string $id
-    ): RedirectResponse {
-
-        DB::beginTransaction();
-
-        try {
-
-            $invoice = $this->findInvoice($id);
-
-            $data = $request->validated();
-
-            $totals = $this->calculateTotals($data);
-
-            $invoice->update([
-                'contact_id'           => $data['contact_id'] ?? null,
-                'quotation_id'         => $data['quotation_id'] ?? null,
-                'date'                 => $data['date'],
-                'due_date'             => $data['due_date'] ?? null,
-                'items'                => $data['items'],
-                'subtotal'             => $totals['subtotal'],
-                'tax_percent'          => $data['tax_percent'] ?? 0,
-                'tax_amount'           => $totals['tax_amount'],
-                'discount'             => $data['discount'] ?? 0,
-                'total'                => $totals['total'],
-                'paid_amount'          => $data['paid_amount'] ?? 0,
-                'status'               => $data['status'],
-                'paid_at'              => $data['status'] === 'paid'
-                    ? now()
-                    : null,
-            ]);
-
-            DB::commit();
-
+        if ($invoice->status === 'paid') {
             return redirect()
                 ->route('tenant.invoices.show', $invoice->id)
-                ->with('success', 'Invoice updated successfully.');
-        } catch (\Throwable $e) {
-
-            DB::rollBack();
-
-            return back()
-                ->withInput()
-                ->with('error', $e->getMessage());
+                ->with('error', 'Paid invoice cannot be edited.');
         }
+
+        $contacts = Contact::where('tenant_id', $this->tenantId())
+            ->orderBy('name')
+            ->get(['id', 'name', 'company', 'phone', 'email', 'address', 'city', 'state', 'gst_number']);
+
+        $statuses = Invoice::statuses();
+        $tenant   = auth()->user()->tenant;
+
+        return view('tenant.invoices.edit', compact(
+            'invoice', 'contacts', 'statuses', 'tenant'
+        ));
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Destroy
-    |--------------------------------------------------------------------------
-    */
-
-    public function destroy(string $tenant, int|string $id): RedirectResponse
+    // ── Update ────────────────────────────────────────────────────
+    public function update(Request $request, int|string $id): RedirectResponse
     {
         $invoice = $this->findInvoice($id);
 
+        if ($invoice->status === 'paid') {
+            return back()->with('error', 'Paid invoice cannot be edited.');
+        }
+
+        $request->validate([
+            'contact_id'  => ['required', 'exists:contacts,id'],
+            'date'        => ['required', 'date'],
+            'due_date'    => ['required', 'date', 'after_or_equal:date'],
+            'items'       => ['required', 'array', 'min:1'],
+            'items.*.description' => ['required', 'string'],
+            'items.*.quantity'    => ['required', 'numeric', 'min:0.01'],
+            'items.*.rate'        => ['required', 'numeric', 'min:0'],
+            'discount'    => ['nullable', 'numeric', 'min:0'],
+            'tax_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'notes'       => ['nullable', 'string'],
+            'terms'       => ['nullable', 'string'],
+        ]);
+
+        $items  = $request->items;
+        $totals = Invoice::calculateTotals(
+            $items,
+            $request->discount ?? 0,
+            $request->tax_percent ?? $invoice->tax_percent
+        );
+
+        $invoice->update(array_merge($totals, [
+            'contact_id' => $request->contact_id,
+            'date'       => $request->date,
+            'due_date'   => $request->due_date,
+            'items'      => $items,
+            'notes'      => $request->notes,
+            'terms'      => $request->terms,
+        ]));
+
+        return redirect()
+            ->route('tenant.invoices.show', $invoice->id)
+            ->with('success', 'Invoice updated.');
+    }
+
+    // ── Destroy ───────────────────────────────────────────────────
+    public function destroy(int|string $id): RedirectResponse
+    {
+        $invoice = $this->findInvoice($id);
+
+        if ($invoice->status === 'paid') {
+            return back()->with('error', 'Paid invoice cannot be deleted.');
+        }
+
+        $number = $invoice->number;
         $invoice->delete();
 
         return redirect()
             ->route('tenant.invoices.index')
-            ->with('success', 'Invoice deleted successfully.');
+            ->with('success', "Invoice {$number} deleted.");
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Mark Paid
-    |--------------------------------------------------------------------------
-    */
-
-    public function markPaid(
-        Request $request,
-        string $tenant,
-        int|string $id
-    ): RedirectResponse {
-
+    // ── Update status ─────────────────────────────────────────────
+    public function updateStatus(Request $request, int|string $id): RedirectResponse
+    {
         $request->validate([
-            'amount' => ['required', 'numeric', 'min:1'],
+            'status' => ['required', 'in:draft,sent,paid,partial,overdue'],
         ]);
 
         $invoice = $this->findInvoice($id);
+        $data    = ['status' => $request->status];
 
-        $newPaid = $invoice->paid_amount + $request->amount;
-
-        $status = 'partial';
-
-        if ($newPaid >= $invoice->total) {
-            $status = 'paid';
+        if ($request->status === 'paid') {
+            $data['paid_amount'] = $invoice->total;
+            $data['paid_at']     = now();
         }
+
+        $invoice->update($data);
+
+        return back()->with('success', 'Invoice status updated.');
+    }
+
+    // ── Record payment ────────────────────────────────────────────
+    public function recordPayment(Request $request, int|string $id): RedirectResponse
+    {
+        $request->validate([
+            'paid_amount' => ['required', 'numeric', 'min:0.01'],
+            'paid_at'     => ['required', 'date'],
+            'payment_note'=> ['nullable', 'string', 'max:255'],
+        ]);
+
+        $invoice    = $this->findInvoice($id);
+        $newPaid    = round($invoice->paid_amount + $request->paid_amount, 2);
+        $newStatus  = $newPaid >= $invoice->total ? 'paid' : 'partial';
 
         $invoice->update([
-            'paid_amount' => $newPaid,
-            'status'      => $status,
-            'paid_at'     => $status === 'paid' ? now() : null,
+            'paid_amount' => min($newPaid, $invoice->total),
+            'paid_at'     => $newStatus === 'paid' ? $request->paid_at : $invoice->paid_at,
+            'status'      => $newStatus,
         ]);
 
-        return back()->with('success', 'Payment updated.');
+        return back()->with('success', 'Payment recorded. Status: ' . ucfirst($newStatus));
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Send Invoice
-    |--------------------------------------------------------------------------
-    */
-
-    public function send(
-        string $tenant,
-        int|string $id
-    ): RedirectResponse {
-
-        $invoice = $this->findInvoice($id);
-
-        if ($invoice->status === 'draft') {
-            $invoice->update([
-                'status' => 'sent',
-            ]);
-        }
-
-        // Mail / WhatsApp logic later
-
-        return back()->with('success', 'Invoice sent successfully.');
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | PDF
-    |--------------------------------------------------------------------------
-    */
-
-    public function pdf(string $tenant, int|string $id)
+    // ── Download PDF ──────────────────────────────────────────────
+    public function pdf(int|string $id)
     {
         $invoice = $this->findInvoice($id);
+        $invoice->load(['contact', 'createdBy', 'quotation']);
+        $tenant = auth()->user()->tenant;
 
-        return view('tenant.invoices.pdf', [
-            'invoice' => $invoice,
-            'config'  => $this->getInvoiceConfig(),
-        ]);
+        $pdf = Pdf::loadView('tenant.invoices.pdf', compact('invoice', 'tenant'))
+                  ->setPaper('a4', 'portrait');
 
-        /*
-        later:
-        return Pdf::loadView(...)->download(...)
-        */
+        return $pdf->download("Invoice-{$invoice->number}.pdf");
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Helpers
-    |--------------------------------------------------------------------------
-    */
-
-    private function generateInvoiceNumber(): string
+    // ── Send via email ────────────────────────────────────────────
+    public function send(int|string $id): RedirectResponse
     {
-        $prefix = config('invoice_fields.number_prefix', 'INV');
+        $invoice = $this->findInvoice($id);
+        $invoice->load('contact');
 
-        $last = Invoice::where('tenant_id', $this->tenantId())
-            ->latest('id')
-            ->first();
-
-        $next = $last ? ($last->id + 1) : 1;
-
-        return $prefix . '-' . str_pad($next, 5, '0', STR_PAD_LEFT);
-    }
-
-    private function calculateTotals(array $data): array
-    {
-        $subtotal = 0;
-
-        foreach ($data['items'] as $item) {
-
-            $qty   = (float) ($item['qty'] ?? 1);
-            $price = (float) ($item['price'] ?? 0);
-
-            $subtotal += ($qty * $price);
+        if (!$invoice->contact?->email) {
+            return back()->with('error', 'Contact has no email address.');
         }
 
-        $discount = (float) ($data['discount'] ?? 0);
+        // TODO: Dispatch SendInvoiceEmail job
+        $invoice->update(['status' => 'sent']);
 
-        $taxPercent = (float) ($data['tax_percent'] ?? 0);
-
-        $taxable = max(0, $subtotal - $discount);
-
-        $taxAmount = ($taxable * $taxPercent) / 100;
-
-        $total = $taxable + $taxAmount;
-
-        return [
-            'subtotal'  => round($subtotal, 2),
-            'tax_amount' => round($taxAmount, 2),
-            'total'     => round($total, 2),
-        ];
+        return back()->with('success', "Invoice sent to {$invoice->contact->email}.");
     }
 }

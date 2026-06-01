@@ -27,8 +27,12 @@ return new class extends Migration
             $table->decimal('total', 12, 2)->default(0);
             $table->decimal('paid_amount', 12, 2)->default(0);
             $table->enum('status', ['draft', 'sent', 'paid', 'partial', 'overdue'])->default('draft');
+
+            $table->string('notes')->nullable();
+            $table->string('terms')->nullable();
             $table->string('razorpay_payment_id')->nullable();
             $table->timestamp('paid_at')->nullable();
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
             $table->softDeletes();
             $table->index(['tenant_id', 'status']);

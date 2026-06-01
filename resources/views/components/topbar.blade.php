@@ -38,7 +38,7 @@
         </button>
 
         {{-- Notifications --}}
-        <div class="dropdown">
+      {{--  <div class="dropdown">
             <button class="tb-btn" onclick="toggleDrop('notifDrop')" type="button" title="Notifications">
                 <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/>
@@ -46,7 +46,7 @@
                 @if(($unreadNotifs ?? 0) > 0)
                     <span class="tb-notif-dot"></span>
                 @else
-                    <span class="tb-notif-dot"></span>{{-- remove in prod if 0 --}}
+                    <span class="tb-notif-dot"></span> {{-- remove in prod if 0 
                 @endif
             </button>
 
@@ -56,7 +56,7 @@
                     <a href="#" style="font-size:11px;color:var(--accent);text-decoration:none;font-weight:600;text-transform:none;letter-spacing:0">Mark all read</a>
                 </div>
 
-                {{-- Notif items --}}
+                {{-- Notif items
                 @php
                     $notifs = $notifications ?? [
                         ['type'=>'lead',  'dot'=>'lead', 'text'=>'3 new leads assigned to you', 'time'=>'2 min ago',  'unread'=>true],
@@ -95,7 +95,10 @@
                     </a>
                 </div>
             </div>
-        </div>
+        </div>  --}}
+
+        {{-- Notification bell component --}}
+        @include('components.layouts.bell')
 
         {{-- User avatar --}}
         <div class="dropdown">
@@ -142,8 +145,7 @@
                     <div style="font-size:11px;color:var(--text-400);text-transform:uppercase;letter-spacing:0.5px;font-weight:700;margin-bottom:4px">Current Plan</div>
                     <div style="display:flex;align-items:center;justify-content:space-between">
                         <span style="font-size:13px;font-weight:600;color:var(--text-100)">{{ $sub->plan?->name ?? 'Free' }}</span>
-                        {{-- <a href="{{ route('subscription.current') ?? '#' }}" style="font-size:11.5px;color:var(--accent);text-decoration:none;font-weight:600">Upgrade</a> --}}
-                         <a href="#" style="font-size:11.5px;color:var(--accent);text-decoration:none;font-weight:600">Upgrade</a>
+                        <a href="{{ route('tenant.subscription.plans') }}" style="font-size:11.5px;color:var(--accent);text-decoration:none;font-weight:600">Upgrade</a>
                     </div>
                     @if($sub->ends_at)
                     <div style="font-size:11px;color:var(--text-400);margin-top:2px;font-family:var(--mono)">
