@@ -59,11 +59,16 @@ class SubscriptionController extends Controller
         $user   = Auth::user();
         $tenant = $user->tenant;
 
-        $order = $this->razorpay->createOrder($amount, 'INR', [
-            'tenant_id' => $tenant->id,
-            'plan_slug' => $plan->slug,
-            'cycle'     => $cycle,
-        ]);
+        try {
+            $order = $this->razorpay->createOrder($amount, 'INR', [
+                'tenant_id' => $tenant->id,
+                'plan_slug' => $plan->slug,
+                'cycle'     => $cycle,
+            ]);
+        } catch (\RuntimeException $e) {
+            return redirect()->route('tenant.subscription.plans')
+                ->with('error', 'Payment gateway is currently unavailable. Please contact support.');
+        }
 
         Subscription::updateOrCreate(
             ['tenant_id' => $tenant->id, 'status' => 'pending_payment'],
@@ -136,12 +141,16 @@ class SubscriptionController extends Controller
         $discountAmount = $coupon->calculateDiscount($baseAmount);
         $finalAmount    = max(0, $baseAmount - $discountAmount);
 
-        $order = $this->razorpay->createOrder((int) $finalAmount, 'INR', [
-            'tenant_id' => $tenant->id,
-            'plan_slug' => $plan->slug,
-            'cycle'     => $subscription->billing_cycle,
-            'coupon'    => $coupon->code,
-        ]);
+        try {
+            $order = $this->razorpay->createOrder((int) $finalAmount, 'INR', [
+                'tenant_id' => $tenant->id,
+                'plan_slug' => $plan->slug,
+                'cycle'     => $subscription->billing_cycle,
+                'coupon'    => $coupon->code,
+            ]);
+        } catch (\RuntimeException $e) {
+            return response()->json(['success' => false, 'message' => 'Payment gateway unavailable. Please contact support.'], 503);
+        }
 
         $subscription->update([
             'razorpay_order_id' => $order['id'],

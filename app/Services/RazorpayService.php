@@ -11,10 +11,22 @@ class RazorpayService
 
     public function __construct()
     {
-        $this->api = new Api(
-            config('services.razorpay.key_id'),
-            config('services.razorpay.key_secret')
-        );
+        if (!class_exists(Api::class)) {
+            throw new \RuntimeException(
+                'Razorpay SDK not found. Run: composer install --no-dev --optimize-autoloader'
+            );
+        }
+
+        $keyId     = config('services.razorpay.key_id');
+        $keySecret = config('services.razorpay.key_secret');
+
+        if (empty($keyId) || empty($keySecret)) {
+            throw new \RuntimeException(
+                'Razorpay credentials missing. Set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in .env'
+            );
+        }
+
+        $this->api = new Api($keyId, $keySecret);
     }
 
     /**
