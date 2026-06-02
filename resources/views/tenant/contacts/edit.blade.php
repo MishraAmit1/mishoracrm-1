@@ -104,15 +104,14 @@
         </div>
     </div>
 
-    <form method="POST"
-          action="{{ route('tenant.contacts.update', ['tenant'=>$tenantSlug,'id'=>$contact->id]) }}"
-          novalidate id="contactForm">
-        @csrf
-        @method('PUT')
-
         <div class="cf-layout">
 
             {{-- Main Form --}}
+            <form method="POST"
+                  action="{{ route('tenant.contacts.update', ['tenant'=>$tenantSlug,'id'=>$contact->id]) }}"
+                  novalidate id="contactForm">
+            @csrf
+            @method('PUT')
             <div class="cf-main">
 
                 {{-- Last Updated Bar --}}
@@ -140,6 +139,7 @@
                     </div>
                 </div>
             </div>
+            </form>
 
             {{-- Sidebar --}}
             <div class="cf-sidebar">
@@ -200,7 +200,6 @@
 
             </div>
         </div>
-    </form>
 </div>
 @endsection
 
