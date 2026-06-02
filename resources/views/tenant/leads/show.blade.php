@@ -280,8 +280,8 @@ $ringOffset = 163.4 - (163.4 * $score / 100);
 
 /* Assignee initials */
 $assigneeInitials = '';
-if ($lead->assignee) {
-    $assigneeInitials = collect(explode(' ', $lead->assignee->name))
+if ($lead->assignedTo) {
+    $assigneeInitials = collect(explode(' ', $lead->assignedTo->name))
         ->map(fn($p) => strtoupper($p[0] ?? ''))->join('');
     $assigneeInitials = substr($assigneeInitials, 0, 2);
 }
@@ -592,7 +592,7 @@ if ($lead->assignee) {
                                 <span class="ls-tl-time">{{ $lead->created_at->format('M d, Y · g:i A') }}</span>
                             </div>
                             <div class="ls-tl-desc">
-                                Created by {{ $lead->creator->name ?? 'System' }} · Source: {{ $sourceLabel }}
+                                Created by {{ $lead->createdBy->name ?? 'System' }} · Source: {{ $sourceLabel }}
                             </div>
                         </div>
                     </div>
@@ -708,10 +708,9 @@ if ($lead->assignee) {
                         </div>
                         Schedule Follow-up
                     </button>
-                    @if(($lead->status ?? '') !== 'won')
-                    <form method="POST" action="{{ route('tenant.leads.update', $lead) }}">
-                        @csrf @method('PATCH')
-                        <input type="hidden" name="status" value="won">
+                    @if(!$lead->isConverted())
+                    <form method="POST" action="{{ route('tenant.leads.convert', $lead) }}">
+                        @csrf
                         <button type="submit" class="ls-qa-btn" style="color:#1D9E75;border-color:#9FE1CB;background:#E1F5EE;width:100%">
                             <div class="ls-qa-icon" style="background:#E1F5EE">
                                 <svg width="14" height="14" fill="none" stroke="#1D9E75" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>

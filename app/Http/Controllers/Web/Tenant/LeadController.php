@@ -129,7 +129,7 @@ class LeadController extends Controller
         $this->saveCustomFields($lead, $request->input('custom_fields', []));
 
         return redirect()
-            ->route('leads.show', $lead->id)
+            ->route('tenant.leads.show', $lead->id)
             ->with('success', "Lead '{$lead->name}' created successfully.");
     }
 
@@ -200,7 +200,7 @@ class LeadController extends Controller
         }
 
         return redirect()
-            ->route('leads.show', $lead->id)
+            ->route('tenant.leads.show', $lead->id)
             ->with('success', 'Lead updated successfully.');
     }
 
@@ -218,7 +218,7 @@ class LeadController extends Controller
         $lead->delete();
 
         return redirect()
-            ->route('leads.index')
+            ->route('tenant.leads.index')
             ->with('success', "Lead '{$name}' deleted.");
     }
 
@@ -363,7 +363,7 @@ class LeadController extends Controller
         // Block direct 'converted' status change — use convert() instead
         if ($request->status === 'converted') {
             return redirect()
-                ->route('leads.convert', $lead->id);
+                ->route('tenant.leads.convert', $lead->id);
         }
 
         if ($request->status === 'contacted') $data['contacted_at'] = now();

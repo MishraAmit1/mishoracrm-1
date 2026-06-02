@@ -3,24 +3,36 @@
 namespace App\Http\Controllers\Web\Tenant;
 
 use App\Http\Controllers\Controller;
+use App\Models\Tenant;
 use App\Models\TenantIntegration;
+use App\Models\User;
 use App\Services\Integrations\IndiaMartLeadService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class LeadIntegrationController extends Controller
 {
-    private function tenantId(): int
+    private function authUser(): User
     {
-        return auth()->user()->tenant_id;
+        /** @var User $user */
+        $user = Auth::user();
+        return $user;
     }
 
-    private function tenant(): \App\Models\Tenant
+    private function tenantId(): int
     {
-        return app('tenant');
+        return (int) $this->authUser()->tenant_id;
+    }
+
+    private function tenant(): Tenant
+    {
+        return app()->has('tenant')
+            ? app('tenant')
+            : Tenant::findOrFail($this->tenantId());
     }
 
     // ── Index: show all integrations for this tenant ──────────────
@@ -40,7 +52,7 @@ class LeadIntegrationController extends Controller
                 return [
                     'key'           => $platform,
                     'info'          => $info,
-                    'allowed'       => in_array($platform, $allowed),
+                    'allowed'       => \in_array($platform, $allowed, true),
                     'integration'   => $integrations->get($platform),
                 ];
             });
@@ -60,7 +72,7 @@ class LeadIntegrationController extends Controller
                 ->with('error', 'This integration is not enabled for your account. Please contact support.');
         }
 
-        if (!array_key_exists($platform, TenantIntegration::PLATFORMS)) {
+        if (!\array_key_exists($platform, TenantIntegration::PLATFORMS)) {
             abort(404);
         }
 
@@ -96,12 +108,12 @@ class LeadIntegrationController extends Controller
             $settings['form_ids'] = $formIds;
         }
 
-        $credentials = array_filter($credentials, fn($v) => !is_null($v) && $v !== '');
+        $credentials = array_filter($credentials, fn($v) => $v !== null && $v !== '');
 
         $integration->update([
             'credentials' => $credentials,
             'settings'    => $settings ?: null,
-            'is_active'   => (bool) $request->is_active,
+            'is_active'   => $request->boolean('is_active'),
         ]);
 
         return redirect()

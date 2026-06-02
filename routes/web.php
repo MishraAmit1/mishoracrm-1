@@ -169,7 +169,6 @@ Route::middleware(['tenant', 'auth', 'subscription'])
         Route::post('/leads/save-view', [Tenant\LeadController::class, 'saveView'])->name('leads.view');
         Route::patch('/leads/{id}/status',  [Tenant\LeadController::class, 'updateStatus'])->name('leads.status.update');
         Route::post('/leads/bulk-status',       [Tenant\LeadController::class, 'bulkUpdateStatus'])->name('bulk-status');
-        Route::get('/leads/{id}/data',     [Tenant\LeadController::class, 'leadData'])->name('leads.data');
         // ── Follow-ups ────────────────────────────────────────────
         Route::get('/followups',           [Tenant\FollowupController::class, 'index'])->name('followups.index');
         Route::get('/followups/create',    [Tenant\FollowupController::class, 'create'])->name('followups.create');
@@ -210,6 +209,8 @@ Route::middleware(['tenant', 'auth', 'subscription'])
                 Route::put('/{id}', 'update')->name('update');
                 Route::delete('/{id}', 'destroy')->name('destroy');
                 Route::patch('/update-stage/{id}', 'updateStage')->name('update_stage');
+                Route::post('/{id}/mark-won',  'markWon')->name('mark_won');
+                Route::post('/{id}/mark-lost', 'markLost')->name('mark_lost');
             });
         });
 

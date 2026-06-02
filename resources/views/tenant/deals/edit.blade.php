@@ -235,8 +235,7 @@
                     <div class="df-sc-title">Quick Actions</div>
                     <div style="display:flex;flex-direction:column;gap:7px">
                         @if($deal->stage !== 'won')
-                        {{-- <form method="POST" action="{{ route('tenant.deals.mark_won', $deal->id) }}"> --}}
-                        <form method="POST" action="#">
+                        <form method="POST" action="{{ route('tenant.deals.mark_won', $deal->id) }}">
                             @csrf
                             <button type="submit" class="btn" style="width:100%;justify-content:center;background:#E1F5EE;border-color:#9FE1CB;color:#0F6E56;font-size:12.5px">
                                 <i class="ti ti-trophy" style="font-size:14px"></i>
@@ -287,7 +286,7 @@
 
 {{-- Mark Lost Modal --}}
 <dialog id="lostModal" style="border:1px solid var(--border-default);border-radius:14px;padding:24px;background:var(--bg-surface);width:420px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,.15)">
-    {{-- <form method="POST" action="{{ route('tenant.deals.mark_lost', $deal->id) }}"> --}}
+    <form method="POST" action="{{ route('tenant.deals.mark_lost', $deal->id) }}">
         @csrf
         <div style="font-size:16px;font-weight:600;color:var(--text-100);margin-bottom:4px">
             Mark Deal as Lost
@@ -367,8 +366,7 @@
             btn.addEventListener('click', () => {
                 setTimeout(() => {
                     stageHidden.dispatchEvent(new Event('change'));
-                    const ev = new MutationEvent ?? null;
-                    observer.takeRecords(); // flush
+                    observer.takeRecords();
                     const newStage = stageHidden.value;
                     const notice   = document.getElementById('stageChangedNotice');
                     const text     = document.getElementById('stageChangedText');

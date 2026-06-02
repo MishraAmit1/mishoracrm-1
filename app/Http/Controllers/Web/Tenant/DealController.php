@@ -110,9 +110,10 @@ class DealController extends Controller
     // ── Create ────────────────────────────────────────────────────
     public function create(Request $request): View
     {
+        $tenantId  = auth()->user()->tenant_id;
         $staffList = $this->getStaffList();
-        $contacts  = Contact::orderBy('name')->get(['id', 'name', 'company']);
-        $leads     = Lead::orderBy('name')->get(['id', 'name']);
+        $contacts  = Contact::where('tenant_id', $tenantId)->orderBy('name')->get(['id', 'name', 'company']);
+        $leads     = Lead::where('tenant_id', $tenantId)->orderBy('name')->get(['id', 'name']);
         $stages    = Deal::stages();
 
         // Pre-fill contact/lead if coming from their pages
@@ -184,10 +185,11 @@ class DealController extends Controller
     // ── Edit ──────────────────────────────────────────────────────
     public function edit(int|string $id): View
     {
+        $tenantId  = auth()->user()->tenant_id;
         $deal      = $this->findDeal($id);
         $staffList = $this->getStaffList();
-        $contacts  = Contact::orderBy('name')->get(['id', 'name', 'company']);
-        $leads     = Lead::orderBy('name')->get(['id', 'name']);
+        $contacts  = Contact::where('tenant_id', $tenantId)->orderBy('name')->get(['id', 'name', 'company']);
+        $leads     = Lead::where('tenant_id', $tenantId)->orderBy('name')->get(['id', 'name']);
         $stages    = Deal::stages();
 
         return view('tenant.deals.edit', compact(

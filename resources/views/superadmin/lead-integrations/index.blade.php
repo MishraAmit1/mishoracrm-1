@@ -1,4 +1,4 @@
-@extends('layouts.superadmin')
+@extends('layouts.app')
 @section('title', 'Lead Integrations — Tenant Access')
 
 @push('styles')
@@ -43,7 +43,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($tenants as $row)
+            @forelse($tenants as $row)
             @php
                 $tenant  = $row['tenant'];
                 $allowed = $row['allowed'];
@@ -60,13 +60,11 @@
                 </td>
                 <td>
                     <div class="platform-chips">
-                        @forelse(array_keys($platforms) as $key)
+                        @foreach(array_keys($platforms) as $key)
                         <span class="chip {{ ($allowed[$key] ?? false) ? 'chip-on' : 'chip-off' }}">
                             {{ ($allowed[$key] ?? false) ? '✓' : '✗' }} {{ $platforms[$key]['label'] }}
                         </span>
-                        @empty
-                            <span class="text-muted">—</span>
-                        @endforelse
+                        @endforeach
                     </div>
                 </td>
                 <td>
@@ -81,15 +79,13 @@
                     </a>
                 </td>
             </tr>
-            @endforeach
-
-            @if($tenants->isEmpty())
+            @empty
             <tr>
                 <td colspan="6" style="text-align:center;color:var(--text-300);padding:40px">
                     No active tenants found.
                 </td>
             </tr>
-            @endif
+            @endforelse
         </tbody>
     </table>
 </div>
