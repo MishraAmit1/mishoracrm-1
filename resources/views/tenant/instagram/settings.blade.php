@@ -66,7 +66,7 @@
 
         {{-- QR display area --}}
         <div id="qrArea" style="display:none;margin-top:16px;">
-            <div class="qr-wrap"><canvas id="qrCanvas"></canvas></div>
+            <div class="qr-wrap"><img id="qrImg" src="" alt="QR Code" style="width:200px;height:200px;display:block;"></div>
             <div class="qr-timer" id="qrTimer">Valid for <strong id="qrCountdown">10:00</strong></div>
             <div style="font-size:12px;color:var(--text-400);margin-top:4px;">Scan with any camera app or WhatsApp</div>
         </div>
@@ -205,7 +205,6 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <script>
 function copyText(id) {
     const text = document.getElementById(id).textContent.trim();
@@ -244,27 +243,31 @@ function startQrFlow() {
     fetch('{{ route("tenant.instagram.oauth.qr") }}', {
         headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
     })
-    .then(r => r.json())
-    .then(data => {
+    .then(function(r) {
+        if (!r.ok) return r.text().then(function(t) { throw new Error('Server error ' + r.status + ': ' + t.substring(0, 200)); });
+        return r.json();
+    })
+    .then(function(data) {
         if (!data.success) { alert(data.message); return; }
 
         qrState = data.state;
 
-        // Render QR on canvas
-        QRCode.toCanvas(document.getElementById('qrCanvas'), data.url, { width: 200, margin: 1 }, function(err) {
-            if (err) console.error(err);
-        });
+        // QR via free image API — no JS library needed
+        document.getElementById('qrImg').src =
+            'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=10&data=' + encodeURIComponent(data.url);
 
         document.getElementById('qrGenerateBtn').style.display = 'none';
-        document.getElementById('qrArea').style.display = 'block';
-        document.getElementById('qrSteps').style.display = 'block';
-        document.getElementById('qrConnecting').style.display = 'block';
-        document.getElementById('qrRefreshBtn').style.display = 'block';
+        document.getElementById('qrArea').style.display      = 'block';
+        document.getElementById('qrSteps').style.display     = 'block';
+        document.getElementById('qrConnecting').style.display= 'block';
+        document.getElementById('qrRefreshBtn').style.display= 'block';
 
         startCountdown(600);
         startPolling();
     })
-    .catch(() => alert('Could not generate QR. Please try again.'));
+    .catch(function(err) {
+        alert('Could not generate QR: ' + err.message);
+    });
 }
 
 function startCountdown(seconds) {
