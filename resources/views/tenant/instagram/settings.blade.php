@@ -92,11 +92,6 @@
 
         {{-- Buttons --}}
         <div id="qrGenerateBtn" style="margin-top:16px;">
-            @if(!$settings->app_id || !$settings->app_secret)
-                <div style="font-size:13px;color:#f59e0b;font-weight:600;margin-bottom:10px;">
-                    Save your App ID &amp; App Secret below first, then generate QR.
-                </div>
-            @endif
             <button type="button" class="btn btn-primary" onclick="startQrFlow()">Generate QR Code</button>
         </div>
         <div id="qrRefreshBtn" style="display:none;margin-top:12px;">
@@ -128,32 +123,23 @@
 <div class="settings-grid">
     {{-- Meta App credentials --}}
     <div class="card" style="grid-column:1/-1;">
-        <div class="card-header"><h3 class="card-title">Meta App Credentials</h3></div>
+        <div class="card-header"><h3 class="card-title">Account Details</h3></div>
         <div class="card-body">
-            <div class="form-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-                <div class="form-group">
-                    <label class="form-label">App ID</label>
-                    <input type="text" name="app_id" class="form-input" value="{{ $settings->app_id }}" placeholder="Meta App ID">
+            @if($settings->is_connected)
+                <div style="display:flex;gap:24px;flex-wrap:wrap;">
+                    <div class="form-group" style="flex:1;min-width:200px;">
+                        <label class="form-label">Page ID</label>
+                        <input type="text" name="page_id" class="form-input" value="{{ $settings->page_id }}" placeholder="Auto-filled on QR connect">
+                    </div>
+                    <div class="form-group" style="flex:1;min-width:200px;">
+                        <label class="form-label">Instagram Account ID</label>
+                        <input type="text" name="instagram_account_id" class="form-input" value="{{ $settings->instagram_account_id }}" placeholder="Auto-filled on QR connect">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">App Secret</label>
-                    <input type="password" name="app_secret" class="form-input" placeholder="Leave blank to keep current">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Page ID</label>
-                    <input type="text" name="page_id" class="form-input" value="{{ $settings->page_id }}" placeholder="Facebook Page ID">
-                    <span class="form-hint">The Facebook Page connected to your Instagram account</span>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Instagram Account ID</label>
-                    <input type="text" name="instagram_account_id" class="form-input" value="{{ $settings->instagram_account_id }}" placeholder="Instagram Business Account ID">
-                </div>
-                <div class="form-group" style="grid-column:1/-1;">
-                    <label class="form-label">Access Token</label>
-                    <input type="password" name="access_token" class="form-input" placeholder="Page Access Token (long-lived)">
-                    <span class="form-hint">Never-expiring Page Access Token from Meta Business Suite</span>
-                </div>
-            </div>
+                <p style="font-size:12px;color:var(--text-300);margin-top:8px;">These are filled automatically when you connect via QR code. Edit only if needed.</p>
+            @else
+                <p style="font-size:13px;color:var(--text-300);">Use the <strong>QR code above</strong> to connect your Instagram account. Page ID and Account ID will be filled automatically.</p>
+            @endif
         </div>
     </div>
 

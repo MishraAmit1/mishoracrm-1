@@ -14,6 +14,7 @@ use App\Http\Controllers\Web\InstagramWebhookController;
 use App\Http\Controllers\Web\WhatsappWebhookController;
 use App\Http\Controllers\Web\LeadWebhookController;
 use App\Http\Controllers\Web\SuperAdmin\LeadIntegrationController as SuperAdminLeadIntegrationController;
+use App\Http\Controllers\Web\SuperAdmin\PlatformSettingController as SuperAdminPlatformSettingController;
 use App\Http\Controllers\Web\Tenant\LeadIntegrationController as TenantLeadIntegrationController;
 use Illuminate\Support\Facades\Route;
 
@@ -98,6 +99,12 @@ Route::prefix('superadmin')
             Route::get('/{tenant}/edit',             'edit')->name('edit');
             Route::put('/{tenant}',                  'update')->name('update');
             Route::post('/{tenant}/toggle',          'toggle')->name('toggle');
+        });
+
+        // Platform-level settings (Meta App credentials etc.)
+        Route::prefix('platform-settings')->name('platform-settings.')->controller(SuperAdminPlatformSettingController::class)->group(function () {
+            Route::get('/meta',  'metaApp')->name('meta');
+            Route::post('/meta', 'saveMetaApp')->name('meta.save');
         });
 
         // Coupon management

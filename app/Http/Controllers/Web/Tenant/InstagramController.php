@@ -7,6 +7,7 @@ use App\Models\InstagramAutomation;
 use App\Models\InstagramChatbotFlow;
 use App\Models\InstagramLog;
 use App\Models\InstagramSetting;
+use App\Models\PlatformSetting;
 use App\Services\InstagramService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -53,20 +54,14 @@ class InstagramController extends Controller
     public function saveSettings(Request $request): RedirectResponse
     {
         $request->validate([
-            'app_id'                 => ['nullable', 'string', 'max:255'],
-            'app_secret'             => ['nullable', 'string', 'max:255'],
-            'access_token'           => ['nullable', 'string'],
-            'instagram_account_id'   => ['nullable', 'string', 'max:100'],
-            'page_id'                => ['nullable', 'string', 'max:100'],
-            'n8n_webhook_url'        => ['nullable', 'url', 'max:500'],
+            'instagram_account_id' => ['nullable', 'string', 'max:100'],
+            'page_id'              => ['nullable', 'string', 'max:100'],
+            'n8n_webhook_url'      => ['nullable', 'url', 'max:500'],
         ]);
 
         $settings = InstagramSetting::forTenant($this->tenantId());
         $settings->tenant_id = $this->tenantId();
 
-        if ($request->filled('app_id'))               $settings->app_id = $request->app_id;
-        if ($request->filled('app_secret'))           $settings->app_secret = $request->app_secret;
-        if ($request->filled('access_token'))         $settings->access_token = $request->access_token;
         if ($request->filled('instagram_account_id')) $settings->instagram_account_id = $request->instagram_account_id;
         if ($request->filled('page_id'))              $settings->page_id = $request->page_id;
         if (!$settings->webhook_verify_token)         $settings->webhook_verify_token = Str::random(32);
@@ -301,17 +296,18 @@ class InstagramController extends Controller
     // ── OAuth — Generate QR (authenticated) ──────────────────────
     public function oauthGenerateQr(): JsonResponse
     {
-        $settings = InstagramSetting::forTenant($this->tenantId());
+        $appId     = PlatformSetting::get('meta_app_id');
+        $appSecret = PlatformSetting::get('meta_app_secret');
 
-        if (!$settings->app_id || !$settings->app_secret) {
-            return response()->json(['success' => false, 'message' => 'Please save App ID and App Secret first.']);
+        if (!$appId || !$appSecret) {
+            return response()->json(['success' => false, 'message' => 'Meta App credentials not configured yet. Please ask your administrator.']);
         }
 
         $state = Str::random(40);
         cache()->put("ig_oauth_{$state}", [
             'tenant_id'  => $this->tenantId(),
-            'app_id'     => $settings->app_id,
-            'app_secret' => $settings->app_secret,
+            'app_id'     => $appId,
+            'app_secret' => $appSecret,
         ], now()->addMinutes(10));
 
         return response()->json([
