@@ -62,6 +62,10 @@ Route::post('/webhook/whatsapp',  [WhatsappWebhookController::class, 'handle'])-
 Route::get('/webhook/leads/{token}',  [LeadWebhookController::class, 'verify'])->name('webhook.leads.verify');
 Route::post('/webhook/leads/{token}', [LeadWebhookController::class, 'handle'])->name('webhook.leads');
 
+// ── Instagram OAuth (no auth — phone browser redirected here by Meta) ──
+Route::get('/instagram/oauth/start',    [Tenant\InstagramController::class, 'oauthStart'])->name('instagram.oauth.start');
+Route::get('/instagram/oauth/callback', [Tenant\InstagramController::class, 'oauthCallback'])->name('instagram.oauth.callback');
+
 // ══════════════════════════════════════════════════════════════════
 // SUPER ADMIN (base domain: saas-crm.test/superadmin)
 // ══════════════════════════════════════════════════════════════════
@@ -349,6 +353,10 @@ Route::middleware(['tenant', 'auth', 'subscription'])
 
             // Guide / How it works
             Route::get('/guide',                           [Tenant\InstagramController::class, 'guide'])->name('guide');
+
+            // OAuth QR Connect
+            Route::get('/oauth/qr',     [Tenant\InstagramController::class, 'oauthGenerateQr'])->name('oauth.qr');
+            Route::get('/oauth/status', [Tenant\InstagramController::class, 'oauthStatus'])->name('oauth.status');
         });
 
         // Email and WhatsApp templates and logs

@@ -123,10 +123,16 @@
             <div class="form-section">
                 <div class="fs-title">Template (Optional)</div>
                 <input type="hidden" name="template_id" id="templateId"/>
+
+                {{-- Hidden template data elements --}}
+                @foreach($templates as $tpl)
+                <template id="tplbody_{{ $tpl->id }}" data-subject="{{ $tpl->subject }}">{!! $tpl->body !!}</template>
+                @endforeach
+
                 <div style="display:flex;flex-wrap:wrap;gap:6px">
                     @foreach($templates as $tpl)
                     <button type="button" class="tpl-chip" id="chip_{{ $tpl->id }}"
-                            onclick='selectTemplate({{ $tpl->id }}, @json($tpl->subject), @json($tpl->body))'>
+                            onclick="selectTemplate({{ $tpl->id }})">
                         {{ $tpl->name }}
                     </button>
                     @endforeach
@@ -199,7 +205,7 @@
 @push('scripts')
 <script src="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.min.js"></script>
 <script>
-const quillEmailSend = new Quill('#quillEmailSend', {
+var quillEmailSend = new Quill('#quillEmailSend', {
     theme: 'snow',
     placeholder: 'Dear @{{name}}, ...',
     modules: {
@@ -218,7 +224,7 @@ const quillEmailSend = new Quill('#quillEmailSend', {
 quillEmailSend.on('text-change', updatePreview);
 
 function syncBody() {
-    const html = quillEmailSend.root.innerHTML.trim();
+    var html = quillEmailSend.root.innerHTML;
     if (!html || html === '<p><br></p>') { alert('Email body is required.'); return false; }
     document.getElementById('emailBodyHidden').value = html;
     return true;
@@ -226,7 +232,7 @@ function syncBody() {
 
 function insertVar(v) {
     quillEmailSend.focus();
-    const range = quillEmailSend.getSelection() || { index: quillEmailSend.getLength() };
+    var range = quillEmailSend.getSelection() || { index: quillEmailSend.getLength() };
     quillEmailSend.insertText(range.index, v, 'user');
     quillEmailSend.setSelection(range.index + v.length);
     updatePreview();
@@ -234,25 +240,32 @@ function insertVar(v) {
 
 function fillRecipient(sel) {
     if (!sel.value) return;
-    const [email, name, type, id] = sel.value.split('|');
-    document.getElementById('toEmail').value   = email;
-    document.getElementById('toName').value    = name;
-    document.getElementById('leadId').value    = type === 'lead'    ? id : '';
-    document.getElementById('contactId').value = type === 'contact' ? id : '';
+    var parts = sel.value.split('|');
+    document.getElementById('toEmail').value   = parts[0];
+    document.getElementById('toName').value    = parts[1];
+    document.getElementById('leadId').value    = parts[2] === 'lead'    ? parts[3] : '';
+    document.getElementById('contactId').value = parts[2] === 'contact' ? parts[3] : '';
     updatePreview();
 }
 
-function selectTemplate(id, subject, body) {
-    document.querySelectorAll('.tpl-chip').forEach(c => c.classList.remove('active'));
+function selectTemplate(id) {
+    var tmpl = document.getElementById('tplbody_' + id);
+    if (!tmpl) return;
+
+    document.querySelectorAll('.tpl-chip').forEach(function(c) { c.classList.remove('active'); });
     document.getElementById('chip_' + id).classList.add('active');
-    document.getElementById('templateId').value      = id;
-    document.getElementById('emailSubject').value    = subject;
-    quillEmailSend.root.innerHTML = body;
+    document.getElementById('templateId').value   = id;
+    document.getElementById('emailSubject').value = tmpl.dataset.subject || '';
+
+    // Use Quill's clipboard API — avoids scroll.js emit crash from direct innerHTML
+    var body = tmpl.innerHTML;
+    quillEmailSend.clipboard.dangerouslyPasteHTML(body);
+    quillEmailSend.history.clear();
     updatePreview();
 }
 
 function clearTemplate() {
-    document.querySelectorAll('.tpl-chip').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.tpl-chip').forEach(function(c) { c.classList.remove('active'); });
     document.getElementById('templateId').value   = '';
     document.getElementById('emailSubject').value = '';
     quillEmailSend.setContents([]);
@@ -260,14 +273,17 @@ function clearTemplate() {
 }
 
 function updatePreview() {
-    const email   = document.getElementById('toEmail').value;
-    const name    = document.getElementById('toName').value;
-    const subject = document.getElementById('emailSubject').value;
-    const html    = quillEmailSend.root.innerHTML;
+    var email   = document.getElementById('toEmail').value.trim();
+    var name    = document.getElementById('toName').value.trim();
+    var subject = document.getElementById('emailSubject').value.trim();
+    var html    = quillEmailSend.root.innerHTML;
+    var hasBody = html && html !== '<p><br></p>';
 
-    document.getElementById('prevTo').textContent      = name ? `${name} <${email}>` : email || '—';
+    document.getElementById('prevTo').textContent      = name ? (name + ' <' + email + '>') : (email || '—');
     document.getElementById('prevSubject').textContent = subject || '—';
-    document.getElementById('prevBody').innerHTML      = html || 'Your email body will appear here...';
+    document.getElementById('prevBody').innerHTML      = hasBody
+        ? html
+        : '<span style="color:#9ca3af;font-style:italic">Your email body will appear here...</span>';
 }
 
 document.getElementById('toEmail').addEventListener('input', updatePreview);

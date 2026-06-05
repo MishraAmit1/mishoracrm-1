@@ -9,6 +9,17 @@
 .copy-btn { cursor:pointer; background:none; border:none; color:var(--text-300); padding:4px; }
 .copy-btn:hover { color:var(--accent); }
 .conn-strip { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-radius:var(--r-md); border:1px solid var(--border-default); background:var(--bg-surface); margin-bottom:20px; }
+
+/* QR Connect */
+.qr-setup-card { border:2px dashed var(--border-default); border-radius:var(--r-lg); padding:28px 24px; text-align:center; background:var(--bg-subtle); margin-bottom:24px; }
+.qr-setup-card.connected { border-color:#22c55e; background:#f0fdf4; }
+.qr-wrap { display:inline-block; background:#fff; border-radius:12px; padding:16px; box-shadow:0 2px 12px rgba(0,0,0,.08); margin:16px 0; }
+.qr-steps { display:flex; gap:16px; justify-content:center; flex-wrap:wrap; margin:12px 0 0; }
+.qr-step { display:flex; align-items:flex-start; gap:8px; text-align:left; max-width:160px; }
+.qr-step-num { width:22px; height:22px; border-radius:50%; background:var(--accent,#6366f1); color:#fff; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
+.qr-step-text { font-size:12px; color:var(--text-300); line-height:1.4; }
+.qr-timer { font-size:12px; color:var(--text-300); margin-top:6px; }
+.qr-success-icon { width:56px; height:56px; border-radius:50%; background:#dcfce7; display:flex; align-items:center; justify-content:center; margin:0 auto 12px; }
 </style>
 @endpush
 
@@ -29,6 +40,70 @@
 @if(session('success'))
     <div class="alert alert-success" style="margin-bottom:20px;">{{ session('success') }}</div>
 @endif
+
+{{-- ── QR Quick Connect ─────────────────────────────────────────── --}}
+<div class="qr-setup-card" id="qrSetupCard">
+    @if($settings->is_connected)
+        <div class="qr-success-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" style="width:28px;height:28px;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+            </svg>
+        </div>
+        <div style="font-weight:700;font-size:16px;color:#16a34a;">Instagram Connected</div>
+        <div style="font-size:13px;color:var(--text-300);margin-top:4px;">Account ID: {{ $settings->instagram_account_id }} &nbsp;|&nbsp; Page ID: {{ $settings->page_id }}</div>
+        <button type="button" class="btn btn-sm" style="margin-top:14px;" onclick="startQrFlow()">Reconnect / Change Account</button>
+    @else
+        <div style="font-size:22px;margin-bottom:8px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:40px;height:40px;color:var(--accent,#6366f1);margin:0 auto;display:block;">
+                <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
+                <path stroke-linecap="round" d="M14 14h2m3 0h2M14 17v2m3-2v5m3-5v2"/>
+            </svg>
+        </div>
+        <div style="font-weight:700;font-size:17px;color:var(--text-100);">Quick Connect with QR Code</div>
+        <div style="font-size:13px;color:var(--text-300);margin-top:6px;max-width:400px;margin-left:auto;margin-right:auto;">
+            Scan this QR code with your phone to connect your Instagram Business account automatically — no need to copy tokens manually.
+        </div>
+
+        {{-- QR display area --}}
+        <div id="qrArea" style="display:none;margin-top:16px;">
+            <div class="qr-wrap"><canvas id="qrCanvas"></canvas></div>
+            <div class="qr-timer" id="qrTimer">Valid for <strong id="qrCountdown">10:00</strong></div>
+            <div style="font-size:12px;color:var(--text-400);margin-top:4px;">Scan with any camera app or WhatsApp</div>
+        </div>
+
+        <div id="qrSteps" style="display:none;">
+            <div class="qr-steps">
+                <div class="qr-step"><div class="qr-step-num">1</div><div class="qr-step-text">Open your phone camera and scan the QR code above</div></div>
+                <div class="qr-step"><div class="qr-step-num">2</div><div class="qr-step-text">Log in with your Facebook account that owns the Instagram Business page</div></div>
+                <div class="qr-step"><div class="qr-step-num">3</div><div class="qr-step-text">Allow the requested permissions and this page will update automatically</div></div>
+            </div>
+        </div>
+
+        <div id="qrConnecting" style="display:none;margin-top:14px;">
+            <div style="font-size:13px;color:var(--text-300);">
+                <span style="animation:pulse 1.5s ease-in-out infinite;display:inline-block;width:8px;height:8px;border-radius:50%;background:#f59e0b;margin-right:6px;vertical-align:middle;"></span>
+                Waiting for authorization on your phone…
+            </div>
+        </div>
+
+        <div id="qrDone" style="display:none;margin-top:14px;">
+            <div style="font-size:15px;font-weight:600;color:#16a34a;">Connected successfully! Reloading…</div>
+        </div>
+
+        {{-- Buttons --}}
+        <div id="qrGenerateBtn" style="margin-top:16px;">
+            @if(!$settings->app_id || !$settings->app_secret)
+                <div style="font-size:13px;color:#f59e0b;font-weight:600;margin-bottom:10px;">
+                    Save your App ID &amp; App Secret below first, then generate QR.
+                </div>
+            @endif
+            <button type="button" class="btn btn-primary" onclick="startQrFlow()">Generate QR Code</button>
+        </div>
+        <div id="qrRefreshBtn" style="display:none;margin-top:12px;">
+            <button type="button" class="btn btn-ghost btn-sm" onclick="startQrFlow()">Generate New QR</button>
+        </div>
+    @endif
+</div>
 
 {{-- Connection status --}}
 <div class="conn-strip">
@@ -130,11 +205,11 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <script>
 function copyText(id) {
     const text = document.getElementById(id).textContent.trim();
     navigator.clipboard.writeText(text).then(() => {
-        // brief visual feedback
         const el = document.getElementById(id);
         el.style.background = 'var(--bg-success, #dcfce7)';
         setTimeout(() => el.style.background = '', 1200);
@@ -161,5 +236,84 @@ function testConnection() {
     .catch(() => alert('Request failed. Check console.'))
     .finally(() => { btn.textContent = 'Test Connection'; btn.disabled = false; });
 }
+
+// ── QR Connect ──────────────────────────────────────────────
+let qrState = null, qrPollTimer = null, qrCountdownTimer = null;
+
+function startQrFlow() {
+    fetch('{{ route("tenant.instagram.oauth.qr") }}', {
+        headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (!data.success) { alert(data.message); return; }
+
+        qrState = data.state;
+
+        // Render QR on canvas
+        QRCode.toCanvas(document.getElementById('qrCanvas'), data.url, { width: 200, margin: 1 }, function(err) {
+            if (err) console.error(err);
+        });
+
+        document.getElementById('qrGenerateBtn').style.display = 'none';
+        document.getElementById('qrArea').style.display = 'block';
+        document.getElementById('qrSteps').style.display = 'block';
+        document.getElementById('qrConnecting').style.display = 'block';
+        document.getElementById('qrRefreshBtn').style.display = 'block';
+
+        startCountdown(600);
+        startPolling();
+    })
+    .catch(() => alert('Could not generate QR. Please try again.'));
+}
+
+function startCountdown(seconds) {
+    clearInterval(qrCountdownTimer);
+    let remaining = seconds;
+    const el = document.getElementById('qrCountdown');
+
+    qrCountdownTimer = setInterval(() => {
+        remaining--;
+        const m = String(Math.floor(remaining / 60)).padStart(2, '0');
+        const s = String(remaining % 60).padStart(2, '0');
+        if (el) el.textContent = m + ':' + s;
+        if (remaining <= 0) {
+            clearInterval(qrCountdownTimer);
+            clearInterval(qrPollTimer);
+            document.getElementById('qrConnecting').style.display = 'none';
+            document.getElementById('qrTimer').textContent = 'QR code expired. Generate a new one.';
+        }
+    }, 1000);
+}
+
+function startPolling() {
+    clearInterval(qrPollTimer);
+    qrPollTimer = setInterval(() => {
+        if (!qrState) return;
+        fetch('{{ route("tenant.instagram.oauth.status") }}?state=' + qrState, {
+            headers: { 'Accept': 'application/json' }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.connected) {
+                clearInterval(qrPollTimer);
+                clearInterval(qrCountdownTimer);
+                document.getElementById('qrConnecting').style.display = 'none';
+                document.getElementById('qrArea').style.display = 'none';
+                document.getElementById('qrRefreshBtn').style.display = 'none';
+                document.getElementById('qrDone').style.display = 'block';
+                document.getElementById('qrSetupCard').classList.add('connected');
+                setTimeout(() => location.reload(), 1800);
+            }
+        })
+        .catch(() => {});
+    }, 3000);
+}
 </script>
+<style>
+@keyframes pulse {
+    0%,100% { opacity:1; }
+    50%      { opacity:.3; }
+}
+</style>
 @endpush

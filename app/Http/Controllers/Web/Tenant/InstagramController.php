@@ -11,6 +11,8 @@ use App\Services\InstagramService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -294,6 +296,169 @@ class InstagramController extends Controller
             ->where('tenant_id', $this->tenantId())->delete();
 
         return back()->with('success', 'Chatbot flow deleted.');
+    }
+
+    // ── OAuth — Generate QR (authenticated) ──────────────────────
+    public function oauthGenerateQr(): JsonResponse
+    {
+        $settings = InstagramSetting::forTenant($this->tenantId());
+
+        if (!$settings->app_id || !$settings->app_secret) {
+            return response()->json(['success' => false, 'message' => 'Please save App ID and App Secret first.']);
+        }
+
+        $state = Str::random(40);
+        cache()->put("ig_oauth_{$state}", [
+            'tenant_id'  => $this->tenantId(),
+            'app_id'     => $settings->app_id,
+            'app_secret' => $settings->app_secret,
+        ], now()->addMinutes(10));
+
+        return response()->json([
+            'success' => true,
+            'state'   => $state,
+            'url'     => route('instagram.oauth.start', ['state' => $state]),
+        ]);
+    }
+
+    // ── OAuth — Start (public — phone browser) ────────────────────
+    public function oauthStart(Request $request): RedirectResponse|Response
+    {
+        $state = $request->query('state');
+        $data  = cache("ig_oauth_{$state}");
+
+        if (!$data) {
+            return response('QR code has expired. Please generate a new one in the CRM.', 400);
+        }
+
+        $scope = implode(',', [
+            'pages_show_list',
+            'instagram_basic',
+            'instagram_manage_messages',
+            'instagram_manage_comments',
+            'pages_read_engagement',
+            'pages_manage_metadata',
+        ]);
+
+        $metaUrl = 'https://www.facebook.com/v19.0/dialog/oauth?' . http_build_query([
+            'client_id'     => $data['app_id'],
+            'redirect_uri'  => route('instagram.oauth.callback'),
+            'state'         => $state,
+            'scope'         => $scope,
+            'response_type' => 'code',
+        ]);
+
+        return redirect($metaUrl);
+    }
+
+    // ── OAuth — Callback (public — Meta redirects here) ──────────
+    public function oauthCallback(Request $request): View|Response
+    {
+        $state = $request->query('state');
+        $code  = $request->query('code');
+
+        if ($request->query('error')) {
+            return view('tenant.instagram.oauth_result', [
+                'success' => false,
+                'message' => $request->query('error_description', 'Authorization denied.'),
+            ]);
+        }
+
+        $data = cache("ig_oauth_{$state}");
+        if (!$data) {
+            return view('tenant.instagram.oauth_result', [
+                'success' => false,
+                'message' => 'QR code expired. Please generate a new one.',
+            ]);
+        }
+
+        try {
+            $callbackUrl = route('instagram.oauth.callback');
+
+            $tokenRes = Http::get('https://graph.facebook.com/v19.0/oauth/access_token', [
+                'client_id'     => $data['app_id'],
+                'client_secret' => $data['app_secret'],
+                'redirect_uri'  => $callbackUrl,
+                'code'          => $code,
+            ])->json();
+
+            if (empty($tokenRes['access_token'])) {
+                throw new \Exception($tokenRes['error']['message'] ?? 'Failed to get access token.');
+            }
+
+            $longRes = Http::get('https://graph.facebook.com/v19.0/oauth/access_token', [
+                'grant_type'        => 'fb_exchange_token',
+                'client_id'         => $data['app_id'],
+                'client_secret'     => $data['app_secret'],
+                'fb_exchange_token' => $tokenRes['access_token'],
+            ])->json();
+
+            $longToken = $longRes['access_token'] ?? $tokenRes['access_token'];
+
+            $pagesRes = Http::get('https://graph.facebook.com/v19.0/me/accounts', [
+                'access_token' => $longToken,
+            ])->json();
+
+            if (empty($pagesRes['data'])) {
+                throw new \Exception('No Facebook Pages found. Link a Page to your Instagram Business account first.');
+            }
+
+            $page      = $pagesRes['data'][0];
+            $pageId    = $page['id'];
+            $pageToken = $page['access_token'];
+
+            $igRes = Http::get("https://graph.facebook.com/v19.0/{$pageId}", [
+                'fields'       => 'instagram_business_account',
+                'access_token' => $pageToken,
+            ])->json();
+
+            $igAccountId = $igRes['instagram_business_account']['id'] ?? null;
+
+            if (!$igAccountId) {
+                throw new \Exception('No Instagram Business Account linked to this Facebook Page.');
+            }
+
+            $settings = InstagramSetting::firstOrNew(['tenant_id' => $data['tenant_id']]);
+            $settings->tenant_id            = $data['tenant_id'];
+            $settings->access_token         = $pageToken;
+            $settings->page_id              = $pageId;
+            $settings->instagram_account_id = $igAccountId;
+            $settings->is_connected         = true;
+            if (!$settings->webhook_verify_token) {
+                $settings->webhook_verify_token = Str::random(32);
+            }
+            $settings->save();
+
+            cache()->put("ig_oauth_done_{$state}", true, now()->addMinutes(5));
+            cache()->forget("ig_oauth_{$state}");
+
+            return view('tenant.instagram.oauth_result', [
+                'success' => true,
+                'message' => 'Instagram account connected! You can close this window.',
+            ]);
+        } catch (\Throwable $e) {
+            return view('tenant.instagram.oauth_result', [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    // ── OAuth — Poll status (authenticated) ───────────────────────
+    public function oauthStatus(Request $request): JsonResponse
+    {
+        $state = $request->query('state');
+
+        if (cache("ig_oauth_done_{$state}")) {
+            $settings = InstagramSetting::forTenant($this->tenantId());
+            return response()->json([
+                'connected'            => true,
+                'instagram_account_id' => $settings->instagram_account_id,
+                'page_id'              => $settings->page_id,
+            ]);
+        }
+
+        return response()->json(['connected' => false]);
     }
 
     // ── Guide / How it works ──────────────────────────────────────
