@@ -3,183 +3,601 @@
 
 @push('styles')
 <style>
-.settings-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
-@media(max-width:700px){ .settings-grid { grid-template-columns:1fr; } }
-.webhook-box { background:var(--bg-subtle); border:1px solid var(--border-subtle); border-radius:var(--r-md); padding:12px 14px; font-family:var(--mono); font-size:12px; word-break:break-all; color:var(--text-200); }
-.conn-strip { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-radius:var(--r-md); border:1px solid var(--border-default); background:var(--bg-surface); margin-bottom:20px; }
+/* ── Layout ───────────────────────────────────────────────────── */
+.wa-settings-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+@media(max-width:720px){ .wa-settings-grid { grid-template-columns:1fr; } }
+
+/* ── Coexistence banner ───────────────────────────────────────── */
+.coex-banner {
+    background:linear-gradient(135deg,#f0fdf4 0%,#eff6ff 100%);
+    border:1.5px solid #86efac;
+    border-radius:var(--r-lg);
+    padding:0;
+    margin-bottom:20px;
+    overflow:hidden;
+}
+.coex-banner-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 20px;
+    cursor:pointer;
+    user-select:none;
+}
+.coex-banner-title {
+    display:flex; align-items:center; gap:10px;
+    font-weight:700; font-size:14px; color:#15803d;
+}
+.coex-banner-sub { font-size:12px; color:#166534; font-weight:400; margin-top:2px; }
+.coex-chevron { color:#16a34a; transition:transform .25s; flex-shrink:0; }
+.coex-chevron.open { transform:rotate(180deg); }
+
+.coex-body {
+    padding:0 20px 20px;
+    border-top:1px solid #bbf7d0;
+}
+
+/* ── Method tabs ──────────────────────────────────────────────── */
+.method-tabs { display:flex; gap:0; margin-bottom:16px; border-bottom:2px solid var(--border-subtle); }
+.method-tab {
+    padding:10px 18px; font-size:13px; font-weight:600; cursor:pointer;
+    color:var(--text-300); border-bottom:2px solid transparent; margin-bottom:-2px;
+    transition:all .15s;
+}
+.method-tab.active { color:#15803d; border-bottom-color:#25d366; }
+
+.method-panel { display:none; }
+.method-panel.active { display:block; }
+
+/* ── Steps inside coexistence ─────────────────────────────────── */
+.coex-steps { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:10px; }
+.coex-step { display:flex; gap:10px; align-items:flex-start; }
+.coex-step-num {
+    min-width:24px; height:24px; border-radius:50%;
+    background:#25d366; color:#fff;
+    font-size:11px; font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0; margin-top:1px;
+}
+.coex-step-text { font-size:13px; color:var(--text-200); line-height:1.5; }
+.coex-step-text strong { color:var(--text-100); }
+.coex-step-text .path {
+    display:inline-block; background:var(--bg-subtle); border:1px solid var(--border-subtle);
+    border-radius:4px; padding:1px 7px; font-size:12px; font-family:var(--mono);
+    color:var(--text-200); margin:0 1px;
+}
+
+.coex-note {
+    display:flex; gap:8px; align-items:flex-start;
+    background:#fff; border:1px solid #bbf7d0;
+    border-radius:var(--r-md); padding:10px 14px;
+    font-size:12px; color:#166534; line-height:1.5;
+    margin-top:14px;
+}
+
+/* ── Connect wizard card ──────────────────────────────────────── */
+.wa-connect-card {
+    background:var(--bg-surface);
+    border:1.5px solid var(--border-default);
+    border-radius:var(--r-lg);
+    overflow:hidden;
+    margin-bottom:20px;
+}
+.wa-connect-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 20px 14px;
+    border-bottom:1px solid var(--border-subtle);
+}
+.wa-connect-title {
+    display:flex; align-items:center; gap:10px;
+    font-weight:700; font-size:15px; color:var(--text-100);
+}
+.wa-badge-connected    { background:#dcfce7; color:#15803d; border-radius:20px; padding:3px 10px; font-size:12px; font-weight:600; }
+.wa-badge-disconnected { background:#fee2e2; color:#b91c1c; border-radius:20px; padding:3px 10px; font-size:12px; font-weight:600; }
+
+/* ── Steps bar ────────────────────────────────────────────────── */
+.wa-steps {
+    display:flex; align-items:flex-start; gap:0;
+    padding:20px 24px 0;
+    position:relative;
+}
+.wa-steps::before {
+    content:'';
+    position:absolute;
+    top:34px; left:calc(24px + 14px); right:calc(24px + 14px);
+    height:2px; background:var(--border-subtle);
+    z-index:0;
+}
+.wa-step { flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; position:relative; z-index:1; }
+.wa-step-dot {
+    width:28px; height:28px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:700;
+    border:2px solid var(--border-default);
+    background:var(--bg-surface); color:var(--text-300);
+    transition:all .2s;
+}
+.wa-step.active .wa-step-dot { background:#25d366; border-color:#25d366; color:#fff; }
+.wa-step.done   .wa-step-dot { background:#dcfce7; border-color:#22c55e; color:#16a34a; }
+.wa-step-label { font-size:11px; color:var(--text-400); text-align:center; line-height:1.3; max-width:80px; }
+.wa-step.active .wa-step-label { color:#16a34a; font-weight:600; }
+.wa-step.done   .wa-step-label { color:#16a34a; }
+
+/* ── QR body ──────────────────────────────────────────────────── */
+.wa-connect-body { padding:24px; display:flex; gap:32px; align-items:flex-start; flex-wrap:wrap; }
+.wa-qr-col { display:flex; flex-direction:column; align-items:center; gap:12px; }
+.wa-qr-frame {
+    width:200px; height:200px; border-radius:14px;
+    border:2px solid var(--border-subtle); background:var(--bg-subtle);
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden; position:relative;
+}
+.wa-qr-frame img { width:100%; height:100%; display:block; }
+.wa-qr-placeholder { display:flex; flex-direction:column; align-items:center; gap:10px; color:var(--text-400); }
+.wa-qr-placeholder svg { opacity:.35; }
+.wa-qr-placeholder span { font-size:12px; text-align:center; max-width:120px; line-height:1.4; }
+.wa-timer { font-size:12px; color:var(--text-300); text-align:center; }
+.wa-timer strong { color:var(--text-200); }
+
+/* ── Info col ─────────────────────────────────────────────────── */
+.wa-info-col { flex:1; min-width:220px; }
+.wa-info-title { font-weight:700; font-size:16px; color:var(--text-100); margin-bottom:6px; }
+.wa-info-sub   { font-size:13px; color:var(--text-300); margin-bottom:20px; line-height:1.5; }
+.wa-how-list { list-style:none; padding:0; margin:0 0 20px; display:flex; flex-direction:column; gap:12px; }
+.wa-how-item { display:flex; align-items:flex-start; gap:10px; }
+.wa-how-num {
+    min-width:22px; height:22px; border-radius:50%;
+    background:#f0fdf4; border:1.5px solid #22c55e;
+    color:#16a34a; font-size:11px; font-weight:700;
+    display:flex; align-items:center; justify-content:center; margin-top:1px;
+}
+.wa-how-text { font-size:13px; color:var(--text-200); line-height:1.45; }
+.wa-how-text strong { color:var(--text-100); }
+
+/* ── Status indicators ────────────────────────────────────────── */
+.wa-status-waiting {
+    display:flex; align-items:center; gap:8px;
+    padding:10px 14px; background:#fffbeb; border:1px solid #fde68a;
+    border-radius:var(--r-md); font-size:13px; color:#92400e;
+}
+.wa-pulse { width:8px; height:8px; border-radius:50%; background:#f59e0b; animation:waPulse 1.4s ease-in-out infinite; flex-shrink:0; }
+.wa-status-success {
+    display:flex; align-items:center; gap:8px;
+    padding:10px 14px; background:#f0fdf4; border:1px solid #86efac;
+    border-radius:var(--r-md); font-size:13px; color:#15803d; font-weight:600;
+}
+
+/* ── Connected state ──────────────────────────────────────────── */
+.wa-connected-body { padding:24px; display:flex; gap:24px; align-items:center; flex-wrap:wrap; }
+.wa-connected-icon { width:64px; height:64px; border-radius:50%; background:#dcfce7; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.wa-connected-info { flex:1; min-width:200px; }
+.wa-connected-info h3 { font-weight:700; font-size:16px; color:#16a34a; margin:0 0 6px; }
+.wa-meta-row { display:flex; gap:20px; flex-wrap:wrap; margin-top:10px; }
+.wa-meta-item { font-size:12px; color:var(--text-300); }
+.wa-meta-item strong { color:var(--text-200); display:block; font-size:11px; margin-bottom:2px; letter-spacing:.03em; text-transform:uppercase; }
+
+/* ── Misc ─────────────────────────────────────────────────────── */
+.webhook-box { background:var(--bg-subtle); border:1px solid var(--border-subtle); border-radius:var(--r-md); padding:10px 12px; font-family:var(--mono); font-size:12px; word-break:break-all; color:var(--text-200); }
 .copy-btn { cursor:pointer; background:none; border:none; color:var(--text-300); padding:4px; }
 .copy-btn:hover { color:var(--accent); }
 
-/* QR Connect */
-.qr-setup-card { border:2px dashed var(--border-default); border-radius:var(--r-lg); padding:28px 24px; text-align:center; background:var(--bg-subtle); margin-bottom:24px; }
-.qr-setup-card.connected { border-color:#22c55e; background:#f0fdf4; }
-.qr-wrap { display:inline-block; background:#fff; border-radius:12px; padding:16px; box-shadow:0 2px 12px rgba(0,0,0,.08); margin:16px 0; }
-.qr-steps { display:flex; gap:16px; justify-content:center; flex-wrap:wrap; margin:12px 0 0; }
-.qr-step { display:flex; align-items:flex-start; gap:8px; text-align:left; max-width:160px; }
-.qr-step-num { width:22px; height:22px; border-radius:50%; background:#25d366; color:#fff; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
-.qr-step-text { font-size:12px; color:var(--text-300); line-height:1.4; }
-.qr-success-icon { width:56px; height:56px; border-radius:50%; background:#dcfce7; display:flex; align-items:center; justify-content:center; margin:0 auto 12px; }
-@keyframes wapulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+@keyframes waPulse { 0%,100%{opacity:1} 50%{opacity:.25} }
 </style>
 @endpush
 
 @section('content')
 <div class="page-header">
     <div>
-        <h1 class="page-title">WhatsApp Business API Settings</h1>
-        <p class="page-sub">Connect Meta WhatsApp Cloud API for chatbot &amp; automation</p>
+        <h1 class="page-title">WhatsApp Business API</h1>
+        <p class="page-sub">Connect Meta WhatsApp Cloud API — phone app + CRM dono ek saath chalega</p>
     </div>
-    <a href="{{ route('tenant.whatsapp.index') }}" class="btn btn-ghost">Back to WhatsApp</a>
+    <a href="{{ route('tenant.whatsapp.index') }}" class="btn btn-ghost">← Back</a>
 </div>
 
 @if(session('success'))
     <div class="alert alert-success" style="margin-bottom:20px;">{{ session('success') }}</div>
 @endif
 
-{{-- ── QR Quick Connect ──────────────────────────────────────────── --}}
-<div class="qr-setup-card" id="qrSetupCard">
-    @if($settings->is_connected)
-        <div class="qr-success-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" style="width:28px;height:28px;">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-            </svg>
+{{-- ══════════════════════════════════════════════════════════════
+     COEXISTENCE GUIDE — Phone App + CRM dono saath
+══════════════════════════════════════════════════════════════ --}}
+<div class="coex-banner">
+    <div class="coex-banner-header" onclick="toggleCoex()" id="coexHeader">
+        <div>
+            <div class="coex-banner-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" style="width:20px;height:20px;flex-shrink:0;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Coexistence Mode — Same Number: Phone App + CRM dono ek saath
+            </div>
+            <div class="coex-banner-sub">
+                Aap same WhatsApp Business number apne phone pe bhi rakh sakte hain aur CRM automation bhi chala sakte hain — <strong>number change karne ki zaroorat nahi</strong>.
+                &nbsp;Setup guide dekhne ke liye click karein ↓
+            </div>
         </div>
-        <div style="font-weight:700;font-size:16px;color:#16a34a;">WhatsApp Connected</div>
-        <div style="font-size:13px;color:var(--text-300);margin-top:4px;">
-            Phone Number ID: {{ $settings->phone_number_id }} &nbsp;|&nbsp; WABA ID: {{ $settings->waba_id }}
-        </div>
-        <button type="button" class="btn btn-sm" style="margin-top:14px;" onclick="startQrFlow()">Reconnect / Change Number</button>
-    @else
-        <div style="margin-bottom:8px;">
-            <svg viewBox="0 0 24 24" fill="#25d366" style="width:40px;height:40px;margin:0 auto;display:block;">
-                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-                <path d="M12.004 2C6.477 2 2 6.477 2 12.004c0 1.773.465 3.48 1.348 4.985L2 22l5.13-1.34A9.953 9.953 0 0012.004 22C17.527 22 22 17.523 22 12c0-5.522-4.473-10-9.996-10z" fill-rule="evenodd" clip-rule="evenodd"/>
-            </svg>
-        </div>
-        <div style="font-weight:700;font-size:17px;color:var(--text-100);">Quick Connect with QR Code</div>
-        <div style="font-size:13px;color:var(--text-300);margin-top:6px;max-width:420px;margin-left:auto;margin-right:auto;">
-            Scan this QR code with your phone to connect your WhatsApp Business account automatically — no manual token copying needed.
-        </div>
+        <svg id="coexChevron" class="coex-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:18px;height:18px;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+        </svg>
+    </div>
 
-        <div id="qrArea" style="display:none;margin-top:16px;">
-            <div class="qr-wrap"><img id="qrImg" src="" alt="QR Code" style="width:200px;height:200px;display:block;"></div>
-            <div style="font-size:12px;color:var(--text-300);" id="qrTimer">Valid for <strong id="qrCountdown">10:00</strong></div>
-        </div>
+    <div id="coexBody" class="coex-body" style="display:none;">
 
-        <div id="qrSteps" style="display:none;">
-            <div class="qr-steps">
-                <div class="qr-step"><div class="qr-step-num">1</div><div class="qr-step-text">Scan the QR code with your phone camera</div></div>
-                <div class="qr-step"><div class="qr-step-num">2</div><div class="qr-step-text">Log in with Facebook that manages your WhatsApp Business account</div></div>
-                <div class="qr-step"><div class="qr-step-num">3</div><div class="qr-step-text">Allow permissions — this page will update automatically</div></div>
+        {{-- What coexistence means --}}
+        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;padding-top:4px;">
+            <div style="flex:1;min-width:200px;background:#fff;border:1px solid #bbf7d0;border-radius:var(--r-md);padding:14px 16px;">
+                <div style="font-size:12px;font-weight:700;color:#15803d;margin-bottom:6px;">
+                    <svg viewBox="0 0 20 20" fill="#25d366" style="width:14px;height:14px;display:inline;margin-right:4px;vertical-align:middle;"><path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z"/><path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z"/></svg>
+                    WhatsApp Business App (Phone)
+                </div>
+                <div style="font-size:12px;color:#166534;line-height:1.5;">
+                    ✓ Manual chats as usual<br>
+                    ✓ Incoming messages dikhenge<br>
+                    ✓ Manually reply kar sakte hain<br>
+                    ✓ App normally kaam karta hai
+                </div>
+            </div>
+            <div style="display:flex;align-items:center;font-size:20px;color:#16a34a;padding:0 4px;">+</div>
+            <div style="flex:1;min-width:200px;background:#fff;border:1px solid #bbf7d0;border-radius:var(--r-md);padding:14px 16px;">
+                <div style="font-size:12px;font-weight:700;color:#15803d;margin-bottom:6px;">
+                    <svg viewBox="0 0 20 20" fill="#6366f1" style="width:14px;height:14px;display:inline;margin-right:4px;vertical-align:middle;"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/></svg>
+                    CRM (WhatsApp Cloud API)
+                </div>
+                <div style="font-size:12px;color:#166534;line-height:1.5;">
+                    ✓ Chatbot auto-reply karta hai<br>
+                    ✓ Incoming messages webhook pe aate hain<br>
+                    ✓ CRM se messages bhejna<br>
+                    ✓ n8n automation trigger hoti hai
+                </div>
             </div>
         </div>
 
-        <div id="qrConnecting" style="display:none;margin-top:14px;">
-            <span style="animation:wapulse 1.5s ease-in-out infinite;display:inline-block;width:8px;height:8px;border-radius:50%;background:#25d366;margin-right:6px;vertical-align:middle;"></span>
-            <span style="font-size:13px;color:var(--text-300);">Waiting for authorization on your phone…</span>
+        {{-- Method tabs --}}
+        <div style="font-size:13px;font-weight:600;color:var(--text-200);margin-bottom:10px;">
+            Coexistence enable karne ke do tarike hain — CRM se connect karne se PEHLE ye karna hai:
         </div>
 
-        <div id="qrDone" style="display:none;margin-top:14px;font-size:15px;font-weight:600;color:#16a34a;">
-            Connected successfully! Reloading…
+        <div class="method-tabs">
+            <div class="method-tab active" onclick="switchMethod('app')" id="tab-app">
+                📱 WhatsApp Business App se (Easiest)
+            </div>
+            <div class="method-tab" onclick="switchMethod('bm')" id="tab-bm">
+                🌐 Meta Business Manager se
+            </div>
         </div>
 
-        <div id="qrGenerateBtn" style="margin-top:16px;">
-            <button type="button" class="btn btn-primary" onclick="startQrFlow()">Generate QR Code</button>
+        {{-- Method A: Via WhatsApp Business App --}}
+        <div class="method-panel active" id="panel-app">
+            <ul class="coex-steps">
+                <li class="coex-step">
+                    <div class="coex-step-num">1</div>
+                    <div class="coex-step-text">
+                        Apne phone pe <strong>WhatsApp Business App</strong> kholein
+                    </div>
+                </li>
+                <li class="coex-step">
+                    <div class="coex-step-num">2</div>
+                    <div class="coex-step-text">
+                        Top-right mein <strong>3 dots (⋮)</strong> → <span class="path">Settings</span> → <span class="path">Business Tools</span>
+                    </div>
+                </li>
+                <li class="coex-step">
+                    <div class="coex-step-num">3</div>
+                    <div class="coex-step-text">
+                        <span class="path">WhatsApp Business API</span> pe tap karein
+                    </div>
+                </li>
+                <li class="coex-step">
+                    <div class="coex-step-num">4</div>
+                    <div class="coex-step-text">
+                        <strong>"Continue using WhatsApp Business App"</strong> option select karein
+                        — yahi coexistence mode hai
+                    </div>
+                </li>
+                <li class="coex-step">
+                    <div class="coex-step-num">5</div>
+                    <div class="coex-step-text">
+                        Apne <strong>Facebook Business account</strong> se login karein aur permissions allow karein
+                    </div>
+                </li>
+                <li class="coex-step">
+                    <div class="coex-step-num">6</div>
+                    <div class="coex-step-text">
+                        Setup complete hone ke baad — <strong>neeche CRM connect karein</strong> (QR code se)
+                    </div>
+                </li>
+            </ul>
+            <div class="coex-note">
+                <svg viewBox="0 0 20 20" fill="currentColor" style="width:15px;height:15px;flex-shrink:0;margin-top:1px;color:#16a34a;"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+                <span>
+                    Agar <span class="path">WhatsApp Business API</span> option nahi dikh raha, toh app update karein.
+                    WhatsApp Business App version 2.23+ mein ye option available hai.
+                </span>
+            </div>
         </div>
-        <div id="qrRefreshBtn" style="display:none;margin-top:12px;">
-            <button type="button" class="btn btn-ghost btn-sm" onclick="startQrFlow()">Generate New QR</button>
+
+        {{-- Method B: Via Meta Business Manager --}}
+        <div class="method-panel" id="panel-bm">
+            <ul class="coex-steps">
+                <li class="coex-step">
+                    <div class="coex-step-num">1</div>
+                    <div class="coex-step-text">
+                        Browser mein <strong>business.facebook.com</strong> kholen aur apne Business Manager account se login karein
+                    </div>
+                </li>
+                <li class="coex-step">
+                    <div class="coex-step-num">2</div>
+                    <div class="coex-step-text">
+                        Left sidebar → <span class="path">Business Settings</span> → <span class="path">Accounts</span> → <span class="path">WhatsApp Accounts</span>
+                    </div>
+                </li>
+                <li class="coex-step">
+                    <div class="coex-step-num">3</div>
+                    <div class="coex-step-text">
+                        Apna WhatsApp Business Account (WABA) select karein → <span class="path">Settings</span> → <span class="path">Phone Numbers</span>
+                    </div>
+                </li>
+                <li class="coex-step">
+                    <div class="coex-step-num">4</div>
+                    <div class="coex-step-text">
+                        Apna number click karein → <span class="path">API Setup</span> ya <span class="path">Configure</span> → <strong>"Coexistence"</strong> option enable karein
+                    </div>
+                </li>
+                <li class="coex-step">
+                    <div class="coex-step-num">5</div>
+                    <div class="coex-step-text">
+                        Save karein — ab aapka number coexistence mode mein hai
+                    </div>
+                </li>
+                <li class="coex-step">
+                    <div class="coex-step-num">6</div>
+                    <div class="coex-step-text">
+                        <strong>Neeche CRM se QR code scan karke connect karein</strong>
+                    </div>
+                </li>
+            </ul>
+            <div class="coex-note">
+                <svg viewBox="0 0 20 20" fill="currentColor" style="width:15px;height:15px;flex-shrink:0;margin-top:1px;color:#16a34a;"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                <span>
+                    Agar aapne pehle number ko API pe migrate kar diya tha (without coexistence), toh WhatsApp Business App pe wapas laane ke liye Meta Business Manager mein number re-register karna hoga.
+                </span>
+            </div>
+        </div>
+
+    </div>{{-- end coex-body --}}
+</div>
+
+{{-- ══════════════════════════════════════════════════════════════
+     CONNECT WIZARD CARD
+══════════════════════════════════════════════════════════════ --}}
+<div class="wa-connect-card" id="waConnectCard">
+
+    <div class="wa-connect-header">
+        <div class="wa-connect-title">
+            <svg viewBox="0 0 24 24" fill="#25d366" style="width:22px;height:22px;flex-shrink:0;">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                <path d="M12.004 2C6.477 2 2 6.477 2 12.004c0 1.773.465 3.48 1.348 4.985L2 22l5.13-1.34A9.953 9.953 0 0012.004 22C17.527 22 22 17.523 22 12c0-5.522-4.473-10-9.996-10z" fill-rule="evenodd" clip-rule="evenodd"/>
+            </svg>
+            Step 2 — CRM se Connect Karein
+        </div>
+        @if($settings->is_connected)
+            <span class="wa-badge-connected">● Connected</span>
+        @else
+            <span class="wa-badge-disconnected">● Not Connected</span>
+        @endif
+    </div>
+
+    {{-- Steps bar --}}
+    <div class="wa-steps" id="waStepsBar">
+        <div class="wa-step {{ $settings->is_connected ? 'done' : 'active' }}" id="step1">
+            <div class="wa-step-dot">
+                @if($settings->is_connected)
+                    <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><path stroke-linecap="round" stroke-linejoin="round" d="M2 6l3 3 5-5"/></svg>
+                @else 1 @endif
+            </div>
+            <div class="wa-step-label">Generate QR</div>
+        </div>
+        <div class="wa-step {{ $settings->is_connected ? 'done' : '' }}" id="step2">
+            <div class="wa-step-dot">
+                @if($settings->is_connected)
+                    <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><path stroke-linecap="round" stroke-linejoin="round" d="M2 6l3 3 5-5"/></svg>
+                @else 2 @endif
+            </div>
+            <div class="wa-step-label">Scan Phone</div>
+        </div>
+        <div class="wa-step {{ $settings->is_connected ? 'done' : '' }}" id="step3">
+            <div class="wa-step-dot">
+                @if($settings->is_connected)
+                    <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><path stroke-linecap="round" stroke-linejoin="round" d="M2 6l3 3 5-5"/></svg>
+                @else 3 @endif
+            </div>
+            <div class="wa-step-label">Facebook Allow</div>
+        </div>
+        <div class="wa-step {{ $settings->is_connected ? 'done' : '' }}" id="step4">
+            <div class="wa-step-dot">
+                @if($settings->is_connected)
+                    <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><path stroke-linecap="round" stroke-linejoin="round" d="M2 6l3 3 5-5"/></svg>
+                @else 4 @endif
+            </div>
+            <div class="wa-step-label">Auto Connected!</div>
+        </div>
+    </div>
+
+    @if($settings->is_connected)
+        {{-- CONNECTED --}}
+        <div class="wa-connected-body">
+            <div class="wa-connected-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" style="width:32px;height:32px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                </svg>
+            </div>
+            <div class="wa-connected-info">
+                <h3>WhatsApp Business Connected</h3>
+                <p style="font-size:13px;color:var(--text-300);margin:0;">Coexistence mode — phone app + CRM automation dono kaam kar rahe hain.</p>
+                <div class="wa-meta-row">
+                    <div class="wa-meta-item"><strong>Phone Number ID</strong>{{ $settings->phone_number_id ?? '—' }}</div>
+                    <div class="wa-meta-item"><strong>WABA ID</strong>{{ $settings->waba_id ?? '—' }}</div>
+                </div>
+            </div>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="startQrFlow()" id="reconnectBtn">
+                Reconnect / Change Number
+            </button>
+        </div>
+        <div id="qrReconnectArea" style="display:none;padding:0 24px 24px;">
+            <div style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap;">
+                <div class="wa-qr-col">
+                    <div class="wa-qr-frame"><img id="qrImg" src="" alt="QR Code"></div>
+                    <div class="wa-timer" id="qrTimer">Valid for <strong id="qrCountdown">10:00</strong></div>
+                    <button type="button" class="btn btn-ghost btn-sm" id="qrRefreshBtn" style="display:none;" onclick="startQrFlow()">New QR Code</button>
+                </div>
+                <div class="wa-info-col" style="min-width:180px;">
+                    <div class="wa-status-waiting" id="qrConnecting">
+                        <span class="wa-pulse"></span>Waiting for authorization…
+                    </div>
+                    <div class="wa-status-success" id="qrDone" style="display:none;">
+                        <svg viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px;flex-shrink:0;"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        Connected! Reloading…
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    @else
+        {{-- NOT CONNECTED --}}
+        <div class="wa-connect-body">
+            <div class="wa-qr-col">
+                <div class="wa-qr-frame" id="qrFrame">
+                    <div class="wa-qr-placeholder" id="qrPlaceholder">
+                        <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:64px;height:64px;">
+                            <rect x="4" y="4" width="28" height="28" rx="3" stroke="currentColor" stroke-width="3"/>
+                            <rect x="11" y="11" width="14" height="14" rx="1" fill="currentColor"/>
+                            <rect x="48" y="4" width="28" height="28" rx="3" stroke="currentColor" stroke-width="3"/>
+                            <rect x="55" y="11" width="14" height="14" rx="1" fill="currentColor"/>
+                            <rect x="4" y="48" width="28" height="28" rx="3" stroke="currentColor" stroke-width="3"/>
+                            <rect x="11" y="55" width="14" height="14" rx="1" fill="currentColor"/>
+                            <rect x="48" y="48" width="8" height="8" rx="1" fill="currentColor"/>
+                            <rect x="62" y="48" width="8" height="8" rx="1" fill="currentColor"/>
+                            <rect x="48" y="62" width="8" height="8" rx="1" fill="currentColor"/>
+                            <rect x="62" y="62" width="8" height="8" rx="1" fill="currentColor"/>
+                        </svg>
+                        <span>"Connect Now" click karein</span>
+                    </div>
+                    <img id="qrImg" src="" alt="QR Code" style="display:none;width:100%;height:100%;">
+                </div>
+                <div class="wa-timer" id="qrTimer" style="display:none;">Valid for <strong id="qrCountdown">10:00</strong></div>
+                <button type="button" class="btn btn-ghost btn-sm" id="qrRefreshBtn" style="display:none;" onclick="startQrFlow()">New QR Code</button>
+            </div>
+
+            <div class="wa-info-col">
+                <div class="wa-info-title">CRM se Connect Karein</div>
+                <div class="wa-info-sub">
+                    Coexistence enable ho jaane ke baad — neeche button click karein aur QR scan karein.
+                </div>
+                <ul class="wa-how-list">
+                    <li class="wa-how-item">
+                        <div class="wa-how-num">1</div>
+                        <div class="wa-how-text"><strong>Connect Now</strong> click karein — QR code generate hoga.</div>
+                    </li>
+                    <li class="wa-how-item">
+                        <div class="wa-how-num">2</div>
+                        <div class="wa-how-text"><strong>QR scan karein</strong> — phone camera se ya kisi bhi QR scanner se.</div>
+                    </li>
+                    <li class="wa-how-item">
+                        <div class="wa-how-num">3</div>
+                        <div class="wa-how-text">Facebook page khulega — <strong>Facebook Business account se login karein</strong> aur <strong>Allow</strong> tap karein.</div>
+                    </li>
+                </ul>
+
+                <div id="qrConnecting" style="display:none;margin-bottom:12px;">
+                    <div class="wa-status-waiting">
+                        <span class="wa-pulse"></span>Waiting for authorization on your phone…
+                    </div>
+                </div>
+                <div id="qrDone" style="display:none;margin-bottom:12px;">
+                    <div class="wa-status-success">
+                        <svg viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px;flex-shrink:0;"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        Connected! Reloading…
+                    </div>
+                </div>
+
+                <div id="qrGenerateBtn">
+                    <button type="button" class="btn btn-primary" onclick="startQrFlow()" style="gap:8px;display:inline-flex;align-items:center;">
+                        <svg viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px;">
+                            <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm2 2V5h1v1H5zM3 13a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1v-3zm2 2v-1h1v1H5zM13 3a1 1 0 00-1 1v3a1 1 0 001 1h3a1 1 0 001-1V4a1 1 0 00-1-1h-3zm1 2v1h1V5h-1z" clip-rule="evenodd"/>
+                            <path d="M11 4a1 1 0 10-2 0v1a1 1 0 002 0V4zM10 7a1 1 0 011 1v1h2a1 1 0 110 2h-3a1 1 0 01-1-1V8a1 1 0 011-1zM16 9a1 1 0 100 2 1 1 0 000-2zM9 13a1 1 0 011-1h1a1 1 0 110 2v2a1 1 0 11-2 0v-3zM7 11a1 1 0 100-2H4a1 1 0 100 2h3zM17 13a1 1 0 01-1 1h-2a1 1 0 110-2h2a1 1 0 011 1zM16 17a1 1 0 100-2h-3a1 1 0 100 2h3z"/>
+                        </svg>
+                        Connect Now
+                    </button>
+                </div>
+                <p style="font-size:11px;color:var(--text-400);margin-top:10px;line-height:1.5;">
+                    Pehle upar wala <strong>Coexistence setup</strong> complete karein, tab connect karein.
+                </p>
+            </div>
         </div>
     @endif
 </div>
 
-{{-- Connection status --}}
-<div class="conn-strip">
-    <div style="display:flex;align-items:center;gap:10px;">
-        @if($settings->is_connected)
-            <span style="width:10px;height:10px;border-radius:50%;background:#22c55e;"></span>
-            <span style="font-weight:600;">Connected</span>
-            @if($settings->phone_number_id)
-                <span style="color:var(--text-300);font-size:13px;">• Phone Number ID: {{ $settings->phone_number_id }}</span>
-            @endif
-        @else
-            <span style="width:10px;height:10px;border-radius:50%;background:#ef4444;"></span>
-            <span style="font-weight:600;">Not Connected</span>
-        @endif
-    </div>
-    <button onclick="testConnection()" class="btn btn-sm" id="testBtn">Test Connection</button>
-</div>
-
+{{-- ══════════════════════════════════════════════════════════════
+     SETTINGS FORM
+══════════════════════════════════════════════════════════════ --}}
 <form method="POST" action="{{ route('tenant.whatsapp.api-settings.save') }}">
 @csrf
+<div class="wa-settings-grid">
 
-<div class="settings-grid">
-    {{-- Account details (auto-filled via QR) --}}
-    <div class="card" style="grid-column:1/-1;">
-        <div class="card-header"><h3 class="card-title">Account Details</h3></div>
-        <div class="card-body">
-            @if($settings->is_connected)
-                <div style="display:flex;gap:24px;flex-wrap:wrap;">
-                    <div class="form-group" style="flex:1;min-width:200px;">
-                        <label class="form-label">Phone Number ID</label>
-                        <input type="text" name="phone_number_id" class="form-input" value="{{ $settings->phone_number_id }}" placeholder="Auto-filled on QR connect">
-                    </div>
-                    <div class="form-group" style="flex:1;min-width:200px;">
-                        <label class="form-label">WABA ID</label>
-                        <input type="text" name="waba_id" class="form-input" value="{{ $settings->waba_id }}" placeholder="Auto-filled on QR connect">
-                    </div>
-                </div>
-                <p style="font-size:12px;color:var(--text-300);margin-top:8px;">These are filled automatically when you connect via QR code. Edit only if needed.</p>
-            @else
-                <p style="font-size:13px;color:var(--text-300);">Use the <strong>QR code above</strong> to connect your WhatsApp Business account. Phone Number ID and WABA ID will be filled automatically.</p>
-            @endif
-        </div>
-    </div>
-
-    {{-- Webhook --}}
     <div class="card">
         <div class="card-header"><h3 class="card-title">Webhook Configuration</h3></div>
         <div class="card-body">
-            <p style="font-size:13px;color:var(--text-300);margin-bottom:10px;">Configure in Meta App → WhatsApp → Configuration → Webhook</p>
-            <label class="form-label" style="margin-bottom:6px;">Callback URL</label>
+            <p style="font-size:12px;color:var(--text-300);margin-bottom:14px;">
+                Meta App → WhatsApp → Configuration → Webhook mein ye daalein
+            </p>
+            <label class="form-label" style="margin-bottom:5px;">Callback URL</label>
             <div style="display:flex;gap:8px;margin-bottom:14px;">
                 <div class="webhook-box" style="flex:1;" id="webhookUrl">{{ url('/webhook/whatsapp') }}</div>
-                <button type="button" class="copy-btn" onclick="copyText('webhookUrl')">
-                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:16px;height:16px;">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75"/>
-                    </svg>
+                <button type="button" class="copy-btn" onclick="copyText('webhookUrl')" title="Copy">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:16px;height:16px;"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                 </button>
             </div>
-            <label class="form-label" style="margin-bottom:6px;">Verify Token</label>
+            <label class="form-label" style="margin-bottom:5px;">Verify Token</label>
             <div style="display:flex;gap:8px;">
                 <div class="webhook-box" style="flex:1;" id="verifyToken">{{ $settings->webhook_verify_token ?? 'Will be generated on save' }}</div>
-                <button type="button" class="copy-btn" onclick="copyText('verifyToken')">
-                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:16px;height:16px;">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75"/>
-                    </svg>
+                <button type="button" class="copy-btn" onclick="copyText('verifyToken')" title="Copy">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:16px;height:16px;"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                 </button>
             </div>
-            <p style="font-size:12px;color:var(--text-300);margin-top:8px;">Subscribe to field: <strong>messages</strong></p>
+            <p style="font-size:11px;color:var(--text-400);margin-top:8px;">Subscribe field: <strong>messages</strong></p>
+            @if($settings->is_connected)
+            <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border-subtle);">
+                <div style="display:flex;gap:16px;flex-wrap:wrap;">
+                    <div class="form-group" style="flex:1;min-width:140px;margin:0;">
+                        <label class="form-label" style="font-size:11px;">Phone Number ID</label>
+                        <input type="text" name="phone_number_id" class="form-input" value="{{ $settings->phone_number_id }}" placeholder="Auto-filled via QR">
+                    </div>
+                    <div class="form-group" style="flex:1;min-width:140px;margin:0;">
+                        <label class="form-label" style="font-size:11px;">WABA ID</label>
+                        <input type="text" name="waba_id" class="form-input" value="{{ $settings->waba_id }}" placeholder="Auto-filled via QR">
+                    </div>
+                </div>
+            </div>
+            @endif
+            <div style="margin-top:16px;">
+                <button onclick="testConnection()" type="button" class="btn btn-ghost btn-sm" id="testBtn">Test Connection</button>
+            </div>
         </div>
     </div>
 
-    {{-- n8n + Chatbot --}}
     <div class="card">
         <div class="card-header"><h3 class="card-title">Chatbot &amp; n8n</h3></div>
         <div class="card-body">
             <div class="form-group">
-                <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-                    <input type="checkbox" name="chatbot_enabled" value="1" {{ $settings->chatbot_enabled ? 'checked' : '' }}
-                        style="width:18px;height:18px;">
+                <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;">
+                    <input type="checkbox" name="chatbot_enabled" value="1" {{ $settings->chatbot_enabled ? 'checked' : '' }} style="width:18px;height:18px;margin-top:2px;flex-shrink:0;">
                     <div>
                         <div style="font-weight:600;font-size:14px;">Enable Chatbot</div>
-                        <div style="font-size:12px;color:var(--text-300);">Auto-reply to incoming WhatsApp messages using keyword flows</div>
+                        <div style="font-size:12px;color:var(--text-300);margin-top:2px;">Incoming messages pe keyword-based auto-reply</div>
                     </div>
                 </label>
             </div>
-            <div class="form-group" style="margin-top:16px;">
-                <label class="form-label">n8n Webhook URL <span style="font-weight:400;color:var(--text-300);">(optional)</span></label>
+            <div class="form-group" style="margin-top:18px;">
+                <label class="form-label">n8n Webhook URL <span style="font-weight:400;color:var(--text-300);font-size:12px;">(optional)</span></label>
                 <input type="url" name="n8n_webhook_url" class="form-input" value="{{ $settings->n8n_webhook_url }}" placeholder="https://your-n8n.com/webhook/xxxx">
-                <span class="form-hint">All incoming WhatsApp messages will be forwarded to this n8n webhook</span>
+                <span class="form-hint">Har incoming message is URL pe forward hoga</span>
             </div>
         </div>
     </div>
@@ -193,17 +611,35 @@
 
 @push('scripts')
 <script>
+// ── Coexistence guide toggle ───────────────────────────────────
+function toggleCoex() {
+    const body = document.getElementById('coexBody');
+    const chevron = document.getElementById('coexChevron');
+    const isOpen = body.style.display !== 'none';
+    body.style.display = isOpen ? 'none' : 'block';
+    chevron.classList.toggle('open', !isOpen);
+}
+
+function switchMethod(method) {
+    ['app','bm'].forEach(function(m) {
+        document.getElementById('tab-' + m).classList.toggle('active', m === method);
+        document.getElementById('panel-' + m).classList.toggle('active', m === method);
+    });
+}
+
+// ── Utilities ─────────────────────────────────────────────────
 function copyText(id) {
     const text = document.getElementById(id).textContent.trim();
     navigator.clipboard.writeText(text).then(() => {
         const el = document.getElementById(id);
         el.style.background = '#dcfce7';
-        setTimeout(() => el.style.background = '', 1200);
+        setTimeout(() => el.style.background = '', 1400);
     });
 }
+
 function testConnection() {
     const btn = document.getElementById('testBtn');
-    btn.textContent = 'Testing...';
+    btn.textContent = 'Testing…';
     btn.disabled = true;
     fetch('{{ route("tenant.whatsapp.api-settings.test") }}', {
         method: 'POST',
@@ -211,20 +647,25 @@ function testConnection() {
     })
     .then(r => r.json())
     .then(data => {
-        if (data.success) {
-            alert('Connected! ' + (data.account?.display_phone_number ?? ''));
-        } else {
-            alert('Failed: ' + data.message);
-        }
+        if (data.success) alert('Connected! ' + (data.account?.display_phone_number ?? ''));
+        else alert('Failed: ' + data.message);
     })
     .catch(() => alert('Request failed.'))
     .finally(() => { btn.textContent = 'Test Connection'; btn.disabled = false; });
 }
 
-// ── QR Connect ──────────────────────────────────────────────
+// ── QR Connect flow ────────────────────────────────────────────
 let qrState = null, qrPollTimer = null, qrCountdownTimer = null;
+const isConnected = {{ $settings->is_connected ? 'true' : 'false' }};
 
 function startQrFlow() {
+    if (isConnected) {
+        const area = document.getElementById('qrReconnectArea');
+        if (area) area.style.display = 'block';
+        const btn = document.getElementById('reconnectBtn');
+        if (btn) btn.style.display = 'none';
+    }
+
     fetch('{{ route("tenant.whatsapp.oauth.qr") }}', {
         headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
     })
@@ -237,19 +678,41 @@ function startQrFlow() {
 
         qrState = data.state;
 
-        document.getElementById('qrImg').src =
-            'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=10&data=' + encodeURIComponent(data.url);
+        const img = document.getElementById('qrImg');
+        img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=10&data=' + encodeURIComponent(data.url);
+        img.style.display = 'block';
 
-        document.getElementById('qrGenerateBtn').style.display  = 'none';
-        document.getElementById('qrArea').style.display         = 'block';
-        document.getElementById('qrSteps').style.display        = 'block';
-        document.getElementById('qrConnecting').style.display   = 'block';
-        document.getElementById('qrRefreshBtn').style.display   = 'block';
+        const ph = document.getElementById('qrPlaceholder');
+        if (ph) ph.style.display = 'none';
+
+        const timer = document.getElementById('qrTimer');
+        if (timer) timer.style.display = 'block';
+
+        setStep(2);
+
+        const genBtn = document.getElementById('qrGenerateBtn');
+        if (genBtn) genBtn.style.display = 'none';
+
+        const conn = document.getElementById('qrConnecting');
+        if (conn) conn.style.display = 'block';
+
+        const ref = document.getElementById('qrRefreshBtn');
+        if (ref) ref.style.display = 'inline-flex';
 
         startCountdown(600);
         startPolling();
     })
     .catch(function(err) { alert('Could not generate QR: ' + err.message); });
+}
+
+function setStep(n) {
+    for (let i = 1; i <= 4; i++) {
+        const el = document.getElementById('step' + i);
+        if (!el) continue;
+        el.classList.remove('active','done');
+        if (i < n) el.classList.add('done');
+        else if (i === n) el.classList.add('active');
+    }
 }
 
 function startCountdown(seconds) {
@@ -258,14 +721,16 @@ function startCountdown(seconds) {
     const el = document.getElementById('qrCountdown');
     qrCountdownTimer = setInterval(function() {
         remaining--;
-        const m = String(Math.floor(remaining / 60)).padStart(2, '0');
-        const s = String(remaining % 60).padStart(2, '0');
+        const m = String(Math.floor(remaining / 60)).padStart(2,'0');
+        const s = String(remaining % 60).padStart(2,'0');
         if (el) el.textContent = m + ':' + s;
         if (remaining <= 0) {
             clearInterval(qrCountdownTimer);
             clearInterval(qrPollTimer);
-            document.getElementById('qrConnecting').style.display = 'none';
-            document.getElementById('qrTimer').textContent = 'QR code expired. Generate a new one.';
+            const c = document.getElementById('qrConnecting');
+            if (c) c.style.display = 'none';
+            const t = document.getElementById('qrTimer');
+            if (t) t.textContent = 'QR expired — generate a new one.';
         }
     }, 1000);
 }
@@ -282,11 +747,14 @@ function startPolling() {
             if (data.connected) {
                 clearInterval(qrPollTimer);
                 clearInterval(qrCountdownTimer);
-                document.getElementById('qrConnecting').style.display = 'none';
-                document.getElementById('qrArea').style.display       = 'none';
-                document.getElementById('qrRefreshBtn').style.display = 'none';
-                document.getElementById('qrDone').style.display       = 'block';
-                document.getElementById('qrSetupCard').classList.add('connected');
+                const c = document.getElementById('qrConnecting');
+                if (c) c.style.display = 'none';
+                const d = document.getElementById('qrDone');
+                if (d) d.style.display = 'block';
+                const r = document.getElementById('qrRefreshBtn');
+                if (r) r.style.display = 'none';
+                setStep(4);
+                document.getElementById('waConnectCard').style.borderColor = '#22c55e';
                 setTimeout(function() { location.reload(); }, 1800);
             }
         })
