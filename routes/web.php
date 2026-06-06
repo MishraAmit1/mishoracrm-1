@@ -67,6 +67,10 @@ Route::post('/webhook/leads/{token}', [LeadWebhookController::class, 'handle'])-
 Route::get('/instagram/oauth/start',    [Tenant\InstagramController::class, 'oauthStart'])->name('instagram.oauth.start');
 Route::get('/instagram/oauth/callback', [Tenant\InstagramController::class, 'oauthCallback'])->name('instagram.oauth.callback');
 
+// ── WhatsApp OAuth (no auth — phone browser redirected here by Meta) ──
+Route::get('/whatsapp/oauth/start',    [Tenant\WhatsappChatbotController::class, 'oauthStart'])->name('whatsapp.oauth.start');
+Route::get('/whatsapp/oauth/callback', [Tenant\WhatsappChatbotController::class, 'oauthCallback'])->name('whatsapp.oauth.callback');
+
 // ══════════════════════════════════════════════════════════════════
 // SUPER ADMIN (base domain: saas-crm.test/superadmin)
 // ══════════════════════════════════════════════════════════════════
@@ -389,6 +393,8 @@ Route::middleware(['tenant', 'auth', 'subscription'])
             Route::get('api-settings',              [Tenant\WhatsappChatbotController::class, 'settings'])->name('api-settings');
             Route::post('api-settings',             [Tenant\WhatsappChatbotController::class, 'saveSettings'])->name('api-settings.save');
             Route::post('api-settings/test',        [Tenant\WhatsappChatbotController::class, 'testConnection'])->name('api-settings.test');
+            Route::get('oauth/qr',                  [Tenant\WhatsappChatbotController::class, 'oauthGenerateQr'])->name('oauth.qr');
+            Route::get('oauth/status',              [Tenant\WhatsappChatbotController::class, 'oauthStatus'])->name('oauth.status');
         });
 
         // Email

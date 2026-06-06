@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web\Tenant;
 
 use App\Http\Controllers\Controller;
+use App\Models\PlatformSetting;
 use App\Models\WhatsappChatbotFlow;
 use App\Models\WhatsappChatbotSession;
 use App\Models\WhatsappSetting;
@@ -10,6 +11,8 @@ use App\Services\WhatsappChatbotService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -33,7 +36,6 @@ class WhatsappChatbotController extends Controller
         $request->validate([
             'phone_number_id' => ['nullable', 'string', 'max:100'],
             'waba_id'         => ['nullable', 'string', 'max:100'],
-            'access_token'    => ['nullable', 'string'],
             'n8n_webhook_url' => ['nullable', 'url', 'max:500'],
             'chatbot_enabled' => ['nullable', 'boolean'],
         ]);
@@ -43,7 +45,6 @@ class WhatsappChatbotController extends Controller
 
         if ($request->filled('phone_number_id')) $settings->phone_number_id = $request->phone_number_id;
         if ($request->filled('waba_id'))         $settings->waba_id = $request->waba_id;
-        if ($request->filled('access_token'))    $settings->access_token = $request->access_token;
         if (!$settings->webhook_verify_token)    $settings->webhook_verify_token = Str::random(32);
 
         $settings->n8n_webhook_url  = $request->n8n_webhook_url;
@@ -51,6 +52,166 @@ class WhatsappChatbotController extends Controller
         $settings->save();
 
         return back()->with('success', 'WhatsApp settings saved successfully.');
+    }
+
+    // ── OAuth — Generate QR (authenticated) ──────────────────────
+    public function oauthGenerateQr(): JsonResponse
+    {
+        $appId     = PlatformSetting::get('meta_app_id');
+        $appSecret = PlatformSetting::get('meta_app_secret');
+
+        if (!$appId || !$appSecret) {
+            return response()->json(['success' => false, 'message' => 'Meta App credentials not configured yet. Please ask your administrator.']);
+        }
+
+        $state = Str::random(40);
+        cache()->put("wa_oauth_{$state}", [
+            'tenant_id'  => $this->tenantId(),
+            'app_id'     => $appId,
+            'app_secret' => $appSecret,
+        ], now()->addMinutes(10));
+
+        return response()->json([
+            'success' => true,
+            'state'   => $state,
+            'url'     => route('whatsapp.oauth.start', ['state' => $state]),
+        ]);
+    }
+
+    // ── OAuth — Start (public — phone browser) ────────────────────
+    public function oauthStart(Request $request): RedirectResponse|Response
+    {
+        $state = $request->query('state');
+        $data  = cache("wa_oauth_{$state}");
+
+        if (!$data) {
+            return response('QR code has expired. Please generate a new one in the CRM.', 400);
+        }
+
+        $scope = implode(',', [
+            'whatsapp_business_management',
+            'whatsapp_business_messaging',
+        ]);
+
+        $metaUrl = 'https://www.facebook.com/v19.0/dialog/oauth?' . http_build_query([
+            'client_id'     => $data['app_id'],
+            'redirect_uri'  => route('whatsapp.oauth.callback'),
+            'state'         => $state,
+            'scope'         => $scope,
+            'response_type' => 'code',
+        ]);
+
+        return redirect($metaUrl);
+    }
+
+    // ── OAuth — Callback (public — Meta redirects here) ──────────
+    public function oauthCallback(Request $request): View|Response
+    {
+        $state = $request->query('state');
+        $code  = $request->query('code');
+
+        if ($request->query('error')) {
+            return view('tenant.instagram.oauth_result', [
+                'success' => false,
+                'message' => $request->query('error_description', 'Authorization denied.'),
+            ]);
+        }
+
+        $data = cache("wa_oauth_{$state}");
+        if (!$data) {
+            return view('tenant.instagram.oauth_result', [
+                'success' => false,
+                'message' => 'QR code expired. Please generate a new one.',
+            ]);
+        }
+
+        try {
+            $callbackUrl = route('whatsapp.oauth.callback');
+
+            $tokenRes = Http::get('https://graph.facebook.com/v19.0/oauth/access_token', [
+                'client_id'     => $data['app_id'],
+                'client_secret' => $data['app_secret'],
+                'redirect_uri'  => $callbackUrl,
+                'code'          => $code,
+            ])->json();
+
+            if (empty($tokenRes['access_token'])) {
+                throw new \Exception($tokenRes['error']['message'] ?? 'Failed to get access token.');
+            }
+
+            $longRes = Http::get('https://graph.facebook.com/v19.0/oauth/access_token', [
+                'grant_type'        => 'fb_exchange_token',
+                'client_id'         => $data['app_id'],
+                'client_secret'     => $data['app_secret'],
+                'fb_exchange_token' => $tokenRes['access_token'],
+            ])->json();
+
+            $longToken = $longRes['access_token'] ?? $tokenRes['access_token'];
+
+            // Get WhatsApp Business Account
+            $wabaRes = Http::get('https://graph.facebook.com/v19.0/me/whatsapp_business_accounts', [
+                'access_token' => $longToken,
+            ])->json();
+
+            if (empty($wabaRes['data'])) {
+                throw new \Exception('No WhatsApp Business Account found for this Facebook account.');
+            }
+
+            $wabaId = $wabaRes['data'][0]['id'];
+
+            // Get Phone Numbers under this WABA
+            $phoneRes = Http::get("https://graph.facebook.com/v19.0/{$wabaId}/phone_numbers", [
+                'access_token' => $longToken,
+            ])->json();
+
+            if (empty($phoneRes['data'])) {
+                throw new \Exception('No phone numbers found in this WhatsApp Business Account.');
+            }
+
+            $phoneNumberId = $phoneRes['data'][0]['id'];
+
+            // Save to DB
+            $settings = WhatsappSetting::firstOrNew(['tenant_id' => $data['tenant_id']]);
+            $settings->tenant_id      = $data['tenant_id'];
+            $settings->access_token   = $longToken;
+            $settings->waba_id        = $wabaId;
+            $settings->phone_number_id= $phoneNumberId;
+            $settings->is_connected   = true;
+            if (!$settings->webhook_verify_token) {
+                $settings->webhook_verify_token = Str::random(32);
+            }
+            $settings->save();
+
+            cache()->put("wa_oauth_done_{$state}", true, now()->addMinutes(5));
+            cache()->forget("wa_oauth_{$state}");
+
+            return view('tenant.instagram.oauth_result', [
+                'success' => true,
+                'message' => 'WhatsApp Business account connected! You can close this window.',
+            ]);
+        } catch (\Throwable $e) {
+            return view('tenant.instagram.oauth_result', [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    // ── OAuth — Poll status (authenticated) ───────────────────────
+    public function oauthStatus(Request $request): JsonResponse
+    {
+        $state = $request->query('state');
+
+        if (cache("wa_oauth_done_{$state}")) {
+            $settings = WhatsappSetting::forTenant($this->tenantId());
+            return response()->json([
+                'connected'       => true,
+                'phone_number_id' => $settings->phone_number_id,
+                'waba_id'         => $settings->waba_id,
+            ]);
+        }
+
+        return response()->json(['connected' => false]);
     }
 
     // ── Settings — test connection ────────────────────────────────

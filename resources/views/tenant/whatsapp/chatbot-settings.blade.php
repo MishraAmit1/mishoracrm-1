@@ -9,6 +9,17 @@
 .conn-strip { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-radius:var(--r-md); border:1px solid var(--border-default); background:var(--bg-surface); margin-bottom:20px; }
 .copy-btn { cursor:pointer; background:none; border:none; color:var(--text-300); padding:4px; }
 .copy-btn:hover { color:var(--accent); }
+
+/* QR Connect */
+.qr-setup-card { border:2px dashed var(--border-default); border-radius:var(--r-lg); padding:28px 24px; text-align:center; background:var(--bg-subtle); margin-bottom:24px; }
+.qr-setup-card.connected { border-color:#22c55e; background:#f0fdf4; }
+.qr-wrap { display:inline-block; background:#fff; border-radius:12px; padding:16px; box-shadow:0 2px 12px rgba(0,0,0,.08); margin:16px 0; }
+.qr-steps { display:flex; gap:16px; justify-content:center; flex-wrap:wrap; margin:12px 0 0; }
+.qr-step { display:flex; align-items:flex-start; gap:8px; text-align:left; max-width:160px; }
+.qr-step-num { width:22px; height:22px; border-radius:50%; background:#25d366; color:#fff; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
+.qr-step-text { font-size:12px; color:var(--text-300); line-height:1.4; }
+.qr-success-icon { width:56px; height:56px; border-radius:50%; background:#dcfce7; display:flex; align-items:center; justify-content:center; margin:0 auto 12px; }
+@keyframes wapulse { 0%,100%{opacity:1} 50%{opacity:.3} }
 </style>
 @endpush
 
@@ -24,6 +35,62 @@
 @if(session('success'))
     <div class="alert alert-success" style="margin-bottom:20px;">{{ session('success') }}</div>
 @endif
+
+{{-- ── QR Quick Connect ──────────────────────────────────────────── --}}
+<div class="qr-setup-card" id="qrSetupCard">
+    @if($settings->is_connected)
+        <div class="qr-success-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" style="width:28px;height:28px;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+            </svg>
+        </div>
+        <div style="font-weight:700;font-size:16px;color:#16a34a;">WhatsApp Connected</div>
+        <div style="font-size:13px;color:var(--text-300);margin-top:4px;">
+            Phone Number ID: {{ $settings->phone_number_id }} &nbsp;|&nbsp; WABA ID: {{ $settings->waba_id }}
+        </div>
+        <button type="button" class="btn btn-sm" style="margin-top:14px;" onclick="startQrFlow()">Reconnect / Change Number</button>
+    @else
+        <div style="margin-bottom:8px;">
+            <svg viewBox="0 0 24 24" fill="#25d366" style="width:40px;height:40px;margin:0 auto;display:block;">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                <path d="M12.004 2C6.477 2 2 6.477 2 12.004c0 1.773.465 3.48 1.348 4.985L2 22l5.13-1.34A9.953 9.953 0 0012.004 22C17.527 22 22 17.523 22 12c0-5.522-4.473-10-9.996-10z" fill-rule="evenodd" clip-rule="evenodd"/>
+            </svg>
+        </div>
+        <div style="font-weight:700;font-size:17px;color:var(--text-100);">Quick Connect with QR Code</div>
+        <div style="font-size:13px;color:var(--text-300);margin-top:6px;max-width:420px;margin-left:auto;margin-right:auto;">
+            Scan this QR code with your phone to connect your WhatsApp Business account automatically — no manual token copying needed.
+        </div>
+
+        <div id="qrArea" style="display:none;margin-top:16px;">
+            <div class="qr-wrap"><img id="qrImg" src="" alt="QR Code" style="width:200px;height:200px;display:block;"></div>
+            <div style="font-size:12px;color:var(--text-300);" id="qrTimer">Valid for <strong id="qrCountdown">10:00</strong></div>
+        </div>
+
+        <div id="qrSteps" style="display:none;">
+            <div class="qr-steps">
+                <div class="qr-step"><div class="qr-step-num">1</div><div class="qr-step-text">Scan the QR code with your phone camera</div></div>
+                <div class="qr-step"><div class="qr-step-num">2</div><div class="qr-step-text">Log in with Facebook that manages your WhatsApp Business account</div></div>
+                <div class="qr-step"><div class="qr-step-num">3</div><div class="qr-step-text">Allow permissions — this page will update automatically</div></div>
+            </div>
+        </div>
+
+        <div id="qrConnecting" style="display:none;margin-top:14px;">
+            <span style="animation:wapulse 1.5s ease-in-out infinite;display:inline-block;width:8px;height:8px;border-radius:50%;background:#25d366;margin-right:6px;vertical-align:middle;"></span>
+            <span style="font-size:13px;color:var(--text-300);">Waiting for authorization on your phone…</span>
+        </div>
+
+        <div id="qrDone" style="display:none;margin-top:14px;font-size:15px;font-weight:600;color:#16a34a;">
+            Connected successfully! Reloading…
+        </div>
+
+        <div id="qrGenerateBtn" style="margin-top:16px;">
+            <button type="button" class="btn btn-primary" onclick="startQrFlow()">Generate QR Code</button>
+        </div>
+        <div id="qrRefreshBtn" style="display:none;margin-top:12px;">
+            <button type="button" class="btn btn-ghost btn-sm" onclick="startQrFlow()">Generate New QR</button>
+        </div>
+    @endif
+</div>
 
 {{-- Connection status --}}
 <div class="conn-strip">
@@ -46,25 +113,25 @@
 @csrf
 
 <div class="settings-grid">
-    {{-- Meta credentials --}}
+    {{-- Account details (auto-filled via QR) --}}
     <div class="card" style="grid-column:1/-1;">
-        <div class="card-header"><h3 class="card-title">WhatsApp Cloud API Credentials</h3></div>
+        <div class="card-header"><h3 class="card-title">Account Details</h3></div>
         <div class="card-body">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-                <div class="form-group">
-                    <label class="form-label">Phone Number ID</label>
-                    <input type="text" name="phone_number_id" class="form-input" value="{{ $settings->phone_number_id }}" placeholder="From Meta Business Manager">
+            @if($settings->is_connected)
+                <div style="display:flex;gap:24px;flex-wrap:wrap;">
+                    <div class="form-group" style="flex:1;min-width:200px;">
+                        <label class="form-label">Phone Number ID</label>
+                        <input type="text" name="phone_number_id" class="form-input" value="{{ $settings->phone_number_id }}" placeholder="Auto-filled on QR connect">
+                    </div>
+                    <div class="form-group" style="flex:1;min-width:200px;">
+                        <label class="form-label">WABA ID</label>
+                        <input type="text" name="waba_id" class="form-input" value="{{ $settings->waba_id }}" placeholder="Auto-filled on QR connect">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">WhatsApp Business Account ID (WABA ID)</label>
-                    <input type="text" name="waba_id" class="form-input" value="{{ $settings->waba_id }}" placeholder="Business Account ID">
-                </div>
-                <div class="form-group" style="grid-column:1/-1;">
-                    <label class="form-label">Access Token (Permanent)</label>
-                    <input type="password" name="access_token" class="form-input" placeholder="Leave blank to keep current token">
-                    <span class="form-hint">System User Access Token from Meta Business Manager (never expires)</span>
-                </div>
-            </div>
+                <p style="font-size:12px;color:var(--text-300);margin-top:8px;">These are filled automatically when you connect via QR code. Edit only if needed.</p>
+            @else
+                <p style="font-size:13px;color:var(--text-300);">Use the <strong>QR code above</strong> to connect your WhatsApp Business account. Phone Number ID and WABA ID will be filled automatically.</p>
+            @endif
         </div>
     </div>
 
@@ -152,6 +219,79 @@ function testConnection() {
     })
     .catch(() => alert('Request failed.'))
     .finally(() => { btn.textContent = 'Test Connection'; btn.disabled = false; });
+}
+
+// ── QR Connect ──────────────────────────────────────────────
+let qrState = null, qrPollTimer = null, qrCountdownTimer = null;
+
+function startQrFlow() {
+    fetch('{{ route("tenant.whatsapp.oauth.qr") }}', {
+        headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+    })
+    .then(function(r) {
+        if (!r.ok) return r.text().then(function(t) { throw new Error('Server error ' + r.status + ': ' + t.substring(0, 200)); });
+        return r.json();
+    })
+    .then(function(data) {
+        if (!data.success) { alert(data.message); return; }
+
+        qrState = data.state;
+
+        document.getElementById('qrImg').src =
+            'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=10&data=' + encodeURIComponent(data.url);
+
+        document.getElementById('qrGenerateBtn').style.display  = 'none';
+        document.getElementById('qrArea').style.display         = 'block';
+        document.getElementById('qrSteps').style.display        = 'block';
+        document.getElementById('qrConnecting').style.display   = 'block';
+        document.getElementById('qrRefreshBtn').style.display   = 'block';
+
+        startCountdown(600);
+        startPolling();
+    })
+    .catch(function(err) { alert('Could not generate QR: ' + err.message); });
+}
+
+function startCountdown(seconds) {
+    clearInterval(qrCountdownTimer);
+    let remaining = seconds;
+    const el = document.getElementById('qrCountdown');
+    qrCountdownTimer = setInterval(function() {
+        remaining--;
+        const m = String(Math.floor(remaining / 60)).padStart(2, '0');
+        const s = String(remaining % 60).padStart(2, '0');
+        if (el) el.textContent = m + ':' + s;
+        if (remaining <= 0) {
+            clearInterval(qrCountdownTimer);
+            clearInterval(qrPollTimer);
+            document.getElementById('qrConnecting').style.display = 'none';
+            document.getElementById('qrTimer').textContent = 'QR code expired. Generate a new one.';
+        }
+    }, 1000);
+}
+
+function startPolling() {
+    clearInterval(qrPollTimer);
+    qrPollTimer = setInterval(function() {
+        if (!qrState) return;
+        fetch('{{ route("tenant.whatsapp.oauth.status") }}?state=' + qrState, {
+            headers: { 'Accept': 'application/json' }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.connected) {
+                clearInterval(qrPollTimer);
+                clearInterval(qrCountdownTimer);
+                document.getElementById('qrConnecting').style.display = 'none';
+                document.getElementById('qrArea').style.display       = 'none';
+                document.getElementById('qrRefreshBtn').style.display = 'none';
+                document.getElementById('qrDone').style.display       = 'block';
+                document.getElementById('qrSetupCard').classList.add('connected');
+                setTimeout(function() { location.reload(); }, 1800);
+            }
+        })
+        .catch(function() {});
+    }, 3000);
 }
 </script>
 @endpush
