@@ -3,13 +3,14 @@
 namespace App\Models;
 
 use App\BelongsToTenant;
+use App\HasAuditLog;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Staff extends Model
 {
-    use SoftDeletes, BelongsToTenant;
+    use SoftDeletes, BelongsToTenant, HasAuditLog;
 
     protected $table = 'staff';
 
@@ -30,6 +31,11 @@ class Staff extends Model
     ];
 
     // ── Relationships ─────────────────────────────────────────────
+
+    public function getAuditLabel(): string
+    {
+        return $this->employee_code ?? ((string) $this->getKey());
+    }
 
     public function user(): BelongsTo
     {

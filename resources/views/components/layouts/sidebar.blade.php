@@ -191,6 +191,14 @@ Badge counts: pass from controller via shared view data.
                     </span>
                     <span class="sidebar__item-label">Roles & Permissions</span>
                 </a>
+
+                <a href="{{ route('tenant.audit-logs.index') }}"
+                    class="sidebar__item {{ $isActive(['tenant.audit-logs.*']) ? 'is-active' : '' }}" data-tooltip="Audit Logs">
+                    <span class="sidebar__item-icon">
+                        <i data-feather="activity"></i>
+                    </span>
+                    <span class="sidebar__item-label">Audit Logs</span>
+                </a>
             </div>
         @endif
 

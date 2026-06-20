@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -58,6 +59,13 @@ class LoginController extends Controller
         // Update last login
         $user->update(['last_login_at' => now()]);
 
+        AuditLog::record([
+            'tenant_id'   => $user->tenant_id,
+            'user_id'     => $user->id,
+            'action'      => 'login',
+            'description' => "User \"{$user->name}\" logged in",
+        ]);
+
         // Regenerate session
         $request->session()->regenerate();
 
@@ -68,6 +76,16 @@ class LoginController extends Controller
     // ── Logout ────────────────────────────────────────────────────
     public function destroy(Request $request): RedirectResponse
     {
+        $user = Auth::user();
+        if ($user) {
+            AuditLog::record([
+                'tenant_id'   => $user->tenant_id,
+                'user_id'     => $user->id,
+                'action'      => 'logout',
+                'description' => "User \"{$user->name}\" logged out",
+            ]);
+        }
+
         Auth::logout();
 
         $request->session()->invalidate();

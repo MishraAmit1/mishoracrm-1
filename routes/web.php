@@ -84,7 +84,11 @@ Route::prefix('superadmin')
             ->name('dashboard');
 
         // Tenant management
-        // Route::resource('tenants', SuperAdmin\TenantController::class);
+        Route::prefix('tenants')->name('tenants.')->controller(SuperAdmin\TenantController::class)->group(function () {
+            Route::get('/',                       'index')->name('index');
+            Route::get('/{tenant}',               'show')->name('show');
+            Route::post('/{tenant}/toggle-status','toggleStatus')->name('toggle-status');
+        });
 
         // Plan management
         Route::prefix('plans')->name('plans.')->controller(SuperAdmin\PlanController::class)->group(function () {
@@ -120,6 +124,15 @@ Route::prefix('superadmin')
             Route::put('/{coupon}',       'update')->name('update');
             Route::delete('/{coupon}',    'destroy')->name('destroy');
             Route::post('/{coupon}/toggle', 'toggle')->name('toggle');
+        });
+
+        // Error logs monitoring
+        Route::prefix('error-logs')->name('error-logs.')->controller(SuperAdmin\ErrorLogController::class)->group(function () {
+            Route::get('/',                       'index')->name('index');
+            Route::get('/{errorLog}',             'show')->name('show');
+            Route::post('/{errorLog}/resolve',    'resolve')->name('resolve');
+            Route::post('/resolve-all',           'resolveAll')->name('resolve-all');
+            Route::delete('/{errorLog}',          'destroy')->name('destroy');
         });
     });
 
@@ -184,6 +197,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
         Route::post('/leads/save-view', [Tenant\LeadController::class, 'saveView'])->name('leads.view');
         Route::patch('/leads/{id}/status',  [Tenant\LeadController::class, 'updateStatus'])->name('leads.status.update');
         Route::post('/leads/bulk-status',       [Tenant\LeadController::class, 'bulkUpdateStatus'])->name('bulk-status');
+        Route::post('/leads/{lead}/call-log',   [Tenant\LeadController::class, 'storeCallLog'])->name('leads.call-log.store');
         // ── Follow-ups ────────────────────────────────────────────
         Route::get('/followups',           [Tenant\FollowupController::class, 'index'])->name('followups.index');
         Route::get('/followups/create',    [Tenant\FollowupController::class, 'create'])->name('followups.create');
@@ -217,6 +231,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
         Route::prefix('/deals')->name('deals.')->group(function () {
             Route::controller(Tenant\DealController::class)->group(function () {
                 Route::get('/', 'index')->name('index');
+                Route::get('/pipeline', 'pipelineAnalytics')->name('pipeline');
                 Route::get('/create', 'create')->name('create');
                 Route::post('/', 'store')->name('store');
                 Route::get('/{id}', 'show')->name('show');
@@ -471,6 +486,13 @@ Route::middleware(['tenant', 'auth', 'subscription'])
                 Route::post('/{id}/toggle',       [Tenant\TenantFieldController::class, 'toggle'])->name('toggle');
                 Route::post('/reorder',           [Tenant\TenantFieldController::class, 'reorder'])->name('reorder');
                 Route::delete('/{id}',            [Tenant\TenantFieldController::class, 'remove'])->name('remove');
+            });
+
+        // Audit Logs — users with audit_logs.view permission (tenant_admin gets it by default)
+        Route::prefix('audit-logs')->name('audit-logs.')->middleware(['permission:audit_logs.view'])
+            ->controller(Tenant\AuditLogController::class)->group(function () {
+                Route::get('/',      'index')->name('index');
+                Route::get('/{id}',  'show')->name('show');
             });
 
         // tenant staff roles and permission

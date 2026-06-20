@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\BelongsToTenant;
+use App\HasAuditLog;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Deal extends Model
 {
-    use SoftDeletes, BelongsToTenant;
+    use SoftDeletes, BelongsToTenant, HasAuditLog;
 
     protected $fillable = [
         'tenant_id',
@@ -23,6 +24,7 @@ class Deal extends Model
         'probability',
         'expected_close_date',
         'actual_close_date',
+        'stage_changed_at',
         'notes',
         'lost_reason',
         'assigned_to',
@@ -34,6 +36,7 @@ class Deal extends Model
         'probability'         => 'integer',
         'expected_close_date' => 'date',
         'actual_close_date'   => 'date',
+        'stage_changed_at'    => 'datetime',
     ];
 
     // ── Relationships ─────────────────────────────────────────────
@@ -143,6 +146,12 @@ class Deal extends Model
             'lost'        => 'red',
             default       => 'gray',
         };
+    }
+
+    public function getDaysInStageAttribute(): int
+    {
+        $since = $this->stage_changed_at ?? $this->created_at;
+        return (int) ($since ? now()->diffInDays($since) : 0);
     }
 
     // ── Static helpers ────────────────────────────────────────────

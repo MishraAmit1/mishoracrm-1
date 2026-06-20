@@ -31,119 +31,72 @@ class TaskController extends Controller
             ->get(['id', 'name']);
     }
 
-    // index method to kanban view
+    // index method — supports kanban and list views
     public function index(Request $request)
     {
-        $tenantId = auth()->user()->tenant_id;
+        $tenantId    = auth()->user()->tenant_id;
+        $currentView = $request->get('view', 'kanban');
 
-        /*
-    |--------------------------------------------------------------------------
-    | Base Query
-    |--------------------------------------------------------------------------
-    */
         $query = Task::query()
             ->where('tenant_id', $tenantId)
-            ->with([
-                'assignedTo',
-                'creator',
-            ]);
+            ->with(['assignedTo', 'creator']);
 
-        /*
-    |--------------------------------------------------------------------------
-    | Filters
-    |--------------------------------------------------------------------------
-    */
-
-        // Search
         if ($request->filled('search')) {
-
             $query->where(function ($q) use ($request) {
-
                 $q->where('title', 'like', '%' . $request->search . '%')
                     ->orWhere('description', 'like', '%' . $request->search . '%');
             });
         }
 
-        // Status
-        if ($request->filled('status')) {
-
-            $query->where('status', $request->status);
+        // 'stage' param from URL maps to the status DB column
+        if ($request->filled('stage')) {
+            $query->where('status', $request->stage);
         }
 
-        // Priority
         if ($request->filled('priority')) {
-
             $query->where('priority', $request->priority);
         }
 
-        // Assigned User
         if ($request->filled('assigned_to')) {
-
             $query->where('assigned_to', $request->assigned_to);
         }
 
-        /*
-    |--------------------------------------------------------------------------
-    | Kanban Data
-    |--------------------------------------------------------------------------
-    */
-        $tasks = $query
-            ->latest()
-            ->get();
-
         $statuses = config('task_fields.stages');
 
-        /*
-    |--------------------------------------------------------------------------
-    | Empty Columns Generate
-    |--------------------------------------------------------------------------
-    */
-        $kanbanData = collect();
-
-        foreach (array_keys($statuses) as $status) {
-
-            $kanbanData[$status] = $tasks
-                ->where('status', $status)
-                ->values();
-        }
-
-        /*
-    |--------------------------------------------------------------------------
-    | Summary Cards
-    |--------------------------------------------------------------------------
-    */
         $summary = Task::query()
             ->where('tenant_id', $tenantId)
             ->selectRaw('status, COUNT(*) as count')
             ->groupBy('status')
             ->pluck('count', 'status');
 
+        $staffList = $this->getStaffList();
 
-        
+        if ($currentView === 'list') {
+            $tasks = $query->latest()->paginate(20)->withQueryString();
 
-        /*
-    |--------------------------------------------------------------------------
-    | Extra Data
-    |--------------------------------------------------------------------------
-    */
-         $staffList = $this->getStaffList();
-        /*
-    |--------------------------------------------------------------------------
-    | View
-    |--------------------------------------------------------------------------
-    */
+            return view('tenant.tasks.index', [
+                'kanbanTasks' => collect(),
+                'tasks'       => $tasks,
+                'stageSummary'=> $summary,
+                'cfgStatuses' => $statuses,
+                'staffList'   => $staffList,
+                'view'        => 'list',
+            ]);
+        }
+
+        // Kanban view — load all for drag-and-drop
+        $allTasks   = $query->latest()->get();
+        $kanbanData = collect();
+        foreach (array_keys($statuses) as $status) {
+            $kanbanData[$status] = $allTasks->where('status', $status)->values();
+        }
+
         return view('tenant.tasks.index', [
-
             'kanbanTasks' => $kanbanData,
-
-            'stageSummary' => $summary,
-
+            'stageSummary'=> $summary,
             'cfgStatuses' => $statuses,
-
-            'staffList' => $staffList,
-
-            'view' => 'kanban',
-
+            'staffList'   => $staffList,
+            'view'        => 'kanban',
         ]);
     }
 

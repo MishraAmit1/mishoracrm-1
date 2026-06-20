@@ -199,7 +199,7 @@
     $initials = fn(string $name): string =>
         collect(explode(' ', $name))->map(fn($p) => strtoupper($p[0] ?? ''))->join('');
 
-    $allCount = count($stageSummary);
+    $allCount = $stageSummary->sum();
 @endphp
 
 <div class="di">
@@ -242,7 +242,7 @@
         @endphp
         <a href="{{ route('tenant.tasks.index', array_merge(request()->except(['stage','page']), ['stage'=>$slug,'view'=>$currentView])) }}"
            class="di-sum {{ $currentStage === $slug ? 'active' : '' }}">
-            <div class="di-sum-val">{{ $ss?? 0 }}</div>
+            <div class="di-sum-val">{{ $sc }}</div>
             <div class="di-sum-lbl">{{ $stage['label'] }}</div>
             <div class="di-sum-bar" style="width:{{ $pct }}%;background:{{ $stage['color'] }}"></div>
         </a>

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\BelongsToTenant;
+use App\HasAuditLog;
 use App\HasCustomFields;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Lead extends TenantModel
 {
-    use SoftDeletes, BelongsToTenant, HasCustomFields;
+    use SoftDeletes, BelongsToTenant, HasCustomFields, HasAuditLog;
 
     public static string $customFieldModule = 'lead';
 
@@ -64,6 +65,11 @@ class Lead extends TenantModel
     public function deal(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
         return $this->hasOne(Deal::class);
+    }
+
+    public function callLogs(): HasMany
+    {
+        return $this->hasMany(LeadCallLog::class)->latest();
     }
 
     public function followups(): HasMany

@@ -226,6 +226,14 @@
 .source-other       { background: #F1EFE8; color: #5F5E5A; }
 
 @keyframes ls-spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
+/* ── Modal ── */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.5); display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px; }
+.modal-box { background:var(--bg-surface); border:1px solid var(--border-default); border-radius:14px; width:100%; overflow:hidden; display:flex; flex-direction:column; max-height:90vh; }
+.modal-head { padding:16px 20px; border-bottom:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center; }
+.modal-title { font-size:15px; font-weight:700; color:var(--text-100); }
+.modal-body  { padding:20px; display:flex; flex-direction:column; gap:14px; overflow-y:auto; flex:1; }
+.modal-foot  { padding:14px 20px; border-top:1px solid var(--border-subtle); display:flex; justify-content:flex-end; gap:8px; background:var(--bg-elevated); }
 </style>
 @endpush
 
@@ -370,7 +378,7 @@ if ($lead->assignedTo) {
                         <div class="ls-stat-lbl">Days Active</div>
                     </div>
                     <div>
-                        <div class="ls-stat-val">{{-- $lead->activities_count ?? $lead->activities()->count() --}}</div>
+                        <div class="ls-stat-val">{{ $lead->callLogs->count() }}</div>
                         <div class="ls-stat-lbl">Touchpoints</div>
                     </div>
                     <div>
@@ -539,50 +547,60 @@ if ($lead->assignedTo) {
                 </div>
 
                 <div class="ls-timeline-wrap">
-                   {{-- @forelse($lead->activities()->latest()->get() as $activity)
                     @php
-                    $iconColors = [
-                        'note'   => ['bg'=>'#E6F1FB','stroke'=>'#185FA5'],
-                        'call'   => ['bg'=>'#E1F5EE','stroke'=>'#0F6E56'],
-                        'email'  => ['bg'=>'#FAEEDA','stroke'=>'#BA7517'],
-                        'status' => ['bg'=>'#EEEDFE','stroke'=>'#534AB7'],
+                    $tlIconColors = [
+                        'note'     => ['bg'=>'#E6F1FB','stroke'=>'#185FA5'],
+                        'call'     => ['bg'=>'#E1F5EE','stroke'=>'#0F6E56'],
+                        'email'    => ['bg'=>'#FAEEDA','stroke'=>'#BA7517'],
+                        'meeting'  => ['bg'=>'#EEEDFE','stroke'=>'#534AB7'],
+                        'whatsapp' => ['bg'=>'#E1F5EE','stroke'=>'#0F6E56'],
                     ];
-                    $ic = $iconColors[$activity->type ?? 'note'] ?? $iconColors['note'];
+                    $outcomeLabels = \App\Models\LeadCallLog::outcomes();
                     @endphp
+
+                    @forelse($lead->callLogs as $log)
+                    @php $ic = $tlIconColors[$log->type] ?? $tlIconColors['note']; @endphp
                     <div class="ls-tl-item">
                         <div class="ls-tl-icon" style="background:{{ $ic['bg'] }}">
-                            @if(($activity->type ?? 'note') === 'call')
+                            @if($log->type === 'call')
                             <svg width="14" height="14" fill="none" stroke="{{ $ic['stroke'] }}" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
-                            @elseif(($activity->type ?? 'note') === 'email')
+                            @elseif($log->type === 'email')
                             <svg width="14" height="14" fill="none" stroke="{{ $ic['stroke'] }}" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                            @elseif(($activity->type ?? 'note') === 'status')
-                            <svg width="14" height="14" fill="none" stroke="{{ $ic['stroke'] }}" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                            @elseif($log->type === 'meeting')
+                            <svg width="14" height="14" fill="none" stroke="{{ $ic['stroke'] }}" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            @elseif($log->type === 'whatsapp')
+                            <svg width="14" height="14" fill="none" stroke="{{ $ic['stroke'] }}" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
                             @else
                             <svg width="14" height="14" fill="none" stroke="{{ $ic['stroke'] }}" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                             @endif
                         </div>
                         <div class="ls-tl-body">
                             <div class="ls-tl-meta">
-                                <span class="ls-tl-action">{{ ucfirst(str_replace('_',' ',$activity->type ?? 'Note')) }}</span>
-                                <span class="ls-tl-time">{{ $activity->created_at->diffForHumans() }}</span>
+                                <span class="ls-tl-action">{{ \App\Models\LeadCallLog::types()[$log->type] ?? ucfirst($log->type) }}</span>
+                                @if($log->type === 'call' && $log->call_outcome)
+                                <span class="ls-tl-tag">{{ $outcomeLabels[$log->call_outcome] ?? $log->call_outcome }}</span>
+                                @endif
+                                @if($log->type === 'call' && $log->call_duration)
+                                <span style="font-size:11px;color:var(--text-300)">{{ $log->call_duration }}m</span>
+                                @endif
+                                <span class="ls-tl-time">{{ $log->created_at->diffForHumans() }}</span>
                             </div>
-                            <div class="ls-tl-desc">{{ $activity->description }}</div>
+                            <div class="ls-tl-desc">{{ $log->description }}</div>
+                            @if($log->createdBy)
+                            <div style="font-size:11px;color:var(--text-400);margin-top:3px">by {{ $log->createdBy->name }}</div>
+                            @endif
                         </div>
                     </div>
                     @empty
-                    <div style="text-align:center;padding:24px 0;color:var(--text-300);font-size:13px">
-                        No activity yet. Add a note or log a call to get started.
-                    </div>
-                    @endforelse--}}
+                    @endforelse
 
                     {{-- custom fields --}}
-                         @include('components.custom-fields-display', [
-                             'customFields' => $customFields,
-                             'customValues' => $customValues,
-                         ])
-                    {{-- end custom fields --}}
+                    @include('components.custom-fields-display', [
+                        'customFields' => $customFields,
+                        'customValues' => $customValues,
+                    ])
                     {{-- Lead Created entry --}}
-                    <div class="ls-tl-item" style="margin-top:{{-- $lead->activities()->count() ? '4px' : '0' --}}">
+                    <div class="ls-tl-item" style="margin-top:{{ $lead->callLogs->count() ? '4px' : '0' }}">
                         <div class="ls-tl-icon" style="background:#EAF3DE">
                             <svg width="14" height="14" fill="none" stroke="#3B6D11" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                         </div>
@@ -600,7 +618,7 @@ if ($lead->assignedTo) {
 
                 {{-- Add Note Box --}}
                 <div class="ls-note-box">
-                    <form method="POST" action="#" id="noteForm">
+                    <form method="POST" action="{{ route('tenant.leads.call-log.store', $lead) }}" id="noteForm">
                         @csrf
                         <input type="hidden" name="type" id="activityType" value="note">
                         <textarea name="description" class="ls-note-input"
@@ -608,7 +626,7 @@ if ($lead->assignedTo) {
                                   required></textarea>
                         <div class="ls-note-actions">
                             <button type="button" class="btn btn-secondary"
-                                    onclick="document.getElementById('activityType').value='call';document.getElementById('noteForm').submit()">
+                                    onclick="document.getElementById('logCallModal').classList.add('open')">
                                 <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
                                 Log Call
                             </button>
@@ -764,17 +782,90 @@ if ($lead->assignedTo) {
     </div>{{-- /ls-layout --}}
 </div>
 
+{{-- ── Log Call Modal ─────────────────────────────────────────── --}}
+<div class="modal-overlay" id="logCallModal" style="display:none" onclick="if(event.target===this)closeCallModal()">
+    <div class="modal-box" style="max-width:500px">
+        <div class="modal-head">
+            <span class="modal-title">Log Call</span>
+            <button type="button" onclick="closeCallModal()" style="background:none;border:none;cursor:pointer;color:var(--text-300);font-size:20px;line-height:1">&times;</button>
+        </div>
+        <form method="POST" action="{{ route('tenant.leads.call-log.store', $lead) }}" id="callLogForm">
+            @csrf
+            <input type="hidden" name="type" value="call">
+            <div class="modal-body">
+                <div>
+                    <label style="font-size:12px;font-weight:600;color:var(--text-300);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Call Outcome</label>
+                    <select name="call_outcome" style="width:100%;padding:9px 12px;border:1.5px solid var(--border-default);border-radius:8px;background:var(--bg-surface);color:var(--text-100);font-size:13px;outline:none">
+                        <option value="">— Select outcome —</option>
+                        <option value="connected">Connected</option>
+                        <option value="no_answer">No Answer</option>
+                        <option value="voicemail">Left Voicemail</option>
+                        <option value="callback">Requested Callback</option>
+                        <option value="not_interested">Not Interested</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size:12px;font-weight:600;color:var(--text-300);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Duration (minutes)</label>
+                    <input type="number" name="call_duration" min="1" max="999" placeholder="e.g. 5"
+                           style="width:100%;padding:9px 12px;border:1.5px solid var(--border-default);border-radius:8px;background:var(--bg-surface);color:var(--text-100);font-size:13px;outline:none">
+                </div>
+                <div>
+                    <label style="font-size:12px;font-weight:600;color:var(--text-300);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Notes <span style="color:#E05252">*</span></label>
+                    <textarea name="description" required rows="3"
+                              placeholder="What was discussed on the call?"
+                              style="width:100%;padding:9px 12px;border:1.5px solid var(--border-default);border-radius:8px;background:var(--bg-surface);color:var(--text-100);font-size:13px;outline:none;resize:none;font-family:inherit"></textarea>
+                </div>
+            </div>
+            <div class="modal-foot">
+                <button type="button" onclick="closeCallModal()" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="callLogSubmitBtn">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                    Save Call
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
 <script>
 (function(){
+    /* Modal helpers */
+    function openCallModal() {
+        const m = document.getElementById('logCallModal');
+        m.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+    function closeCallModal() {
+        const m = document.getElementById('logCallModal');
+        m.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+    window.closeCallModal = closeCallModal;
+
+    /* Wire the "Log Call" button in the header */
+    document.querySelectorAll('[onclick*="logCallModal"]').forEach(el => {
+        el.removeAttribute('onclick');
+        el.addEventListener('click', openCallModal);
+    });
+
+    /* Call log form submit */
+    const callLogForm = document.getElementById('callLogForm');
+    if (callLogForm) {
+        callLogForm.addEventListener('submit', function () {
+            const btn = document.getElementById('callLogSubmitBtn');
+            if (btn) { btn.textContent = 'Saving...'; btn.disabled = true; }
+        });
+    }
+
     /* Note form submit loading state */
     const noteForm = document.getElementById('noteForm');
-    if(noteForm){
-        noteForm.addEventListener('submit', function(){
+    if (noteForm) {
+        noteForm.addEventListener('submit', function () {
             const btn = this.querySelector('button[type="submit"]');
-            if(btn){ btn.textContent = 'Saving...'; btn.disabled = true; }
+            if (btn) { btn.textContent = 'Saving...'; btn.disabled = true; }
         });
     }
 })();

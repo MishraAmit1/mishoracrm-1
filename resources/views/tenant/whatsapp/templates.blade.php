@@ -110,6 +110,23 @@
     </div>
     @endforeach
 </div>
+
+{{-- Pagination --}}
+@if($templates->hasPages())
+<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;margin-top:8px;font-size:13px;color:var(--text-300)">
+    <span>Showing {{ $templates->firstItem() }}–{{ $templates->lastItem() }} of {{ $templates->total() }}</span>
+    <div style="display:flex;gap:4px">
+        <a href="{{ $templates->previousPageUrl() ?? '#' }}"
+           style="padding:5px 10px;border-radius:var(--r-sm);border:1px solid var(--border-default);color:var(--text-200);text-decoration:none;font-size:13px;{{ !$templates->previousPageUrl() ? 'opacity:.4;pointer-events:none' : '' }}">←</a>
+        @foreach($templates->getUrlRange(max(1,$templates->currentPage()-2), min($templates->lastPage(),$templates->currentPage()+2)) as $page => $url)
+        <a href="{{ $url }}"
+           style="padding:5px 10px;border-radius:var(--r-sm);border:1px solid var(--border-default);text-decoration:none;font-size:13px;{{ $page==$templates->currentPage() ? 'background:var(--accent);border-color:var(--accent);color:#fff' : 'color:var(--text-200)' }}">{{ $page }}</a>
+        @endforeach
+        <a href="{{ $templates->nextPageUrl() ?? '#' }}"
+           style="padding:5px 10px;border-radius:var(--r-sm);border:1px solid var(--border-default);color:var(--text-200);text-decoration:none;font-size:13px;{{ !$templates->nextPageUrl() ? 'opacity:.4;pointer-events:none' : '' }}">→</a>
+    </div>
+</div>
+@endif
 @endif
 
 {{-- Modal --}}

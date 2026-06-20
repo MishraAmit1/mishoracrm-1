@@ -3,13 +3,14 @@
 namespace App\Models;
 
 use App\BelongsToTenant;
+use App\HasAuditLog;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Followup extends TenantModel
 {
-    use SoftDeletes, BelongsToTenant;
+    use SoftDeletes, BelongsToTenant, HasAuditLog;
 
     protected $fillable = [
         'tenant_id',

@@ -8,6 +8,7 @@ use App\Models\Contact;
 use App\Models\CustomFieldValue;
 use App\Models\Deal;
 use App\Models\Lead;
+use App\Models\LeadCallLog;
 use App\Models\TenantFieldAssignment;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -143,6 +144,7 @@ class LeadController extends Controller
             'followups.assignedTo',
             'contact',
             'deal',
+            'callLogs.createdBy',
         ]);
 
         return view('tenant.leads.show', [
@@ -417,6 +419,32 @@ class LeadController extends Controller
                 'source'      => $lead->source,
             ],
         ]);
+    }
+
+    // ── Store Call Log / Note ─────────────────────────────────────
+    public function storeCallLog(Request $request, Lead $lead): RedirectResponse
+    {
+        abort_unless($lead->tenant_id === $this->tenantId(), 403);
+
+        $request->validate([
+            'type'          => ['required', 'in:call,note,email,meeting,whatsapp'],
+            'description'   => ['required', 'string', 'max:2000'],
+            'call_outcome'  => ['nullable', 'in:connected,no_answer,voicemail,callback,not_interested'],
+            'call_duration' => ['nullable', 'integer', 'min:1', 'max:999'],
+        ]);
+
+        LeadCallLog::create([
+            'tenant_id'     => $this->tenantId(),
+            'lead_id'       => $lead->id,
+            'type'          => $request->type,
+            'description'   => $request->description,
+            'call_outcome'  => $request->type === 'call' ? $request->call_outcome : null,
+            'call_duration' => $request->type === 'call' ? $request->call_duration : null,
+            'logged_at'     => now(),
+            'created_by'    => auth()->id(),
+        ]);
+
+        return back()->with('success', ucfirst($request->type) . ' logged successfully.');
     }
 
     // ─────────────────────────────────────────────────────────────

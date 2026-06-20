@@ -37,6 +37,11 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions) {
 
+        // Auto-capture all exceptions into error_logs for superadmin monitoring
+        $exceptions->report(function (\Throwable $e) {
+            \App\Models\ErrorLog::capture($e, request());
+        });
+
         $exceptions->render(function (\Throwable $e, $request) {
             if ($request->is('api/*') || $request->expectsJson()) {
                 $status = method_exists($e, 'getStatusCode')

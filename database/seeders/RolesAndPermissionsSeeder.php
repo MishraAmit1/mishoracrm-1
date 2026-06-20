@@ -124,6 +124,9 @@ class RolesAndPermissionsSeeder extends Seeder
             // ── Notifications ─────────────────────────────────────
             'notifications.view',
             'notifications.manage_preferences',
+
+            // ── Audit Logs ────────────────────────────────────────
+            'audit_logs.view',
         ];
 
         foreach ($permissions as $perm) {

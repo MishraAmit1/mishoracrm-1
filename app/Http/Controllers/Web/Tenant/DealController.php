@@ -8,6 +8,7 @@ use App\Models\Contact;
 use App\Models\Deal;
 use App\Models\Lead;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -156,6 +157,8 @@ class DealController extends Controller
             $data['actual_close_date'] = now()->toDateString();
         }
 
+        $data['stage_changed_at'] = now();
+
         $deal = Deal::create($data);
 
         return redirect()
@@ -217,6 +220,11 @@ class DealController extends Controller
             $data['probability'] = $this->defaultProbability($data['stage']);
         }
 
+        // Track stage change time
+        if (isset($data['stage']) && $data['stage'] !== $deal->stage) {
+            $data['stage_changed_at'] = now();
+        }
+
         $deal->update($data);
 
         return redirect()
@@ -259,6 +267,8 @@ class DealController extends Controller
             $data['lost_reason'] = $request->lost_reason;
         }
 
+        $data['stage_changed_at'] = now();
+
         $deal->update($data);
 
         return back()->with('success', 'Deal stage updated.');
@@ -272,6 +282,7 @@ class DealController extends Controller
             'stage'             => 'won',
             'probability'       => 100,
             'actual_close_date' => now()->toDateString(),
+            'stage_changed_at'  => now(),
         ]);
 
         return back()->with('success', "Deal marked as Won! 🎉");
@@ -290,9 +301,98 @@ class DealController extends Controller
             'probability'       => 0,
             'actual_close_date' => now()->toDateString(),
             'lost_reason'       => $request->lost_reason,
+            'stage_changed_at'  => now(),
         ]);
 
         return back()->with('success', 'Deal marked as lost.');
+    }
+
+    // ── Pipeline Analytics ────────────────────────────────────────
+    public function pipelineAnalytics(): View
+    {
+        $tid = auth()->user()->tenant_id;
+
+        // Open pipeline
+        $openDeals       = Deal::where('tenant_id', $tid)->open()->get();
+        $totalPipeline   = $openDeals->sum('value');
+        $weightedForecast = $openDeals->sum(fn($d) => $d->value * ($d->probability / 100));
+
+        // Win/loss this year
+        $wonCount  = Deal::where('tenant_id', $tid)->won()->whereYear('actual_close_date', now()->year)->count();
+        $lostCount = Deal::where('tenant_id', $tid)->lost()->whereYear('actual_close_date', now()->year)->count();
+        $winRate   = ($wonCount + $lostCount) > 0
+            ? round(($wonCount / ($wonCount + $lostCount)) * 100)
+            : 0;
+
+        // Avg deal size (won all-time)
+        $avgDealSize = (float) (Deal::where('tenant_id', $tid)->won()->avg('value') ?? 0);
+
+        // Avg days to close (won with actual_close_date)
+        $avgDaysToClose = Deal::where('tenant_id', $tid)
+            ->won()
+            ->whereNotNull('actual_close_date')
+            ->get()
+            ->avg(fn($d) => $d->created_at->diffInDays($d->actual_close_date)) ?? 0;
+
+        // Stage breakdown
+        $stageData = Deal::where('tenant_id', $tid)
+            ->selectRaw('stage, COUNT(*) as count, SUM(value) as total')
+            ->groupBy('stage')
+            ->get()
+            ->keyBy('stage');
+
+        // Monthly closed revenue + win/loss counts — last 6 months
+        $monthlyRevenue = collect();
+        $winLossData    = collect();
+        for ($i = 5; $i >= 0; $i--) {
+            $m   = now()->subMonths($i);
+            $rev = Deal::where('tenant_id', $tid)->won()
+                ->whereYear('actual_close_date', $m->year)
+                ->whereMonth('actual_close_date', $m->month)
+                ->sum('value');
+            $w = Deal::where('tenant_id', $tid)->won()
+                ->whereYear('actual_close_date', $m->year)
+                ->whereMonth('actual_close_date', $m->month)->count();
+            $l = Deal::where('tenant_id', $tid)->lost()
+                ->whereYear('actual_close_date', $m->year)
+                ->whereMonth('actual_close_date', $m->month)->count();
+
+            $monthlyRevenue->push(['month' => $m->format('M Y'), 'short' => $m->format('M'), 'value' => (float) $rev]);
+            $winLossData->push(['month' => $m->format('M'), 'won' => $w, 'lost' => $l]);
+        }
+
+        // Deals closing this month
+        $closingThisMonth = Deal::where('tenant_id', $tid)
+            ->open()
+            ->whereMonth('expected_close_date', now()->month)
+            ->whereYear('expected_close_date', now()->year)
+            ->with(['contact', 'assignedTo'])
+            ->orderBy('expected_close_date')
+            ->get();
+
+        // Top 5 open deals by value
+        $topDeals = Deal::where('tenant_id', $tid)
+            ->open()
+            ->with(['contact', 'assignedTo'])
+            ->orderByDesc('value')
+            ->limit(5)
+            ->get();
+
+        // Funnel conversion (stage counts in pipeline order, excluding won/lost)
+        $pipelineStages = ['new', 'proposal', 'negotiation'];
+        $funnelData     = collect($pipelineStages)->map(function ($stage) use ($stageData) {
+            $row = $stageData->get($stage);
+            return ['stage' => $stage, 'count' => $row->count ?? 0, 'total' => (float) ($row->total ?? 0)];
+        });
+
+        $stages = Deal::stages();
+
+        return view('tenant.deals.pipeline-analytics', compact(
+            'totalPipeline', 'weightedForecast', 'winRate', 'avgDealSize',
+            'avgDaysToClose', 'stageData', 'monthlyRevenue', 'winLossData',
+            'closingThisMonth', 'topDeals', 'funnelData',
+            'stages', 'wonCount', 'lostCount'
+        ));
     }
 
     // ── Default probability by stage ──────────────────────────────

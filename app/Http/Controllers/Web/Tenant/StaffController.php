@@ -81,6 +81,24 @@ class StaffController extends Controller
             'employment_type'  => ['nullable', 'in:full_time,part_time,contract,intern'],
         ]);
 
+        // Check subscription user limit
+        $plan = auth()->user()->tenant?->subscription?->plan;
+        if ($plan) {
+            $maxUsers = (int) ($plan->features['users'] ?? 0);
+            if ($maxUsers > 0) {
+                $currentCount = User::withoutGlobalScopes()
+                    ->where('tenant_id', $this->tenantId())
+                    ->where('is_active', true)
+                    ->count();
+                if ($currentCount >= $maxUsers) {
+                    return back()->withInput()->with(
+                        'error',
+                        "User limit reached. Your {$plan->name} plan allows {$maxUsers} users. Please upgrade your subscription to add more users."
+                    );
+                }
+            }
+        }
+
         // 1. Create user
         $user = User::create([
             'tenant_id'  => $this->tenantId(),

@@ -267,6 +267,16 @@
 .di-empty-icon { width: 46px; height: 46px; border-radius: 12px; background: var(--bg-elevated); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; }
 .di-empty-title { font-size: 14px; font-weight: 600; color: var(--text-100); margin-bottom: 5px; }
 .di-empty-sub   { font-size: 13px; color: var(--text-300); margin-bottom: 16px; }
+
+/* Aging badge */
+.age-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    padding: 1px 6px; border-radius: 20px;
+    font-size: 10px; font-weight: 600; font-family: 'DM Mono', monospace;
+}
+.age-fresh  { background: #E1F5EE; color: #0F6E56; }
+.age-warm   { background: #FAEEDA; color: #854F0B; }
+.age-stale  { background: #FCEBEB; color: #A32D2D; }
 </style>
 @endpush
 
@@ -306,6 +316,9 @@ $allTotal = $stageSummary->sum('total');
         <div style="font-size:12px;color:var(--text-300);margin-top:2px">Track and manage your sales pipeline</div>
     </div>
     <div style="display:flex;gap:8px">
+        <a href="{{ route('tenant.deals.pipeline') }}" class="btn btn-secondary">
+            <i class="ti ti-chart-bar" style="font-size:14px"></i> Analytics
+        </a>
         <button class="btn btn-secondary" onclick="exportDeals()">
             <i class="ti ti-download" style="font-size:14px"></i> Export
         </button>
@@ -432,6 +445,8 @@ $allTotal = $stageSummary->sum('total');
             $prob   = (int)($deal->probability ?? $stage['probability']);
             $pColor = $probColor($prob);
             $assInit = $deal->assignedTo ? $initials($deal->assignedTo->name) : '';
+            $days = $deal->days_in_stage;
+            $ageCls = $days >= 14 ? 'age-stale' : ($days >= 7 ? 'age-warm' : 'age-fresh');
         @endphp
 
         <div class="deal-card"
@@ -492,6 +507,7 @@ $allTotal = $stageSummary->sum('total');
                     @endif
                 </div>
                 <div class="dc-right">
+                    <span class="age-badge {{ $ageCls }}" title="{{ $days }}d in this stage">{{ $days }}d</span>
                     @if($deal->expected_close_date)
                     <span class="dc-date">{{ \Carbon\Carbon::parse($deal->expected_close_date)->format('M d') }}</span>
                     @endif
