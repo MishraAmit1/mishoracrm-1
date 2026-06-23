@@ -14,8 +14,9 @@ class DealController extends Controller
     // ── Find deal — tenant scope ──────────────────────────────────
     private function findDeal(int $id): Deal
     {
+        $tenantId = auth()->user()?->tenant_id ?? app('tenant_id');
         return Deal::where('id', $id)
-                   ->where('tenant_id', auth()->user()->tenant_id)
+                   ->where('tenant_id', $tenantId)
                    ->firstOrFail();
     }
 
@@ -92,7 +93,7 @@ class DealController extends Controller
     public function store(DealRequest $request): JsonResponse
     {
         $data               = $request->validated();
-        $data['tenant_id']  = auth()->user()->tenant_id;
+        $data['tenant_id']  = auth()->user()?->tenant_id ?? app('tenant_id');
         $data['created_by'] = auth()->id();
 
         if (empty($data['probability'])) {

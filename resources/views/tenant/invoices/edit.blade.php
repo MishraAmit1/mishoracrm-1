@@ -402,6 +402,8 @@
 
 @endsection
 
+@include('tenant.partials.product-search-js')
+
 @push('scripts')
 <script>
 // ── Existing data ─────────────────────────────────────────────────
@@ -422,19 +424,8 @@ function loadContact(id) {
     box.style.display = 'block';
 }
 
-// ── Product selector helpers ──────────────────────────────────────
-function productOptions() {
-    let opts = '<option value="">— Select Product —</option>';
-    Object.values(PRODUCTS).forEach(p => {
-        opts += `<option value="${p.id}">${escHtml(p.name)}${p.unit ? ' ('+escHtml(p.unit)+')' : ''}</option>`;
-    });
-    return opts;
-}
-
-function fillFromProduct(selectEl, i) {
-    const pid = selectEl.value;
-    if (!pid || !PRODUCTS[pid]) return;
-    const p = PRODUCTS[pid];
+// ── Autofill row (called by shared partial) ───────────────────────
+window.fillRowFromProduct = function(i, p) {
     const row = document.querySelector(`[data-row="${i}"]`);
     if (!row) return;
     row.querySelector(`[name="items[${i}][description]"]`).value  = p.description || p.name;
@@ -442,7 +433,7 @@ function fillFromProduct(selectEl, i) {
     row.querySelector(`[name="items[${i}][tax_percent]"]`).value  = p.tax_percent;
     calcRow(i);
     calcTotals();
-}
+};
 
 // ── Add row ───────────────────────────────────────────────────────
 function addRow(desc = '', qty = 1, rate = '', taxPct = '') {
@@ -452,14 +443,11 @@ function addRow(desc = '', qty = 1, rate = '', taxPct = '') {
     tr.dataset.row = i;
 
     const amount = (parseFloat(qty)||0) * (parseFloat(rate)||0);
-    const gst    = taxPct !== '' ? taxPct : (document.getElementById('taxPercent')?.value || 18);
+    const gst    = taxPct !== '' ? taxPct : 18;
 
     tr.innerHTML = `
         <td>
-            <select class="item-input" style="margin-bottom:4px;font-size:12px;color:var(--text-300)"
-                    onchange="fillFromProduct(this, ${i})">
-                ${productOptions()}
-            </select>
+            <div id="ps_container_${i}"></div>
             <input type="text"
                    name="items[${i}][description]"
                    class="item-input"
@@ -504,6 +492,7 @@ function addRow(desc = '', qty = 1, rate = '', taxPct = '') {
         </td>`;
 
     tbody.appendChild(tr);
+    buildProductSearch(i, document.getElementById('ps_container_' + i));
     calcTotals();
     set('sumItems', document.querySelectorAll('#itemsBody tr').length);
 }

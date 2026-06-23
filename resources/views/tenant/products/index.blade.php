@@ -44,6 +44,7 @@
 <table class="prod-table">
     <thead>
         <tr>
+            <th>Code</th>
             <th>Name</th>
             <th>Description</th>
             <th>HSN</th>
@@ -57,6 +58,7 @@
     <tbody>
         @forelse($products as $p)
         <tr>
+            <td class="mono" style="font-size:12px;color:var(--text-300)">{{ $p->product_code ?: '—' }}</td>
             <td style="font-weight:600">{{ $p->name }}</td>
             <td style="color:var(--text-300);font-size:12.5px;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
                 {{ $p->description ?: '—' }}

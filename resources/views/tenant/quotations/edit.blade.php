@@ -499,6 +499,8 @@
 </div>
 @endsection
 
+@include('tenant.partials.product-search-js')
+
 @push('scripts')
 <script>
 (function(){
@@ -510,18 +512,8 @@ let rowIndex = 0;
 
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-function productOptions() {
-    let opts = '<option value="">— Select Product —</option>';
-    Object.values(PRODUCTS).forEach(p => {
-        opts += `<option value="${p.id}">${esc(p.name)}${p.unit ? ' ('+esc(p.unit)+')' : ''}</option>`;
-    });
-    return opts;
-}
-
-function fillFromProduct(selectEl, i) {
-    const pid = selectEl.value;
-    if (!pid || !PRODUCTS[pid]) return;
-    const p = PRODUCTS[pid];
+/* fillRowFromProduct — called by shared partial */
+window.fillRowFromProduct = function(i, p) {
     const row = document.getElementById('row_' + i);
     if (!row) return;
     row.querySelector(`[name="items[${i}][name]"]`).value        = p.name;
@@ -533,7 +525,7 @@ function fillFromProduct(selectEl, i) {
     if (taxSel) taxSel.value = p.tax_percent;
     calcRowAmount(i);
     markDirty();
-}
+};
 
 function addItemRow(name='', desc='', qty=1, rate=0, taxPct=''){
     const i    = rowIndex++;
@@ -544,7 +536,7 @@ function addItemRow(name='', desc='', qty=1, rate=0, taxPct=''){
     tr.id      = 'row_' + i;
     tr.innerHTML = `
         <td>
-            <select class="item-input" style="margin-bottom:4px;font-size:12px;color:var(--text-300)" onchange="fillFromProduct(this,${i})">${productOptions()}</select>
+            <div id="ps_container_${i}"></div>
             <input type="text" name="items[${i}][name]" class="item-input" placeholder="Item / Service name" value="${esc(name)}" required/>
         </td>
         <td><input type="text" name="items[${i}][description]" class="item-input" placeholder="Optional description" value="${esc(desc)}"/></td>
@@ -557,6 +549,7 @@ function addItemRow(name='', desc='', qty=1, rate=0, taxPct=''){
         <td><button type="button" class="del-row-btn" onclick="delRow(${i})" title="Remove"><i class="ti ti-trash" style="font-size:13px"></i></button></td>
     `;
     tbody.appendChild(tr);
+    buildProductSearch(i, document.getElementById('ps_container_' + i));
     recalcTotals();
     markDirty();
 }

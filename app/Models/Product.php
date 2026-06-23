@@ -14,6 +14,7 @@ class Product extends Model
     protected $fillable = [
         'tenant_id',
         'name',
+        'product_code',
         'description',
         'rate',
         'tax_percent',

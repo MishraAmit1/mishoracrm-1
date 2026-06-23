@@ -47,6 +47,14 @@
         </div>
 
         <div class="field">
+            <label class="fl">Product Code / SKU</label>
+            <input type="text" name="product_code" class="fi"
+                   value="{{ old('product_code') }}" placeholder="e.g. SRV-WD001"
+                   style="font-family:var(--mono,monospace);letter-spacing:.5px"/>
+            <span style="font-size:11.5px;color:var(--text-400)">Search mein code se bhi dhundh sakte hain</span>
+        </div>
+
+        <div class="field">
             <label class="fl">Description</label>
             <textarea name="description" class="fi" rows="3"
                       style="resize:vertical" placeholder="Optional — shown in invoice item description">{{ old('description') }}</textarea>

@@ -86,7 +86,7 @@ class InvoiceController extends Controller
         $number   = Invoice::generateNumber();
         $statuses = Invoice::statuses();
         $tenant   = auth()->user()->tenant;
-        $products = Product::where('tenant_id', $this->tenantId())->active()->orderBy('name')->get(['id','name','description','rate','tax_percent','hsn','unit']);
+        $products = Product::where('tenant_id', $this->tenantId())->active()->orderBy('name')->get(['id','product_code','name','description','rate','tax_percent','hsn','unit']);
 
         return view('tenant.invoices.create', compact(
             'contacts', 'contact', 'quotation',
@@ -169,7 +169,7 @@ class InvoiceController extends Controller
 
         $statuses = Invoice::statuses();
         $tenant   = auth()->user()->tenant;
-        $products = Product::where('tenant_id', $this->tenantId())->active()->orderBy('name')->get(['id','name','description','rate','tax_percent','hsn','unit']);
+        $products = Product::where('tenant_id', $this->tenantId())->active()->orderBy('name')->get(['id','product_code','name','description','rate','tax_percent','hsn','unit']);
 
         return view('tenant.invoices.edit', compact(
             'invoice', 'contacts', 'statuses', 'tenant', 'products'

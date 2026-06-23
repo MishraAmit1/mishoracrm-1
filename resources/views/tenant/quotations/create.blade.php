@@ -531,6 +531,8 @@
 </div>
 @endsection
 
+@include('tenant.partials.product-search-js')
+
 @push('scripts')
 <script>
 (function(){
@@ -541,29 +543,19 @@ const PRODUCTS = @json($products->keyBy('id'));
 /* ── Item Row Template ── */
 let rowIndex = 0;
 
-function productOptions() {
-    let opts = '<option value="">— Select Product —</option>';
-    Object.values(PRODUCTS).forEach(p => {
-        opts += `<option value="${p.id}">${escHtml(p.name)}${p.unit ? ' ('+escHtml(p.unit)+')' : ''}</option>`;
-    });
-    return opts;
-}
-
-function fillFromProduct(selectEl, i) {
-    const pid = selectEl.value;
-    if (!pid || !PRODUCTS[pid]) return;
-    const p = PRODUCTS[pid];
+/* ── fillRowFromProduct called by shared partial ── */
+window.fillRowFromProduct = function(i, p) {
     const row = document.getElementById('row_' + i);
     if (!row) return;
     row.querySelector(`[name="items[${i}][name]"]`).value        = p.name;
     row.querySelector(`[name="items[${i}][description]"]`).value = p.description || '';
     row.querySelector(`[name="items[${i}][rate]"]`).value        = p.rate;
-    row.querySelector(`[name="items[${i}][tax_percent]"]`).value = p.tax_percent;
-    // Also update the tax select to match product's GST
+    const taxHid = row.querySelector(`[name="items[${i}][tax_percent]"]`);
+    if (taxHid) taxHid.value = p.tax_percent;
     const taxSel = document.getElementById('taxSelect');
-    if (taxSel) { taxSel.value = p.tax_percent; }
+    if (taxSel) taxSel.value = p.tax_percent;
     calcRowAmount(i);
-}
+};
 
 function addItemRow(name='', desc='', qty=1, rate=0, taxPct=''){
     const i    = rowIndex++;
@@ -573,23 +565,8 @@ function addItemRow(name='', desc='', qty=1, rate=0, taxPct=''){
     const tr   = document.createElement('tr');
     tr.id      = 'row_' + i;
     tr.innerHTML = `
-        <td colspan="2" style="padding-bottom:0">
-            <select class="item-input" style="margin-bottom:4px;font-size:12px;color:var(--text-300)"
-                    onchange="fillFromProduct(this, ${i})">
-                ${productOptions()}
-            </select>
-        </td>
-        <td colspan="4" style="display:none"></td>
-    `;
-    tbody.appendChild(tr);
-
-    // Replace with proper row
-    tr.innerHTML = `
         <td>
-            <select class="item-input" style="margin-bottom:4px;font-size:12px;color:var(--text-300)"
-                    onchange="fillFromProduct(this, ${i})">
-                ${productOptions()}
-            </select>
+            <div id="ps_container_${i}"></div>
             <input type="text" name="items[${i}][name]"
                    class="item-input {{ $errors->has("items.*.name")?"is-err":"" }}"
                    placeholder="Item / Service name" value="${escHtml(name)}" required/>
@@ -624,6 +601,8 @@ function addItemRow(name='', desc='', qty=1, rate=0, taxPct=''){
             </button>
         </td>
     `;
+    tbody.appendChild(tr);
+    buildProductSearch(i, document.getElementById('ps_container_' + i));
     recalcTotals();
 }
 window.addItemRow = addItemRow;

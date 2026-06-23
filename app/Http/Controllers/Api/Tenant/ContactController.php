@@ -46,7 +46,7 @@ class ContactController extends Controller
     public function store(ContactRequest $request): JsonResponse
     {
         $data              = $request->validated();
-        $data['tenant_id'] = auth()->user()->tenant_id;
+        $data['tenant_id'] = auth()->user()?->tenant_id ?? app('tenant_id');
 
         $contact = Contact::create($data);
         $contact->load('lead');

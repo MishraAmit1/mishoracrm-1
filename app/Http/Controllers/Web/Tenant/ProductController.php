@@ -47,13 +47,14 @@ class ProductController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'name'        => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'rate'        => ['required', 'numeric', 'min:0'],
-            'tax_percent' => ['required', 'numeric', 'min:0', 'max:100'],
-            'hsn'         => ['nullable', 'string', 'max:50'],
-            'unit'        => ['nullable', 'string', 'max:50'],
-            'is_active'   => ['nullable', 'boolean'],
+            'name'         => ['required', 'string', 'max:255'],
+            'product_code' => ['nullable', 'string', 'max:50'],
+            'description'  => ['nullable', 'string'],
+            'rate'         => ['required', 'numeric', 'min:0'],
+            'tax_percent'  => ['required', 'numeric', 'min:0', 'max:100'],
+            'hsn'          => ['nullable', 'string', 'max:50'],
+            'unit'         => ['nullable', 'string', 'max:50'],
+            'is_active'    => ['nullable', 'boolean'],
         ]);
 
         $data['tenant_id'] = $this->tenantId();
@@ -79,13 +80,14 @@ class ProductController extends Controller
         $product = $this->findProduct($id);
 
         $data = $request->validate([
-            'name'        => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'rate'        => ['required', 'numeric', 'min:0'],
-            'tax_percent' => ['required', 'numeric', 'min:0', 'max:100'],
-            'hsn'         => ['nullable', 'string', 'max:50'],
-            'unit'        => ['nullable', 'string', 'max:50'],
-            'is_active'   => ['nullable', 'boolean'],
+            'name'         => ['required', 'string', 'max:255'],
+            'product_code' => ['nullable', 'string', 'max:50'],
+            'description'  => ['nullable', 'string'],
+            'rate'         => ['required', 'numeric', 'min:0'],
+            'tax_percent'  => ['required', 'numeric', 'min:0', 'max:100'],
+            'hsn'          => ['nullable', 'string', 'max:50'],
+            'unit'         => ['nullable', 'string', 'max:50'],
+            'is_active'    => ['nullable', 'boolean'],
         ]);
 
         $data['is_active'] = $request->boolean('is_active', true);
@@ -109,10 +111,13 @@ class ProductController extends Controller
     {
         $products = Product::where('tenant_id', $this->tenantId())
             ->active()
-            ->when($request->filled('q'), fn($q) => $q->where('name', 'like', "%{$request->q}%"))
+            ->when($request->filled('q'), fn($q) => $q->where(function ($sub) use ($request) {
+                $sub->where('name', 'like', "%{$request->q}%")
+                    ->orWhere('product_code', 'like', "%{$request->q}%");
+            }))
             ->orderBy('name')
             ->limit(100)
-            ->get(['id', 'name', 'description', 'rate', 'tax_percent', 'hsn', 'unit']);
+            ->get(['id', 'product_code', 'name', 'description', 'rate', 'tax_percent', 'hsn', 'unit']);
 
         return response()->json($products);
     }

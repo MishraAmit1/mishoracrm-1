@@ -530,6 +530,15 @@ Route::middleware(['tenant', 'auth', 'subscription'])
             // Assign role to specific user
             Route::post('/assign',  'assignToUser')->name('assign');
         });
+
+        // ── API Key Management (tenant_admin only) ────────────────
+        Route::prefix('api-keys')->name('api-keys.')->middleware(['role:tenant_admin'])
+            ->controller(Tenant\ApiKeyController::class)->group(function () {
+                Route::get('/',           'index')->name('index');
+                Route::post('/',          'store')->name('store');
+                Route::post('/{id}/toggle', 'toggle')->name('toggle');
+                Route::delete('/{id}',    'destroy')->name('destroy');
+            });
     });
 
 
