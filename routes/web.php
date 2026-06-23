@@ -278,6 +278,19 @@ Route::middleware(['tenant', 'auth', 'subscription'])
             });
         });
 
+        // Products / Item Catalog routes
+        Route::prefix('/products')->name('products.')->group(function () {
+            Route::controller(Tenant\ProductController::class)->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::get('/create', 'create')->name('create');
+                Route::post('/', 'store')->name('store');
+                Route::get('/search', 'search')->name('search');
+                Route::get('/{id}/edit', 'edit')->name('edit');
+                Route::put('/{id}', 'update')->name('update');
+                Route::delete('/{id}', 'destroy')->name('destroy');
+            });
+        });
+
         //Tasks routes
         Route::prefix('/tasks')->name('tasks.')->group(function () {
             Route::controller(Tenant\TaskController::class)->group(function () {

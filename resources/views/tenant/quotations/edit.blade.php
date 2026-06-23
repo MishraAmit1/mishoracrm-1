@@ -504,21 +504,56 @@
 (function(){
 
 const STATUSES = @json(config('quotation.statuses'));
+const PRODUCTS = @json($products->keyBy('id'));
 /* ── Item Row ── */
 let rowIndex = 0;
 
-function addItemRow(name='', desc='', qty=1, rate=0){
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function productOptions() {
+    let opts = '<option value="">— Select Product —</option>';
+    Object.values(PRODUCTS).forEach(p => {
+        opts += `<option value="${p.id}">${esc(p.name)}${p.unit ? ' ('+esc(p.unit)+')' : ''}</option>`;
+    });
+    return opts;
+}
+
+function fillFromProduct(selectEl, i) {
+    const pid = selectEl.value;
+    if (!pid || !PRODUCTS[pid]) return;
+    const p = PRODUCTS[pid];
+    const row = document.getElementById('row_' + i);
+    if (!row) return;
+    row.querySelector(`[name="items[${i}][name]"]`).value        = p.name;
+    row.querySelector(`[name="items[${i}][description]"]`).value = p.description || '';
+    row.querySelector(`[name="items[${i}][rate]"]`).value        = p.rate;
+    const taxHid = row.querySelector(`[name="items[${i}][tax_percent]"]`);
+    if (taxHid) taxHid.value = p.tax_percent;
+    const taxSel = document.getElementById('taxSelect');
+    if (taxSel) taxSel.value = p.tax_percent;
+    calcRowAmount(i);
+    markDirty();
+}
+
+function addItemRow(name='', desc='', qty=1, rate=0, taxPct=''){
     const i    = rowIndex++;
     const amt  = (parseFloat(qty)||0) * (parseFloat(rate)||0);
+    const gst  = taxPct !== '' ? taxPct : (document.getElementById('taxSelect')?.value || 18);
     const tbody = document.getElementById('itemsBody');
     const tr   = document.createElement('tr');
     tr.id      = 'row_' + i;
     tr.innerHTML = `
-        <td><input type="text" name="items[${i}][name]" class="item-input" placeholder="Item / Service name" value="${esc(name)}" required/></td>
+        <td>
+            <select class="item-input" style="margin-bottom:4px;font-size:12px;color:var(--text-300)" onchange="fillFromProduct(this,${i})">${productOptions()}</select>
+            <input type="text" name="items[${i}][name]" class="item-input" placeholder="Item / Service name" value="${esc(name)}" required/>
+        </td>
         <td><input type="text" name="items[${i}][description]" class="item-input" placeholder="Optional description" value="${esc(desc)}"/></td>
         <td><input type="number" name="items[${i}][quantity]" class="item-input" placeholder="1" value="${qty}" min="0.01" step="0.01" required oninput="calcRowAmount(${i})"/></td>
         <td><input type="number" name="items[${i}][rate]" class="item-input" placeholder="0.00" value="${rate}" min="0" step="0.01" required oninput="calcRowAmount(${i})"/></td>
-        <td><input type="number" name="items[${i}][amount]" class="item-input item-amount-input" id="amt_${i}" value="${amt.toFixed(2)}" readonly/></td>
+        <td>
+            <input type="hidden" name="items[${i}][tax_percent]" value="${gst}"/>
+            <input type="number" name="items[${i}][amount]" class="item-input item-amount-input" id="amt_${i}" value="${amt.toFixed(2)}" readonly/>
+        </td>
         <td><button type="button" class="del-row-btn" onclick="delRow(${i})" title="Remove"><i class="ti ti-trash" style="font-size:13px"></i></button></td>
     `;
     tbody.appendChild(tr);
@@ -526,8 +561,6 @@ function addItemRow(name='', desc='', qty=1, rate=0){
     markDirty();
 }
 window.addItemRow = addItemRow;
-
-function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 window.calcRowAmount = function(i){
     const qty  = parseFloat(document.querySelector(`[name="items[${i}][quantity]"]`)?.value)||0;
@@ -613,7 +646,7 @@ form.addEventListener('submit', function(){
 const items = @json($existingItems);
 if(items && items.length){
     items.forEach(item => {
-        addItemRow(item.name||'', item.description||'', item.quantity||1, item.rate||0);
+        addItemRow(item.name||'', item.description||'', item.quantity||1, item.rate||0, item.tax_percent||'');
     });
 } else {
     addItemRow();

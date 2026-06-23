@@ -7,6 +7,7 @@ use App\Http\Requests\QuotationRequest;
 use App\Models\Contact;
 use App\Models\Invoice;
 use App\Models\Lead;
+use App\Models\Product;
 use App\Models\Quotation;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
@@ -89,9 +90,8 @@ class QuotationController extends Controller
 
         $number   = Quotation::generateNumber();
         $statuses = Quotation::statuses();
-
-        // Tenant info for header
-        $tenant = auth()->user()->tenant;
+        $tenant   = auth()->user()->tenant;
+        $products = Product::where('tenant_id', auth()->user()->tenant_id)->active()->orderBy('name')->get(['id','name','description','rate','tax_percent','hsn','unit']);
 
         return view('tenant.quotations.create', compact(
             'contacts',
@@ -100,7 +100,8 @@ class QuotationController extends Controller
             'lead',
             'number',
             'statuses',
-            'tenant'
+            'tenant',
+            'products'
         ));
     }
 
@@ -155,13 +156,15 @@ class QuotationController extends Controller
         $leads    = Lead::orderBy('name')->get(['id', 'name']);
         $statuses = Quotation::statuses();
         $tenant   = auth()->user()->tenant;
+        $products = Product::where('tenant_id', auth()->user()->tenant_id)->active()->orderBy('name')->get(['id','name','description','rate','tax_percent','hsn','unit']);
 
         return view('tenant.quotations.edit', compact(
             'quotation',
             'contacts',
             'leads',
             'statuses',
-            'tenant'
+            'tenant',
+            'products'
         ));
     }
 

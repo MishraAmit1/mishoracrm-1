@@ -185,7 +185,7 @@
         <div class="sb-section-label">Finance</div>
 
         <button type="button"
-                class="sb-item {{ request()->routeIs('quotations.*','invoices.*') ? 'sub-open' : '' }}"
+                class="sb-item {{ request()->routeIs('quotations.*','invoices.*','products.*') ? 'sub-open' : '' }}"
                 onclick="toggleSub('sub-finance', this)">
             <span class="sb-icon">
                 <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
@@ -200,7 +200,7 @@
             </span>
         </button>
 
-        <div class="sb-sub {{ request()->routeIs('quotations.*','invoices.*') ? 'open' : '' }}"
+        <div class="sb-sub {{ request()->routeIs('quotations.*','invoices.*','products.*') ? 'open' : '' }}"
              id="sub-finance">
           
             <a href="{{ route('tenant.quotations.index') }}"
@@ -220,6 +220,15 @@
                     </svg>
                 </span>
                 <span class="sb-label">Invoices</span>
+            </a>
+            <a href="{{ route('tenant.products.index') }}"
+               class="sb-item {{ request()->routeIs('products.*') ? 'active' : '' }}">
+                <span class="sb-icon">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/>
+                    </svg>
+                </span>
+                <span class="sb-label">Products</span>
             </a>
         </div>
 

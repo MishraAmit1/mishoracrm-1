@@ -83,6 +83,7 @@
         'description' => $item['description'] ?? '',
         'quantity'    => $item['quantity']    ?? 1,
         'rate'        => $item['rate']        ?? 0,
+        'tax_percent' => $item['tax_percent'] ?? ($invoice->tax_percent ?? 18),
         'amount'      => ($item['quantity'] ?? 1) * ($item['rate'] ?? 0),
     ])->toArray();
 
@@ -223,9 +224,10 @@
                 <table class="items-table">
                     <thead>
                         <tr>
-                            <th style="min-width:240px">Description</th>
+                            <th style="min-width:260px">Description</th>
                             <th style="width:90px">Qty</th>
                             <th style="width:120px">Rate (₹)</th>
+                            <th style="width:80px">GST %</th>
                             <th class="right" style="width:120px">Amount</th>
                             <th style="width:40px"></th>
                         </tr>
@@ -255,10 +257,11 @@
                 </div>
                 <div class="field">
                     <label class="field-label">GST / Tax (%)</label>
-                    <input type="number" name="tax_percent" id="taxPercent"
-                           class="field-input" min="0" max="100" step="0.1"
-                           value="{{ old('tax_percent', $selTax) }}"
-                           oninput="calcTotals()" placeholder="18"/>
+                    <input type="text" class="field-input"
+                           style="background:var(--bg-elevated);color:var(--text-300);cursor:default"
+                           readonly value="Per-item (set per row below)"
+                           id="taxPercent"/>
+                    <input type="hidden" name="tax_percent" value="{{ old('tax_percent', $selTax) }}"/>
                 </div>
             </div>
 
@@ -402,8 +405,9 @@
 @push('scripts')
 <script>
 // ── Existing data ─────────────────────────────────────────────────
-const CONTACTS      = @json($contactsJson);
+const CONTACTS       = @json($contactsJson);
 const EXISTING_ITEMS = @json($existingItems);
+const PRODUCTS       = @json($products->keyBy('id'));
 let rowCount = 0;
 
 // ── Contact preview ───────────────────────────────────────────────
@@ -418,17 +422,44 @@ function loadContact(id) {
     box.style.display = 'block';
 }
 
+// ── Product selector helpers ──────────────────────────────────────
+function productOptions() {
+    let opts = '<option value="">— Select Product —</option>';
+    Object.values(PRODUCTS).forEach(p => {
+        opts += `<option value="${p.id}">${escHtml(p.name)}${p.unit ? ' ('+escHtml(p.unit)+')' : ''}</option>`;
+    });
+    return opts;
+}
+
+function fillFromProduct(selectEl, i) {
+    const pid = selectEl.value;
+    if (!pid || !PRODUCTS[pid]) return;
+    const p = PRODUCTS[pid];
+    const row = document.querySelector(`[data-row="${i}"]`);
+    if (!row) return;
+    row.querySelector(`[name="items[${i}][description]"]`).value  = p.description || p.name;
+    row.querySelector(`[name="items[${i}][rate]"]`).value         = p.rate;
+    row.querySelector(`[name="items[${i}][tax_percent]"]`).value  = p.tax_percent;
+    calcRow(i);
+    calcTotals();
+}
+
 // ── Add row ───────────────────────────────────────────────────────
-function addRow(desc = '', qty = 1, rate = '') {
+function addRow(desc = '', qty = 1, rate = '', taxPct = '') {
     const tbody = document.getElementById('itemsBody');
     const i     = rowCount++;
     const tr    = document.createElement('tr');
     tr.dataset.row = i;
 
     const amount = (parseFloat(qty)||0) * (parseFloat(rate)||0);
+    const gst    = taxPct !== '' ? taxPct : (document.getElementById('taxPercent')?.value || 18);
 
     tr.innerHTML = `
         <td>
+            <select class="item-input" style="margin-bottom:4px;font-size:12px;color:var(--text-300)"
+                    onchange="fillFromProduct(this, ${i})">
+                ${productOptions()}
+            </select>
             <input type="text"
                    name="items[${i}][description]"
                    class="item-input"
@@ -454,6 +485,15 @@ function addRow(desc = '', qty = 1, rate = '') {
                    value="${rate}"
                    oninput="calcRow(${i}); calcTotals();"
                    required/>
+        </td>
+        <td>
+            <input type="number"
+                   name="items[${i}][tax_percent]"
+                   class="item-input right"
+                   min="0" max="100" step="0.1"
+                   placeholder="18"
+                   value="${gst}"
+                   oninput="calcTotals();"/>
         </td>
         <td>
             <div class="item-amount" id="rowAmt_${i}">₹${fmt(amount)}</div>
@@ -493,23 +533,28 @@ function calcRow(i) {
 // ── Calc totals ───────────────────────────────────────────────────
 function calcTotals() {
     let subtotal = 0;
+    let taxAmt   = 0;
 
     document.querySelectorAll('#itemsBody tr').forEach(tr => {
-        const qty  = parseFloat(tr.querySelector('[name$="[quantity]"]')?.value) || 0;
-        const rate = parseFloat(tr.querySelector('[name$="[rate]"]')?.value)     || 0;
-        subtotal  += qty * rate;
+        const qty    = parseFloat(tr.querySelector('[name$="[quantity]"]')?.value)    || 0;
+        const rate   = parseFloat(tr.querySelector('[name$="[rate]"]')?.value)        || 0;
+        const taxPct = parseFloat(tr.querySelector('[name$="[tax_percent]"]')?.value) || 0;
+        const rowAmt = qty * rate;
+        subtotal += rowAmt;
+        taxAmt   += rowAmt * taxPct / 100;
     });
 
-    const discount  = parseFloat(document.getElementById('discount')?.value)   || 0;
-    const taxPct    = parseFloat(document.getElementById('taxPercent')?.value)  || 0;
+    const discount  = parseFloat(document.getElementById('discount')?.value) || 0;
     const afterDisc = Math.max(0, subtotal - discount);
-    const taxAmt    = afterDisc * taxPct / 100;
+    const discRatio = subtotal > 0 ? afterDisc / subtotal : 1;
+    taxAmt          = taxAmt * discRatio;
     const total     = afterDisc + taxAmt;
+    const avgTaxPct = afterDisc > 0 ? (taxAmt / afterDisc * 100) : 0;
 
     set('dispSubtotal', '₹' + fmt(subtotal));
     set('dispDiscount', '- ₹' + fmt(discount));
     set('dispTax',      '₹' + fmt(taxAmt));
-    set('dispTaxPct',   taxPct);
+    set('dispTaxPct',   avgTaxPct.toFixed(1));
     set('dispTotal',    '₹' + fmt(total));
     set('sumSubtotal',  '₹' + fmt(subtotal));
     set('sumTax',       '₹' + fmt(taxAmt));
@@ -526,11 +571,7 @@ function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&
 (function () {
     if (EXISTING_ITEMS && EXISTING_ITEMS.length) {
         EXISTING_ITEMS.forEach(item => {
-            addRow(
-                item.description || '',
-                item.quantity    || 1,
-                item.rate        || 0
-            );
+            addRow(item.description || '', item.quantity || 1, item.rate || 0, item.tax_percent ?? '');
         });
     } else {
         addRow();

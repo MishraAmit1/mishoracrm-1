@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web\Tenant;
 use App\Http\Controllers\Controller;
 use App\Models\Contact;
 use App\Models\Invoice;
+use App\Models\Product;
 use App\Models\Quotation;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
@@ -85,10 +86,11 @@ class InvoiceController extends Controller
         $number   = Invoice::generateNumber();
         $statuses = Invoice::statuses();
         $tenant   = auth()->user()->tenant;
+        $products = Product::where('tenant_id', $this->tenantId())->active()->orderBy('name')->get(['id','name','description','rate','tax_percent','hsn','unit']);
 
         return view('tenant.invoices.create', compact(
             'contacts', 'contact', 'quotation',
-            'number', 'statuses', 'tenant'
+            'number', 'statuses', 'tenant', 'products'
         ));
     }
 
@@ -167,9 +169,10 @@ class InvoiceController extends Controller
 
         $statuses = Invoice::statuses();
         $tenant   = auth()->user()->tenant;
+        $products = Product::where('tenant_id', $this->tenantId())->active()->orderBy('name')->get(['id','name','description','rate','tax_percent','hsn','unit']);
 
         return view('tenant.invoices.edit', compact(
-            'invoice', 'contacts', 'statuses', 'tenant'
+            'invoice', 'contacts', 'statuses', 'tenant', 'products'
         ));
     }
 

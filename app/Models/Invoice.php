@@ -143,20 +143,34 @@ class Invoice extends Model
     // ── Calculate totals from items ───────────────────────────────
     public static function calculateTotals(array $items, float $discount = 0, float $taxPercent = 18): array
     {
-        $subtotal = collect($items)->sum(fn($item) =>
-            ($item['quantity'] ?? 0) * ($item['rate'] ?? 0)
-        );
+        $subtotal = 0;
+        $taxAmount = 0;
+
+        foreach ($items as $item) {
+            $qty     = (float) ($item['quantity'] ?? 0);
+            $rate    = (float) ($item['rate']     ?? 0);
+            $rowAmt  = $qty * $rate;
+            $subtotal += $rowAmt;
+
+            // Use per-item tax_percent if stored, fall back to invoice-level
+            $itemTax = isset($item['tax_percent']) ? (float) $item['tax_percent'] : $taxPercent;
+            $taxAmount += $rowAmt * $itemTax / 100;
+        }
 
         $discountedSubtotal = $subtotal - $discount;
-        $taxAmount          = ($discountedSubtotal * $taxPercent) / 100;
-        $total              = $discountedSubtotal + $taxAmount;
+        $discRatio  = $subtotal > 0 ? $discountedSubtotal / $subtotal : 1;
+        $taxAmount  = round($taxAmount * $discRatio, 2);
+        $total      = round($discountedSubtotal + $taxAmount, 2);
+
+        // Effective tax percent for display
+        $effectiveTaxPct = $discountedSubtotal > 0 ? round($taxAmount / $discountedSubtotal * 100, 2) : $taxPercent;
 
         return [
             'subtotal'    => round($subtotal, 2),
             'discount'    => round($discount, 2),
-            'tax_percent' => $taxPercent,
-            'tax_amount'  => round($taxAmount, 2),
-            'total'       => round($total, 2),
+            'tax_percent' => $effectiveTaxPct,
+            'tax_amount'  => $taxAmount,
+            'total'       => $total,
         ];
     }
 
