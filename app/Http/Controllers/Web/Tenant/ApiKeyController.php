@@ -51,6 +51,18 @@ class ApiKeyController extends Controller
         return back()->with('success', "API key {$status}.");
     }
 
+    // ── Regenerate key value ──────────────────────────────────────
+    public function regenerate(int $id): RedirectResponse
+    {
+        $key = ApiKey::where('id', $id)
+            ->where('tenant_id', $this->tenantId())
+            ->firstOrFail();
+
+        $key->update(['key' => 'crm_' . bin2hex(random_bytes(24))]);
+
+        return back()->with('success', 'API key regenerated. Update your integrations with the new key.');
+    }
+
     // ── Destroy ───────────────────────────────────────────────────
     public function destroy(int $id): RedirectResponse
     {

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web\Tenant;
 
 use App\Http\Controllers\Controller;
+use App\Models\ApiKey;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -15,8 +16,12 @@ class SettingsController extends Controller
     // ── My Profile — read-only overview ──────────────────────────
     public function profile(): View
     {
-        $user = auth()->user()->load(['roles', 'tenant', 'staff.department']);
-        return view('tenant.settings.profile', compact('user'));
+        $user    = auth()->user()->load(['roles', 'tenant', 'staff.department']);
+        $apiKeys = $user->isTenantAdmin()
+            ? ApiKey::where('tenant_id', $user->tenant_id)->with('creator:id,name')->latest()->get()
+            : collect();
+
+        return view('tenant.settings.profile', compact('user', 'apiKeys'));
     }
 
     // ── Index — show settings page ────────────────────────────────

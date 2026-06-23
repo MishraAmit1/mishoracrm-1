@@ -534,10 +534,11 @@ Route::middleware(['tenant', 'auth', 'subscription'])
         // ── API Key Management (tenant_admin only) ────────────────
         Route::prefix('api-keys')->name('api-keys.')->middleware(['role:tenant_admin'])
             ->controller(Tenant\ApiKeyController::class)->group(function () {
-                Route::get('/',           'index')->name('index');
-                Route::post('/',          'store')->name('store');
-                Route::post('/{id}/toggle', 'toggle')->name('toggle');
-                Route::delete('/{id}',    'destroy')->name('destroy');
+                Route::get('/',              'index')->name('index');
+                Route::post('/',             'store')->name('store');
+                Route::post('/{id}/toggle',  'toggle')->name('toggle');
+                Route::post('/{id}/regenerate', 'regenerate')->name('regenerate');
+                Route::delete('/{id}',       'destroy')->name('destroy');
             });
     });
 

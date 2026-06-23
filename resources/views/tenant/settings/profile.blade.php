@@ -50,6 +50,69 @@
 .perm-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:16px 20px; }
 .perm-item { display:flex; align-items:center; gap:8px; font-size:13px; }
 .perm-dot  { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+
+/* ── API Keys section ────────────────────────────────────────────── */
+.ak-gen-row { display:flex; gap:8px; align-items:flex-end; padding:16px 20px; border-bottom:1px solid var(--border-subtle); }
+.ak-gen-row .ak-input {
+    flex:1; padding:9px 12px;
+    background:var(--bg-input); border:1.5px solid var(--border-default);
+    border-radius:var(--r-sm); color:var(--text-100);
+    font-family:var(--font); font-size:13.5px; outline:none;
+    transition:border-color .15s;
+}
+.ak-gen-row .ak-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-dim); }
+.ak-gen-row .ak-input::placeholder { color:var(--text-400); }
+.ak-btn-gen {
+    display:inline-flex; align-items:center; gap:5px;
+    padding:9px 16px; border-radius:var(--r-sm);
+    background:var(--accent); color:#fff; border:none;
+    font-size:13px; font-weight:600; cursor:pointer;
+    font-family:var(--font); white-space:nowrap;
+    transition:opacity .15s;
+}
+.ak-btn-gen:hover { opacity:.88; }
+.ak-btn-gen svg { width:14px; height:14px; }
+
+.ak-row {
+    display:flex; align-items:center; gap:10px;
+    padding:12px 20px; border-bottom:1px solid var(--border-subtle);
+}
+.ak-row:last-child { border-bottom:none; }
+.ak-info { flex:1; min-width:0; }
+.ak-name { font-size:13px; font-weight:600; color:var(--text-100); margin-bottom:2px; }
+.ak-meta { font-size:11.5px; color:var(--text-400); }
+.ak-key-wrap { display:flex; align-items:center; gap:6px; }
+.ak-key-val {
+    font-family:monospace; font-size:11.5px;
+    background:var(--bg-elevated); border:1px solid var(--border-subtle);
+    border-radius:var(--r-sm); padding:4px 8px;
+    color:var(--text-100); max-width:200px;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.ak-icon-btn {
+    background:none; border:1px solid var(--border-default);
+    border-radius:var(--r-sm); padding:4px 8px;
+    cursor:pointer; color:var(--text-300);
+    display:inline-flex; align-items:center; gap:4px;
+    font-size:11.5px; font-weight:500; font-family:var(--font);
+    transition:all .15s; white-space:nowrap;
+}
+.ak-icon-btn svg { width:12px; height:12px; }
+.ak-icon-btn:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-dim); }
+.ak-icon-btn.danger:hover { border-color:var(--red); color:var(--red); background:var(--red-dim); }
+.ak-badge-active   { font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:20px; background:var(--green-dim); color:var(--green); }
+.ak-badge-inactive { font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:20px; background:var(--bg-elevated); color:var(--text-400); border:1px solid var(--border-default); }
+.ak-empty { text-align:center; padding:24px; color:var(--text-400); font-size:13px; }
+
+/* Alert */
+.flash-alert {
+    display:flex; align-items:center; gap:8px;
+    padding:10px 14px; border-radius:var(--r-sm);
+    font-size:13px; font-weight:500; margin-bottom:14px;
+}
+.flash-success { background:var(--green-dim); color:var(--green); border:1px solid rgba(45,212,160,.2); }
+.flash-error   { background:var(--red-dim);   color:var(--red);   border:1px solid rgba(255,82,87,.2); }
+.flash-alert svg { width:14px; height:14px; flex-shrink:0; }
 </style>
 @endpush
 
@@ -314,7 +377,138 @@
             </div>
         </div>
 
+        {{-- ── API Keys (tenant_admin only) ───────────────────────── --}}
+        @if($user->isTenantAdmin())
+        <div class="detail-card">
+            <div class="detail-head">
+                <div>
+                    API Keys
+                    <span style="font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:20px;background:var(--accent-dim);color:var(--accent);margin-left:6px">
+                        {{ $apiKeys->count() }}
+                    </span>
+                </div>
+                <a href="{{ route('tenant.api-keys.index') }}"
+                   style="font-size:12px;color:var(--accent);text-decoration:none">
+                    Full page →
+                </a>
+            </div>
+
+            {{-- Flash messages --}}
+            @if(session('success'))
+            <div class="flash-alert flash-success" style="margin:12px 20px 0;">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                {{ session('success') }}
+            </div>
+            @endif
+            @if($errors->has('name'))
+            <div class="flash-alert flash-error" style="margin:12px 20px 0;">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
+                {{ $errors->first('name') }}
+            </div>
+            @endif
+
+            {{-- Generate form --}}
+            <form method="POST" action="{{ route('tenant.api-keys.store') }}">
+                @csrf
+                <div class="ak-gen-row">
+                    <input type="text" name="name" class="ak-input"
+                           placeholder="Label — e.g. Zoho CRM, n8n, Website"
+                           value="{{ old('name') }}" maxlength="100" required>
+                    <button type="submit" class="ak-btn-gen">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                        </svg>
+                        Generate
+                    </button>
+                </div>
+            </form>
+
+            {{-- Keys list --}}
+            @if($apiKeys->isEmpty())
+            <div class="ak-empty">No API keys yet. Generate one above.</div>
+            @else
+            @foreach($apiKeys as $key)
+            <div class="ak-row">
+                {{-- Info --}}
+                <div class="ak-info">
+                    <div class="ak-name">
+                        {{ $key->name }}
+                        @if($key->is_active)
+                            <span class="ak-badge-active">Active</span>
+                        @else
+                            <span class="ak-badge-inactive">Inactive</span>
+                        @endif
+                    </div>
+                    <div class="ak-meta">
+                        Created {{ $key->created_at->format('d M Y') }}
+                        @if($key->last_used_at) · Last used {{ $key->last_used_at->diffForHumans() }} @endif
+                    </div>
+                    {{-- Key value + copy --}}
+                    <div class="ak-key-wrap" style="margin-top:6px">
+                        <span class="ak-key-val" title="{{ $key->key }}">{{ substr($key->key,0,20) }}••••</span>
+                        <button class="ak-icon-btn" onclick="akCopy('{{ $key->key }}', this)">
+                            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75"/>
+                            </svg>
+                            Copy
+                        </button>
+                    </div>
+                </div>
+
+                {{-- Actions --}}
+                <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0">
+                    {{-- Reset --}}
+                    <form method="POST" action="{{ route('tenant.api-keys.regenerate', $key->id) }}"
+                          onsubmit="return confirm('Regenerate this key? The old key will stop working immediately.')">
+                        @csrf
+                        <button type="submit" class="ak-icon-btn" style="width:100%">
+                            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/>
+                            </svg>
+                            Reset
+                        </button>
+                    </form>
+
+                    {{-- Remove --}}
+                    <form method="POST" action="{{ route('tenant.api-keys.destroy', $key->id) }}"
+                          onsubmit="return confirm('Remove this API key permanently? Any integration using it will break.')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="ak-icon-btn danger" style="width:100%">
+                            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
+                            </svg>
+                            Remove
+                        </button>
+                    </form>
+                </div>
+            </div>
+            @endforeach
+            @endif
+        </div>
+        @endif
+
     </div>
 </div>
+
+@push('scripts')
+<script>
+function akCopy(key, btn) {
+    navigator.clipboard.writeText(key).then(() => {
+        const orig = btn.innerHTML;
+        btn.innerHTML = `<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg> Copied!`;
+        btn.style.borderColor = 'var(--green)';
+        btn.style.color       = 'var(--green)';
+        btn.style.background  = 'var(--green-dim)';
+        setTimeout(() => {
+            btn.innerHTML = orig;
+            btn.style.borderColor = '';
+            btn.style.color = '';
+            btn.style.background = '';
+        }, 2000);
+    });
+}
+</script>
+@endpush
 
 @endsection
