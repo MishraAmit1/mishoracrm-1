@@ -158,7 +158,7 @@
                                 </td>
 
                                 <td>
-                                    {{ $item['tax'] }}%
+                                    {{ $invoice->tax_percent }}%
                                 </td>
 
                                 <td>
