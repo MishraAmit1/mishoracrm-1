@@ -12,7 +12,9 @@ class ApiKeyController extends Controller
 {
     private function tenantId(): int
     {
-        return app('tenant_id');
+        return app()->has('tenant_id')
+            ? app('tenant_id')
+            : auth()->user()->tenant_id;
     }
 
     // ── Index ─────────────────────────────────────────────────────
