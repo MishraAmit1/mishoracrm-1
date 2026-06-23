@@ -151,7 +151,7 @@
                                     </div>
                                 </td>
 
-                                <td>{{ $item['qty'] }}</td>
+                                <td>{{ $item['quantity'] ?? '-' }}</td>
 
                                 <td>
                                     ₹{{ number_format($item['rate'], 2) }}
