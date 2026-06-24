@@ -13,8 +13,6 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
 
-        $middleware->statefulApi();
-
         // Webhook routes CSRF se exempt — each has its own signature/token verification
         $middleware->validateCsrfTokens(except: [
             'webhook/razorpay',

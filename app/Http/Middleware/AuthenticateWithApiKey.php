@@ -11,17 +11,16 @@ class AuthenticateWithApiKey
 {
     public function handle(Request $request, Closure $next): Response
     {
-        // Accept key from header (preferred) or query param
-        $rawKey = $request->header('X-API-Key') ?? $request->query('api_key');
+        $rawKey = $this->extractKey($request);
 
         if (!$rawKey) {
             return response()->json([
                 'success' => false,
-                'message' => 'API key missing. Pass it as X-API-Key header.',
+                'message' => 'API key missing. Send it as X-API-Key header, Authorization: Bearer <key>, or ?api_key= query param.',
             ], 401);
         }
 
-        $apiKey = ApiKey::where('key', $rawKey)->first();
+        $apiKey = ApiKey::where('key', $rawKey)->with('tenant')->first();
 
         if (!$apiKey || !$apiKey->isValid()) {
             return response()->json([
@@ -31,12 +30,36 @@ class AuthenticateWithApiKey
         }
 
         // Bind tenant context — same pattern as IdentifyTenant middleware
-        app()->instance('tenant', $apiKey->tenant);
+        app()->instance('tenant',    $apiKey->tenant);
         app()->instance('tenant_id', $apiKey->tenant_id);
 
-        // Update last used time without touching updated_at
         $apiKey->touchLastUsed();
 
         return $next($request);
+    }
+
+    private function extractKey(Request $request): ?string
+    {
+        // 1. X-API-Key header (preferred)
+        if ($key = $request->header('X-API-Key')) {
+            return $key;
+        }
+
+        // 2. Authorization: Bearer <key>  (n8n / common REST clients)
+        $auth = $request->header('Authorization', '');
+        if (str_starts_with($auth, 'Bearer ')) {
+            $token = substr($auth, 7);
+            // Only treat as API key if it starts with our prefix
+            if (str_starts_with($token, 'crm_')) {
+                return $token;
+            }
+        }
+
+        // 3. ?api_key= query param (webhooks / simple integrations)
+        if ($key = $request->query('api_key')) {
+            return $key;
+        }
+
+        return null;
     }
 }

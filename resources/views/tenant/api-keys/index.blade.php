@@ -377,9 +377,15 @@
             {{-- Base URL + Auth --}}
             <div class="docs-grid">
                 <div class="doc-block">
-                    <div class="doc-block-title">Authentication</div>
-                    <div class="doc-code"><span class="doc-comment"># Pass your API key as a header</span>
-<span class="doc-key">X-API-Key</span>: <span class="doc-val">crm_your_api_key_here</span></div>
+                    <div class="doc-block-title">Authentication — 3 Methods</div>
+                    <div class="doc-code"><span class="doc-comment"># Method 1: X-API-Key header (recommended)</span>
+<span class="doc-key">X-API-Key</span>: <span class="doc-val">crm_your_api_key_here</span>
+
+<span class="doc-comment"># Method 2: Bearer token (n8n / Postman)</span>
+<span class="doc-key">Authorization</span>: <span class="doc-val">Bearer crm_your_api_key_here</span>
+
+<span class="doc-comment"># Method 3: Query param (webhooks)</span>
+<span class="doc-url">?api_key=crm_your_api_key_here</span></div>
                 </div>
                 <div class="doc-block">
                     <div class="doc-block-title">Base URL</div>
