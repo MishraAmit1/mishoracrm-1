@@ -7,6 +7,7 @@ use App\Models\Contact;
 use App\Models\Invoice;
 use App\Models\Product;
 use App\Models\Quotation;
+use App\Services\WebhookService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -133,6 +134,15 @@ class InvoiceController extends Controller
             'created_by'   => auth()->id(),
         ]));
 
+        WebhookService::fire('invoice.created', $invoice->tenant_id, [
+            'id'           => $invoice->id,
+            'number'       => $invoice->number,
+            'total'        => $invoice->total,
+            'due_date'     => $invoice->due_date,
+            'contact_name' => $invoice->contact?->name,
+            'contact_phone'=> $invoice->contact?->phone,
+        ]);
+
         return redirect()
             ->route('tenant.invoices.show', $invoice->id)
             ->with('success', "Invoice {$invoice->number} created.");
@@ -254,6 +264,16 @@ class InvoiceController extends Controller
 
         $invoice->update($data);
 
+        if ($request->status === 'paid') {
+            WebhookService::fire('invoice.paid', $invoice->tenant_id, [
+                'id'           => $invoice->id,
+                'number'       => $invoice->number,
+                'total'        => $invoice->total,
+                'paid_at'      => now()->toIso8601String(),
+                'contact_name' => $invoice->contact?->name,
+            ]);
+        }
+
         return back()->with('success', 'Invoice status updated.');
     }
 
@@ -275,6 +295,16 @@ class InvoiceController extends Controller
             'paid_at'     => $newStatus === 'paid' ? $request->paid_at : $invoice->paid_at,
             'status'      => $newStatus,
         ]);
+
+        if ($newStatus === 'paid') {
+            WebhookService::fire('invoice.paid', $invoice->tenant_id, [
+                'id'           => $invoice->id,
+                'number'       => $invoice->number,
+                'total'        => $invoice->total,
+                'paid_at'      => $request->paid_at,
+                'contact_name' => $invoice->contact?->name,
+            ]);
+        }
 
         return back()->with('success', 'Payment recorded. Status: ' . ucfirst($newStatus));
     }

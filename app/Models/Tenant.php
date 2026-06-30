@@ -4,6 +4,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Tenant extends Model
 {
@@ -41,5 +42,28 @@ class Tenant extends Model
     public function isActive(): bool
     {
         return $this->status === 'active';
+    }
+
+    public function getWebhookToken(): string
+    {
+        $settings = $this->settings ?? [];
+
+        if (empty($settings['webhook_token'])) {
+            $token = 'crm_whk_' . Str::random(40);
+            $settings['webhook_token'] = $token;
+            $this->update(['settings' => $settings]);
+        }
+
+        return $settings['webhook_token'];
+    }
+
+    public function regenerateWebhookToken(): string
+    {
+        $settings = $this->settings ?? [];
+        $token = 'crm_whk_' . Str::random(40);
+        $settings['webhook_token'] = $token;
+        $this->update(['settings' => $settings]);
+
+        return $token;
     }
 }

@@ -84,6 +84,34 @@
             </span>
         </a>
 
+        <div class="sb-section-label">Automation</div>
+
+        <a href="{{ route('superadmin.workflow-templates.index') }}"
+           class="sb-item {{ request()->routeIs('superadmin.workflow-templates.*') ? 'active' : '' }}">
+            <span class="sb-icon">
+                <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/>
+                </svg>
+            </span>
+            <span class="sb-label">Templates</span>
+        </a>
+
+        <a href="{{ route('superadmin.workflow-requests.index') }}"
+           class="sb-item {{ request()->routeIs('superadmin.workflow-requests.*') ? 'active' : '' }}">
+            <span class="sb-icon">
+                <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
+                </svg>
+            </span>
+            <span class="sb-label">
+                Requests
+                @php $newWfReqs = \App\Models\WorkflowRequest::where('status','new')->count(); @endphp
+                @if($newWfReqs > 0)
+                    <span style="margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;">{{ $newWfReqs }}</span>
+                @endif
+            </span>
+        </a>
+
         <div class="sb-section-label">Platform</div>
 
         <a href="{{ route('superadmin.platform-settings.meta') }}"
@@ -179,6 +207,19 @@
                 </svg>
             </span>
             <span class="sb-label">Tasks</span>
+        </a>
+
+        {{-- Automation --}}
+        <div class="sb-section-label">Automation</div>
+
+        <a href="{{ route('tenant.automation.index') }}"
+           class="sb-item {{ request()->routeIs('tenant.automation.*') ? 'active' : '' }}">
+            <span class="sb-icon">
+                <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/>
+                </svg>
+            </span>
+            <span class="sb-label">AI Automation</span>
         </a>
 
         {{-- Finance --}}

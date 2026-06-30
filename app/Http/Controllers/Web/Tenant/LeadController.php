@@ -11,6 +11,7 @@ use App\Models\Lead;
 use App\Models\LeadCallLog;
 use App\Models\TenantFieldAssignment;
 use App\Models\User;
+use App\Services\WebhookService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -128,6 +129,15 @@ class LeadController extends Controller
         ]));
 
         $this->saveCustomFields($lead, $request->input('custom_fields', []));
+
+        WebhookService::fire('lead.created', $lead->tenant_id, [
+            'id'     => $lead->id,
+            'name'   => $lead->name,
+            'phone'  => $lead->phone,
+            'email'  => $lead->email,
+            'source' => $lead->source,
+            'status' => $lead->status,
+        ]);
 
         return redirect()
             ->route('tenant.leads.show', $lead->id)
@@ -247,7 +257,18 @@ class LeadController extends Controller
             $data['contacted_at'] = now();
         }
 
+        $oldStatus = $lead->status;
         $lead->update($data);
+
+        if ($oldStatus !== $lead->status) {
+            WebhookService::fire('lead.status_changed', $lead->tenant_id, [
+                'id'         => $lead->id,
+                'name'       => $lead->name,
+                'phone'      => $lead->phone,
+                'old_status' => $oldStatus,
+                'new_status' => $lead->status,
+            ]);
+        }
 
         return response()->json(['ok' => true, 'status' => $lead->status]);
     }

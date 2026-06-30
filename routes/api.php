@@ -5,8 +5,12 @@ use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Tenant\ContactController as ApiContactController;
 use App\Http\Controllers\Api\Tenant\LeadController    as ApiLeadController;
 use App\Http\Controllers\Api\Tenant\DealController    as ApiDealController;
+use App\Http\Controllers\Api\WebhookValidationController;
 
 Route::prefix('v1')->group(function () {
+
+    // ── Webhook token validation (public — called by n8n) ─────────
+    Route::post('/webhook/validate', [WebhookValidationController::class, 'validate']);
 
     // ── Auth (no key needed) ──────────────────────────────────────
     Route::post('/register',        [AuthController::class, 'register']);

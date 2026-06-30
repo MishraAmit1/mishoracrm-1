@@ -134,6 +134,35 @@ Route::prefix('superadmin')
             Route::post('/resolve-all',           'resolveAll')->name('resolve-all');
             Route::delete('/{errorLog}',          'destroy')->name('destroy');
         });
+
+        // Workflow templates
+        Route::prefix('workflow-templates')->name('workflow-templates.')->controller(SuperAdmin\WorkflowTemplateController::class)->group(function () {
+            Route::get('/',                              'index')->name('index');
+            Route::get('/create',                        'create')->name('create');
+            Route::post('/',                             'store')->name('store');
+            Route::get('/{workflowTemplate}/edit',       'edit')->name('edit');
+            Route::put('/{workflowTemplate}',            'update')->name('update');
+            Route::delete('/{workflowTemplate}',         'destroy')->name('destroy');
+            Route::post('/{workflowTemplate}/toggle',    'toggle')->name('toggle');
+        });
+
+        // Workflow requests from tenants
+        Route::prefix('workflow-requests')->name('workflow-requests.')->controller(SuperAdmin\WorkflowRequestController::class)->group(function () {
+            Route::get('/',                              'index')->name('index');
+            Route::get('/{workflowRequest}',             'show')->name('show');
+            Route::patch('/{workflowRequest}/status',    'updateStatus')->name('update-status');
+        });
+
+        // Tenant webhook management
+        Route::prefix('tenants/{tenant}/webhooks')->name('tenant-webhooks.')->controller(SuperAdmin\TenantWebhookController::class)->group(function () {
+            Route::get('/',                       'index')->name('index');
+            Route::post('/',                      'store')->name('store');
+            Route::patch('/{webhook}',            'update')->name('update');
+            Route::delete('/{webhook}',           'destroy')->name('destroy');
+            Route::post('/{webhook}/toggle',      'toggle')->name('toggle');
+            Route::post('/{webhook}/test',        'test')->name('test');
+            Route::post('/regenerate-token',      'regenerateToken')->name('regenerate-token');
+        });
     });
 
 // ══════════════════════════════════════════════════════════════════
@@ -540,6 +569,10 @@ Route::middleware(['tenant', 'auth', 'subscription'])
                 Route::post('/{id}/regenerate', 'regenerate')->name('regenerate');
                 Route::delete('/{id}',       'destroy')->name('destroy');
             });
+
+        // ── AI & Workflow Automation ───────────────────────────────
+        Route::get('/automation',         [Tenant\AutomationController::class, 'index'])->name('automation.index');
+        Route::post('/automation/request',[Tenant\AutomationController::class, 'request'])->name('automation.request');
     });
 
 

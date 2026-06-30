@@ -8,6 +8,7 @@ use App\Models\Contact;
 use App\Models\Deal;
 use App\Models\Lead;
 use App\Models\User;
+use App\Services\WebhookService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -285,6 +286,15 @@ class DealController extends Controller
             'stage_changed_at'  => now(),
         ]);
 
+        WebhookService::fire('deal.won', $deal->tenant_id, [
+            'id'           => $deal->id,
+            'title'        => $deal->title,
+            'value'        => $deal->value,
+            'contact_name' => $deal->contact?->name,
+            'contact_phone'=> $deal->contact?->phone,
+            'close_date'   => $deal->actual_close_date,
+        ]);
+
         return back()->with('success', "Deal marked as Won! 🎉");
     }
 
@@ -302,6 +312,13 @@ class DealController extends Controller
             'actual_close_date' => now()->toDateString(),
             'lost_reason'       => $request->lost_reason,
             'stage_changed_at'  => now(),
+        ]);
+
+        WebhookService::fire('deal.lost', $deal->tenant_id, [
+            'id'          => $deal->id,
+            'title'       => $deal->title,
+            'value'       => $deal->value,
+            'lost_reason' => $deal->lost_reason,
         ]);
 
         return back()->with('success', 'Deal marked as lost.');
