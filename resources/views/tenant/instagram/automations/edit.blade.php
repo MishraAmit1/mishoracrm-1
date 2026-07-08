@@ -10,6 +10,14 @@
 @media(max-width:600px){ .form-row { grid-template-columns:1fr; } }
 .action-field { display:none; }
 .action-field.visible { display:block; }
+.post-gallery { display:grid; grid-template-columns:repeat(auto-fill,minmax(90px,1fr)); gap:10px; margin-top:12px; max-height:280px; overflow-y:auto; padding:4px; }
+.post-card { position:relative; border:2px solid transparent; border-radius:var(--r-md); overflow:hidden; cursor:grab; aspect-ratio:1/1; background:var(--bg-subtle); }
+.post-card img { width:100%; height:100%; object-fit:cover; display:block; pointer-events:none; }
+.post-card.selected { border-color:var(--accent); }
+.post-card-check { position:absolute; top:4px; right:4px; width:18px; height:18px; border-radius:50%; background:var(--accent); color:#fff; font-size:11px; align-items:center; justify-content:center; display:none; }
+.post-card.selected .post-card-check { display:flex; }
+.post-gallery-empty, .post-gallery-loading { font-size:12px; color:var(--text-300); padding:12px 4px; grid-column:1/-1; }
+#postIdInput.drop-target { outline:2px dashed var(--accent); outline-offset:2px; }
 </style>
 @endpush
 
@@ -54,8 +62,13 @@
     </div>
 
     <div id="postIdField" class="form-group action-field">
-        <label class="form-label">Post ID</label>
-        <input type="text" name="post_id" class="form-input" value="{{ old('post_id', $automation->post_id) }}">
+        <label class="form-label">Post</label>
+        <input type="text" name="post_id" id="postIdInput" class="form-input" value="{{ old('post_id', $automation->post_id) }}" placeholder="Instagram Post ID"
+            ondragover="event.preventDefault(); this.classList.add('drop-target')"
+            ondragleave="this.classList.remove('drop-target')"
+            ondrop="handlePostDrop(event)">
+        <span class="form-hint">Click or drag a post below to fill this in automatically</span>
+        <div id="postGallery" class="post-gallery"></div>
     </div>
 
     <div class="form-row">
@@ -83,7 +96,6 @@
         <select name="action_type" id="actionType" class="form-input" onchange="updateAction(this.value)" required>
             <option value="send_dm" {{ old('action_type',$automation->action_type)==='send_dm'?'selected':'' }}>Send DM to commenter</option>
             <option value="reply_comment" {{ old('action_type',$automation->action_type)==='reply_comment'?'selected':'' }}>Reply to comment</option>
-            <option value="trigger_n8n" {{ old('action_type',$automation->action_type)==='trigger_n8n'?'selected':'' }}>Trigger n8n workflow</option>
         </select>
     </div>
 
@@ -95,11 +107,6 @@
     <div id="commentField" class="form-group action-field">
         <label class="form-label">Comment Reply</label>
         <textarea name="comment_reply" class="form-input" rows="3">{{ old('comment_reply', $automation->comment_reply) }}</textarea>
-    </div>
-
-    <div id="n8nField" class="form-group action-field">
-        <label class="form-label">n8n Webhook URL</label>
-        <input type="url" name="n8n_webhook_url" class="form-input" value="{{ old('n8n_webhook_url', $automation->n8n_webhook_url) }}">
     </div>
 </div>
 
@@ -114,13 +121,62 @@
 <script>
 function updateTrigger(val) {
     document.getElementById('postIdField').classList.toggle('visible', val === 'specific_post_comment');
+    if (val === 'specific_post_comment') loadPosts();
 }
 function updateAction(val) {
     document.getElementById('dmField').classList.toggle('visible', val === 'send_dm');
     document.getElementById('commentField').classList.toggle('visible', val === 'reply_comment');
-    document.getElementById('n8nField').classList.toggle('visible', val === 'trigger_n8n');
 }
 updateTrigger(document.getElementById('triggerType').value);
 updateAction(document.getElementById('actionType').value);
+
+// ── Post picker (click or drag a post to fill Post ID) ─────────
+let postsLoaded = false;
+function loadPosts() {
+    if (postsLoaded) return;
+    postsLoaded = true;
+    const gallery = document.getElementById('postGallery');
+    gallery.innerHTML = '<div class="post-gallery-loading">Loading your posts…</div>';
+    fetch('{{ route('tenant.instagram.automations.posts') }}')
+        .then(r => r.json())
+        .then(data => renderPostGallery(data.posts || []))
+        .catch(() => renderPostGallery([]));
+}
+
+function renderPostGallery(posts) {
+    const gallery = document.getElementById('postGallery');
+    if (!posts.length) {
+        gallery.innerHTML = '<div class="post-gallery-empty">No posts found. Connect your Instagram account, or paste the Post ID manually above.</div>';
+        return;
+    }
+    const currentId = document.getElementById('postIdInput').value;
+    gallery.innerHTML = posts.map(function (p) {
+        const thumb = p.thumbnail_url || p.media_url || '';
+        const selected = p.id === currentId ? ' selected' : '';
+        const caption = (p.caption || '').replace(/"/g, '&quot;').slice(0, 80);
+        return '<div class="post-card' + selected + '" draggable="true" data-post-id="' + p.id + '" ' +
+            'ondragstart="handlePostDragStart(event)" onclick="selectPost(\'' + p.id + '\')" title="' + caption + '">' +
+            (thumb ? '<img src="' + thumb + '" alt="" loading="lazy">' : '') +
+            '<span class="post-card-check">&#10003;</span></div>';
+    }).join('');
+}
+
+function handlePostDragStart(e) {
+    e.dataTransfer.setData('text/plain', e.currentTarget.dataset.postId);
+}
+
+function handlePostDrop(e) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drop-target');
+    const id = e.dataTransfer.getData('text/plain');
+    if (id) selectPost(id);
+}
+
+function selectPost(id) {
+    document.getElementById('postIdInput').value = id;
+    document.querySelectorAll('#postGallery .post-card').forEach(function (el) {
+        el.classList.toggle('selected', el.dataset.postId === id);
+    });
+}
 </script>
 @endpush

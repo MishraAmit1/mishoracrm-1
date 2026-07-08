@@ -114,7 +114,7 @@
     <a href="#instagram-flow">3. Instagram Flow — Comment → DM</a>
     <a href="#chatbot-flow">4. Instagram Chatbot — DM keyword reply</a>
     <a href="#whatsapp-flow">5. WhatsApp Chatbot Flow</a>
-    <a href="#n8n-flow">6. n8n Integration Flow</a>
+    <a href="#n8n-flow">6. n8n Integration Flow (WhatsApp only)</a>
     <a href="#setup-steps">7. Step-by-step Setup</a>
     <a href="#methods">8. Controller Methods Reference</a>
     <a href="#payloads">9. n8n Payload Examples</a>
@@ -128,7 +128,7 @@
         <div class="g-section-num">1</div>
         <div>
             <div class="g-section-title">Overview — What this module does</div>
-            <div class="g-section-sub">Three tools in one: Automations, Chatbot, n8n</div>
+            <div class="g-section-sub">Three tools in one: Automations, Chatbot, Post Picker</div>
         </div>
     </div>
 
@@ -136,7 +136,7 @@
         <div class="branch-card purple">
             <div class="branch-label">Tool 1</div>
             <div class="branch-title">⚡ Automations</div>
-            <div class="branch-desc">Jab koi aapki post pe comment kare ya DM kare, automatically ek specific action trigger hota hai — DM bhejo, comment reply karo, ya n8n call karo. Rule-based, keyword filtering ke saath.</div>
+            <div class="branch-desc">Jab koi aapki post pe comment kare ya DM kare, automatically ek specific action trigger hota hai — DM bhejo ya comment reply karo. Rule-based, keyword filtering ke saath, fully Laravel backend mein.</div>
         </div>
         <div class="branch-card green">
             <div class="branch-label">Tool 2</div>
@@ -145,9 +145,16 @@
         </div>
         <div class="branch-card sky">
             <div class="branch-label">Tool 3</div>
-            <div class="branch-title">🔗 n8n Integration</div>
-            <div class="branch-desc">Automation ya Chatbot ke saath apna n8n webhook URL daal sakte ho. Jab bhi event ho, n8n ko full payload milta hai — wahan aap kuch bhi kar sakte ho (CRM mein lead add, email bhejo, etc.).</div>
+            <div class="branch-title">📸 Post Picker</div>
+            <div class="branch-desc">"Comment on SPECIFIC post" automation banate waqt, apni actual Instagram posts ka thumbnail gallery dikhta hai — Post ID manually copy-paste karne ki zaroorat nahi, click ya drag karke select karo.</div>
         </div>
+    </div>
+
+    <div class="tip-box info" style="margin-top:12px;">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:18px;height:18px;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/>
+        </svg>
+        <span><strong>Note:</strong> Instagram Automation ab n8n workflow use nahi karta — matching aur action dono fully Laravel backend mein hote hain (koi external webhook dependency nahi). n8n integration sirf <a href="#n8n-flow">WhatsApp Chatbot flows</a> ke liye available hai.</span>
     </div>
 </div>
 
@@ -186,7 +193,7 @@
         <div class="flow-arrow">→</div>
         <div class="flow-box green-box">
             <div class="flow-box-title">Action</div>
-            <div class="flow-box-sub">DM / Reply / n8n</div>
+            <div class="flow-box-sub">DM / Reply</div>
         </div>
     </div>
 
@@ -194,7 +201,7 @@
         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:18px;height:18px;">
             <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/>
         </svg>
-        <span><strong>Real-time:</strong> Meta aapka webhook URL call karta hai event ke baad kuch milliseconds mein. Aapka Laravel app process karta hai aur Graph API ke through reply bhejta hai — bilkul real-time.</span>
+        <span><strong>Real-time:</strong> Meta aapka webhook URL call karta hai event ke baad kuch milliseconds mein. Aapka Laravel app process karta hai aur Graph API ke through reply bhejta hai — bilkul real-time, koi external workflow engine involved nahi.</span>
     </div>
 
     <div style="margin-top:16px;">
@@ -246,7 +253,7 @@
     </div>
     <div style="margin-left:20px;margin-top:-4px;margin-bottom:16px;">
         <div style="font-size:12px;color:var(--text-300);margin-bottom:8px;">↓ Matched automation ke action ke hisaab se:</div>
-        <div class="branch-wrap" style="grid-template-columns:repeat(3,1fr);">
+        <div class="branch-wrap" style="grid-template-columns:repeat(2,1fr);">
             <div class="branch-card purple">
                 <div class="branch-label">Action: send_dm</div>
                 <div class="branch-title">💬 DM bhejo</div>
@@ -257,12 +264,19 @@
                 <div class="branch-title">💭 Comment Reply</div>
                 <div class="branch-desc">Usi comment pe public reply karti hai system. Sab dekh sakte hain.</div>
             </div>
-            <div class="branch-card sky">
-                <div class="branch-label">Action: trigger_n8n</div>
-                <div class="branch-title">🔗 n8n Webhook</div>
-                <div class="branch-desc">Aapka n8n webhook call hota hai full event payload ke saath. n8n mein koi bhi logic chala sakte ho.</div>
-            </div>
         </div>
+    </div>
+
+    <div style="font-size:13px;font-weight:700;color:var(--text-200);margin:16px 0 10px;">Specific post select karna — Post Picker:</div>
+    <div style="padding:14px 16px;border:1px solid var(--border-default);border-radius:var(--r-md);background:var(--bg-surface);">
+        <div style="font-size:13px;color:var(--text-200);line-height:1.6;">
+            <code style="font-size:11px;">specific_post_comment</code> trigger select karne par, automation form mein aapke Instagram account ke recent posts ka thumbnail grid load ho jaata hai. Post ID manually nikaal kar paste karne ki zaroorat nahi:
+        </div>
+        <ul style="margin:10px 0 0 18px;font-size:12.5px;color:var(--text-300);line-height:1.8;">
+            <li><strong>Click</strong> karo kisi post par → Post ID field apne aap fill ho jaata hai (sab devices — mobile/desktop — par kaam karta hai)</li>
+            <li><strong>Drag</strong> karke bhi Post ID field mein drop kar sakte ho (desktop par)</li>
+            <li>Agar account connect nahi hai ya posts load nahi hote, tab bhi Post ID manually type kiya ja sakta hai — field plain text hi rehta hai</li>
+        </ul>
     </div>
 
     <div style="font-size:13px;font-weight:700;color:var(--text-200);margin:16px 0 10px;">Trigger Types:</div>
@@ -439,52 +453,33 @@
     <div class="g-section-head">
         <div class="g-section-num">6</div>
         <div>
-            <div class="g-section-title">n8n Integration Flow</div>
-            <div class="g-section-sub">3 levels mein n8n webhook support</div>
+            <div class="g-section-title">n8n Integration Flow (WhatsApp only)</div>
+            <div class="g-section-sub">2 levels mein n8n webhook support</div>
         </div>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;">
+    <div class="tip-box warn" style="margin-bottom:16px;">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:18px;height:18px;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+        </svg>
+        <span><strong>Instagram Automation n8n use nahi karta.</strong> Yeh section sirf WhatsApp ke liye hai. Instagram comment/DM automation fully Laravel backend mein process hota hai — koi n8n webhook involved nahi.</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
         <div style="padding:14px 16px;border:1.5px solid #a78bfa;background:#faf5ff;border-radius:var(--r-md);">
             <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#7c3aed;margin-bottom:6px;">Level 1 — Global</div>
-            <div style="font-size:13px;font-weight:700;color:#4c1d95;margin-bottom:4px;">Instagram/WA Settings mein</div>
-            <div style="font-size:12px;color:#6d28d9;line-height:1.5;">Tenant ka ek global n8n URL. <strong>Har event</strong> — comment, DM, automation, chatbot — sab wahan jayega.</div>
-        </div>
-        <div style="padding:14px 16px;border:1.5px solid #6ee7b7;background:#f0fdf4;border-radius:var(--r-md);">
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#059669;margin-bottom:6px;">Level 2 — Per Automation</div>
-            <div style="font-size:13px;font-weight:700;color:#064e3b;margin-bottom:4px;">Automation create karte waqt</div>
-            <div style="font-size:12px;color:#065f46;line-height:1.5;">Sirf <strong>ek specific automation</strong> trigger hone pe call hoga. Alag-alag workflows trigger kar sakte ho different automations se.</div>
+            <div style="font-size:13px;font-weight:700;color:#4c1d95;margin-bottom:4px;">WhatsApp API Settings mein</div>
+            <div style="font-size:12px;color:#6d28d9;line-height:1.5;">Tenant ka ek global n8n URL. <strong>Har incoming WhatsApp message</strong> par n8n ko call jaata hai.</div>
         </div>
         <div style="padding:14px 16px;border:1.5px solid #7dd3fc;background:#f0f9ff;border-radius:var(--r-md);">
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#0284c7;margin-bottom:6px;">Level 3 — Per Chatbot Flow</div>
-            <div style="font-size:13px;font-weight:700;color:#0c4a6e;margin-bottom:4px;">Chatbot flow mein</div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#0284c7;margin-bottom:6px;">Level 2 — Per Chatbot Flow</div>
+            <div style="font-size:13px;font-weight:700;color:#0c4a6e;margin-bottom:4px;">WhatsApp Chatbot flow mein</div>
             <div style="font-size:12px;color:#075985;line-height:1.5;">Jab <strong>specific chatbot flow match</strong> ho, n8n call hoga. Reply bhi jayega aur n8n bhi trigger hoga — dono ek saath.</div>
         </div>
     </div>
 
     <div style="font-size:13px;font-weight:700;color:var(--text-200);margin-bottom:10px;">n8n ko payload milta hai POST body mein (JSON):</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div>
-            <div class="pill pill-pink" style="margin-bottom:8px;">Instagram Comment Automation</div>
-            <div class="payload-box">{
-  <span class="key">"event"</span>: <span class="str">"instagram_automation_triggered"</span>,
-  <span class="key">"trigger"</span>: <span class="str">"any_post_comment"</span>,
-  <span class="key">"user_id"</span>: <span class="str">"17841400123456"</span>,
-  <span class="key">"comment_id"</span>: <span class="str">"17858893123"</span>,
-  <span class="key">"text"</span>: <span class="str">"price batao bhai"</span>,
-  <span class="key">"tenant_id"</span>: <span class="num">3</span>
-}</div>
-        </div>
-        <div>
-            <div class="pill pill-purple" style="margin-bottom:8px;">Instagram DM Chatbot</div>
-            <div class="payload-box">{
-  <span class="key">"event"</span>: <span class="str">"instagram_event"</span>,
-  <span class="key">"trigger"</span>: <span class="str">"chatbot_triggered"</span>,
-  <span class="key">"user_id"</span>: <span class="str">"17841400123456"</span>,
-  <span class="key">"text"</span>: <span class="str">"hello"</span>,
-  <span class="key">"tenant_id"</span>: <span class="num">3</span>
-}</div>
-        </div>
         <div>
             <div class="pill pill-green" style="margin-bottom:8px;">WhatsApp Message Received</div>
             <div class="payload-box">{
@@ -658,6 +653,7 @@
                 <tr><td><code class="method-name">automations()</code></td><td>GET /instagram/automations</td><td>Tenant ki saari automations list karta hai — active/inactive ke saath.</td></tr>
                 <tr><td><code class="method-name">storeAutomation()</code></td><td>POST /instagram/automations</td><td>Naya automation create karta hai. Keywords comma-separated se array mein convert.</td></tr>
                 <tr><td><code class="method-name">toggleAutomation()</code></td><td>POST /instagram/automations/{id}/toggle</td><td>is_active toggle karta hai — AJAX response deta hai.</td></tr>
+                <tr><td><code class="method-name">fetchPosts()</code></td><td>GET /instagram/automations/posts</td><td>Post Picker ke liye — tenant ke recent Instagram posts JSON mein return karta hai (thumbnail, caption, permalink).</td></tr>
                 <tr><td><code class="method-name">chatbot()</code></td><td>GET /instagram/chatbot</td><td>Saare chatbot flows paginated list karta hai.</td></tr>
                 <tr><td><code class="method-name">storeChatbotFlow()</code></td><td>POST /instagram/chatbot</td><td>Naya chatbot keyword flow create karta hai.</td></tr>
                 <tr><td><code class="method-name">guide()</code></td><td>GET /instagram/guide</td><td>Yahi page — complete guide view.</td></tr>
@@ -682,7 +678,7 @@
                 <tr><td><code class="method-name">handle()</code></td><td>POST /webhook/instagram</td><td>Saare Meta events receive karta hai. messaging → handleDm(), changes.comments → handleComment().</td></tr>
                 <tr><td><code class="method-name">handleDm()</code> (private)</td><td>—</td><td>DM event process karta hai: automations check → chatbot check → reply. Log banata hai.</td></tr>
                 <tr><td><code class="method-name">handleComment()</code> (private)</td><td>—</td><td>Comment event process karta hai: automations check → execute. Log banata hai.</td></tr>
-                <tr><td><code class="method-name">executeAutomation()</code> (private)</td><td>—</td><td>Automation run karta hai — send_dm / reply_comment / trigger_n8n. Log update karta hai.</td></tr>
+                <tr><td><code class="method-name">executeAutomation()</code> (private)</td><td>—</td><td>Automation run karta hai — send_dm / reply_comment. Log update karta hai. (n8n support 2026-07 mein hata diya gaya.)</td></tr>
             </tbody>
         </table>
         </div>
@@ -701,9 +697,10 @@
                 <tr><td><code class="method-name">InstagramService::sendDm()</code></td><td>Graph API v21.0 POST call — recipient ko private DM bhejta hai access token se.</td></tr>
                 <tr><td><code class="method-name">InstagramService::replyToComment()</code></td><td>Comment ID ke /{commentId}/replies endpoint pe POST karta hai.</td></tr>
                 <tr><td><code class="method-name">InstagramService::getAccountInfo()</code></td><td>Account details fetch karta hai — test connection ke liye.</td></tr>
+                <tr><td><code class="method-name">InstagramService::getRecentMedia()</code></td><td>Graph API se recent posts (id, caption, thumbnail_url, permalink) fetch karta hai — Post Picker gallery ke liye.</td></tr>
                 <tr><td><code class="method-name">WhatsappChatbotService::handleIncomingMessage()</code></td><td>WA message ke liye matching flow dhundhta hai, n8n trigger karta hai, aur reply bhejta hai.</td></tr>
                 <tr><td><code class="method-name">WhatsappChatbotService::sendMessage()</code></td><td>Meta Cloud API ke through WhatsApp message bhejta hai.</td></tr>
-                <tr><td><code class="method-name">N8nService::trigger()</code></td><td>Kisi bhi n8n webhook URL pe 5s timeout ke saath POST karta hai JSON payload ke saath.</td></tr>
+                <tr><td><code class="method-name">N8nService::trigger()</code></td><td>Kisi bhi n8n webhook URL pe 5s timeout ke saath POST karta hai JSON payload ke saath. <strong>Ab sirf WhatsApp chatbot flows use karte hain</strong> — Instagram se unhook kar diya gaya hai.</td></tr>
             </tbody>
         </table>
         </div>
@@ -717,42 +714,15 @@
     <div class="g-section-head">
         <div class="g-section-num">9</div>
         <div>
-            <div class="g-section-title">n8n Payload Examples</div>
-            <div class="g-section-sub">n8n mein ye data milega — har event type ke liye</div>
+            <div class="g-section-title">n8n Payload Examples (WhatsApp only)</div>
+            <div class="g-section-sub">n8n mein ye data milega — Instagram ke liye ab koi n8n payload nahi banta</div>
         </div>
     </div>
 
     <div style="display:grid;gap:14px;">
         <div>
             <div style="font-size:12.5px;font-weight:700;color:var(--text-200);margin-bottom:6px;">
-                ① Comment → send_dm automation trigger hone pe (n8n_webhook_url set ho toh)
-            </div>
-            <div class="payload-box">{
-  <span class="key">"event"</span>: <span class="str">"instagram_automation_triggered"</span>,
-  <span class="key">"trigger"</span>: <span class="str">"any_post_comment"</span>,   <span class="comment">// ya specific_post_comment / dm_keyword</span>
-  <span class="key">"user_id"</span>: <span class="str">"17841400123456"</span>,           <span class="comment">// Instagram user ID</span>
-  <span class="key">"comment_id"</span>: <span class="str">"17858893456789"</span>,        <span class="comment">// comment ka ID (null for DMs)</span>
-  <span class="key">"text"</span>: <span class="str">"price batao please"</span>,           <span class="comment">// user ka message</span>
-  <span class="key">"tenant_id"</span>: <span class="num">3</span>                             <span class="comment">// aapka tenant ID</span>
-}</div>
-        </div>
-
-        <div>
-            <div style="font-size:12.5px;font-weight:700;color:var(--text-200);margin-bottom:6px;">
-                ② Global Instagram webhook (har event pe — Instagram Settings mein n8n URL set ho)
-            </div>
-            <div class="payload-box">{
-  <span class="key">"event"</span>: <span class="str">"instagram_event"</span>,
-  <span class="key">"trigger"</span>: <span class="str">"any_post_comment"</span>,   <span class="comment">// event type</span>
-  <span class="key">"user_id"</span>: <span class="str">"17841400123456"</span>,
-  <span class="key">"text"</span>: <span class="str">"interested!"</span>,
-  <span class="key">"tenant_id"</span>: <span class="num">3</span>
-}</div>
-        </div>
-
-        <div>
-            <div style="font-size:12.5px;font-weight:700;color:var(--text-200);margin-bottom:6px;">
-                ③ WhatsApp — Chatbot flow trigger hone pe (per-flow n8n URL)
+                ① WhatsApp — Chatbot flow trigger hone pe (per-flow n8n URL)
             </div>
             <div class="payload-box">{
   <span class="key">"event"</span>: <span class="str">"whatsapp_chatbot_triggered"</span>,
@@ -765,7 +735,7 @@
 
         <div>
             <div style="font-size:12.5px;font-weight:700;color:var(--text-200);margin-bottom:6px;">
-                ④ Global WhatsApp webhook (har incoming message pe)
+                ② Global WhatsApp webhook (har incoming message pe)
             </div>
             <div class="payload-box">{
   <span class="key">"event"</span>: <span class="str">"whatsapp_message_received"</span>,

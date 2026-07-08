@@ -403,6 +403,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
             // Automations
             Route::get('/automations',                     [Tenant\InstagramController::class, 'automations'])->name('automations');
             Route::get('/automations/create',              [Tenant\InstagramController::class, 'createAutomation'])->name('automations.create');
+            Route::get('/automations/posts',               [Tenant\InstagramController::class, 'fetchPosts'])->name('automations.posts');
             Route::post('/automations',                    [Tenant\InstagramController::class, 'storeAutomation'])->name('automations.store');
             Route::get('/automations/{id}/edit',           [Tenant\InstagramController::class, 'editAutomation'])->name('automations.edit');
             Route::put('/automations/{id}',                [Tenant\InstagramController::class, 'updateAutomation'])->name('automations.update');

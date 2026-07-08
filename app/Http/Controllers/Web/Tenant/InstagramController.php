@@ -56,7 +56,6 @@ class InstagramController extends Controller
         $request->validate([
             'instagram_account_id' => ['nullable', 'string', 'max:100'],
             'page_id'              => ['nullable', 'string', 'max:100'],
-            'n8n_webhook_url'      => ['nullable', 'url', 'max:500'],
         ]);
 
         $settings = InstagramSetting::forTenant($this->tenantId());
@@ -66,7 +65,6 @@ class InstagramController extends Controller
         if ($request->filled('page_id'))              $settings->page_id = $request->page_id;
         if (!$settings->webhook_verify_token)         $settings->webhook_verify_token = Str::random(32);
 
-        $settings->n8n_webhook_url = $request->n8n_webhook_url;
         $settings->save();
 
         return back()->with('success', 'Instagram settings saved successfully.');
@@ -116,10 +114,9 @@ class InstagramController extends Controller
             'post_id'         => ['nullable', 'string', 'max:100'],
             'trigger_keywords'=> ['nullable', 'string'],
             'keyword_match'   => ['required', 'in:any,exact,contains'],
-            'action_type'     => ['required', 'in:send_dm,reply_comment,trigger_n8n'],
+            'action_type'     => ['required', 'in:send_dm,reply_comment'],
             'dm_message'      => ['nullable', 'string', 'max:1000'],
             'comment_reply'   => ['nullable', 'string', 'max:1000'],
-            'n8n_webhook_url' => ['nullable', 'url', 'max:500'],
         ]);
 
         $keywords = $request->filled('trigger_keywords')
@@ -136,12 +133,22 @@ class InstagramController extends Controller
             'action_type'      => $request->action_type,
             'dm_message'       => $request->dm_message,
             'comment_reply'    => $request->comment_reply,
-            'n8n_webhook_url'  => $request->n8n_webhook_url,
             'is_active'        => true,
         ]);
 
         return redirect()->route('tenant.instagram.automations')
             ->with('success', 'Automation created successfully.');
+    }
+
+    // ── Automations — fetch recent posts for the picker ───────────
+    public function fetchPosts(): JsonResponse
+    {
+        try {
+            $posts = InstagramService::forTenant($this->tenantId())->getRecentMedia();
+            return response()->json(['success' => true, 'posts' => $posts]);
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'posts' => [], 'message' => $e->getMessage()]);
+        }
     }
 
     // ── Automations — edit ────────────────────────────────────────
@@ -165,10 +172,9 @@ class InstagramController extends Controller
             'post_id'         => ['nullable', 'string'],
             'trigger_keywords'=> ['nullable', 'string'],
             'keyword_match'   => ['required', 'in:any,exact,contains'],
-            'action_type'     => ['required', 'in:send_dm,reply_comment,trigger_n8n'],
+            'action_type'     => ['required', 'in:send_dm,reply_comment'],
             'dm_message'      => ['nullable', 'string'],
             'comment_reply'   => ['nullable', 'string'],
-            'n8n_webhook_url' => ['nullable', 'url'],
         ]);
 
         $keywords = $request->filled('trigger_keywords')
@@ -184,7 +190,6 @@ class InstagramController extends Controller
             'action_type'      => $request->action_type,
             'dm_message'       => $request->dm_message,
             'comment_reply'    => $request->comment_reply,
-            'n8n_webhook_url'  => $request->n8n_webhook_url,
         ]);
 
         return redirect()->route('tenant.instagram.automations')

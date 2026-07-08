@@ -8,7 +8,6 @@ use App\Models\InstagramChatbotFlow;
 use App\Models\InstagramLog;
 use App\Models\InstagramSetting;
 use App\Services\InstagramService;
-use App\Services\N8nService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
@@ -196,29 +195,6 @@ class InstagramWebhookController extends Controller
                 $log->update([
                     'outgoing_text' => $automation->comment_reply,
                     'status'        => $sent ? 'success' : 'failed',
-                ]);
-            }
-
-            if ($automation->action_type === 'trigger_n8n' && $automation->n8n_webhook_url) {
-                app(N8nService::class)->trigger($automation->n8n_webhook_url, [
-                    'event'       => 'instagram_automation_triggered',
-                    'trigger'     => $automation->trigger_type,
-                    'user_id'     => $userId,
-                    'comment_id'  => $commentId,
-                    'text'        => $text,
-                    'tenant_id'   => $setting->tenant_id,
-                ]);
-                $log->update(['status' => 'success', 'event_type' => 'n8n_triggered']);
-            }
-
-            // Tenant-level n8n webhook
-            if ($setting->n8n_webhook_url) {
-                app(N8nService::class)->trigger($setting->n8n_webhook_url, [
-                    'event'       => 'instagram_event',
-                    'trigger'     => $automation->trigger_type,
-                    'user_id'     => $userId,
-                    'text'        => $text,
-                    'tenant_id'   => $setting->tenant_id,
                 ]);
             }
         } catch (\Throwable $e) {

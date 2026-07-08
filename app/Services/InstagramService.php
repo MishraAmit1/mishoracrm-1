@@ -65,6 +65,26 @@ class InstagramService
         return true;
     }
 
+    // Get recent posts/media for the automation post picker
+    public function getRecentMedia(int $limit = 25): array
+    {
+        $response = Http::get(self::GRAPH_URL . '/' . $this->settings->instagram_account_id . '/media', [
+            'fields'       => 'id,caption,media_type,media_url,thumbnail_url,permalink,timestamp',
+            'limit'        => $limit,
+            'access_token' => $this->settings->access_token,
+        ]);
+
+        if ($response->failed()) {
+            Log::error('Instagram media fetch failed', [
+                'tenant_id' => $this->settings->tenant_id,
+                'error'     => $response->json(),
+            ]);
+            return [];
+        }
+
+        return $response->json('data') ?? [];
+    }
+
     // Get Instagram account info
     public function getAccountInfo(): ?array
     {

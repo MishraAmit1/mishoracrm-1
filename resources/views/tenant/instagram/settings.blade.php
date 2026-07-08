@@ -144,7 +144,7 @@
     </div>
 
     {{-- Webhook info --}}
-    <div class="card">
+    <div class="card" style="grid-column:1/-1;">
         <div class="card-header"><h3 class="card-title">Webhook URL</h3></div>
         <div class="card-body">
             <p style="font-size:13px;color:var(--text-300);margin-bottom:10px;">Configure this URL in your Meta App → Webhooks → Instagram</p>
@@ -167,19 +167,6 @@
                 </button>
             </div>
             <p style="font-size:12px;color:var(--text-300);margin-top:8px;">Subscribe to: <strong>messages</strong>, <strong>comments</strong>, <strong>mention</strong></p>
-        </div>
-    </div>
-
-    {{-- n8n --}}
-    <div class="card">
-        <div class="card-header"><h3 class="card-title">n8n Integration</h3></div>
-        <div class="card-body">
-            <p style="font-size:13px;color:var(--text-300);margin-bottom:14px;">Set a global n8n webhook URL to receive ALL Instagram events from this account.</p>
-            <div class="form-group">
-                <label class="form-label">n8n Webhook URL <span style="color:var(--text-300);font-weight:400;">(optional)</span></label>
-                <input type="url" name="n8n_webhook_url" class="form-input" value="{{ $settings->n8n_webhook_url }}" placeholder="https://your-n8n.com/webhook/xxxx">
-                <span class="form-hint">Every Instagram event (comment/DM) will POST to this URL with full payload</span>
-            </div>
         </div>
     </div>
 </div>
