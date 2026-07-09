@@ -187,8 +187,4 @@
 }
 .notif-item.unread { background: rgba(99,120,255,0.04); }
 .notif-item.unread:hover { background: var(--bg-hover); }
-@media(max-width:640px) {
-    .topbar-search { display: none; }
-    .search-kbd    { display: none; }
-}
 </style>

@@ -155,7 +155,7 @@
                     $paidPct = $inv->total > 0 ? min(100, round(($inv->paid_amount / $inv->total) * 100)) : 0;
                 @endphp
                 <tr onclick="window.location='{{ route('tenant.invoices.show', $inv->id) }}'">
-                    <td>
+                    <td data-label="Invoice #">
                         <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent)">
                             {{ $inv->number }}
                         </div>
@@ -165,25 +165,25 @@
                         </div>
                         @endif
                     </td>
-                    <td>
+                    <td data-label="Contact">
                         <div style="font-weight:600">{{ $inv->contact?->name ?? '—' }}</div>
                         @if($inv->contact?->company)
                         <div style="font-size:12px;color:var(--text-300)">{{ $inv->contact->company }}</div>
                         @endif
                     </td>
-                    <td style="color:var(--text-200);font-size:13px">
+                    <td style="color:var(--text-200);font-size:13px" data-label="Date">
                         {{ $inv->date?->format('d M Y') ?? '—' }}
                     </td>
-                    <td style="color:{{ $isOD ? 'var(--red)':'var(--text-200)' }};font-size:13px;font-weight:{{ $isOD ? '700':'400' }}">
+                    <td style="color:{{ $isOD ? 'var(--red)':'var(--text-200)' }};font-size:13px;font-weight:{{ $isOD ? '700':'400' }}" data-label="Due Date">
                         {{ $inv->due_date?->format('d M Y') ?? '—' }}
                         @if($isOD)
                         <div style="font-size:11px">Overdue</div>
                         @endif
                     </td>
-                    <td style="text-align:right;font-family:var(--mono);font-weight:700">
+                    <td style="text-align:right;font-family:var(--mono);font-weight:700" data-label="Amount">
                         ₹{{ number_format($inv->total, 2) }}
                     </td>
-                    <td style="text-align:right;min-width:100px">
+                    <td style="text-align:right;min-width:100px" data-label="Paid">
                         @if($inv->paid_amount > 0)
                         <div style="font-family:var(--mono);font-size:13px;color:var(--green);font-weight:600">
                             ₹{{ number_format($inv->paid_amount, 2) }}
@@ -195,7 +195,7 @@
                         <span style="color:var(--text-400);font-size:12.5px">—</span>
                         @endif
                     </td>
-                    <td>
+                    <td data-label="Status">
                         <span class="badge" style="background:var(--{{ $sc['bg'] }});color:var(--{{ $sc['color'] }})">
                             {{ $isOD ? 'Overdue' : $sc['label'] }}
                         </span>

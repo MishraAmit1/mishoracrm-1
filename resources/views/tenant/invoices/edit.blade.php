@@ -51,6 +51,26 @@
 .add-row-btn { display:flex; align-items:center; gap:6px; padding:9px 14px; border:1.5px dashed var(--accent); background:none; color:var(--accent); border-radius:var(--r-sm); font-size:13px; font-weight:600; cursor:pointer; font-family:var(--font); transition:background .15s; margin-top:10px; }
 .add-row-btn:hover { background:var(--accent-dim); }
 
+@media(max-width:768px) {
+    .items-table thead { display:none; }
+    .items-table, .items-table tbody { display:block; width:100%; }
+    .items-table tr {
+        display:block; margin-bottom:12px; padding:12px;
+        background:var(--bg-elevated); border:1px solid var(--border-default); border-radius:var(--r-md);
+    }
+    .items-table td {
+        display:flex; align-items:center; justify-content:space-between;
+        gap:10px; padding:6px 0;
+    }
+    .items-table td::before {
+        content:attr(data-label);
+        font-size:11px; font-weight:700; text-transform:uppercase;
+        letter-spacing:0.4px; color:var(--text-400); flex-shrink:0;
+    }
+    .items-table td[style*="text-align:center"] { justify-content:flex-end; }
+    .items-table td[style*="text-align:center"]::before { content:''; }
+}
+
 /* Totals */
 .totals-box { background:var(--bg-elevated); border-radius:var(--r-sm); padding:16px; }
 .total-row  { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--border-subtle); font-size:13.5px; }
@@ -446,7 +466,7 @@ function addRow(desc = '', qty = 1, rate = '', taxPct = '') {
     const gst    = taxPct !== '' ? taxPct : 18;
 
     tr.innerHTML = `
-        <td>
+        <td data-label="Description">
             <div id="ps_container_${i}"></div>
             <input type="text"
                    name="items[${i}][description]"
@@ -455,7 +475,7 @@ function addRow(desc = '', qty = 1, rate = '', taxPct = '') {
                    value="${escHtml(desc)}"
                    required/>
         </td>
-        <td>
+        <td data-label="Qty">
             <input type="number"
                    name="items[${i}][quantity]"
                    class="item-input right"
@@ -464,7 +484,7 @@ function addRow(desc = '', qty = 1, rate = '', taxPct = '') {
                    oninput="calcRow(${i}); calcTotals();"
                    required/>
         </td>
-        <td>
+        <td data-label="Rate (₹)">
             <input type="number"
                    name="items[${i}][rate]"
                    class="item-input right"
@@ -474,7 +494,7 @@ function addRow(desc = '', qty = 1, rate = '', taxPct = '') {
                    oninput="calcRow(${i}); calcTotals();"
                    required/>
         </td>
-        <td>
+        <td data-label="GST %">
             <input type="number"
                    name="items[${i}][tax_percent]"
                    class="item-input right"
@@ -483,7 +503,7 @@ function addRow(desc = '', qty = 1, rate = '', taxPct = '') {
                    value="${gst}"
                    oninput="calcTotals();"/>
         </td>
-        <td>
+        <td data-label="Amount">
             <div class="item-amount" id="rowAmt_${i}">₹${fmt(amount)}</div>
             <input type="hidden" name="items[${i}][amount]" id="rowAmtHidden_${i}" value="${amount}"/>
         </td>

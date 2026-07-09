@@ -480,7 +480,7 @@
                         $taskInitials = $task->assignedTo ? $initials($task->assignedTo->name) : '';
                     @endphp
                     <tr>
-                        <td>
+                        <td data-label="Title">
                             <div style="font-weight:600">
                                 <a href="{{ route('tenant.tasks.show', $task->id) }}"
                                    style="text-decoration:none;color:inherit">
@@ -493,13 +493,13 @@
                             </div>
                             @endif
                         </td>
-                        <td>
+                        <td data-label="Status">
                             <span class="st-badge"
                                   style="background:{{ $status['bg'] }};color:{{ $status['text_color'] }};border:1px solid {{ $status['color'] }}30">
                                 {{ $status['label'] }}
                             </span>
                         </td>
-                        <td>
+                        <td data-label="Priority">
                             @if($priority)
                             <span class="st-badge"
                                   style="background:{{ $priority['bg'] }};color:{{ $priority['color'] }};border:1px solid {{ $priority['color'] }}30">
@@ -508,14 +508,14 @@
                             @else —
                             @endif
                         </td>
-                        <td>
+                        <td data-label="Due Date">
                             @if($task->due_at)
                             <span style="font-size:12px;{{ \Carbon\Carbon::parse($task->due_at)->isPast() && $task->status !== 'completed' ? 'color:var(--red)':'' }}">
                                 {{ \Carbon\Carbon::parse($task->due_at)->format('d M Y, h:i A') }}
                             </span>
                             @else — @endif
                         </td>
-                        <td>
+                        <td data-label="Assigned To">
                             @if($task->assignedTo)
                             <div style="display:flex;align-items:center;gap:8px">
                                 <div class="tc-av" style="background:{{ $avBg }};color:{{ $avTx }}">

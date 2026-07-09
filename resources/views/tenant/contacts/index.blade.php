@@ -429,7 +429,7 @@
             <tbody>
                 @foreach($contacts as $contact)
                 <tr>
-                    <td>
+                    <td data-label="Name">
                         <div style="display:flex;align-items:center;gap:10px">
                             <div style="width:32px;height:32px;border-radius:50%;background:var(--accent-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">
                                 {{ strtoupper(substr($contact->name,0,1)) }}
@@ -445,12 +445,12 @@
                             </div>
                         </div>
                     </td>
-                    <td class="td-mono">{{ $contact->phone }}</td>
-                    <td style="font-size:13px;color:var(--text-200)">{{ $contact->company ?? '—' }}</td>
-                    <td style="font-size:13px;color:var(--text-300)">{{ $contact->city ?? '—' }}</td>
-                    <td class="td-mono" style="font-size:13px">{{ $contact->deals_count }}</td>
-                    <td class="td-mono" style="font-size:13px">{{ $contact->invoices_count }}</td>
-                    <td class="td-mono" style="font-size:11.5px;color:var(--text-400)">
+                    <td class="td-mono" data-label="Phone">{{ $contact->phone }}</td>
+                    <td style="font-size:13px;color:var(--text-200)" data-label="Company">{{ $contact->company ?? '—' }}</td>
+                    <td style="font-size:13px;color:var(--text-300)" data-label="City">{{ $contact->city ?? '—' }}</td>
+                    <td class="td-mono" style="font-size:13px" data-label="Deals">{{ $contact->deals_count }}</td>
+                    <td class="td-mono" style="font-size:13px" data-label="Invoices">{{ $contact->invoices_count }}</td>
+                    <td class="td-mono" style="font-size:11.5px;color:var(--text-400)" data-label="Added">
                         {{ $contact->created_at->diffForHumans() }}
                     </td>
                     <td>

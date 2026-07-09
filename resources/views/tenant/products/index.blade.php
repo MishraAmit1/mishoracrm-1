@@ -12,6 +12,13 @@
 .badge-active   { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11.5px; font-weight:600; background:var(--green-dim); color:var(--green); }
 .badge-inactive { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11.5px; font-weight:600; background:var(--bg-elevated); color:var(--text-400); }
 .mono { font-family:var(--mono); }
+@media(max-width:768px) {
+    .prod-table { border:none; }
+    .prod-table thead { display:none; }
+    .prod-table tbody tr { display:block; margin-bottom:12px; border:1px solid var(--border-default); border-radius:var(--r-md); overflow:hidden; }
+    .prod-table td { display:flex; align-items:center; justify-content:space-between; gap:12px; text-align:right; max-width:none !important; white-space:normal !important; }
+    .prod-table td::before { content:attr(data-label); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.4px; color:var(--text-400); text-align:left; flex-shrink:0; }
+}
 </style>
 @endpush
 
@@ -58,16 +65,16 @@
     <tbody>
         @forelse($products as $p)
         <tr>
-            <td class="mono" style="font-size:12px;color:var(--text-300)">{{ $p->product_code ?: '—' }}</td>
-            <td style="font-weight:600">{{ $p->name }}</td>
-            <td style="color:var(--text-300);font-size:12.5px;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+            <td class="mono" style="font-size:12px;color:var(--text-300)" data-label="Code">{{ $p->product_code ?: '—' }}</td>
+            <td style="font-weight:600" data-label="Name">{{ $p->name }}</td>
+            <td style="color:var(--text-300);font-size:12.5px;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" data-label="Description">
                 {{ $p->description ?: '—' }}
             </td>
-            <td class="mono" style="font-size:12.5px">{{ $p->hsn ?: '—' }}</td>
-            <td class="mono">₹{{ number_format($p->rate, 2) }}</td>
-            <td class="mono">{{ $p->tax_percent }}%</td>
-            <td>{{ $p->unit ?: '—' }}</td>
-            <td>
+            <td class="mono" style="font-size:12.5px" data-label="HSN">{{ $p->hsn ?: '—' }}</td>
+            <td class="mono" data-label="Rate (₹)">₹{{ number_format($p->rate, 2) }}</td>
+            <td class="mono" data-label="GST %">{{ $p->tax_percent }}%</td>
+            <td data-label="Unit">{{ $p->unit ?: '—' }}</td>
+            <td data-label="Status">
                 @if($p->is_active)
                     <span class="badge-active">Active</span>
                 @else

@@ -29,9 +29,6 @@
         {{-- ── Sidebar ────────────────────────────────────────────────── --}}
         @include('components.sidebar')
 
-        {{-- ── Mobile overlay ─────────────────────────────────────────── --}}
-        <div class="sb-overlay" id="sbOverlay" onclick="closeMobile()"></div>
-
         {{-- ── Main area ───────────────────────────────────────────────── --}}
         <div class="main-area" id="mainArea">
 
@@ -198,6 +195,7 @@
             if (window.innerWidth <= 768) {
                 const isOpen = sidebar.classList.toggle('mobile-open');
                 overlay.classList.toggle('show', isOpen);
+                document.body.classList.toggle('sb-lock', isOpen);
             } else {
                 sbCollapsed = !sbCollapsed;
                 localStorage.setItem('crm_sb', sbCollapsed ? '1' : '0');
@@ -207,6 +205,7 @@
         function closeMobile() {
             sidebar.classList.remove('mobile-open');
             overlay.classList.remove('show');
+            document.body.classList.remove('sb-lock');
         }
         window.addEventListener('resize', () => { if (window.innerWidth > 768) closeMobile(); });
 
@@ -384,6 +383,7 @@
         });
         
     </script>
+    <script src="{{ asset('js/capacitor-app.js') }}"></script>
 
     @stack('scripts')
 </body>

@@ -57,6 +57,16 @@
 .qs-items-table tbody tr:hover td { background:var(--bg-elevated); }
 .qs-items-table .td-right { text-align:right; font-family:'DM Mono',monospace; font-weight:500; }
 .qs-items-table .td-num { font-family:'DM Mono',monospace; color:var(--text-200); }
+@media(max-width:768px) {
+    .qs-items-table { width:100%; min-width:0; border-collapse:separate; border-spacing:0 12px; }
+    .qs-items-table thead { display:none; }
+    .qs-items-table tbody tr { display:block; background:var(--bg-surface); border:1px solid var(--border-default); border-radius:var(--r-md); overflow:hidden; }
+    .qs-items-table tbody tr:last-child td { border-bottom:1px solid var(--border-subtle); }
+    .qs-items-table tbody tr td:last-child { border-bottom:none; }
+    .qs-items-table td { display:flex; align-items:center; justify-content:space-between; gap:12px; text-align:right; }
+    .qs-items-table .td-right, .qs-items-table .td-num { text-align:right; }
+    .qs-items-table td::before { content:attr(data-label); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.4px; color:var(--text-400); text-align:left; flex-shrink:0; }
+}
 .item-desc { font-size:12px; color:var(--text-400); margin-top:2px; }
 
 /* Totals */
@@ -293,16 +303,16 @@
                         <tbody>
                             @foreach($items as $idx => $item)
                             <tr>
-                                <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text-400)">{{ $idx+1 }}</td>
-                                <td>
+                                <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text-400)" data-label="#">{{ $idx+1 }}</td>
+                                <td data-label="Item / Service">
                                     <div style="font-weight:500;color:var(--text-100)">{{ $item['name'] ?? '—' }}</div>
                                 </td>
-                                <td>
+                                <td data-label="Description">
                                     <div class="item-desc">{{ $item['description'] ?? '—' }}</div>
                                 </td>
-                                <td class="td-right td-num">{{ number_format($item['quantity'] ?? 0, 2) }}</td>
-                                <td class="td-right td-num">{{ number_format($item['rate'] ?? 0, 2) }}</td>
-                                <td class="td-right" style="font-family:'DM Mono',monospace;font-weight:600;color:var(--text-100)">
+                                <td class="td-right td-num" data-label="Qty">{{ number_format($item['quantity'] ?? 0, 2) }}</td>
+                                <td class="td-right td-num" data-label="Rate (₹)">{{ number_format($item['rate'] ?? 0, 2) }}</td>
+                                <td class="td-right" style="font-family:'DM Mono',monospace;font-weight:600;color:var(--text-100)" data-label="Amount (₹)">
                                     {{ number_format($item['amount'] ?? 0, 2) }}
                                 </td>
                             </tr>

@@ -12,6 +12,7 @@
 .fi:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-dim); }
 .fg2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
 .fe  { font-size:12px; color:var(--red); }
+@media(max-width:640px) { .fg2 { grid-template-columns:1fr; } }
 </style>
 @endpush
 

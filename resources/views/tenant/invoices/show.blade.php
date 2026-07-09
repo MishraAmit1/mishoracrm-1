@@ -141,7 +141,7 @@
 
                             <tr>
 
-                                <td>
+                                <td data-label="Description">
                                     <div class="item-title">
                                         {{ $item['description'] ?? '-' }}
                                     </div>
@@ -151,17 +151,17 @@
                                     </div>
                                 </td>
 
-                                <td>{{ $item['quantity'] ?? '-' }}</td>
+                                <td data-label="Qty">{{ $item['quantity'] ?? '-' }}</td>
 
-                                <td>
+                                <td data-label="Rate">
                                     ₹{{ number_format($item['rate'], 2) }}
                                 </td>
 
-                                <td>
+                                <td data-label="Tax">
                                     {{ $invoice->tax_percent }}%
                                 </td>
 
-                                <td>
+                                <td data-label="Total">
                                     {{-- ₹{{ number_format($item['amount'], 2) }} --}}
                                 </td>
 

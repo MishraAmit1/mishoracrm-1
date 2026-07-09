@@ -335,7 +335,7 @@ $srcL=is_array($src)?($src['label']??ucfirst($lead->source)):($src??ucfirst($lea
     <td style="padding:11px 6px 11px 14px">
         <div class="prio-dot {{ $lead->priority }}"></div>
     </td>
-    <td style="padding-left:4px">
+    <td style="padding-left:4px" data-label="Name">
         <div style="display:flex;align-items:center;gap:9px">
             <div class="lead-av" style="background:{{ $av }}">{{ $in }}</div>
             <div>
@@ -344,14 +344,14 @@ $srcL=is_array($src)?($src['label']??ucfirst($lead->source)):($src??ucfirst($lea
             </div>
         </div>
     </td>
-    <td>
+    <td data-label="Contact">
         <div style="font-size:12.5px;font-family:var(--mono);color:var(--text-200)">{{ $lead->phone }}</div>
         @if($lead->email)<div style="font-size:11px;color:var(--text-400);margin-top:2px">{{ $lead->email }}</div>@endif
     </td>
-    <td><span style="font-size:12px;color:var(--text-300)">{{ $srcL }}</span></td>
-    <td><span class="s-badge" style="background:{{ $sc['bg'] }};color:{{ $sc['color'] }}">{{ $sc['label'] }}</span></td>
-    <td><span style="font-size:12px;font-weight:700;color:{{ $priC }};text-transform:capitalize">{{ $lead->priority }}</span></td>
-    <td>
+    <td data-label="Source"><span style="font-size:12px;color:var(--text-300)">{{ $srcL }}</span></td>
+    <td data-label="Status"><span class="s-badge" style="background:{{ $sc['bg'] }};color:{{ $sc['color'] }}">{{ $sc['label'] }}</span></td>
+    <td data-label="Priority"><span style="font-size:12px;font-weight:700;color:{{ $priC }};text-transform:capitalize">{{ $lead->priority }}</span></td>
+    <td data-label="Assigned">
         @if($lead->assignedTo)
         <div style="display:flex;align-items:center;gap:7px">
             <div style="width:24px;height:24px;border-radius:50%;background:{{ avc($lead->assignedTo->name,$AVC) }};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0">{{ ini($lead->assignedTo->name) }}</div>
@@ -359,7 +359,7 @@ $srcL=is_array($src)?($src['label']??ucfirst($lead->source)):($src??ucfirst($lea
         </div>
         @else<span style="font-size:12px;color:var(--text-400)">—</span>@endif
     </td>
-    <td><span style="font-size:11.5px;color:var(--text-400);font-family:var(--mono)">{{ $lead->created_at->diffForHumans() }}</span></td>
+    <td data-label="Added"><span style="font-size:11.5px;color:var(--text-400);font-family:var(--mono)">{{ $lead->created_at->diffForHumans() }}</span></td>
     <td onclick="event.stopPropagation()">
         <div class="row-acts">
             <a href="{{ route('tenant.leads.show',$lead->id) }}" class="btn btn-secondary btn-sm btn-icon" title="View">

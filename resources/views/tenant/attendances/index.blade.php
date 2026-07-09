@@ -244,7 +244,7 @@
             <tbody>
                 @foreach($attendances as $att)
                 <tr>
-                    <td>
+                    <td data-label="Staff">
                         <div style="display:flex;align-items:center;gap:10px">
                             <div style="width:32px;height:32px;border-radius:50%;
                                         background:var(--accent-dim);color:var(--accent);
@@ -264,27 +264,27 @@
                             </div>
                         </div>
                     </td>
-                    <td class="td-mono" style="font-size:13px">
+                    <td class="td-mono" style="font-size:13px" data-label="Date">
                         {{ $att->date->format('d M Y') }}
                         <div style="font-size:11px;color:var(--text-400)">
                             {{ $att->date->format('l') }}
                         </div>
                     </td>
-                    <td class="td-mono" style="font-size:13px">
+                    <td class="td-mono" style="font-size:13px" data-label="Clock In">
                         {{ $att->clock_in?->format('h:i A') ?? '—' }}
                     </td>
-                    <td class="td-mono" style="font-size:13px">
+                    <td class="td-mono" style="font-size:13px" data-label="Clock Out">
                         {{ $att->clock_out?->format('h:i A') ?? '—' }}
                     </td>
-                    <td class="td-mono" style="font-size:13px;color:var(--text-200)">
+                    <td class="td-mono" style="font-size:13px;color:var(--text-200)" data-label="Worked">
                         {{ $att->worked_hours ?? '—' }}
                     </td>
-                    <td>
+                    <td data-label="Status">
                         <span class="status-badge badge-{{ $att->status_color }}">
                             {{ $att->status_label }}
                         </span>
                     </td>
-                    <td style="font-size:12.5px;color:var(--text-300);max-width:160px">
+                    <td style="font-size:12.5px;color:var(--text-300);max-width:160px" data-label="Notes">
                         {{ Str::limit($att->notes, 35) ?? '—' }}
                     </td>
                     <td>

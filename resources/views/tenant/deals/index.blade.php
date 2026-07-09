@@ -136,6 +136,11 @@
     border-radius: 12px;
     overflow: hidden;
 }
+@media(max-width:768px) {
+    .kanban-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; scroll-snap-type: x proximity; }
+    .kanban-board { display: flex !important; gap: 12px; }
+    .k-col { min-width: 260px; width: 260px; flex-shrink: 0; scroll-snap-align: start; }
+}
 .k-col-head {
     display: flex; align-items: center; justify-content: space-between;
     padding: 12px 14px; border-bottom: 1px solid var(--border-subtle);
@@ -613,7 +618,7 @@ $allTotal = $stageSummary->sum('total');
                 <input type="checkbox" class="row-check" value="{{ $deal->id }}" style="width:14px;height:14px;cursor:pointer"/>
             </td>
             @foreach($listColumns as $col)
-            <td>
+            <td data-label="{{ $col['label'] }}">
                 @switch($col['key'])
                 @case('title')
                     <div style="font-weight:600;font-size:13px">

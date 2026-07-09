@@ -571,6 +571,18 @@ Route::middleware(['tenant', 'auth', 'subscription'])
                 Route::delete('/{id}',       'destroy')->name('destroy');
             });
 
+        // ── Webhooks — n8n automation (tenant_admin only) ──────────
+        Route::prefix('webhooks')->name('webhooks.')->middleware(['role:tenant_admin'])
+            ->controller(Tenant\WebhookController::class)->group(function () {
+                Route::get('/',                  'index')->name('index');
+                Route::post('/',                 'store')->name('store');
+                Route::patch('/{webhook}',       'update')->name('update');
+                Route::delete('/{webhook}',      'destroy')->name('destroy');
+                Route::post('/{webhook}/toggle', 'toggle')->name('toggle');
+                Route::post('/{webhook}/test',   'test')->name('test');
+                Route::post('/regenerate-token', 'regenerateToken')->name('regenerate-token');
+            });
+
         // ── AI & Workflow Automation ───────────────────────────────
         Route::get('/automation',         [Tenant\AutomationController::class, 'index'])->name('automation.index');
         Route::post('/automation/request',[Tenant\AutomationController::class, 'request'])->name('automation.request');

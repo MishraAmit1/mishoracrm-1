@@ -152,7 +152,7 @@
             <tbody>
                 @foreach($followups as $followup)
                 <tr>
-                    <td>
+                    <td data-label="Type">
                         <div style="display:flex;align-items:center;gap:8px">
                             <div class="type-dot type-{{ $followup->type }}">
                                 <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
@@ -170,7 +170,7 @@
                             <span style="font-size:12.5px;color:var(--text-200)">{{ $types[$followup->type] }}</span>
                         </div>
                     </td>
-                    <td>
+                    <td data-label="Lead / Contact">
                         @if($followup->lead)
                         <a href="{{ route('tenant.leads.show', $followup->lead_id) }}"
                            style="font-size:13.5px;font-weight:600;color:var(--text-100);text-decoration:none">
@@ -188,10 +188,10 @@
                         <span style="color:var(--text-400)">—</span>
                         @endif
                     </td>
-                    <td style="font-size:13px;color:var(--text-200)">
+                    <td style="font-size:13px;color:var(--text-200)" data-label="Assigned To">
                         {{ $followup->assignedTo?->name ?? '—' }}
                     </td>
-                    <td>
+                    <td data-label="Scheduled At">
                         <div class="td-mono" style="font-size:12.5px;{{ $followup->isOverdue() ? 'color:var(--red)' : '' }}">
                             {{ $followup->scheduled_at->format('d M Y') }}
                         </div>
@@ -202,7 +202,7 @@
                             @endif
                         </div>
                     </td>
-                    <td>
+                    <td data-label="Status">
                         <span class="badge
                             @if($followup->status === 'scheduled') badge-new
                             @elseif($followup->status === 'done')  badge-qualified
@@ -212,7 +212,7 @@
                             {{ ucfirst($followup->status) }}
                         </span>
                     </td>
-                    <td style="font-size:12.5px;color:var(--text-300);max-width:180px">
+                    <td style="font-size:12.5px;color:var(--text-300);max-width:180px" data-label="Notes">
                         <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
                             {{ $followup->notes ?? '—' }}
                         </div>

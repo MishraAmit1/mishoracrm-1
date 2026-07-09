@@ -143,7 +143,7 @@
                 @php $s = $statuses[$q->status] ?? ['color'=>'text-300','bg'=>'bg-elevated','label'=>ucfirst($q->status)]; @endphp
                 <tr>
                     {{-- Number --}}
-                    <td>
+                    <td data-label="Number">
                         <a href="{{ route('tenant.quotations.show', $q->id) }}"
                            class="td-name" style="text-decoration:none;color:var(--text-100)">
                             {{ $q->number }}
@@ -154,7 +154,7 @@
                     </td>
 
                     {{-- Contact / Lead --}}
-                    <td>
+                    <td data-label="Contact / Lead">
                         @if($q->contact)
                         <div style="font-size:13.5px;font-weight:600;color:var(--text-100)">
                             {{ $q->contact->name }}
@@ -173,12 +173,12 @@
                     </td>
 
                     {{-- Date --}}
-                    <td class="td-mono" style="font-size:12.5px">
+                    <td class="td-mono" style="font-size:12.5px" data-label="Date">
                         {{ $q->date->format('d M Y') }}
                     </td>
 
                     {{-- Valid until --}}
-                    <td class="td-mono" style="font-size:12.5px;{{ $q->isExpired() ? 'color:var(--red)' : '' }}">
+                    <td class="td-mono" style="font-size:12.5px;{{ $q->isExpired() ? 'color:var(--red)' : '' }}" data-label="Valid Until">
                         {{ $q->valid_until?->format('d M Y') ?? '—' }}
                         @if($q->isExpired())
                         <div style="font-size:11px;color:var(--red)">Expired</div>
@@ -186,7 +186,7 @@
                     </td>
 
                     {{-- Amount --}}
-                    <td>
+                    <td data-label="Amount">
                         <div style="font-size:14px;font-weight:700;color:var(--accent);font-family:var(--mono)">
                             {{ $q->formatted_total }}
                         </div>
@@ -198,7 +198,7 @@
                     </td>
 
                     {{-- Status --}}
-                    <td>
+                    <td data-label="Status">
                         <span class="badge"
                               style="background:var(--{{ $s['bg'] }});color:var(--{{ $s['color'] }});padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:600">
                             {{ $s['label'] }}

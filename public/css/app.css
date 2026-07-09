@@ -683,6 +683,41 @@ select.form-control option { background: var(--bg-elevated); color: var(--text-1
 .td-name { font-weight: 600; color: var(--text-100); font-size: 13.5px; }
 .td-mono { font-family: var(--mono); font-size: 12.5px; }
 
+/* ── Table → card fallback on mobile ───────────────────────────────
+   Applies to .data-table (leads/contacts/invoices/etc.) and .di-table
+   (deals/tasks). <td> elements with a data-label="..." attribute get
+   that label rendered before their value; without one, the value just
+   shows on its own line. Desktop layout (>768px) is untouched. ──── */
+@media(max-width:768px) {
+  /* Some pages set an unconditional min-width/table-layout on their table
+     to force desktop column widths — neutralize that so the card layout
+     below can take over. */
+  .data-table, .di-table { width: 100% !important; min-width: 0 !important; table-layout: auto !important; border-collapse: separate; border-spacing: 0 12px; }
+  .data-table thead, .di-table thead { display: none; }
+  .data-table tr, .di-table tr {
+    display: block;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-md);
+    overflow: hidden;
+  }
+  .data-table tbody tr:hover td, .di-table tbody tr:hover td { background: none; }
+  .data-table td, .di-table td {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; text-align: right;
+    border-bottom: 1px solid var(--border-subtle);
+    white-space: normal;
+  }
+  .data-table td:last-child, .di-table td:last-child { border-bottom: none; }
+  .data-table td::before, .di-table td::before {
+    content: attr(data-label);
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.4px; color: var(--text-400);
+    text-align: left; flex-shrink: 0;
+  }
+  .data-table td:empty, .di-table td:empty { display: none; }
+}
+
 /* ── Badges ─────────────────────────────────────────────────────── */
 .badge {
   display: inline-flex; align-items: center; gap: 5px;
@@ -845,16 +880,55 @@ select.form-control option { background: var(--bg-elevated); color: var(--text-1
 
 /* ── Responsive ─────────────────────────────────────────────────── */
 @media(max-width:768px) {
-  .sidebar { transform: translateX(-100%); }
+  body.sb-lock { overflow: hidden; }
+
+  .sidebar {
+    transform: translateX(-100%);
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
   .sidebar.mobile-open { transform: translateX(0); width: var(--sidebar-w) !important; }
   .main-area { margin-left: 0 !important; }
   .sb-overlay.show { display: block; }
-  .page-body { padding: 20px 16px 80px; }
+
+  .topbar {
+    padding: 0 16px;
+    padding-top: env(safe-area-inset-top);
+    height: calc(var(--topbar-h) + env(safe-area-inset-top));
+  }
+  .topbar-search { max-width: none; flex: 1; }
+  .search-kbd, .topbar-search-shortcut { display: none; }
+
+  .page-body { padding: 20px 16px calc(80px + env(safe-area-inset-bottom)); }
   .page-head { flex-direction: column; }
   .page-actions { width: 100%; }
-  .topbar { padding: 0 16px; }
-  .topbar-search { max-width: none; flex: 1; }
-  .topbar-search-shortcut { display: none; }
+  .page-actions .btn { flex: 1; justify-content: center; }
+
+  /* Touch targets */
+  .sb-item, .drop-item { min-height: 44px; }
+  .btn { min-height: 40px; }
+  .btn-icon { width: 38px; height: 38px; }
+  .tb-btn, .topbar-toggle { width: 38px; height: 38px; }
+
+  /* Row action buttons rely on tr:hover on desktop — unusable on touch */
+  .row-acts, .row-actions { opacity: 1 !important; }
+
+  /* Cards */
+  .card-header { flex-direction: column; align-items: stretch; gap: 10px; }
+  .card-actions { width: 100%; }
+
+  /* Modals */
+  .modal-box { max-height: calc(100vh - 40px); overflow-y: auto; }
+  .modal-actions { flex-direction: column-reverse; }
+  .modal-actions .btn { width: 100%; }
+
+  /* Common filter-bar / pagination widgets used across list pages */
+  .filter-bar, .di-toolbar, .pag-wrap, .pagination-wrap { flex-wrap: wrap; }
+  .pag-links, .pagination-links, .pag-btns { flex-wrap: wrap; justify-content: center; }
+}
+
+@media (hover:none) {
+  .row-acts, .row-actions { opacity: 1 !important; }
 }
 
 @media(max-width:480px) {

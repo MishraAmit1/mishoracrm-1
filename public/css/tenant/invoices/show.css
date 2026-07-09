@@ -301,7 +301,7 @@
 /* ────────────────────────────────────────────────────────────────
    RESPONSIVE TABLE
 ──────────────────────────────────────────────────────────────── */
-@media(max-width:900px){
+@media(min-width:769px) and (max-width:900px){
 
     .card{
         overflow:auto;
@@ -311,6 +311,56 @@
         min-width:760px;
     }
 
+}
+
+/* Phone: stack each line item as a card instead of a scrolling table */
+@media(max-width:768px){
+
+    .invoice-table{
+        width:100%;
+        min-width:0;
+        border-collapse:separate;
+        border-spacing:0 12px;
+    }
+
+    .invoice-table thead{
+        display:none;
+    }
+
+    .invoice-table tbody tr{
+        display:block;
+        background:var(--bg-surface);
+        border:1px solid var(--border-default);
+        border-radius:var(--r-md);
+        overflow:hidden;
+    }
+
+    .invoice-table tbody tr:last-child td{
+        border-bottom:1px solid var(--border-subtle);
+    }
+
+    .invoice-table tbody tr td:last-child{
+        border-bottom:none;
+    }
+
+    .invoice-table tbody td{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:12px;
+        text-align:right;
+    }
+
+    .invoice-table tbody td::before{
+        content:attr(data-label);
+        font-size:11px;
+        font-weight:700;
+        text-transform:uppercase;
+        letter-spacing:0.4px;
+        color:var(--text-400);
+        text-align:left;
+        flex-shrink:0;
+    }
 }
 
 /* ────────────────────────────────────────────────────────────────
