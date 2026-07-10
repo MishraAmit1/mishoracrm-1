@@ -214,7 +214,7 @@ $currentView=session('lead_view','list');
         <div class="page-title">Leads</div>
         <div class="page-sub">{{ number_format($counts['all']) }} leads in pipeline</div>
     </div>
-    <div class="page-actions" style="display:flex;align-items:center;gap:10px">
+    <div class="page-actions" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
         <div class="view-toggle" role="group" aria-label="View mode">
             <button type="button" class="vt-btn" id="btn-list" aria-pressed="false">
                 <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5M3.75 6.75h16.5M3.75 17.25h16.5"/></svg>
