@@ -539,7 +539,7 @@
 
 /* ── Config from PHP ── */
 const STATUSES = @json(config('quotation.statuses'));
-const PRODUCTS = @json($products->keyBy('id'));
+window.PRODUCTS = @json($products->keyBy('id'));
 /* ── Item Row Template ── */
 let rowIndex = 0;
 

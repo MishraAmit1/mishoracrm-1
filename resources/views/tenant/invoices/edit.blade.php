@@ -429,7 +429,7 @@
 // ── Existing data ─────────────────────────────────────────────────
 const CONTACTS       = @json($contactsJson);
 const EXISTING_ITEMS = @json($existingItems);
-const PRODUCTS       = @json($products->keyBy('id'));
+window.PRODUCTS = @json($products->keyBy('id'));
 let rowCount = 0;
 
 // ── Contact preview ───────────────────────────────────────────────

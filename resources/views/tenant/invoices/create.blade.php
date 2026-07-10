@@ -344,7 +344,7 @@
 // ── Data ──────────────────────────────────────────────────────────
 const CONTACTS      = @json($contactsJson);
 const PREFILL_ITEMS = @json($prefillItems);
-const PRODUCTS      = @json($products->keyBy('id'));
+window.PRODUCTS = @json($products->keyBy('id'));
 let rowCount = 0;
 
 // ── Contact load ──────────────────────────────────────────────────

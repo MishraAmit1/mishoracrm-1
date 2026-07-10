@@ -694,15 +694,27 @@ select.form-control option { background: var(--bg-elevated); color: var(--text-1
 @media(max-width:768px) {
   /* Some pages set an unconditional min-width/table-layout on their table
      to force desktop column widths — neutralize that so the card layout
-     below can take over. */
-  .data-table, .di-table { width: 100% !important; min-width: 0 !important; table-layout: auto !important; border-collapse: separate; border-spacing: 0 12px; }
+     below can take over. Critically, the <table> element itself must also
+     become a plain block box: leaving it as display:table means the browser
+     can still run table auto-layout sizing on it (which is allowed to grow
+     past the specified width when a cell's min-content doesn't fit), even
+     though its <tr>/<td> children are individually overridden below — and
+     that's what produces the stray horizontal scroll on mobile. */
+  .data-table, .di-table {
+    display: block !important;
+    width: 100% !important; min-width: 0 !important; max-width: 100% !important;
+    table-layout: auto !important; border-collapse: separate; border-spacing: 0 12px;
+  }
   .data-table thead, .di-table thead { display: none; }
+  .data-table tbody, .di-table tbody { display: block; width: 100%; }
   .data-table tr, .di-table tr {
     display: block;
+    width: 100%;
     background: var(--bg-surface);
     border: 1px solid var(--border-default);
     border-radius: var(--r-md);
     overflow: hidden;
+    box-sizing: border-box;
   }
   .data-table tbody tr:hover td, .di-table tbody tr:hover td { background: none; }
   .data-table td, .di-table td {
@@ -710,7 +722,16 @@ select.form-control option { background: var(--bg-elevated); color: var(--text-1
     gap: 12px;
     border-bottom: 1px solid var(--border-subtle);
     white-space: normal;
+    overflow-wrap: anywhere;
+    min-width: 0;
+    box-sizing: border-box;
   }
+  /* An unbreakable token (email address, phone number, long slug — no
+     spaces to wrap at) otherwise forces its flex-item ancestor to keep
+     "min-width:auto" (= its own full rendered width), which is exactly
+     what pushes a row wider than the screen and creates the left-right
+     scroll. Letting every level shrink + break-anywhere kills that. */
+  .data-table td > *, .di-table td > * { min-width: 0; overflow-wrap: anywhere; }
   .data-table td:last-child, .di-table td:last-child { border-bottom: none; }
   /* Only cells that actually declare a data-label get the "label | value"
      split row. Without this guard, an unlabeled cell (a decorative dot,

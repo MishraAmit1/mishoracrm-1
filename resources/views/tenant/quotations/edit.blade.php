@@ -506,7 +506,7 @@
 (function(){
 
 const STATUSES = @json(config('quotation.statuses'));
-const PRODUCTS = @json($products->keyBy('id'));
+window.PRODUCTS = @json($products->keyBy('id'));
 /* ── Item Row ── */
 let rowIndex = 0;
 
