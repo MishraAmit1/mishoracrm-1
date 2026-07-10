@@ -161,6 +161,59 @@ class Lead extends TenantModel
         return $this->status === 'lost';
     }
 
+    // ── Convert to Contact ───────────────────────────────────────
+    // Reused by LeadController::convert() and by QuotationController
+    // when an accepted, lead-only quotation is converted to an invoice.
+    public function convertToContact(): Contact
+    {
+        if ($this->isConverted()) {
+            $existing = Contact::where('lead_id', $this->id)
+                ->where('tenant_id', $this->tenant_id)
+                ->first();
+
+            if ($existing) {
+                return $existing;
+            }
+        }
+
+        $contact = Contact::create([
+            'tenant_id'   => $this->tenant_id,
+            'lead_id'     => $this->id,
+            'name'        => $this->name,
+            'phone'       => $this->phone,
+            'email'       => $this->email,
+            'company'     => $this->company ?? null,
+            'designation' => $this->designation ?? null,
+            'source'      => $this->source,
+            'city'        => $this->city ?? null,
+            'state'       => $this->state ?? null,
+            'address'     => $this->address ?? null,
+            'assigned_to' => $this->assigned_to,
+            'created_by'  => auth()->id(),
+        ]);
+
+        Deal::create([
+            'tenant_id'            => $this->tenant_id,
+            'contact_id'           => $contact->id,
+            'lead_id'              => $this->id,
+            'title'                => $this->name . ' — Deal',
+            'value'                => $this->lead_value ?? 0,
+            'stage'                => 'new',
+            'probability'          => 10,
+            'expected_close_date'  => now()->addDays(30)->toDateString(),
+            'notes'                => $this->notes,
+            'assigned_to'          => $this->assigned_to,
+            'created_by'           => auth()->id(),
+        ]);
+
+        $this->update([
+            'status'       => 'converted',
+            'converted_at' => now(),
+        ]);
+
+        return $contact;
+    }
+
     public function getStatusColorAttribute(): string
     {
         return match ($this->status) {

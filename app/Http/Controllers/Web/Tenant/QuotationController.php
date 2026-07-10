@@ -231,6 +231,17 @@ class QuotationController extends Controller
             return null;
         }
 
+        // Quotation lead ke against bani thi bina contact ke — lead ko
+        // ab contact/customer mein convert karo taaki invoice usse link ho sake.
+        if (!$quotation->contact_id && $quotation->lead_id) {
+            $lead = Lead::find($quotation->lead_id);
+
+            if ($lead) {
+                $contact = $lead->convertToContact();
+                $quotation->update(['contact_id' => $contact->id]);
+            }
+        }
+
         return Invoice::create([
             'tenant_id'    => $quotation->tenant_id,
             'contact_id'   => $quotation->contact_id,

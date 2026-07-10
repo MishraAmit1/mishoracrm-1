@@ -311,45 +311,8 @@ class LeadController extends Controller
             return back()->with('error', 'Lead is already converted.');
         }
 
-        // ── Step 1: Contact create karo ──────────────────────────
-        $contact = Contact::create([
-            'tenant_id'   => $lead->tenant_id,
-            'lead_id'     => $lead->id,
-            'name'        => $lead->name,
-            'phone'       => $lead->phone,
-            'email'       => $lead->email,
-            'company'     => $lead->company   ?? null,
-            'designation' => $lead->designation ?? null,
-            'source'      => $lead->source,
-            'city'        => $lead->city       ?? null,
-            'state'       => $lead->state      ?? null,
-            'address'     => $lead->address    ?? null,
-            'assigned_to' => $lead->assigned_to,
-            'created_by'  => auth()->id(),
-        ]);
-
-        // ── Step 2: Deal automatically create karo ───────────────
-        $deal = Deal::create([
-            'tenant_id'            => $lead->tenant_id,
-            'contact_id'           => $contact->id,
-            'lead_id'              => $lead->id,
-            'title'                => $lead->name . ' — Deal',
-            'value'                => $lead->lead_value ?? 0,
-            'stage'                => 'new',
-            'probability'          => 10,
-            'expected_close_date'  => now()->addDays(30)->toDateString(),
-            'notes'                => $lead->notes,
-            'assigned_to'          => $lead->assigned_to,
-            'created_by'           => auth()->id(),
-        ]);
-
-        // ── Step 3: Lead update karo ──────────────────────────────
-        // contact_id lead mein nahi store hota
-        // Contact mein lead_id hai — wahi relationship hai
-        $lead->update([
-            'status'       => 'converted',
-            'converted_at' => now(),
-        ]);
+        // ── Contact + Deal create karo, lead ko converted mark karo ──
+        $contact = $lead->convertToContact();
 
         return redirect()
             ->route('tenant.contacts.show', $contact->id)
