@@ -895,11 +895,18 @@ select.form-control option { background: var(--bg-elevated); color: var(--text-1
   .sb-overlay.show { display: block; }
 
   .topbar {
-    padding: 0 16px;
+    padding: 0 12px;
     padding-top: env(safe-area-inset-top);
     height: calc(var(--topbar-h) + env(safe-area-inset-top));
+    gap: 8px;
   }
-  .topbar-search { max-width: none; flex: 1; }
+  /* Without min-width:0 the <input> keeps its browser-default intrinsic
+     width (~200px) and refuses to shrink, so the flex row overflows the
+     screen and pushes the theme/notif/avatar icons off-screen — where
+     body's overflow-x:hidden clips them, making them silently disappear. */
+  .topbar-search { max-width: none; flex: 1 1 auto; min-width: 0; }
+  .topbar-search input { min-width: 0; }
+  .topbar-toggle, .topbar-right { flex-shrink: 0; }
   .search-kbd, .topbar-search-shortcut { display: none; }
 
   .page-body { padding: 20px 16px calc(80px + env(safe-area-inset-bottom)); }
