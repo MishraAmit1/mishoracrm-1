@@ -28,8 +28,8 @@ return new class extends Migration
             $table->decimal('paid_amount', 12, 2)->default(0);
             $table->enum('status', ['draft', 'sent', 'paid', 'partial', 'overdue'])->default('draft');
 
-            $table->string('notes')->nullable();
-            $table->string('terms')->nullable();
+            $table->text('notes')->nullable();
+            $table->text('terms')->nullable();
             $table->string('razorpay_payment_id')->nullable();
             $table->timestamp('paid_at')->nullable();
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
