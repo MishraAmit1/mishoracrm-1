@@ -151,13 +151,13 @@
     </div>
     @endif
 
-    <form method="POST"
-          action="{{ route('tenant.quotations.update', $quotation->id) }}"
-          novalidate id="quotationForm">
-        @csrf @method('PUT')
-        <input type="hidden" name="status" id="statusHidden" value="{{ $currentStatus }}">
+    <div class="qf-layout">
 
-        <div class="qf-layout">
+        <form method="POST"
+              action="{{ route('tenant.quotations.update', $quotation->id) }}"
+              novalidate id="quotationForm">
+            @csrf @method('PUT')
+            <input type="hidden" name="status" id="statusHidden" value="{{ $currentStatus }}">
 
             {{-- ── MAIN ── --}}
             <div>
@@ -399,9 +399,10 @@
                     </div>
                 </div>
             </div>
+        </form>
 
-            {{-- ── SIDEBAR ── --}}
-            <div class="qf-sidebar">
+        {{-- ── SIDEBAR ── --}}
+        <div class="qf-sidebar">
 
                 {{-- Quotation Meta --}}
                 <div class="qf-sc">
@@ -453,18 +454,6 @@
                             </div>
                             Download PDF
                         </a>
-                        @if($quotation->status !== 'sent')
-                        {{-- <form method="POST" action="{{ route('tenant.quotations.send',$quotation->id) }}"> --}}
-                            <form method="POST" action="#"></form>
-                            @csrf
-                            <button type="submit" class="qa-btn" style="width:100%">
-                                <div class="qa-icon" style="background:#E6F1FB">
-                                    <i class="ti ti-send" style="font-size:14px;color:#185FA5"></i>
-                                </div>
-                                Send to Client
-                            </button>
-                        </form>
-                        @endif
                         @if($quotation->status === 'accepted' && !$quotation->invoice)
                         <form method="POST" action="{{ route('tenant.quotations.convert',$quotation->id) }}">
                             @csrf
@@ -495,8 +484,7 @@
                 </div>
             </div>
         </div>
-    </form>
-</div>
+    </div>
 @endsection
 
 @include('tenant.partials.product-search-js')

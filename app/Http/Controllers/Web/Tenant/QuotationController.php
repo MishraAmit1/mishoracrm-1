@@ -182,9 +182,15 @@ class QuotationController extends Controller
 
         $quotation->update(array_merge($data, $totals));
 
+        $invoice = $this->autoCreateInvoice($quotation);
+
+        $message = $invoice
+            ? "Quotation updated successfully. Invoice {$invoice->number} created automatically."
+            : 'Quotation updated successfully.';
+
         return redirect()
             ->route('tenant.quotations.show', $quotation->id)
-            ->with('success', 'Quotation updated successfully.');
+            ->with('success', $message);
     }
 
     // ── Destroy ───────────────────────────────────────────────────
@@ -209,7 +215,40 @@ class QuotationController extends Controller
         $quotation = $this->findQuotation($id);
         $quotation->update(['status' => $request->status]);
 
-        return back()->with('success', 'Quotation status updated.');
+        $invoice = $this->autoCreateInvoice($quotation);
+
+        $message = $invoice
+            ? "Quotation status updated. Invoice {$invoice->number} created automatically."
+            : 'Quotation status updated.';
+
+        return back()->with('success', $message);
+    }
+
+    // ── Auto-create invoice when a quotation becomes accepted ─────
+    private function autoCreateInvoice(Quotation $quotation): ?Invoice
+    {
+        if ($quotation->status !== 'accepted' || $quotation->invoice) {
+            return null;
+        }
+
+        return Invoice::create([
+            'tenant_id'    => $quotation->tenant_id,
+            'contact_id'   => $quotation->contact_id,
+            'quotation_id' => $quotation->id,
+            'number'       => Invoice::generateNumber(),
+            'date'         => now()->toDateString(),
+            'due_date'     => now()->addDays(30)->toDateString(),
+            'items'        => $quotation->items,
+            'subtotal'     => $quotation->subtotal,
+            'discount'     => $quotation->discount,
+            'tax_percent'  => $quotation->tax_percent,
+            'tax_amount'   => $quotation->tax_amount,
+            'total'        => $quotation->total,
+            'notes'        => $quotation->notes,
+            'terms'        => $quotation->terms,
+            'status'       => 'draft',
+            'created_by'   => auth()->id(),
+        ]);
     }
 
     // ── Download PDF ──────────────────────────────────────────────
@@ -250,7 +289,7 @@ class QuotationController extends Controller
 
         if ($quotation->invoice) {
             return redirect()
-                ->route('invoices.show', $quotation->invoice->id)
+                ->route('tenant.invoices.show', $quotation->invoice->id)
                 ->with('info', 'Invoice already exists for this quotation.');
         }
 
@@ -258,24 +297,7 @@ class QuotationController extends Controller
             return back()->with('error', 'Only accepted quotations can be converted to invoice.');
         }
 
-        $invoice = Invoice::create([
-            'tenant_id'      => $quotation->tenant_id,
-            'contact_id'     => $quotation->contact_id,
-            'quotation_id'   => $quotation->id,
-            'number'         => Invoice::generateNumber(),
-            'date'           => now()->toDateString(),
-            'due_date'       => now()->addDays(30)->toDateString(),
-            'items'          => $quotation->items,
-            'subtotal'       => $quotation->subtotal,
-            'discount'       => $quotation->discount,
-            'tax_percent'    => $quotation->tax_percent,
-            'tax_amount'     => $quotation->tax_amount,
-            'total'          => $quotation->total,
-            'notes'          => $quotation->notes,
-            'terms'          => $quotation->terms,
-            'status'         => 'draft',
-            'created_by'     => auth()->id(),
-        ]);
+        $invoice = $this->autoCreateInvoice($quotation);
 
         return redirect()
             ->route('tenant.invoices.show', $invoice->id)
