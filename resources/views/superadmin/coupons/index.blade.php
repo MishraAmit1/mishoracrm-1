@@ -60,20 +60,20 @@
             <tbody>
                 @forelse($coupons as $coupon)
                 <tr>
-                    <td><span class="code-chip">{{ $coupon->code }}</span></td>
-                    <td>
+                    <td data-label="Code"><span class="code-chip">{{ $coupon->code }}</span></td>
+                    <td data-label="Name">
                         <div style="font-weight:600;color:var(--text-100)">{{ $coupon->name }}</div>
                         @if($coupon->description)
                             <div style="font-size:12px;color:var(--text-400)">{{ $coupon->description }}</div>
                         @endif
                     </td>
-                    <td>
+                    <td data-label="Discount">
                         <span class="badge badge-blue">{{ $coupon->discount_label }}</span>
                         @if($coupon->max_discount)
                             <div style="font-size:11px;color:var(--text-400);margin-top:2px">Max ₹{{ number_format($coupon->max_discount) }}</div>
                         @endif
                     </td>
-                    <td>
+                    <td data-label="Applicable To">
                         @if($coupon->applicable_to === 'all')
                             <span class="badge badge-green">All Users</span>
                         @else
@@ -89,7 +89,7 @@
                             @endif
                         @endif
                     </td>
-                    <td>
+                    <td data-label="Uses">
                         {{ $coupon->used_count }}
                         @if($coupon->max_uses)
                             <span style="color:var(--text-400)"> / {{ $coupon->max_uses }}</span>
@@ -97,7 +97,7 @@
                             <span style="color:var(--text-400)"> / ∞</span>
                         @endif
                     </td>
-                    <td>
+                    <td data-label="Expires">
                         @if($coupon->expires_at)
                             <span style="color: {{ $coupon->expires_at->isPast() ? '#ef4444' : 'var(--text-200)' }}">
                                 {{ $coupon->expires_at->format('d M Y') }}
@@ -106,7 +106,7 @@
                             <span style="color:var(--text-400)">Never</span>
                         @endif
                     </td>
-                    <td>
+                    <td data-label="Status">
                         <span class="badge {{ $coupon->is_active ? 'badge-green' : 'badge-red' }}">
                             {{ $coupon->is_active ? 'Active' : 'Inactive' }}
                         </span>

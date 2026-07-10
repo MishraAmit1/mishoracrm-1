@@ -39,18 +39,18 @@
             <tbody>
                 @foreach($templates as $tmpl)
                 <tr>
-                    <td>
+                    <td data-label="Title">
                         <div style="font-weight:600;color:var(--text-100);">{{ $tmpl->title }}</div>
                         <div style="font-size:12px;color:var(--text-300);margin-top:2px;">{{ Str::limit($tmpl->description, 65) }}</div>
                     </td>
-                    <td>
+                    <td data-label="Category">
                         <span style="font-size:12px;font-weight:600;padding:2px 8px;border-radius:20px;background:var(--accent-dim);color:var(--accent);">
                             {{ ucfirst($tmpl->category) }}
                         </span>
                     </td>
-                    <td style="font-size:13px;color:var(--text-300);">{{ $tmpl->suitable_for ?? '—' }}</td>
-                    <td style="font-size:13px;color:var(--text-300);">{{ $tmpl->sort_order }}</td>
-                    <td>
+                    <td style="font-size:13px;color:var(--text-300);" data-label="Suitable For">{{ $tmpl->suitable_for ?? '—' }}</td>
+                    <td style="font-size:13px;color:var(--text-300);" data-label="Order">{{ $tmpl->sort_order }}</td>
+                    <td data-label="Status">
                         @if($tmpl->is_active)
                             <span style="font-size:12px;font-weight:600;padding:2px 8px;border-radius:20px;background:var(--green-dim);color:var(--green);">Active</span>
                         @else

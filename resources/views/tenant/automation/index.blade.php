@@ -283,17 +283,17 @@
         <tbody>
             @foreach($myRequests as $req)
             <tr>
-                <td style="font-weight:600;">{{ $req->template?->title ?? 'Custom Request' }}</td>
-                <td>{{ $req->business_type }}</td>
-                <td style="font-size:12px;color:var(--text-300);">
+                <td style="font-weight:600;" data-label="Workflow">{{ $req->template?->title ?? 'Custom Request' }}</td>
+                <td data-label="Business Type">{{ $req->business_type }}</td>
+                <td style="font-size:12px;color:var(--text-300);" data-label="Contact">
                     {{ ucfirst($req->contact_preference) }}: {{ $req->contact_value }}
                 </td>
-                <td>
+                <td data-label="Status">
                     <span class="req-status {{ $req->status }}">
                         {{ ucfirst(str_replace('_', ' ', $req->status)) }}
                     </span>
                 </td>
-                <td style="font-size:12px;color:var(--text-300);">{{ $req->created_at->diffForHumans() }}</td>
+                <td style="font-size:12px;color:var(--text-300);" data-label="Submitted">{{ $req->created_at->diffForHumans() }}</td>
             </tr>
             @endforeach
         </tbody>

@@ -75,7 +75,7 @@
 
 /* ── Reset ──────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { height: 100%; -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
+html { height: 100%; -webkit-font-smoothing: antialiased; scroll-behavior: smooth; overscroll-behavior-y: none; }
 body {
   font-family: var(--font);
   background: var(--bg-base);
@@ -83,7 +83,10 @@ body {
   min-height: 100%;
   transition: background 0.3s var(--ease), color 0.3s var(--ease);
   overflow-x: hidden;
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
 }
+button, a, .btn, .sb-item, .drop-item, .vt-btn, .tb-btn { -webkit-tap-highlight-color: transparent; }
 
 /* ── Scrollbar ──────────────────────────────────────────────────── */
 ::-webkit-scrollbar       { width: 5px; height: 5px; }
@@ -925,6 +928,21 @@ select.form-control option { background: var(--bg-elevated); color: var(--text-1
   /* Common filter-bar / pagination widgets used across list pages */
   .filter-bar, .di-toolbar, .pag-wrap, .pagination-wrap { flex-wrap: wrap; }
   .pag-links, .pagination-links, .pag-btns { flex-wrap: wrap; justify-content: center; }
+
+  /* Notification bell dropdown has a fixed 360px width — wider than most
+     phone screens. Pin it under the topbar instead of anchoring to the
+     bell icon, so it never overflows off the left edge. */
+  #bellDropdown {
+    position: fixed !important;
+    top: calc(var(--topbar-h) + env(safe-area-inset-top) + 8px) !important;
+    right: 10px !important;
+    left: 10px !important;
+    width: auto !important;
+  }
+  #bellDropdown #bellList { max-height: calc(100vh - var(--topbar-h) - 140px); }
+
+  /* User/account dropdown menu — keep clear of the right edge */
+  .drop-menu { min-width: 220px; max-width: calc(100vw - 20px); }
 }
 
 @media (hover:none) {

@@ -52,6 +52,18 @@
 .empty-icon  { font-size:48px; margin-bottom:12px; }
 .empty-title { font-size:16px; font-weight:700; color:var(--text-100); margin-bottom:6px; }
 .empty-sub   { font-size:13.5px; color:var(--text-300); margin-bottom:24px; }
+
+/* Mobile: fixed-width columns (type/active/actions) no longer fit next to
+   the field name in one row — wrap them onto their own row instead. */
+@media(max-width:640px) {
+    .cf-header-row { display:none; }
+    .field-row { flex-wrap:wrap; row-gap:10px; padding:14px 16px; }
+    .field-row .drag-handle { order:0; }
+    .field-row .type-pill { order:1; width:auto; }
+    .field-row .field-info { order:3; flex:1 1 100%; }
+    .field-row .cf-toggle-col { order:2; width:auto !important; margin-left:auto; }
+    .field-row .cf-actions-col { order:4; width:auto !important; margin-left:42px; }
+}
 </style>
 @endpush
 
@@ -104,7 +116,7 @@
 <div style="background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--r-lg);overflow:hidden">
 
     {{-- Table header --}}
-    <div style="padding:12px 20px;background:var(--bg-elevated);border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;gap:14px">
+    <div class="cf-header-row" style="padding:12px 20px;background:var(--bg-elevated);border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;gap:14px">
         <div style="width:28px"></div>
         <div style="width:110px;font-size:11px;font-weight:700;color:var(--text-400);text-transform:uppercase;letter-spacing:.4px">Type</div>
         <div style="flex:1;font-size:11px;font-weight:700;color:var(--text-400);text-transform:uppercase;letter-spacing:.4px">Field</div>
@@ -171,7 +183,7 @@
             </div>
 
             {{-- Active toggle --}}
-            <div style="width:80px;display:flex;justify-content:center">
+            <div class="cf-toggle-col" style="width:80px;display:flex;justify-content:center">
                 <label class="sw">
                     <input type="checkbox"
                            {{ $field->is_active ? 'checked':'' }}
@@ -182,7 +194,7 @@
             </div>
 
             {{-- Actions --}}
-            <div style="width:100px;display:flex;gap:6px;align-items:center">
+            <div class="cf-actions-col" style="width:100px;display:flex;gap:6px;align-items:center">
                 <a href="{{ route('tenant.custom-fields.edit', [$module, $field->id]) }}"
                    class="btn btn-secondary btn-sm btn-icon" title="Edit">
                     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:14px;height:14px">

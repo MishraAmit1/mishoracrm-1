@@ -162,7 +162,7 @@
         Full Leaderboard
     </div>
     <div style="overflow-x:auto">
-        <table class="lb-table">
+        <table class="lb-table data-table">
             <thead>
                 <tr>
                     <th>Rank</th>
@@ -185,12 +185,12 @@
                     $rankColor = $i < 3 ? '#1a1a1a' : 'var(--text-300)';
                 @endphp
                 <tr>
-                    <td>
+                    <td data-label="Rank">
                         <span class="rank-badge" style="background:{{ $rankBg }};color:{{ $rankColor }}">
                             {{ $i < 3 ? ($rankEmojis[$i]) : ($i+1) }}
                         </span>
                     </td>
-                    <td>
+                    <td data-label="Staff">
                         <div style="display:flex;align-items:center;gap:10px">
                             <div style="width:30px;height:30px;border-radius:50%;background:{{ $avBg }};color:{{ $avTx }};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">
                                 {{ strtoupper(substr($user->name,0,1)) }}
@@ -201,17 +201,17 @@
                             </div>
                         </div>
                     </td>
-                    <td class="right" style="color:var(--accent)">{{ $s['leads_created'] }}</td>
-                    <td class="right" style="color:var(--green)">{{ $s['deals_won'] }}</td>
-                    <td class="right" style="color:var(--green)">₹{{ number_format($s['deal_value']/1000,0) }}K</td>
-                    <td class="right" style="color:var(--amber)">{{ $s['tasks_done'] }}</td>
-                    <td class="right" style="color:var(--purple)">{{ $s['followups_done'] }}</td>
-                    <td class="right">
+                    <td class="right" style="color:var(--accent)" data-label="Leads">{{ $s['leads_created'] }}</td>
+                    <td class="right" style="color:var(--green)" data-label="Deals Won">{{ $s['deals_won'] }}</td>
+                    <td class="right" style="color:var(--green)" data-label="Deal Value">₹{{ number_format($s['deal_value']/1000,0) }}K</td>
+                    <td class="right" style="color:var(--amber)" data-label="Tasks Done">{{ $s['tasks_done'] }}</td>
+                    <td class="right" style="color:var(--purple)" data-label="Follow-ups">{{ $s['followups_done'] }}</td>
+                    <td class="right" data-label="Conversion">
                         <span style="font-size:12px;font-weight:700;color:{{ $s['conversion_rate'] >= 50 ? 'var(--green)' : 'var(--amber)' }}">
                             {{ $s['conversion_rate'] }}%
                         </span>
                     </td>
-                    <td class="right">
+                    <td class="right" data-label="Score">
                         <span style="font-size:14px;font-weight:800;color:var(--accent);font-family:var(--mono)">
                             {{ $s['score'] }}
                         </span>

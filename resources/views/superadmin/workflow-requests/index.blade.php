@@ -62,26 +62,26 @@
             <tbody>
                 @foreach($requests as $req)
                 <tr>
-                    <td>
+                    <td data-label="Tenant">
                         <div style="font-weight:600;color:var(--text-100);font-size:13px;">
                             {{ $req->tenant?->name ?? '—' }}
                         </div>
                     </td>
-                    <td style="font-size:13px;color:var(--text-200);">{{ $req->user?->name ?? '—' }}</td>
-                    <td style="font-size:13px;color:var(--text-200);">{{ $req->template?->title ?? 'Custom' }}</td>
-                    <td style="font-size:13px;color:var(--text-200);">{{ $req->business_type }}</td>
-                    <td>
+                    <td style="font-size:13px;color:var(--text-200);" data-label="Requested By">{{ $req->user?->name ?? '—' }}</td>
+                    <td style="font-size:13px;color:var(--text-200);" data-label="Workflow">{{ $req->template?->title ?? 'Custom' }}</td>
+                    <td style="font-size:13px;color:var(--text-200);" data-label="Business Type">{{ $req->business_type }}</td>
+                    <td data-label="Contact">
                         <div style="font-size:12px;color:var(--text-300);">
                             {{ ucfirst($req->contact_preference) }}<br>
                             <span style="color:var(--text-200);">{{ $req->contact_value }}</span>
                         </div>
                     </td>
-                    <td>
+                    <td data-label="Status">
                         <span class="req-status {{ $req->status }}">
                             {{ ucfirst(str_replace('_', ' ', $req->status)) }}
                         </span>
                     </td>
-                    <td style="font-size:12px;color:var(--text-300);">{{ $req->created_at->format('d M Y') }}</td>
+                    <td style="font-size:12px;color:var(--text-300);" data-label="Date">{{ $req->created_at->format('d M Y') }}</td>
                     <td>
                         <a href="{{ route('superadmin.workflow-requests.show', $req) }}"
                            class="btn btn-secondary btn-sm">View</a>

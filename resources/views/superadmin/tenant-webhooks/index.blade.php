@@ -157,12 +157,12 @@
                     $eventPrefix = explode('.', $wh->event)[0];
                 @endphp
                 <tr id="wh-row-{{ $wh->id }}">
-                    <td>
+                    <td data-label="Event">
                         <span class="wh-event-badge {{ $eventPrefix }}">
                             {{ $events[$wh->event] ?? $wh->event }}
                         </span>
                     </td>
-                    <td>
+                    <td data-label="Webhook URL">
                         <div class="url-cell" id="url-text-{{ $wh->id }}" title="{{ $wh->webhook_url }}">
                             {{ $wh->webhook_url }}
                         </div>
@@ -176,13 +176,13 @@
                                 onclick="toggleEdit({{ $wh->id }})">Cancel</button>
                         </form>
                     </td>
-                    <td>
+                    <td data-label="Status">
                         <span class="wh-status {{ $wh->is_active ? 'active' : 'inactive' }}">
                             <span class="dot"></span>
                             {{ $wh->is_active ? 'Active' : 'Inactive' }}
                         </span>
                     </td>
-                    <td style="font-size:12px;color:var(--text-300);">
+                    <td style="font-size:12px;color:var(--text-300);" data-label="Added">
                         {{ $wh->created_at->format('d M Y') }}
                     </td>
                     <td>

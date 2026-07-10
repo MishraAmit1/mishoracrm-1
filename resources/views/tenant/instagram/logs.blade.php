@@ -59,7 +59,7 @@
         <div style="padding:60px;text-align:center;color:var(--text-300);">No logs found for the selected filters.</div>
     @else
     <div style="overflow-x:auto;">
-        <table class="log-table">
+        <table class="log-table data-table">
             <thead>
                 <tr>
                     <th>Event</th>
@@ -74,19 +74,19 @@
             <tbody>
                 @foreach($logs as $log)
                 <tr>
-                    <td><span class="ev-badge ev-{{ $log->event_type }}">{{ str_replace('_',' ',ucfirst($log->event_type)) }}</span></td>
-                    <td>
+                    <td data-label="Event"><span class="ev-badge ev-{{ $log->event_type }}">{{ str_replace('_',' ',ucfirst($log->event_type)) }}</span></td>
+                    <td data-label="User">
                         @if($log->instagram_username)
                             <span title="{{ $log->instagram_user_id }}">@{{ $log->instagram_username }}</span>
                         @else
                             <span style="color:var(--text-300);">{{ $log->instagram_user_id ?? '—' }}</span>
                         @endif
                     </td>
-                    <td class="msg-cell" title="{{ $log->incoming_text }}">{{ $log->incoming_text ?? '—' }}</td>
-                    <td class="msg-cell" title="{{ $log->outgoing_text }}">{{ $log->outgoing_text ?? '—' }}</td>
-                    <td><span class="st-{{ $log->status }}">{{ ucfirst($log->status) }}</span></td>
-                    <td class="msg-cell" style="color:var(--danger);" title="{{ $log->error_message }}">{{ $log->error_message ? Str::limit($log->error_message, 40) : '—' }}</td>
-                    <td style="white-space:nowrap;color:var(--text-300);font-size:12px;">{{ $log->created_at->format('d M H:i') }}</td>
+                    <td class="msg-cell" title="{{ $log->incoming_text }}" data-label="Incoming">{{ $log->incoming_text ?? '—' }}</td>
+                    <td class="msg-cell" title="{{ $log->outgoing_text }}" data-label="Outgoing">{{ $log->outgoing_text ?? '—' }}</td>
+                    <td data-label="Status"><span class="st-{{ $log->status }}">{{ ucfirst($log->status) }}</span></td>
+                    <td class="msg-cell" style="color:var(--danger);" title="{{ $log->error_message }}" data-label="Error">{{ $log->error_message ? Str::limit($log->error_message, 40) : '—' }}</td>
+                    <td style="white-space:nowrap;color:var(--text-300);font-size:12px;" data-label="Time">{{ $log->created_at->format('d M H:i') }}</td>
                 </tr>
                 @endforeach
             </tbody>

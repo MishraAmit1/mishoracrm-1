@@ -114,9 +114,9 @@
                     $users = $features['users'] ?? 0;
                 @endphp
                 <tr>
-                    <td style="color:var(--text-400);font-size:13px;font-weight:600">{{ $plan->sort_order }}</td>
+                    <td style="color:var(--text-400);font-size:13px;font-weight:600" data-label="#">{{ $plan->sort_order }}</td>
 
-                    <td class="plan-name-cell">
+                    <td class="plan-name-cell" data-label="Plan">
                         <div class="pname">{{ $plan->name }}</div>
                         <div class="pslug">{{ $plan->slug }}</div>
                         @if($plan->description)
@@ -124,7 +124,7 @@
                         @endif
                     </td>
 
-                    <td class="price-cell">
+                    <td class="price-cell" data-label="Monthly Price">
                         @if($plan->monthly_price == 0)
                             <div class="p-main">Free</div>
                         @else
@@ -142,7 +142,7 @@
                         @endif
                     </td>
 
-                    <td class="price-cell">
+                    <td class="price-cell" data-label="Yearly Price">
                         @if($plan->yearly_price == 0)
                             <div class="p-main">—</div>
                         @else
@@ -155,7 +155,7 @@
                         @endif
                     </td>
 
-                    <td>
+                    <td data-label="Features">
                         <div class="feat-list">
                             <span class="feat-tag on">
                                 {{ $leads == -1 ? '∞' : number_format($leads) }} Leads
@@ -171,13 +171,13 @@
                         </div>
                     </td>
 
-                    <td>
+                    <td data-label="Active Subs">
                         <span class="badge {{ $plan->active_subs_count > 0 ? 'badge-blue' : 'badge-gray' }}">
                             {{ $plan->active_subs_count }}
                         </span>
                     </td>
 
-                    <td>
+                    <td data-label="Status">
                         <span class="badge {{ $plan->is_active ? 'badge-green' : 'badge-red' }}">
                             {{ $plan->is_active ? 'Active' : 'Inactive' }}
                         </span>

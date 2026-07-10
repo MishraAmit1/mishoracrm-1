@@ -122,7 +122,7 @@
     </div>
     @else
     <div style="overflow-x:auto">
-        <table class="recent-table">
+        <table class="recent-table data-table">
             <thead>
                 <tr>
                     <th>To</th>
@@ -136,19 +136,19 @@
             <tbody>
                 @foreach($recentLogs as $log)
                 <tr>
-                    <td>
+                    <td data-label="To">
                         <div style="font-weight:600">{{ $log->to_name ?? $log->to_phone }}</div>
                         <div style="font-size:11.5px;color:var(--text-400);font-family:var(--mono)">{{ $log->to_phone }}</div>
                     </td>
-                    <td style="max-width:220px">
+                    <td style="max-width:220px" data-label="Message">
                         <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px;color:var(--text-200)">
                             {{ $log->message }}
                         </div>
                     </td>
-                    <td style="font-size:12px;color:var(--text-300)">{{ $log->template?->name ?? '—' }}</td>
-                    <td style="font-size:12.5px;color:var(--text-200)">{{ $log->sentBy?->name ?? '—' }}</td>
-                    <td style="font-size:11.5px;color:var(--text-400);font-family:var(--mono)">{{ $log->created_at->diffForHumans() }}</td>
-                    <td>
+                    <td style="font-size:12px;color:var(--text-300)" data-label="Template">{{ $log->template?->name ?? '—' }}</td>
+                    <td style="font-size:12.5px;color:var(--text-200)" data-label="Sent By">{{ $log->sentBy?->name ?? '—' }}</td>
+                    <td style="font-size:11.5px;color:var(--text-400);font-family:var(--mono)" data-label="Time">{{ $log->created_at->diffForHumans() }}</td>
+                    <td data-label="Status">
                         @php $sc = match($log->status) { 'sent'=>['green','Sent'], 'failed'=>['red','Failed'], 'pending'=>['amber','Pending'], default=>['text-300','—'] }; @endphp
                         <span style="background:var(--{{ $sc[0] }}-dim);color:var(--{{ $sc[0] }});font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px">
                             {{ $sc[1] }}

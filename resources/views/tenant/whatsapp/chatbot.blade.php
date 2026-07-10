@@ -106,16 +106,16 @@ input:checked + .toggle-slider:before { transform:translateX(16px); }
         @if($sessions->isNotEmpty())
         <div class="card" style="margin-top:20px;">
             <div class="card-header"><h3 class="card-title">Recent Conversations</h3></div>
-            <table class="sessions-table">
+            <table class="sessions-table data-table">
                 <thead>
                     <tr><th>Phone</th><th>Name</th><th>Last Message</th></tr>
                 </thead>
                 <tbody>
                     @foreach($sessions as $session)
                     <tr>
-                        <td>{{ $session->wa_id }}</td>
-                        <td>{{ $session->contact_name ?? '—' }}</td>
-                        <td style="color:var(--text-300);">{{ $session->last_message_at?->diffForHumans() ?? '—' }}</td>
+                        <td data-label="Phone">{{ $session->wa_id }}</td>
+                        <td data-label="Name">{{ $session->contact_name ?? '—' }}</td>
+                        <td style="color:var(--text-300);" data-label="Last Message">{{ $session->last_message_at?->diffForHumans() ?? '—' }}</td>
                     </tr>
                     @endforeach
                 </tbody>

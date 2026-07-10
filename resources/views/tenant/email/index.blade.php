@@ -1,6 +1,16 @@
 @extends('layouts.app')
 @section('title', 'Email')
 
+@push('styles')
+<style>
+.email-stats { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:20px; }
+@media(max-width:900px) { .email-stats { grid-template-columns:repeat(3,1fr); } }
+@media(max-width:500px) { .email-stats { grid-template-columns:repeat(2,1fr); } }
+.email-quick-actions { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:24px; }
+@media(max-width:700px) { .email-quick-actions { grid-template-columns:1fr; } }
+</style>
+@endpush
+
 @section('content')
 
 <div class="page-head">
@@ -17,7 +27,7 @@
 </div>
 
 {{-- Stats --}}
-<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px">
+<div class="email-stats">
     @php
         $statItems = [
             ['num' => $stats['total_sent'],  'lbl' => 'Total Sent',  'color' => 'var(--accent)'],
@@ -36,7 +46,7 @@
 </div>
 
 {{-- Quick actions --}}
-<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px">
+<div class="email-quick-actions">
     @php
         $actions = [
             ['href'=>route('tenant.email.send'),      'icon'=>'✉️', 'label'=>'Send Email',     'sub'=>'Single recipient pe bhejo',    'bg'=>'var(--accent-dim)',  'color'=>'var(--accent)'],
@@ -76,15 +86,15 @@
                 @foreach($recentLogs as $log)
                 @php $sc = match($log->status) { 'sent'=>['green','Sent'], 'failed'=>['red','Failed'], default=>['amber','Pending'] }; @endphp
                 <tr>
-                    <td>
+                    <td data-label="To">
                         <div style="font-weight:600">{{ $log->to_name ?? $log->to_email }}</div>
                         <div style="font-size:11.5px;color:var(--text-400)">{{ $log->to_email }}</div>
                     </td>
-                    <td style="font-size:13px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $log->subject }}</td>
-                    <td style="font-size:12px;color:var(--text-300)">{{ $log->template?->name ?? '—' }}</td>
-                    <td style="font-size:12.5px;color:var(--text-200)">{{ $log->sentBy?->name ?? '—' }}</td>
-                    <td style="font-size:11.5px;color:var(--text-400);font-family:var(--mono)">{{ $log->created_at->diffForHumans() }}</td>
-                    <td>
+                    <td style="font-size:13px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" data-label="Subject">{{ $log->subject }}</td>
+                    <td style="font-size:12px;color:var(--text-300)" data-label="Template">{{ $log->template?->name ?? '—' }}</td>
+                    <td style="font-size:12.5px;color:var(--text-200)" data-label="Sent By">{{ $log->sentBy?->name ?? '—' }}</td>
+                    <td style="font-size:11.5px;color:var(--text-400);font-family:var(--mono)" data-label="Time">{{ $log->created_at->diffForHumans() }}</td>
+                    <td data-label="Status">
                         <span style="background:var(--{{ $sc[0] }}-dim);color:var(--{{ $sc[0] }});font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px">{{ $sc[1] }}</span>
                     </td>
                 </tr>

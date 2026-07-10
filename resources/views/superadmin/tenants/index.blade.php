@@ -129,12 +129,12 @@
                     $fillClass  = $pct >= 100 ? 'full' : ($pct >= 80 ? 'warn' : '');
                 @endphp
                 <tr>
-                    <td>
+                    <td data-label="Company">
                         <div class="td-name">{{ $tenant->name }}</div>
                         <div style="font-size:11.5px;color:var(--text-400)">{{ $tenant->email }}</div>
                     </td>
-                    <td class="td-mono" style="font-size:12px;">{{ $tenant->subdomain }}</td>
-                    <td>
+                    <td class="td-mono" style="font-size:12px;" data-label="Subdomain">{{ $tenant->subdomain }}</td>
+                    <td data-label="Plan">
                         @if($plan)
                             <div style="font-size:12.5px;font-weight:600;color:var(--text-100)">{{ $plan->name }}</div>
                             @if($sub)
@@ -144,7 +144,7 @@
                             <span style="font-size:12px;color:var(--text-400)">No plan</span>
                         @endif
                     </td>
-                    <td style="min-width:110px;">
+                    <td style="min-width:110px;" data-label="Users">
                         <div class="quota-text">
                             {{ $userCount }}{{ $maxUsers > 0 ? ' / '.$maxUsers : '' }}
                         </div>
@@ -154,7 +154,7 @@
                             </div>
                         @endif
                     </td>
-                    <td class="td-mono" style="font-size:11.5px;">
+                    <td class="td-mono" style="font-size:11.5px;" data-label="Last Login">
                         @if($lastLogin)
                             <div style="color:var(--text-200)">{{ $lastLogin->format('d M Y') }}</div>
                             <div style="color:var(--text-400)">{{ $lastLogin->diffForHumans() }}</div>
@@ -162,7 +162,7 @@
                             <span style="color:var(--text-400)">Never</span>
                         @endif
                     </td>
-                    <td>
+                    <td data-label="Status">
                         <form method="POST" action="{{ route('superadmin.tenants.toggle-status', $tenant) }}" onchange="this.submit()">
                             @csrf
                             <select name="status" class="status-select">
@@ -172,7 +172,7 @@
                             </select>
                         </form>
                     </td>
-                    <td class="td-mono" style="font-size:11.5px;color:var(--text-400)">
+                    <td class="td-mono" style="font-size:11.5px;color:var(--text-400)" data-label="Joined">
                         {{ $tenant->created_at->format('d M Y') }}
                     </td>
                     <td>

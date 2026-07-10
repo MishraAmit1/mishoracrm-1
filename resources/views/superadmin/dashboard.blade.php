@@ -296,18 +296,18 @@
                 <tbody>
                     @foreach($recentTenants as $tenant)
                     <tr>
-                        <td>
+                        <td data-label="Company">
                             <div class="td-name">{{ $tenant['name'] }}</div>
                             <div style="font-size:11.5px;color:var(--text-400)">{{ $tenant['email'] }}</div>
                         </td>
-                        <td class="td-mono" style="font-size:12px">{{ $tenant['subdomain'] }}.crmPro.in</td>
-                        <td style="font-size:12.5px;color:var(--text-200)">{{ $tenant['plan'] }}</td>
-                        <td>
+                        <td class="td-mono" style="font-size:12px" data-label="Subdomain">{{ $tenant['subdomain'] }}.crmPro.in</td>
+                        <td style="font-size:12.5px;color:var(--text-200)" data-label="Plan">{{ $tenant['plan'] }}</td>
+                        <td data-label="Status">
                             <span class="t-status t-{{ $tenant['status'] }}">
                                 {{ ucfirst($tenant['status']) }}
                             </span>
                         </td>
-                        <td class="td-mono" style="font-size:11.5px;color:var(--text-400)">{{ $tenant['joined_ago'] }}</td>
+                        <td class="td-mono" style="font-size:11.5px;color:var(--text-400)" data-label="Joined">{{ $tenant['joined_ago'] }}</td>
                         <td>
                             <a href="{{ route('superadmin.tenants.show', $tenant['id']) }}"
                             class="btn btn-secondary btn-sm btn-icon">

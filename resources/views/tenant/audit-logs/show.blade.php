@@ -109,7 +109,7 @@
         <div style="padding:14px 16px;border-bottom:1px solid var(--border-subtle)">
             <h3 style="font-size:14px;font-weight:700;margin:0">Changed Fields</h3>
         </div>
-        <table class="changes-table">
+        <table class="changes-table data-table">
             <thead>
                 <tr>
                     <th style="width:180px">Field</th>
@@ -120,15 +120,15 @@
             <tbody>
                 @foreach($log->changed_fields as $change)
                     <tr>
-                        <td><span class="field-name">{{ $change['field'] }}</span></td>
-                        <td>
+                        <td data-label="Field"><span class="field-name">{{ $change['field'] }}</span></td>
+                        <td data-label="Old Value">
                             @if($change['old'] !== null)
                                 <span class="old-val">{{ is_array($change['old']) ? json_encode($change['old']) : $change['old'] }}</span>
                             @else
                                 <span style="color:var(--text-400)">null</span>
                             @endif
                         </td>
-                        <td>
+                        <td data-label="New Value">
                             @if($change['new'] !== null)
                                 <span class="new-val">{{ is_array($change['new']) ? json_encode($change['new']) : $change['new'] }}</span>
                             @else

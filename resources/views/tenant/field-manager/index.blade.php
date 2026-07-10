@@ -90,6 +90,11 @@
 .qa-icon { font-size:20px; flex-shrink:0; }
 .qa-label { font-size:13.5px; font-weight:700; color:var(--text-100); }
 .qa-sub   { font-size:12px; color:var(--text-300); margin-top:1px; }
+
+/* How it works steps */
+.how-it-works-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+@media(max-width:900px) { .how-it-works-grid { grid-template-columns:repeat(2,1fr); } }
+@media(max-width:480px) { .how-it-works-grid { grid-template-columns:1fr; } }
 </style>
 @endpush
 
@@ -258,7 +263,7 @@
     <div style="font-size:14px;font-weight:700;color:var(--text-100);margin-bottom:14px">
         💡 Kaise kaam karta hai?
     </div>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+    <div class="how-it-works-grid">
         @foreach([
             ['num'=>'1','title'=>'Module Choose Karo','desc'=>'Upar kisi bhi module pe click karo jisme fields add karne hain'],
             ['num'=>'2','title'=>'Fields Add Karo','desc'=>'Global templates mein se choose karo ya apna custom field banao'],

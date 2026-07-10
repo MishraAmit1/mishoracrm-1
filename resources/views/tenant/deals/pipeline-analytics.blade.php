@@ -592,7 +592,7 @@ $wlMax = $winLossData->max(fn($r) => max($r['won'], $r['lost'])) ?: 1;
             </div>
         </div>
         <div style="overflow:auto">
-            <table style="width:100%;border-collapse:collapse">
+            <table class="data-table" style="width:100%;border-collapse:collapse">
                 <thead>
                     <tr style="background:var(--bg-elevated)">
                         <th style="padding:9px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--text-300);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border-subtle)">Stage</th>
@@ -604,16 +604,16 @@ $wlMax = $winLossData->max(fn($r) => max($r['won'], $r['lost'])) ?: 1;
                     @foreach($cfgStages as $slug => $stage)
                     @php $row=$stageData->get($slug); $cnt=$row?->count??0; $tot=$row?->total??0; @endphp
                     <tr style="{{ !$loop->last?'border-bottom:1px solid var(--border-subtle)':'' }}">
-                        <td style="padding:10px 16px">
+                        <td style="padding:10px 16px" data-label="Stage">
                             <span class="s-badge"
                                   style="background:{{ $stage['bg'] }};color:{{ $stage['text_color'] }};border:1px solid {{ $stage['color'] }}30">
                                 {{ $stage['label'] }}
                             </span>
                         </td>
-                        <td style="padding:10px 14px;text-align:right;font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--text-100)">
+                        <td style="padding:10px 14px;text-align:right;font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--text-100)" data-label="Deals">
                             {{ $cnt }}
                         </td>
-                        <td style="padding:10px 16px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--text-300)">
+                        <td style="padding:10px 16px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--text-300)" data-label="Value">
                             ₹{{ number_format($tot/1000,0) }}K
                         </td>
                     </tr>
@@ -621,11 +621,11 @@ $wlMax = $winLossData->max(fn($r) => max($r['won'], $r['lost'])) ?: 1;
                 </tbody>
                 <tfoot>
                     <tr style="background:var(--bg-elevated);border-top:2px solid var(--border-default)">
-                        <td style="padding:10px 16px;font-size:12px;font-weight:600;color:var(--text-200)">Total</td>
-                        <td style="padding:10px 14px;text-align:right;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:var(--text-100)">
+                        <td style="padding:10px 16px;font-size:12px;font-weight:600;color:var(--text-200)" data-label="Stage">Total</td>
+                        <td style="padding:10px 14px;text-align:right;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:var(--text-100)" data-label="Deals">
                             {{ $stageData->sum('count') }}
                         </td>
-                        <td style="padding:10px 16px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--text-100)">
+                        <td style="padding:10px 16px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--text-100)" data-label="Value">
                             ₹{{ number_format($stageData->sum('total')/100000,1) }}L
                         </td>
                     </tr>

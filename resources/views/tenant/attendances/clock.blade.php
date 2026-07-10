@@ -76,7 +76,7 @@
                     @foreach($staffList as $staff)
                         @php $att = $today[$staff->id] ?? null; @endphp
                         <tr>
-                            <td>
+                            <td data-label="Staff">
                                 <div style="display:flex;align-items:center;gap:10px">
                                     <div style="width:36px;height:36px;border-radius:50%;
                                                 background:var(--accent-dim);color:var(--accent);
@@ -97,18 +97,18 @@
                                 </div>
                             </td>
 
-                            <td class="td-mono" style="font-size:13px">
+                            <td class="td-mono" style="font-size:13px" data-label="Clock In">
                                 {{ $att?->clock_in?->format('h:i A') ?? '—' }}
                             </td>
-                            <td class="td-mono" style="font-size:13px">
+                            <td class="td-mono" style="font-size:13px" data-label="Clock Out">
                                 {{ $att?->clock_out?->format('h:i A') ?? '—' }}
                             </td>
-                            <td class="td-mono" style="font-size:13px;color:var(--text-200)">
+                            <td class="td-mono" style="font-size:13px;color:var(--text-200)" data-label="Worked">
                                 {{ $att?->worked_hours ?? '—' }}
                             </td>
 
                             {{-- Screenshots count --}}
-                            <td>
+                            <td data-label="Screenshots">
                                 @if($att && $att->screenshots_count > 0)
                                     <a href="{{ route('tenant.screenshots.show', $att->id) }}" style="font-size:12.5px;color:var(--accent);text-decoration:none;
                                               display:flex;align-items:center;gap:4px">
@@ -120,7 +120,7 @@
                                 @endif
                             </td>
 
-                            <td>
+                            <td data-label="Status">
                                 @if($att)
                                     <span class="status-badge badge-{{ $att->status_color }}">
                                         {{ $att->status_label }}
@@ -130,7 +130,7 @@
                                 @endif
                             </td>
 
-                            <td style="text-align:center">
+                            <td style="text-align:center" data-label="Action">
                                 @if($staff->id !== $currentStaffId)
                                     <span style="font-size:12px;color:var(--text-400)">Not your account</span>
 

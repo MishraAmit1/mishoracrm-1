@@ -276,7 +276,7 @@
                 </div>
                 @if(count($myRecentLeads))
                 <div style="overflow-x:auto">
-                    <table class="sd-table">
+                    <table class="sd-table data-table">
                         <thead>
                             <tr>
                                 <th>Name</th>
@@ -290,15 +290,15 @@
                         <tbody>
                             @foreach($myRecentLeads as $lead)
                             <tr>
-                                <td class="sd-td-name">{{ $lead['name'] }}</td>
-                                <td class="sd-td-mono">{{ $lead['phone'] }}</td>
-                                <td style="font-size:12px;color:var(--text-300)">{{ ucwords(str_replace('_',' ',$lead['source'])) }}</td>
-                                <td>
+                                <td class="sd-td-name" data-label="Name">{{ $lead['name'] }}</td>
+                                <td class="sd-td-mono" data-label="Phone">{{ $lead['phone'] }}</td>
+                                <td style="font-size:12px;color:var(--text-300)" data-label="Source">{{ ucwords(str_replace('_',' ',$lead['source'])) }}</td>
+                                <td data-label="Status">
                                     <span class="sd-badge sd-badge-{{ $lead['status'] }}">
                                         {{ ucfirst($lead['status']) }}
                                     </span>
                                 </td>
-                                <td class="sd-td-mono" style="font-size:11.5px;color:var(--text-400)">{{ $lead['time'] }}</td>
+                                <td class="sd-td-mono" style="font-size:11.5px;color:var(--text-400)" data-label="Added">{{ $lead['time'] }}</td>
                                 <td>
                                     <a href="{{ route('tenant.leads.show', $lead['id']) }}"
                                        style="font-size:12px;color:var(--accent);text-decoration:none">View →</a>

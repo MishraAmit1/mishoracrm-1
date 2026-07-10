@@ -18,6 +18,7 @@
 .ls-sidebar { display: flex; flex-direction: column; gap: 14px; }
 
 @media (max-width: 900px) { .ls-layout { grid-template-columns: 1fr; } }
+@media (max-width: 480px) { .ls-stats { grid-template-columns: repeat(2, 1fr); row-gap: 14px; } }
 
 /* ── Cards ── */
 .ls-card {

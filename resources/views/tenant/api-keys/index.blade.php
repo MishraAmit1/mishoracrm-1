@@ -93,6 +93,12 @@
 .copy-btn:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-dim); }
 .copy-btn svg { width:13px; height:13px; }
 
+@media(max-width:640px) {
+    .keys-table td[data-label="API Key"] { flex-direction:column; align-items:flex-start !important; }
+    .key-box { width:100%; }
+    .key-value { max-width:none; flex:1; min-width:0; }
+}
+
 /* ── Status badge ────────────────────────────────────────────────── */
 .badge {
     display:inline-flex; align-items:center; gap:5px;
@@ -275,7 +281,7 @@
             No API keys yet. Generate one above to get started.
         </div>
         @else
-        <table class="keys-table">
+        <table class="keys-table data-table">
             <thead>
                 <tr>
                     <th>Label</th>
@@ -289,8 +295,8 @@
             <tbody>
                 @foreach($apiKeys as $key)
                 <tr>
-                    <td style="font-weight:600;color:var(--text-100);">{{ $key->name }}</td>
-                    <td>
+                    <td style="font-weight:600;color:var(--text-100);" data-label="Label">{{ $key->name }}</td>
+                    <td data-label="API Key">
                         <div class="key-box">
                             <span class="key-value" id="key-{{ $key->id }}" title="{{ $key->key }}">
                                 {{ substr($key->key, 0, 18) }}••••••••••••••••
@@ -303,7 +309,7 @@
                             </button>
                         </div>
                     </td>
-                    <td>
+                    <td data-label="Status">
                         @if($key->is_active)
                             <span class="badge badge-active">
                                 <span class="badge-dot"></span> Active
@@ -314,10 +320,10 @@
                             </span>
                         @endif
                     </td>
-                    <td style="color:var(--text-300);font-size:13px;">
+                    <td style="color:var(--text-300);font-size:13px;" data-label="Last Used">
                         {{ $key->last_used_at ? $key->last_used_at->diffForHumans() : '—' }}
                     </td>
-                    <td style="color:var(--text-300);font-size:13px;">
+                    <td style="color:var(--text-300);font-size:13px;" data-label="Created">
                         {{ $key->created_at->format('d M Y') }}
                         @if($key->creator)
                             <div style="font-size:12px;margin-top:1px;">by {{ $key->creator->name }}</div>

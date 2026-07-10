@@ -113,13 +113,13 @@
             <tbody>
                 @forelse($logs as $log)
                     <tr onclick="window.location='{{ route('tenant.audit-logs.show', $log->id) }}'">
-                        <td>
+                        <td data-label="Action">
                             <span class="a-badge {{ $log->action }}">
                                 <i data-feather="{{ $log->action_icon }}" style="width:11px;height:11px"></i>
                                 {{ $log->action }}
                             </span>
                         </td>
-                        <td>
+                        <td data-label="Module">
                             @if($log->model_type)
                                 <span class="model-chip">{{ $log->model_short_name }}</span>
                                 @if($log->model_id)
@@ -129,12 +129,12 @@
                                 <span style="color:var(--text-400)">—</span>
                             @endif
                         </td>
-                        <td style="max-width:320px">
+                        <td style="max-width:320px" data-label="Description">
                             <span style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
                                 {{ $log->description ?? '—' }}
                             </span>
                         </td>
-                        <td>
+                        <td data-label="User">
                             @if($log->user)
                                 <div style="display:flex;align-items:center;gap:7px">
                                     <span class="user-av">{{ strtoupper(substr($log->user->name, 0, 2)) }}</span>
@@ -144,10 +144,10 @@
                                 <span style="color:var(--text-400)">System</span>
                             @endif
                         </td>
-                        <td style="font-family:var(--mono);font-size:12px;color:var(--text-300)">
+                        <td style="font-family:var(--mono);font-size:12px;color:var(--text-300)" data-label="IP">
                             {{ $log->ip_address ?? '—' }}
                         </td>
-                        <td style="white-space:nowrap;color:var(--text-300);font-size:12.5px">
+                        <td style="white-space:nowrap;color:var(--text-300);font-size:12.5px" data-label="When">
                             {{ $log->created_at->diffForHumans() }}
                             <div style="font-size:11px;color:var(--text-400)">{{ $log->created_at->format('d M Y, H:i') }}</div>
                         </td>

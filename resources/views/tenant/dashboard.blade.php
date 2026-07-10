@@ -395,12 +395,12 @@
                         @endphp
                         @foreach($recentLeads as $lead)
                             <tr>
-                                <td class="td-name">{{ $lead['name'] }}</td>
-                                <td class="td-mono">{{ $lead['phone'] }}</td>
-                                <td style="font-size:12px;color:var(--text-300)">{{ $lead['source'] }}</td>
-                                <td><span class="badge badge-{{ $lead['status'] }}">{{ ucfirst($lead['status']) }}</span></td>
-                                <td style="font-size:12.5px;color:var(--text-300)">{{ $lead['assigned'] }}</td>
-                                <td class="td-mono" style="font-size:11.5px;color:var(--text-400)">{{ $lead['time'] }}</td>
+                                <td class="td-name" data-label="Name">{{ $lead['name'] }}</td>
+                                <td class="td-mono" data-label="Phone">{{ $lead['phone'] }}</td>
+                                <td style="font-size:12px;color:var(--text-300)" data-label="Source">{{ $lead['source'] }}</td>
+                                <td data-label="Status"><span class="badge badge-{{ $lead['status'] }}">{{ ucfirst($lead['status']) }}</span></td>
+                                <td style="font-size:12.5px;color:var(--text-300)" data-label="Assigned">{{ $lead['assigned'] }}</td>
+                                <td class="td-mono" style="font-size:11.5px;color:var(--text-400)" data-label="Added">{{ $lead['time'] }}</td>
                             </tr>
                         @endforeach
                     </tbody>

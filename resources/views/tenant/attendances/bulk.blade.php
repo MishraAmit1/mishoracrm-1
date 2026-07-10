@@ -61,7 +61,7 @@
                     @foreach($staffList as $staff)
                     @php $att = $existing[$staff->id] ?? null; @endphp
                     <tr>
-                        <td>
+                        <td data-label="Staff">
                             <div style="display:flex;align-items:center;gap:10px">
                                 <div style="width:32px;height:32px;border-radius:50%;
                                             background:var(--accent-dim);color:var(--accent);
@@ -79,7 +79,7 @@
                                 </div>
                             </div>
                         </td>
-                        <td>
+                        <td data-label="Status">
                             <select name="attendances[{{ $staff->id }}][status]"
                                     class="filter-input status-select"
                                     style="width:100%;height:34px;font-size:12.5px"
@@ -92,21 +92,21 @@
                                 @endforeach
                             </select>
                         </td>
-                        <td>
+                        <td data-label="Clock In">
                             <input type="time"
                                    name="attendances[{{ $staff->id }}][clock_in]"
                                    class="filter-input"
                                    style="width:100%;height:34px;font-size:12.5px"
                                    value="{{ $att?->clock_in?->format('H:i') ?? '' }}">
                         </td>
-                        <td>
+                        <td data-label="Clock Out">
                             <input type="time"
                                    name="attendances[{{ $staff->id }}][clock_out]"
                                    class="filter-input"
                                    style="width:100%;height:34px;font-size:12.5px"
                                    value="{{ $att?->clock_out?->format('H:i') ?? '' }}">
                         </td>
-                        <td>
+                        <td data-label="Notes">
                             <input type="text"
                                    name="attendances[{{ $staff->id }}][notes]"
                                    class="filter-input"

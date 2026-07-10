@@ -267,19 +267,19 @@
                     <tbody>
                         @forelse($users as $user)
                         <tr>
-                            <td>
+                            <td data-label="Name">
                                 <div class="td-name">{{ $user->name }}</div>
                                 <div style="font-size:11.5px;color:var(--text-400)">{{ $user->email }}</div>
                             </td>
-                            <td>
+                            <td data-label="Type">
                                 <span class="user-type-badge {{ $user->user_type === 'tenant_admin' ? 'ut-admin' : 'ut-staff' }}">
                                     {{ $user->user_type === 'tenant_admin' ? 'Admin' : 'Staff' }}
                                 </span>
                             </td>
-                            <td style="font-size:12px;color:var(--text-300)">
+                            <td style="font-size:12px;color:var(--text-300)" data-label="Role">
                                 {{ $user->roles->pluck('name')->implode(', ') ?: '—' }}
                             </td>
-                            <td class="td-mono" style="font-size:11.5px;">
+                            <td class="td-mono" style="font-size:11.5px;" data-label="Last Login">
                                 @if($user->last_login_at)
                                     <div style="color:var(--text-200)">{{ $user->last_login_at->format('d M Y') }}</div>
                                     <div style="color:var(--text-400)">{{ $user->last_login_at->diffForHumans() }}</div>
@@ -287,7 +287,7 @@
                                     <span style="color:var(--text-400)">Never</span>
                                 @endif
                             </td>
-                            <td>
+                            <td data-label="Status">
                                 @if($user->is_active)
                                     <span class="t-status t-active">Active</span>
                                 @else

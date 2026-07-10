@@ -198,7 +198,7 @@
         <a href="{{ route('tenant.deals.index') }}" class="btn btn-secondary btn-sm">View All →</a>
     </div>
     <div style="overflow-x:auto">
-        <table style="width:100%;border-collapse:collapse">
+        <table class="data-table" style="width:100%;border-collapse:collapse">
             <thead>
                 <tr style="background:var(--bg-elevated)">
                     <th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--text-400);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border-subtle)">#</th>
@@ -213,27 +213,27 @@
                 @forelse($topDeals as $i => $deal)
                 @php $sc = $stagesCfg[$deal->stage] ?? []; @endphp
                 <tr>
-                    <td style="padding:12px 16px;border-bottom:1px solid var(--border-subtle)">
+                    <td style="padding:12px 16px;border-bottom:1px solid var(--border-subtle)" data-label="#">
                         <span style="width:22px;height:22px;border-radius:50%;background:var(--bg-elevated);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--text-300)">{{ $i+1 }}</span>
                     </td>
-                    <td style="padding:12px 16px;border-bottom:1px solid var(--border-subtle)">
+                    <td style="padding:12px 16px;border-bottom:1px solid var(--border-subtle)" data-label="Deal">
                         <a href="{{ route('tenant.deals.show', $deal->id) }}"
                            style="font-weight:600;color:var(--text-100);text-decoration:none;font-size:13.5px">
                             {{ $deal->title }}
                         </a>
                     </td>
-                    <td style="padding:12px 16px;border-bottom:1px solid var(--border-subtle);font-size:13px;color:var(--text-200)">
+                    <td style="padding:12px 16px;border-bottom:1px solid var(--border-subtle);font-size:13px;color:var(--text-200)" data-label="Contact">
                         {{ $deal->contact?->name ?? '—' }}
                     </td>
-                    <td style="padding:12px 16px;border-bottom:1px solid var(--border-subtle)">
+                    <td style="padding:12px 16px;border-bottom:1px solid var(--border-subtle)" data-label="Stage">
                         <span class="badge" style="background:var(--{{ $sc['bg'] ?? 'accent-dim' }});color:var(--{{ $sc['color'] ?? 'accent' }})">
                             {{ $sc['label'] ?? ucfirst($deal->stage) }}
                         </span>
                     </td>
-                    <td style="padding:12px 16px;border-bottom:1px solid var(--border-subtle);text-align:right;font-family:var(--mono);font-size:14px;font-weight:700;color:var(--accent)">
+                    <td style="padding:12px 16px;border-bottom:1px solid var(--border-subtle);text-align:right;font-family:var(--mono);font-size:14px;font-weight:700;color:var(--accent)" data-label="Value">
                         ₹{{ number_format($deal->value) }}
                     </td>
-                    <td style="padding:12px 16px;border-bottom:1px solid var(--border-subtle);font-size:13px;color:var(--text-200)">
+                    <td style="padding:12px 16px;border-bottom:1px solid var(--border-subtle);font-size:13px;color:var(--text-200)" data-label="Assigned">
                         {{ $deal->assignedTo?->name ?? '—' }}
                     </td>
                 </tr>

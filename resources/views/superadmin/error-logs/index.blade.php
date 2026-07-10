@@ -133,7 +133,7 @@
                         @endphp
                         <span class="http-badge {{ $statusClass }}">{{ $error->http_status ?? '?' }}</span>
                     </td>
-                    <td style="max-width:340px;">
+                    <td style="max-width:340px;" data-label="Error">
                         <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
                             <span class="resolved-dot {{ $error->is_resolved ? 'dot-resolved' : 'dot-open' }}"
                                   title="{{ $error->is_resolved ? 'Resolved' : 'Open' }}"></span>
@@ -143,7 +143,7 @@
                         </div>
                         <div class="exc-class">{{ $error->short_class }}</div>
                     </td>
-                    <td>
+                    <td data-label="Tenant / User">
                         @if($error->tenant)
                             <div style="font-size:12.5px;font-weight:600;color:var(--text-100)">{{ $error->tenant->name }}</div>
                         @else
@@ -153,13 +153,13 @@
                             <div style="font-size:11.5px;color:var(--text-300)">{{ $error->user->name }}</div>
                         @endif
                     </td>
-                    <td style="max-width:200px;">
+                    <td style="max-width:200px;" data-label="URL">
                         <div style="font-size:11.5px;color:var(--text-300);font-family:var(--mono);word-break:break-all;">
                             <span style="font-weight:600;color:var(--accent);">{{ $error->method }}</span>
                             {{ Str::limit(parse_url($error->url ?? '', PHP_URL_PATH) ?? '', 60) }}
                         </div>
                     </td>
-                    <td style="white-space:nowrap;font-size:12px;color:var(--text-300);">
+                    <td style="white-space:nowrap;font-size:12px;color:var(--text-300);" data-label="Time">
                         {{ $error->created_at->diffForHumans() }}
                     </td>
                     <td>

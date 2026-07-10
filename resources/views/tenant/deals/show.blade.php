@@ -18,6 +18,7 @@
 .ds-main    { display: flex; flex-direction: column; gap: 14px; }
 .ds-sidebar { display: flex; flex-direction: column; gap: 14px; }
 @media (max-width: 900px) { .ds-layout { grid-template-columns: 1fr; } }
+@media (max-width: 480px) { .ds-stats { grid-template-columns: repeat(2, 1fr); row-gap: 14px; } }
 
 /* ── Card ── */
 .ds-card {

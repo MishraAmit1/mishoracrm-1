@@ -149,7 +149,7 @@
         </div>
     @else
     <div style="overflow-x:auto;">
-        <table class="log-table">
+        <table class="log-table data-table">
             <thead>
                 <tr>
                     <th>Event</th>
@@ -163,12 +163,12 @@
             <tbody>
                 @foreach($recentLogs as $log)
                 <tr>
-                    <td><span class="ev-badge ev-{{ $log->event_type }}">{{ str_replace('_',' ',ucfirst($log->event_type)) }}</span></td>
-                    <td>{{ $log->instagram_username ?? $log->instagram_user_id ?? '—' }}</td>
-                    <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ $log->incoming_text ?? '—' }}</td>
-                    <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ $log->outgoing_text ?? '—' }}</td>
-                    <td><span class="st-{{ $log->status }}">{{ ucfirst($log->status) }}</span></td>
-                    <td style="white-space:nowrap;color:var(--text-300);font-size:12px;">{{ $log->created_at->diffForHumans() }}</td>
+                    <td data-label="Event"><span class="ev-badge ev-{{ $log->event_type }}">{{ str_replace('_',' ',ucfirst($log->event_type)) }}</span></td>
+                    <td data-label="User">{{ $log->instagram_username ?? $log->instagram_user_id ?? '—' }}</td>
+                    <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" data-label="Incoming">{{ $log->incoming_text ?? '—' }}</td>
+                    <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" data-label="Outgoing">{{ $log->outgoing_text ?? '—' }}</td>
+                    <td data-label="Status"><span class="st-{{ $log->status }}">{{ ucfirst($log->status) }}</span></td>
+                    <td style="white-space:nowrap;color:var(--text-300);font-size:12px;" data-label="Time">{{ $log->created_at->diffForHumans() }}</td>
                 </tr>
                 @endforeach
             </tbody>

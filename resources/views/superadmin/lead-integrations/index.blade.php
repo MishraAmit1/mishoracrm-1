@@ -31,7 +31,7 @@
 @endif
 
 <div class="card">
-    <table class="tenant-table">
+    <table class="tenant-table data-table">
         <thead>
             <tr>
                 <th>Tenant</th>
@@ -49,16 +49,16 @@
                 $allowed = $row['allowed'];
             @endphp
             <tr>
-                <td>
+                <td data-label="Tenant">
                     <div style="font-weight:600;color:var(--text-100)">{{ $tenant->name }}</div>
                     <div style="font-size:11.5px;color:var(--text-300)">{{ $tenant->subdomain }}.{{ config('app.base_domain', 'saas-crm.test') }}</div>
                 </td>
-                <td>
+                <td data-label="Plan">
                     <span style="font-size:12.5px;color:var(--text-200)">
                         {{ $tenant->subscription?->plan?->name ?? '—' }}
                     </span>
                 </td>
-                <td>
+                <td data-label="Enabled Integrations">
                     <div class="platform-chips">
                         @foreach(array_keys($platforms) as $key)
                         <span class="chip {{ ($allowed[$key] ?? false) ? 'chip-on' : 'chip-off' }}">
@@ -67,10 +67,10 @@
                         @endforeach
                     </div>
                 </td>
-                <td>
+                <td data-label="Leads Imported">
                     <span class="stat-badge">{{ number_format($row['total_leads']) }} leads</span>
                 </td>
-                <td>
+                <td data-label="Active">
                     <span class="stat-badge">{{ $row['active_count'] }} active</span>
                 </td>
                 <td>

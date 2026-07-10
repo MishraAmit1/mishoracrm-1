@@ -55,22 +55,22 @@
                 @foreach($logs as $log)
                 @php $sc = match($log->status) { 'sent'=>['green','Sent'], 'failed'=>['red','Failed'], default=>['amber','Pending'] }; @endphp
                 <tr>
-                    <td>
+                    <td data-label="To">
                         <div style="font-weight:600">{{ $log->to_name ?? $log->to_email }}</div>
                         <div style="font-size:11.5px;color:var(--text-400)">{{ $log->to_email }}</div>
                     </td>
-                    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px">
+                    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px" data-label="Subject">
                         {{ $log->subject }}
                     </td>
-                    <td style="font-size:12px;color:var(--text-300)">{{ $log->template?->name ?? '—' }}</td>
-                    <td>
+                    <td style="font-size:12px;color:var(--text-300)" data-label="Template">{{ $log->template?->name ?? '—' }}</td>
+                    <td data-label="Type">
                         <span style="font-size:11px;padding:2px 8px;border-radius:20px;{{ $log->is_bulk ? 'background:var(--purple-dim);color:var(--purple)':'background:var(--bg-elevated);color:var(--text-300)' }}">
                             {{ $log->is_bulk ? 'Bulk':'Single' }}
                         </span>
                     </td>
-                    <td style="font-size:12.5px;color:var(--text-200)">{{ $log->sentBy?->name ?? '—' }}</td>
-                    <td style="font-size:11.5px;color:var(--text-400);font-family:var(--mono)">{{ $log->created_at->diffForHumans() }}</td>
-                    <td>
+                    <td style="font-size:12.5px;color:var(--text-200)" data-label="Sent By">{{ $log->sentBy?->name ?? '—' }}</td>
+                    <td style="font-size:11.5px;color:var(--text-400);font-family:var(--mono)" data-label="Time">{{ $log->created_at->diffForHumans() }}</td>
+                    <td data-label="Status">
                         <span style="background:var(--{{ $sc[0] }}-dim);color:var(--{{ $sc[0] }});font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px">
                             {{ $sc[1] }}
                         </span>
