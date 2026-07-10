@@ -19,7 +19,7 @@ class NotificationService
         mixed  $notifiable = null
     ): ?Notification {
 
-        $typeConfig = config("notifications.types.{$type}");
+        $typeConfig = config('notifications.types')[$type] ?? null;
 
         if (!$typeConfig) {
             Log::warning("Unknown notification type: {$type}");

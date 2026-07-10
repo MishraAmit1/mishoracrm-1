@@ -85,10 +85,10 @@ class Notification extends Model
 
     public function getTypeConfigAttribute(): array
     {
-        return config("notifications.types.{$this->type}", [
+        return config('notifications.types')[$this->type] ?? [
             'label' => ucfirst($this->type),
             'color' => 'accent',
             'icon'  => 'bell',
-        ]);
+        ];
     }
 }

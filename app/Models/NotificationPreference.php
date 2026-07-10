@@ -65,7 +65,7 @@ class NotificationPreference extends Model
         }
 
         // Fallback to config default
-        $channels = config("notifications.types.{$type}.channels", ['in_app']);
+        $channels = config('notifications.types')[$type]['channels'] ?? ['in_app'];
         return in_array($channel, $channels);
     }
 }

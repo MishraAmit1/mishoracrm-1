@@ -26,11 +26,15 @@ class Followup extends TenantModel
         'notes',
         'outcome',
         'status',
+        'due_notified_at',
+        'overdue_notified_at',
     ];
 
     protected $casts = [
-        'scheduled_at' => 'datetime',
-        'done_at'      => 'datetime',
+        'scheduled_at'        => 'datetime',
+        'done_at'             => 'datetime',
+        'due_notified_at'     => 'datetime',
+        'overdue_notified_at' => 'datetime',
     ];
 
     // ── Relationships ─────────────────────────────────────────────
@@ -98,6 +102,20 @@ class Followup extends TenantModel
     public function scopeForUser($query, int $userId)
     {
         return $query->where('assigned_to', $userId);
+    }
+
+    public function scopeDueForReminder($query)
+    {
+        return $query->where('status', 'scheduled')
+                     ->whereNull('due_notified_at')
+                     ->where('scheduled_at', '<=', now());
+    }
+
+    public function scopeOverdueForReminder($query, int $graceMinutes = 60)
+    {
+        return $query->where('status', 'scheduled')
+                     ->whereNull('overdue_notified_at')
+                     ->where('scheduled_at', '<=', now()->subMinutes($graceMinutes));
     }
 
     // ── Helpers ───────────────────────────────────────────────────

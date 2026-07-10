@@ -152,7 +152,7 @@
                 @foreach($channelDefs as $key => $ch)
                 <div style="width:72px;display:flex;justify-content:center">
                     @if($ch['enabled'])
-                    <button type="button" class="sel-btn" onclick="toggleAll('{{ $key }}', this)">
+                    <button type="button" class="sel-btn" id="selall_{{ $key }}" data-channel="{{ $key }}" onclick="toggleAll('{{ $key }}', this)">
                         All ON
                     </button>
                     @else
@@ -275,19 +275,41 @@ function syncCard(input) {
         state.textContent = 'OFF';
         state.className   = 'sw-state off';
     }
+
+    updateSelectAllLabel(input.dataset.channel);
+}
+
+// ── Keep "All ON / All OFF" button label matching real state ──────
+// (so clicking it always sets an unambiguous state, never a blind toggle)
+function updateSelectAllLabel(channel) {
+    const btn = document.getElementById(`selall_${channel}`);
+    if (!btn) return;
+
+    const checks = document.querySelectorAll(`.ch-${channel}`);
+    const allOn  = checks.length > 0 && Array.from(checks).every(c => c.checked);
+
+    btn.textContent = allOn ? 'All OFF' : 'All ON';
 }
 
 // ── Toggle all for a channel ──────────────────────────────────────
 function toggleAll(channel, btn) {
-    const checks = document.querySelectorAll(`.ch-${channel}`);
-    const allOn  = Array.from(checks).every(c => c.checked);
+    const checks   = document.querySelectorAll(`.ch-${channel}`);
+    const allOn    = Array.from(checks).every(c => c.checked);
+    const turnOn   = !allOn; // if not all are on yet, this click turns everything ON; otherwise OFF
 
     checks.forEach(c => {
-        c.checked = !allOn;
+        c.checked = turnOn;
         syncCard(c);
     });
 
-    btn.textContent = allOn ? 'All OFF' : 'All ON';
+    updateSelectAllLabel(channel);
 }
+
+// ── Set correct initial label for each column on page load ────────
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.sel-btn').forEach(btn => {
+        updateSelectAllLabel(btn.dataset.channel);
+    });
+});
 </script>
 @endpush
