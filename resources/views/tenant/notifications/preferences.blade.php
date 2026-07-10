@@ -191,6 +191,9 @@
                 @if($ch['enabled'])
                 <label class="toggle-card {{ $isOn ? 'is-on':'' }}" id="card_{{ $typeKey }}_{{ $chKey }}">
 
+                    {{-- Preserve unchecked state so all channel prefs are submitted --}}
+                    <input type="hidden" name="prefs[{{ $typeKey }}][{{ $chKey }}]" value="0" />
+
                     {{-- Switch (input inside .sw so CSS :checked ~ .sw-track works) --}}
                     <div class="sw">
                         <input type="checkbox"
@@ -284,7 +287,7 @@ function toggleAll(channel, btn) {
         syncCard(c);
     });
 
-    btn.textContent = allOn ? 'All ON' : 'All OFF';
+    btn.textContent = allOn ? 'All OFF' : 'All ON';
 }
 </script>
 @endpush

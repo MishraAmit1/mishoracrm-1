@@ -6,6 +6,7 @@ use App\BelongsToTenant;
 use App\HasAuditLog;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Followup extends TenantModel
@@ -62,6 +63,11 @@ class Followup extends TenantModel
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
+    }
+
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(FollowupAttachment::class)->latest();
     }
 
     // ── Scopes ────────────────────────────────────────────────────

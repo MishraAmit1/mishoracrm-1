@@ -239,6 +239,9 @@ Route::middleware(['tenant', 'auth', 'subscription'])
         Route::post('/followups/{followup}/done',   [Tenant\FollowupController::class, 'markDone'])->name('followups.done');
         Route::post('/followups/{followup}/missed', [Tenant\FollowupController::class, 'markMissed'])->name('followups.missed');
 
+        Route::post('/followups/{followup}/attachments', [Tenant\FollowupController::class, 'storeAttachment'])->name('followups.attachments.store');
+        Route::delete('/followups/{followup}/attachments/{attachment}', [Tenant\FollowupController::class, 'destroyAttachment'])->name('followups.attachments.destroy');
+
         // ── Contacts (uncomment when ready) ───────────────────────
         Route::prefix('/contacts')->name('contacts.')->group(function () {
             Route::controller(Tenant\ContactController::class)->group(function () {

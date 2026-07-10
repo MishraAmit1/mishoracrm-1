@@ -65,6 +65,20 @@
 .linked-box svg { width:18px; height:18px; color:var(--accent); flex-shrink:0; }
 .linked-name { font-size:13.5px; font-weight:600; color:var(--text-100); }
 .linked-sub  { font-size:12px; color:var(--text-300); margin-top:1px; }
+
+.attach-upload {
+    display:flex; align-items:center; gap:10px;
+    padding:14px; border:1.5px dashed var(--border-default);
+    border-radius:var(--r-md);
+}
+.attach-upload input[type=file] {
+    flex:1; min-width:0;
+    padding:10px 12px;
+    background:var(--bg-input); border:1px solid var(--border-default);
+    border-radius:var(--r-sm); font-size:13px; color:var(--text-300);
+}
+.attach-selected { font-size:12px; color:var(--text-300); margin-top:10px; }
+.attach-hint { font-size:11.5px; color:var(--text-400); margin-top:6px; }
 </style>
 @endpush
 
@@ -91,7 +105,7 @@
 </div>
 
 <div class="form-card">
-    <form method="POST" action="{{ route('tenant.followups.store') }}" novalidate>
+    <form method="POST" action="{{ route('tenant.followups.store') }}" enctype="multipart/form-data" novalidate>
         @csrf
 
         {{-- Hidden fields --}}
@@ -229,6 +243,20 @@
             </div>
         </div>
 
+        {{-- Attachments --}}
+        <div class="form-section">
+            <div class="form-section-title">Attachments</div>
+            <div class="form-section-sub">Related documents, PDFs ya images (optional)</div>
+            <div class="attach-upload">
+                <input id="attachments" type="file" name="attachments[]" multiple
+                       accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx,.xls,.xlsx"/>
+            </div>
+            <div class="attach-selected" id="selectedFiles">No file selected.</div>
+            <div class="attach-hint">Images, PDFs, Word or Excel files · up to 10 MB each · max 5 files</div>
+            @error('attachments') <p style="font-size:12px;color:var(--red);margin-top:8px">{{ $message }}</p> @enderror
+            @error('attachments.*') <p style="font-size:12px;color:var(--red);margin-top:8px">{{ $message }}</p> @enderror
+        </div>
+
         <div class="form-actions">
             <a href="{{ $lead ? route('tenant.leads.show',$lead) : ($contact ? route('tenant.contacts.show',$contact) : route('tenant.followups.index')) }}"
                class="btn btn-secondary">Cancel</a>
@@ -252,10 +280,31 @@ function selectType(val) {
     document.getElementById('tc-' + val).classList.add('selected');
     document.querySelector(`input[name="type"][value="${val}"]`).checked = true;
 }
-document.querySelector('form').addEventListener('submit', function() {
-    const btn = document.getElementById('submitBtn');
-    btn.innerHTML = '⏳ Scheduling...';
-    btn.disabled = true;
+
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('attachments');
+    const selectedFiles = document.getElementById('selectedFiles');
+
+    if (fileInput && selectedFiles) {
+        fileInput.addEventListener('change', function() {
+            if (fileInput.files.length === 0) {
+                selectedFiles.textContent = 'No file selected.';
+                return;
+            }
+            selectedFiles.textContent = Array.from(fileInput.files).map(file => file.name).join(', ');
+        });
+    }
+
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function() {
+            const btn = document.getElementById('submitBtn');
+            if (btn) {
+                btn.innerHTML = '⏳ Scheduling...';
+                btn.disabled = true;
+            }
+        });
+    }
 });
 </script>
 @endpush

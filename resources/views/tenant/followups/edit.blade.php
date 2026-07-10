@@ -64,6 +64,45 @@
 .status-opt.sel-done { border-color:var(--green); background:var(--green-dim); color:var(--green); }
 .status-opt.sel-missed { border-color:var(--red); background:var(--red-dim); color:var(--red); }
 .status-opt.sel-rescheduled { border-color:var(--amber); background:var(--amber-dim); color:var(--amber); }
+
+/* Attachments */
+.attach-upload {
+    display:flex; align-items:center; gap:10px;
+    padding:14px; border:1.5px dashed var(--border-default);
+    border-radius:var(--r-md);
+}
+.attach-upload input[type=file] { flex:1; min-width:0; padding:10px 12px; background:var(--bg-input); border:1px solid var(--border-default); border-radius:var(--r-sm); font-size:13px; color:var(--text-300); }
+.attach-hint { font-size:11.5px; color:var(--text-400); margin-top:6px; }
+.attach-selected { font-size:12px; color:var(--text-300); margin-top:10px; }
+
+.attach-list { display:flex; flex-direction:column; gap:10px; margin-top:16px; }
+.attach-item {
+    display:flex; align-items:center; gap:12px;
+    padding:10px 12px; border:1px solid var(--border-subtle);
+    border-radius:var(--r-sm); background:var(--bg-elevated);
+}
+.attach-thumb {
+    width:40px; height:40px; border-radius:var(--r-sm); flex-shrink:0;
+    object-fit:cover; border:1px solid var(--border-subtle);
+}
+.attach-icon {
+    width:40px; height:40px; border-radius:var(--r-sm); flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--accent-dim); color:var(--accent); font-size:11px; font-weight:700;
+}
+.attach-meta { flex:1; min-width:0; }
+.attach-name {
+    font-size:13px; font-weight:600; color:var(--text-100);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block;
+    text-decoration:none;
+}
+.attach-name:hover { color:var(--accent); }
+.attach-sub { font-size:11.5px; color:var(--text-400); margin-top:2px; }
+.attach-del {
+    background:none; border:none; cursor:pointer; color:var(--text-400);
+    padding:4px; border-radius:var(--r-sm); flex-shrink:0;
+}
+.attach-del:hover { color:var(--red); background:var(--red-dim); }
 </style>
 @endpush
 
@@ -82,7 +121,7 @@
 </div>
 
 <div class="form-card">
-    <form method="POST" action="{{ route('tenant.followups.update', $followup->id) }}" novalidate>
+    <form method="POST" action="{{ route('tenant.followups.update', $followup->id) }}" enctype="multipart/form-data" novalidate>
         @csrf
         @method('PUT')
 
@@ -214,6 +253,50 @@
             </div>
         </div>
 
+        {{-- Attachments --}}
+        <div class="form-section">
+            <div class="form-section-title">Attachments</div>
+            <div class="form-section-sub">Related documents, PDFs ya images</div>
+
+            <div class="attach-upload">
+                <input id="attachments" type="file" name="attachments[]" multiple
+                       accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx,.xls,.xlsx"/>
+            </div>
+            <div class="attach-hint">Images, PDFs, Word or Excel files · up to 10 MB each · max 5 files (uploads on save)</div>
+            <div class="attach-selected" id="selectedFiles">No file selected.</div>
+            @error('attachments') <p style="font-size:12px;color:var(--red);margin-top:8px">{{ $message }}</p> @enderror
+            @error('attachments.*') <p style="font-size:12px;color:var(--red);margin-top:8px">{{ $message }}</p> @enderror
+
+            <div class="attach-list">
+                @forelse($followup->attachments as $attachment)
+                    <div class="attach-item">
+                        @if($attachment->isImage())
+                            <img src="{{ $attachment->url }}" alt="" class="attach-thumb">
+                        @else
+                            <div class="attach-icon">{{ strtoupper(pathinfo($attachment->original_name, PATHINFO_EXTENSION)) }}</div>
+                        @endif
+                        <div class="attach-meta">
+                            <a href="{{ $attachment->url }}" target="_blank" rel="noopener" class="attach-name">
+                                {{ $attachment->original_name }}
+                            </a>
+                            <div class="attach-sub">
+                                {{ $attachment->file_size_human }}
+                                · {{ $attachment->created_at->diffForHumans() }}
+                                @if($attachment->uploadedBy)
+                                    · {{ $attachment->uploadedBy->name }}
+                                @endif
+                            </div>
+                        </div>
+                        <button type="submit" form="del-attach-{{ $attachment->id }}" class="attach-del" title="Delete">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+                @empty
+                    <div style="font-size:13px;color:var(--text-400);padding:4px 0">No documents or images attached yet.</div>
+                @endforelse
+            </div>
+        </div>
+
         <div class="form-actions">
             <a href="{{ route('tenant.followups.index') }}" class="btn btn-secondary">Cancel</a>
             <button type="submit" class="btn btn-primary" id="submitBtn">
@@ -225,6 +308,15 @@
         </div>
 
     </form>
+
+    {{-- Standalone delete forms for existing attachments (kept outside the main form to avoid nesting) --}}
+    @foreach($followup->attachments as $attachment)
+        <form id="del-attach-{{ $attachment->id }}" method="POST"
+              action="{{ route('tenant.followups.attachments.destroy', [$followup, $attachment]) }}"
+              onsubmit="return confirm('Delete this attachment?')" style="display:none">
+            @csrf @method('DELETE')
+        </form>
+    @endforeach
 </div>
 
 @endsection

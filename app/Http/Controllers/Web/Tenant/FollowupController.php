@@ -5,10 +5,15 @@ namespace App\Http\Controllers\Web\Tenant;
 use App\Http\Controllers\Controller;
 use App\Models\Contact;
 use App\Models\Followup;
+use App\Models\FollowupAttachment;
 use App\Models\Lead;
 use App\Models\User;
+use App\Services\NotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class FollowupController extends Controller
@@ -16,10 +21,47 @@ class FollowupController extends Controller
     // ── Staff list helper ─────────────────────────────────────────
     private function getStaffList()
     {
-        return User::where('tenant_id', auth()->user()->tenant_id)
+        return User::where('tenant_id', Auth::user()->tenant_id)
                    ->where('is_active', true)
                    ->orderBy('name')
                    ->get(['id', 'name']);
+    }
+
+    // ── Attachment upload rules ─────────────────────────────────────
+    private function attachmentRules(): array
+    {
+        return [
+            'attachments'   => ['nullable', 'array', 'max:5'],
+            'attachments.*' => [
+                'file', 'max:10240', // 10 MB
+                'mimes:jpg,jpeg,png,webp,pdf,doc,docx,xls,xlsx',
+            ],
+        ];
+    }
+
+    // ── Save uploaded attachment files against a follow-up ──────────
+    private function saveAttachments(Request $request, Followup $followup): void
+    {
+        if (! $request->hasFile('attachments')) {
+            return;
+        }
+
+        $tenantId = Auth::user()->tenant_id;
+
+        foreach ($request->file('attachments') as $file) {
+            $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
+            $path     = $file->storeAs("followups/{$tenantId}/{$followup->id}", $filename, 'public');
+
+            FollowupAttachment::create([
+                'tenant_id'     => $tenantId,
+                'followup_id'   => $followup->id,
+                'uploaded_by'   => Auth::id(),
+                'path'          => $path,
+                'original_name' => $file->getClientOriginalName(),
+                'mime_type'     => $file->getClientMimeType(),
+                'file_size'     => $file->getSize(),
+            ]);
+        }
     }
 
     // ── Index ─────────────────────────────────────────────────────
@@ -46,7 +88,7 @@ class FollowupController extends Controller
 
         // My followups only
         if ($request->boolean('mine')) {
-            $query->where('assigned_to', auth()->id());
+            $query->where('assigned_to', Auth::id());
         }
 
         $followups = $query->paginate(20)->withQueryString();
@@ -97,26 +139,29 @@ class FollowupController extends Controller
     // ── Store ─────────────────────────────────────────────────────
     public function store(Request $request): RedirectResponse
     {
-        $request->validate([
+        $request->validate(array_merge([
             'lead_id'      => ['nullable', 'exists:leads,id'],
             'contact_id'   => ['nullable', 'exists:contacts,id'],
             'assigned_to'  => ['required', 'exists:users,id'],
             'type'         => ['required', 'in:call,email,whatsapp,meeting,other'],
             'scheduled_at' => ['required', 'date'],
             'notes'        => ['nullable', 'string', 'max:2000'],
-        ]);
+        ], $this->attachmentRules()));
 
-        Followup::create([
-            'tenant_id'    => auth()->user()->tenant_id,
+        $followup = Followup::create([
+            'tenant_id'    => Auth::user()->tenant_id,
             'lead_id'      => $request->lead_id,
             'contact_id'   => $request->contact_id,
             'assigned_to'  => $request->assigned_to,
-            'created_by'   => auth()->id(),
+            'created_by'   => Auth::id(),
             'type'         => $request->type,
             'scheduled_at' => $request->scheduled_at,
             'notes'        => $request->notes,
             'status'       => 'scheduled',
         ]);
+
+        $this->saveAttachments($request, $followup);
+        $this->notifyFollowupScheduled($followup);
 
         // Redirect back to lead/contact if came from there
         if ($request->filled('lead_id')) {
@@ -139,7 +184,7 @@ class FollowupController extends Controller
     // ── Show ──────────────────────────────────────────────────────
     public function show(Followup $followup): View
     {
-        $followup->load(['lead', 'contact', 'assignedTo', 'createdBy']);
+        $followup->load(['lead', 'contact', 'assignedTo', 'createdBy', 'attachments.uploadedBy']);
 
         return view('tenant.followups.show', compact('followup'));
     }
@@ -151,7 +196,7 @@ class FollowupController extends Controller
         $types     = Followup::types();
         $leads     = Lead::orderBy('name')->get(['id', 'name', 'phone']);
         $contacts  = Contact::orderBy('name')->get(['id', 'name', 'phone']);
-  
+        $followup->load('attachments.uploadedBy');
 
         return view('tenant.followups.edit', compact(
             'followup', 'staffList', 'types', 'leads', 'contacts'
@@ -161,7 +206,7 @@ class FollowupController extends Controller
     // ── Update ────────────────────────────────────────────────────
     public function update(Request $request, Followup $followup): RedirectResponse
     {
-        $request->validate([
+        $request->validate(array_merge([
             'lead_id'      => ['nullable', 'exists:leads,id'],
             'contact_id'   => ['nullable', 'exists:contacts,id'],
             'assigned_to'  => ['required', 'exists:users,id'],
@@ -170,7 +215,7 @@ class FollowupController extends Controller
             'notes'        => ['nullable', 'string', 'max:2000'],
             'status'       => ['required', 'in:scheduled,done,missed,rescheduled'],
             'outcome'      => ['nullable', 'string', 'max:2000'],
-        ]);
+        ], $this->attachmentRules()));
 
         $data = $request->only([
             'lead_id', 'contact_id', 'assigned_to',
@@ -181,7 +226,21 @@ class FollowupController extends Controller
             $data['done_at'] = now();
         }
 
+        $originalAssignedTo   = $followup->assigned_to;
+        $originalScheduledAt  = $followup->scheduled_at?->format('Y-m-d H:i:s');
+        $nextAssignedTo       = $data['assigned_to'];
+        $nextScheduledAt      = $data['scheduled_at'];
+
         $followup->update($data);
+
+        $this->saveAttachments($request, $followup);
+
+        if ($followup->status === 'scheduled' && (
+            $nextAssignedTo !== $originalAssignedTo ||
+            $nextScheduledAt !== $originalScheduledAt
+        )) {
+            $this->notifyFollowupScheduled($followup);
+        }
 
         return redirect()
             ->route('tenant.followups.show', $followup)
@@ -210,15 +269,17 @@ class FollowupController extends Controller
     // ── Mark Done ─────────────────────────────────────────────────
     public function markDone(Request $request, Followup $followup): RedirectResponse
     {
-        $request->validate([
+        $request->validate(array_merge([
             'outcome' => ['nullable', 'string', 'max:2000'],
-        ]);
+        ], $this->attachmentRules()));
 
         $followup->update([
             'status'  => 'done',
             'done_at' => now(),
             'outcome' => $request->outcome,
         ]);
+
+        $this->saveAttachments($request, $followup);
 
         return back()->with('success', 'Follow-up marked as done.');
     }
@@ -229,5 +290,52 @@ class FollowupController extends Controller
         $followup->update(['status' => 'missed']);
 
         return back()->with('success', 'Follow-up marked as missed.');
+    }
+
+    private function notifyFollowupScheduled(Followup $followup): void
+    {
+        if (! $followup->assignedTo) {
+            return;
+        }
+
+        $entityName = $followup->lead?->name
+            ?? $followup->contact?->name
+            ?? 'customer';
+
+        NotificationService::notify(
+            'followup.scheduled',
+            $followup->assignedTo,
+            [
+                'name' => $entityName,
+                'date' => $followup->scheduled_at?->format('d M Y, h:i A') ?? '',
+            ],
+            Auth::user(),
+            route('tenant.followups.show', $followup),
+            $followup
+        );
+    }
+
+    // ── Attachments: Upload ──────────────────────────────────────
+    public function storeAttachment(Request $request, Followup $followup): RedirectResponse
+    {
+        $request->validate(array_merge(
+            ['attachments' => ['required', 'array', 'max:5']],
+            $this->attachmentRules()
+        ));
+
+        $this->saveAttachments($request, $followup);
+
+        return back()->with('success', 'Attachment(s) uploaded successfully.');
+    }
+
+    // ── Attachments: Delete ──────────────────────────────────────
+    public function destroyAttachment(Followup $followup, FollowupAttachment $attachment): RedirectResponse
+    {
+        abort_unless($attachment->followup_id === $followup->id, 404);
+
+        Storage::disk('public')->delete($attachment->path);
+        $attachment->delete();
+
+        return back()->with('success', 'Attachment deleted.');
     }
 }

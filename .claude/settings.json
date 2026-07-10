@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(& \"C:\\\\Users\\\\admin\\\\.config\\\\herd\\\\bin\\\\php83.bat\" artisan view:clear 2>&1)",
+      "PowerShell(& \"C:\\\\Users\\\\admin\\\\.config\\\\herd\\\\bin\\\\php83.bat\" artisan view:cache 2>&1)"
+    ]
+  }
+}

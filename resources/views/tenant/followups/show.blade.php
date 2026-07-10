@@ -50,6 +50,54 @@
 }
 .done-input:focus { border-color:var(--accent); }
 .done-input::placeholder { color:var(--text-400); }
+
+/* Attachments */
+.attach-upload {
+    display:flex; align-items:center; gap:10px;
+    padding:14px; border:1.5px dashed var(--border-default);
+    border-radius:var(--r-md); margin-bottom:16px;
+}
+.attach-upload input[type=file] {
+    flex:1; min-width:0;
+    padding:10px 12px;
+    background:var(--bg-input); border:1px solid var(--border-default);
+    border-radius:var(--r-sm); font-size:13px; color:var(--text-300);
+}
+.attach-upload button {
+    flex-shrink:0;
+}
+.attach-selected { font-size:12px; color:var(--text-300); margin-top:10px; }
+.attach-hint { font-size:11.5px; color:var(--text-400); margin-top:6px; }
+
+.attach-list { display:flex; flex-direction:column; gap:10px; }
+.attach-item {
+    display:flex; align-items:center; gap:12px;
+    padding:10px 12px; border:1px solid var(--border-subtle);
+    border-radius:var(--r-sm); background:var(--bg-elevated);
+}
+.attach-thumb {
+    width:40px; height:40px; border-radius:var(--r-sm); flex-shrink:0;
+    object-fit:cover; border:1px solid var(--border-subtle);
+}
+.attach-icon {
+    width:40px; height:40px; border-radius:var(--r-sm); flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--accent-dim); color:var(--accent); font-size:11px; font-weight:700;
+}
+.attach-meta { flex:1; min-width:0; }
+.attach-name {
+    font-size:13px; font-weight:600; color:var(--text-100);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block;
+    text-decoration:none;
+}
+.attach-name:hover { color:var(--accent); }
+.attach-sub { font-size:11.5px; color:var(--text-400); margin-top:2px; }
+.attach-del {
+    background:none; border:none; cursor:pointer; color:var(--text-400);
+    padding:4px; border-radius:var(--r-sm); flex-shrink:0;
+}
+.attach-del:hover { color:var(--red); background:var(--red-dim); }
+.attach-empty { font-size:13px; color:var(--text-400); padding:8px 0; }
 </style>
 @endpush
 
@@ -198,6 +246,69 @@
             </div>
         </div>
 
+        {{-- Attachments card --}}
+        <div class="detail-card">
+            <div class="detail-head">
+                <div class="detail-title">Attachments</div>
+                <span style="font-size:12px;color:var(--text-400)">{{ $followup->attachments->count() }} file(s)</span>
+            </div>
+            <div class="detail-body">
+
+                <form method="POST" action="{{ route('tenant.followups.attachments.store', $followup) }}"
+                      enctype="multipart/form-data">
+                    @csrf
+                    <div class="attach-upload">
+                        <input id="attachments" type="file" name="attachments[]" multiple
+                               accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx,.xls,.xlsx">
+                        <button type="submit" class="btn btn-primary" style="flex-shrink:0">Upload</button>
+                    </div>
+                    <div class="attach-hint">Images, PDFs, Word or Excel files · up to 10 MB each · max 5 at once</div>
+                    <div class="attach-selected" id="selectedFiles">No file selected.</div>
+                    @error('attachments')
+                        <div style="color:var(--red);font-size:12.5px;margin-top:6px">{{ $message }}</div>
+                    @enderror
+                    @error('attachments.*')
+                        <div style="color:var(--red);font-size:12.5px;margin-top:6px">{{ $message }}</div>
+                    @enderror
+                </form>
+
+                <div class="attach-list" style="margin-top:16px">
+                    @forelse($followup->attachments as $attachment)
+                        <div class="attach-item">
+                            @if($attachment->isImage())
+                                <img src="{{ $attachment->url }}" alt="" class="attach-thumb">
+                            @else
+                                <div class="attach-icon">{{ strtoupper(pathinfo($attachment->original_name, PATHINFO_EXTENSION)) }}</div>
+                            @endif
+                            <div class="attach-meta">
+                                <a href="{{ $attachment->url }}" target="_blank" rel="noopener" class="attach-name">
+                                    {{ $attachment->original_name }}
+                                </a>
+                                <div class="attach-sub">
+                                    {{ $attachment->file_size_human }}
+                                    · {{ $attachment->created_at->diffForHumans() }}
+                                    @if($attachment->uploadedBy)
+                                        · {{ $attachment->uploadedBy->name }}
+                                    @endif
+                                </div>
+                            </div>
+                            <form method="POST"
+                                  action="{{ route('tenant.followups.attachments.destroy', [$followup, $attachment]) }}"
+                                  onsubmit="return confirm('Delete this attachment?')">
+                                @csrf @method('DELETE')
+                                <button type="submit" class="attach-del" title="Delete">
+                                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                                </button>
+                            </form>
+                        </div>
+                    @empty
+                        <div class="attach-empty">No documents or images attached yet.</div>
+                    @endforelse
+                </div>
+
+            </div>
+        </div>
+
     </div>
 
     {{-- Right sidebar --}}
@@ -267,3 +378,26 @@
 </div>
 
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const fileInput = document.getElementById('attachments');
+        const selectedFiles = document.getElementById('selectedFiles');
+
+        if (!fileInput || !selectedFiles) {
+            return;
+        }
+
+        fileInput.addEventListener('change', function() {
+            if (fileInput.files.length === 0) {
+                selectedFiles.textContent = 'No file selected.';
+                return;
+            }
+
+            const names = Array.from(fileInput.files).map(file => file.name);
+            selectedFiles.textContent = names.join(', ');
+        });
+    });
+</script>
+@endpush

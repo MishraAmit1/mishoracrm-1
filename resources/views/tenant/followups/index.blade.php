@@ -45,6 +45,40 @@
 .page-link:hover { border-color:var(--accent); color:var(--accent); }
 .page-link.active { background:var(--accent); border-color:var(--accent); color:#fff; }
 .page-link.disabled { opacity:0.4; pointer-events:none; }
+
+/* Done modal */
+.modal-overlay {
+    position:fixed; inset:0; background:rgba(0,0,0,0.5);
+    display:flex; align-items:center; justify-content:center;
+    z-index:1000; padding:16px;
+}
+.modal-box {
+    background:var(--bg-surface); border:1px solid var(--border-default);
+    border-radius:var(--r-lg); width:100%; max-width:480px;
+    max-height:90vh; overflow-y:auto;
+}
+.modal-head {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 20px; border-bottom:1px solid var(--border-subtle);
+}
+.modal-title { font-size:14px; font-weight:700; color:var(--text-100); }
+.modal-close {
+    background:none; border:none; cursor:pointer; font-size:20px;
+    color:var(--text-400); line-height:1; padding:2px 6px; border-radius:var(--r-sm);
+}
+.modal-close:hover { color:var(--text-100); background:var(--bg-hover); }
+.modal-body { padding:20px; }
+.modal-actions {
+    display:flex; align-items:center; justify-content:flex-end; gap:10px;
+    padding:16px 20px; background:var(--bg-elevated); border-top:1px solid var(--border-subtle);
+}
+.attach-upload {
+    display:flex; align-items:center; gap:10px;
+    padding:12px; border:1.5px dashed var(--border-default);
+    border-radius:var(--r-md);
+}
+.attach-upload input[type=file] { flex:1; font-size:12.5px; color:var(--text-300); }
+.attach-hint { font-size:11.5px; color:var(--text-400); margin-top:6px; }
 </style>
 @endpush
 
@@ -220,13 +254,11 @@
                     <td>
                         <div style="display:flex;gap:6px">
                             @if($followup->isScheduled())
-                            <form method="POST" action="{{ route('tenant.followups.done', $followup) }}">
-                                @csrf
-                                <button type="submit" class="btn btn-secondary btn-sm"
-                                        style="color:var(--green);font-size:12px" title="Mark done">
-                                    ✓ Done
-                                </button>
-                            </form>
+                            <button type="button" class="btn btn-secondary btn-sm"
+                                    style="color:var(--green);font-size:12px" title="Mark done"
+                                    onclick="openDoneModal('{{ route('tenant.followups.done', $followup) }}')">
+                                ✓ Done
+                            </button>
                             @endif
                             <a href="{{ route('tenant.followups.edit', $followup) }}"
                                class="btn btn-secondary btn-sm btn-icon">
@@ -265,4 +297,67 @@
     @endif
 </div>
 
+{{-- Mark Done modal --}}
+<div id="doneModal" class="modal-overlay" style="display:none">
+    <div class="modal-box">
+        <div class="modal-head">
+            <div class="modal-title">✅ Mark Follow-up as Done</div>
+            <button type="button" class="modal-close" onclick="closeDoneModal()">&times;</button>
+        </div>
+        <form id="doneForm" method="POST" enctype="multipart/form-data">
+            @csrf
+            <div class="modal-body">
+                <div class="field" style="display:flex;flex-direction:column;gap:7px">
+                    <label class="field-label" style="font-size:12.5px;font-weight:600;color:var(--text-200);text-transform:uppercase;letter-spacing:0.3px">
+                        Discussion / Outcome
+                    </label>
+                    <textarea name="outcome" class="field-input field-textarea" rows="4"
+                              style="padding:10px 13px;background:var(--bg-input);border:1.5px solid var(--border-default);border-radius:var(--r-sm);color:var(--text-100);font-family:var(--font);font-size:14px;outline:none;resize:vertical"
+                              placeholder="Kya discuss hua, result kya raha..."></textarea>
+                </div>
+
+                <div style="margin-top:16px">
+                    <label class="field-label" style="font-size:12.5px;font-weight:600;color:var(--text-200);text-transform:uppercase;letter-spacing:0.3px;display:block;margin-bottom:7px">
+                        Attach Documents (optional)
+                    </label>
+                    <div class="attach-upload">
+                        <input type="file" name="attachments[]" multiple
+                               accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx,.xls,.xlsx"/>
+                    </div>
+                    <div class="attach-hint">Images, PDFs, Word or Excel · up to 10 MB each · max 5 files</div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeDoneModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="doneSubmitBtn">Mark Done</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 @endsection
+
+@push('scripts')
+<script>
+function openDoneModal(actionUrl) {
+    const form = document.getElementById('doneForm');
+    form.action = actionUrl;
+    form.reset();
+    document.getElementById('doneModal').style.display = 'flex';
+}
+
+function closeDoneModal() {
+    document.getElementById('doneModal').style.display = 'none';
+}
+
+document.getElementById('doneModal').addEventListener('click', function (e) {
+    if (e.target === this) closeDoneModal();
+});
+
+document.getElementById('doneForm').addEventListener('submit', function () {
+    const btn = document.getElementById('doneSubmitBtn');
+    btn.innerHTML = '⏳ Saving...';
+    btn.disabled = true;
+});
+</script>
+@endpush

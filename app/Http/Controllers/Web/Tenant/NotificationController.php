@@ -8,6 +8,7 @@ use App\Models\NotificationPreference;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class NotificationController extends Controller
@@ -15,7 +16,7 @@ class NotificationController extends Controller
     // ── All notifications page ────────────────────────────────────
     public function index(Request $request): View
     {
-        $query = Notification::forUser(auth()->id())->latest();
+        $query = Notification::query()->where('user_id', Auth::id())->latest();
 
         if ($request->filled('type')) {
             $query->ofType($request->type);
@@ -28,7 +29,7 @@ class NotificationController extends Controller
         }
 
         $notifications = $query->paginate(20)->withQueryString();
-        $unreadCount   = Notification::forUser(auth()->id())->unread()->count();
+        $unreadCount   = Notification::query()->where('user_id', Auth::id())->unread()->count();
         $types         = config('notifications.types');
 
         return view('tenant.notifications.index', compact(
@@ -39,7 +40,7 @@ class NotificationController extends Controller
     // ── Get unread count + latest (for bell dropdown) ─────────────
     public function latest(): JsonResponse
     {
-        $notifications = Notification::forUser(auth()->id())
+        $notifications = Notification::query()->where('user_id', Auth::id())
             ->latest()
             ->limit(8)
             ->get()
@@ -55,7 +56,7 @@ class NotificationController extends Controller
                 'time'       => $n->created_at->diffForHumans(),
             ]);
 
-        $unreadCount = Notification::forUser(auth()->id())->unread()->count();
+        $unreadCount = Notification::query()->where('user_id', Auth::id())->unread()->count();
 
         return response()->json([
             'success'      => true,
@@ -67,8 +68,8 @@ class NotificationController extends Controller
     // ── Mark single as read ───────────────────────────────────────
     public function markRead(int $id): JsonResponse
     {
-        $notification = Notification::where('id', $id)
-            ->where('user_id', auth()->id())
+        $notification = Notification::query()->where('id', $id)
+            ->where('user_id', Auth::id())
             ->firstOrFail();
 
         $notification->markAsRead();
@@ -79,7 +80,7 @@ class NotificationController extends Controller
     // ── Mark all as read ──────────────────────────────────────────
     public function markAllRead(): JsonResponse
     {
-        Notification::forUser(auth()->id())
+        Notification::query()->where('user_id', Auth::id())
             ->unread()
             ->update([
                 'is_read' => true,
@@ -92,8 +93,8 @@ class NotificationController extends Controller
     // ── Delete single ─────────────────────────────────────────────
     public function destroy(int $id): JsonResponse
     {
-        Notification::where('id', $id)
-            ->where('user_id', auth()->id())
+        Notification::query()->where('id', $id)
+            ->where('user_id', Auth::id())
             ->delete();
 
         return response()->json(['success' => true]);
@@ -102,7 +103,7 @@ class NotificationController extends Controller
     // ── Clear all read notifications ──────────────────────────────
     public function clearRead(): RedirectResponse
     {
-        Notification::forUser(auth()->id())->read()->delete();
+        Notification::query()->where('user_id', Auth::id())->read()->delete();
 
         return back()->with('success', 'Read notifications cleared.');
     }
@@ -110,7 +111,7 @@ class NotificationController extends Controller
     // ── Preferences page ──────────────────────────────────────────
     public function preferences(): View
     {
-        $prefs    = NotificationPreference::getForUser(auth()->id(), auth()->user()->tenant_id);
+        $prefs    = NotificationPreference::getForUser(Auth::id(), Auth::user()->tenant_id);
         $types    = config('notifications.types');
         $channels = config('notifications.channels');
         $groups   = collect($types)->groupBy(fn($t) => $t['group'] ?? 'Other');
@@ -123,21 +124,23 @@ class NotificationController extends Controller
     // ── Save preferences ──────────────────────────────────────────
     public function savePreferences(Request $request): RedirectResponse
     {
-        $types    = array_keys(config('notifications.types', []));
-        $channels = ['in_app', 'email', 'whatsapp', 'slack'];
+        $types = array_keys(config('notifications.types', []));
+        $prefs = $request->input('prefs', []);
 
         foreach ($types as $type) {
+            $typePrefs = $prefs[$type] ?? [];
+
             NotificationPreference::updateOrCreate(
                 [
-                    'tenant_id' => auth()->user()->tenant_id,
-                    'user_id'   => auth()->id(),
+                    'tenant_id' => Auth::user()->tenant_id,
+                    'user_id'   => Auth::id(),
                     'type'      => $type,
                 ],
                 [
-                    'in_app'   => $request->boolean("prefs.{$type}.in_app"),
-                    'email'    => $request->boolean("prefs.{$type}.email"),
-                    'whatsapp' => $request->boolean("prefs.{$type}.whatsapp"),
-                    'slack'    => $request->boolean("prefs.{$type}.slack"),
+                    'in_app'   => isset($typePrefs['in_app']) ? (bool) $typePrefs['in_app'] : false,
+                    'email'    => isset($typePrefs['email']) ? (bool) $typePrefs['email'] : false,
+                    'whatsapp' => isset($typePrefs['whatsapp']) ? (bool) $typePrefs['whatsapp'] : false,
+                    'slack'    => isset($typePrefs['slack']) ? (bool) $typePrefs['slack'] : false,
                 ]
             );
         }
