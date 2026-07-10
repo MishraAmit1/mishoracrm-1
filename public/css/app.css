@@ -706,13 +706,22 @@ select.form-control option { background: var(--bg-elevated); color: var(--text-1
   }
   .data-table tbody tr:hover td, .di-table tbody tr:hover td { background: none; }
   .data-table td, .di-table td {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 12px; text-align: right;
+    display: flex; align-items: center;
+    gap: 12px;
     border-bottom: 1px solid var(--border-subtle);
     white-space: normal;
   }
   .data-table td:last-child, .di-table td:last-child { border-bottom: none; }
-  .data-table td::before, .di-table td::before {
+  /* Only cells that actually declare a data-label get the "label | value"
+     split row. Without this guard, an unlabeled cell (a decorative dot,
+     an icon-only actions column, …) still generated an empty ::before
+     flex item, and justify-content:space-between shoved the real content
+     off to the far edge — reading as if it were randomly placed. A cell
+     with no label should just show its value in place, nothing fancier. */
+  .data-table td[data-label], .di-table td[data-label] {
+    justify-content: space-between; text-align: right;
+  }
+  .data-table td[data-label]::before, .di-table td[data-label]::before {
     content: attr(data-label);
     font-size: 11px; font-weight: 700; text-transform: uppercase;
     letter-spacing: 0.4px; color: var(--text-400);
