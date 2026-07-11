@@ -318,7 +318,7 @@
         @if($followup->isScheduled())
         <div class="done-form">
             <div class="done-form-title">✅ Mark as Done</div>
-            <form method="POST" action="{{ route('followups.done', $followup) }}">
+            <form method="POST" action="{{ route('tenant.followups.done', $followup) }}">
                 @csrf
                 <textarea name="outcome" class="done-input"
                           placeholder="What happened? Add outcome..."></textarea>
