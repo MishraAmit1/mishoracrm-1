@@ -328,7 +328,7 @@
             </form>
         </div>
 
-        <form method="POST" action="{{ route('followups.missed', $followup) }}" style="margin-bottom:16px">
+        <form method="POST" action="{{ route('tenant.followups.missed', $followup) }}" style="margin-bottom:16px">
             @csrf
             <button type="submit" class="btn" style="width:100%;background:var(--red-dim);color:var(--red);border:1.5px solid rgba(255,82,87,0.3)"
                     onclick="return confirm('Mark as missed?')">
