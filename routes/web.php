@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\DeviceTokenController;
 use App\Http\Controllers\Web\Auth\ForgotPasswordController;
 use App\Http\Controllers\Web\Auth\LoginController;
 use App\Http\Controllers\Web\Auth\RegisterController;
@@ -17,13 +18,26 @@ use App\Http\Controllers\Web\SuperAdmin\LeadIntegrationController as SuperAdminL
 use App\Http\Controllers\Web\SuperAdmin\PlatformSettingController as SuperAdminPlatformSettingController;
 use App\Http\Controllers\Web\Tenant\LeadIntegrationController as TenantLeadIntegrationController;
 use Illuminate\Support\Facades\Route;
-
+use Kreait\Firebase\Factory;
 // ══════════════════════════════════════════════════════════════════
 // PUBLIC — Auth routes (base domain: saas-crm.test)
 // ══════════════════════════════════════════════════════════════════
 
 Route::get('/', fn() => view('welcome'))->name('home');
-
+Route::get('/firebase-test', function () {
+    try {
+        return response()->json([
+            'status' => true,
+            'message' => 'Firebase Connected Successfully'
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => false,
+            'message' => $e->getMessage()
+        ]);
+    }
+});
+Route::middleware('auth')->post('/device-token', [DeviceTokenController::class, 'store']);
 Route::middleware('guest')->group(function () {
     Route::get('/login',  [LoginController::class, 'show'])->name('login');
     Route::post('/login', [LoginController::class, 'store'])->name('login.store');
@@ -87,7 +101,7 @@ Route::prefix('superadmin')
         Route::prefix('tenants')->name('tenants.')->controller(SuperAdmin\TenantController::class)->group(function () {
             Route::get('/',                       'index')->name('index');
             Route::get('/{tenant}',               'show')->name('show');
-            Route::post('/{tenant}/toggle-status','toggleStatus')->name('toggle-status');
+            Route::post('/{tenant}/toggle-status', 'toggleStatus')->name('toggle-status');
         });
 
         // Plan management
@@ -202,7 +216,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
             Route::get('/',                      'index')->name('index');
             Route::get('/{platform}/setup',      'setup')->name('setup');
             Route::post('/{platform}/save',      'save')->name('save');
-            Route::post('/{platform}/regenerate','regenerateToken')->name('regenerate');
+            Route::post('/{platform}/regenerate', 'regenerateToken')->name('regenerate');
             Route::post('/{platform}/sync',      'syncNow')->name('sync');
             Route::get('/{platform}/test',       'testConnection')->name('test');
         });
@@ -588,7 +602,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
 
         // ── AI & Workflow Automation ───────────────────────────────
         Route::get('/automation',         [Tenant\AutomationController::class, 'index'])->name('automation.index');
-        Route::post('/automation/request',[Tenant\AutomationController::class, 'request'])->name('automation.request');
+        Route::post('/automation/request', [Tenant\AutomationController::class, 'request'])->name('automation.request');
     });
 
 
