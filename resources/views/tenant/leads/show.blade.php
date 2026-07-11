@@ -541,6 +541,75 @@ if ($lead->assignedTo) {
                 @endif
             </div>
 
+            {{-- Follow-up History --}}
+            <div class="ls-card">
+                <div style="padding:16px 22px 14px;border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;justify-content:space-between">
+                    <div class="ls-card-title">
+                        Follow-up History
+                        @if($lead->followups->count())
+                        <span style="color:var(--text-400);font-weight:500;text-transform:none;letter-spacing:0">({{ $lead->followups->count() }})</span>
+                        @endif
+                    </div>
+                    <a href="{{ route('tenant.followups.create', ['lead_id' => $lead->id]) }}"
+                       style="font-size:12px;font-weight:600;color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:4px">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                        Schedule Follow-up
+                    </a>
+                </div>
+
+                @php
+                $fuStatusMap = [
+                    'scheduled'   => ['bg'=>'#E6F1FB','color'=>'#185FA5','label'=>'Scheduled'],
+                    'done'        => ['bg'=>'#E1F5EE','color'=>'#0F6E56','label'=>'Done'],
+                    'missed'      => ['bg'=>'#FCEBEB','color'=>'#A32D2D','label'=>'Missed'],
+                    'rescheduled' => ['bg'=>'#FAEEDA','color'=>'#854F0B','label'=>'Rescheduled'],
+                ];
+                $fuTypeIcons = [
+                    'call'     => 'M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z',
+                    'email'    => 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
+                    'whatsapp' => 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z',
+                    'meeting'  => 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
+                    'other'    => 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z',
+                ];
+                $sortedFollowups = $lead->followups->sortByDesc('scheduled_at');
+                @endphp
+
+                @if($sortedFollowups->isEmpty())
+                <div style="padding:26px 22px;text-align:center;color:var(--text-300);font-size:13px">
+                    No follow-ups scheduled yet for this lead.
+                </div>
+                @else
+                <div class="ls-timeline-wrap">
+                    @foreach($sortedFollowups as $fu)
+                    @php
+                        $fs   = $fuStatusMap[$fu->status] ?? ['bg'=>'#F1EFE8','color'=>'#5F5E5A','label'=>ucfirst($fu->status)];
+                        $path = $fuTypeIcons[$fu->type] ?? $fuTypeIcons['other'];
+                    @endphp
+                    <div class="ls-tl-item">
+                        <div class="ls-tl-icon" style="background:{{ $fs['bg'] }}">
+                            <svg width="14" height="14" fill="none" stroke="{{ $fs['color'] }}" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $path }}"/></svg>
+                        </div>
+                        <div class="ls-tl-body">
+                            <div class="ls-tl-meta">
+                                <span class="ls-tl-action">{{ \App\Models\Followup::types()[$fu->type] ?? ucfirst($fu->type) }}</span>
+                                <span class="ls-badge" style="background:{{ $fs['bg'] }};color:{{ $fs['color'] }};padding:2px 8px;font-size:10.5px">{{ $fs['label'] }}</span>
+                                <span class="ls-tl-time">{{ $fu->scheduled_at?->format('M d, Y · g:i A') }}</span>
+                            </div>
+                            @if($fu->status === 'done' && $fu->outcome)
+                            <div class="ls-tl-desc">{{ $fu->outcome }}</div>
+                            @elseif($fu->notes)
+                            <div class="ls-tl-desc">{{ $fu->notes }}</div>
+                            @else
+                            <div class="ls-tl-desc" style="color:var(--text-400);font-style:italic">No notes added</div>
+                            @endif
+                            <a href="{{ route('tenant.followups.show', $fu) }}" style="font-size:11px;color:var(--accent);text-decoration:none;margin-top:3px;display:inline-block">View details →</a>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+                @endif
+            </div>
+
             {{-- Activity Timeline --}}
             <div class="ls-card">
                 <div style="padding:16px 22px 14px;border-bottom:1px solid var(--border-subtle)">
@@ -721,12 +790,12 @@ if ($lead->assignedTo) {
                         </div>
                         Create Proposal
                     </button>
-                    <button class="ls-qa-btn">
+                    <a href="{{ route('tenant.followups.create', ['lead_id' => $lead->id]) }}" class="ls-qa-btn">
                         <div class="ls-qa-icon" style="background:#EEEDFE">
                             <svg width="14" height="14" fill="none" stroke="#534AB7" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                         </div>
                         Schedule Follow-up
-                    </button>
+                    </a>
                     @if(!$lead->isConverted())
                     <form method="POST" action="{{ route('tenant.leads.convert', $lead) }}">
                         @csrf
