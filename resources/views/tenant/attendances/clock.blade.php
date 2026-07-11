@@ -469,14 +469,9 @@
                     staffId: staffId,
                 }));
 
-                // Monitoring shuru karo
-                (async () => {
-                    const granted = await requestScreenShare();
-                    if (granted) {
-                        startMonitoring(attId);
-                        await captureAndUpload(attId, 'auto');
-                    }
-                })();
+                // Screen share yahan dobara nahi maangte — 'load' listener neeche
+                // localStorage se ise pick karke ek hi baar request karega,
+                // isliye clock-in redirect ke turant baad prompt do baar nahi aayega.
             })();
         @endif
 
