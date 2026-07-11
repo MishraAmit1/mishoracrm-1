@@ -62,6 +62,27 @@
 .empty-icon  { font-size:40px; margin-bottom:12px; }
 .empty-title { font-size:15px; font-weight:700; color:var(--text-100); margin-bottom:6px; }
 .empty-sub   { font-size:13px; color:var(--text-300); margin-bottom:20px; }
+
+/* ── MOBILE ATTENDANCE CARDS (list view, <768px) ──────────────── */
+.at-mobile-list{display:none}
+@media(max-width:768px){
+    .at-table-wrap{display:none}
+    .at-mobile-list{display:flex;flex-direction:column;gap:10px;padding:14px}
+}
+.at-card{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--r-md);padding:14px}
+.at-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px}
+.at-id{display:flex;align-items:center;gap:10px;min-width:0}
+.at-av{width:32px;height:32px;border-radius:50%;background:var(--accent-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.at-name{font-size:14px;font-weight:700;color:var(--text-100);line-height:1.3;word-break:break-word}
+.at-desig{font-size:11.5px;color:var(--text-400);margin-top:2px}
+.at-date{display:flex;flex-direction:column;gap:2px;margin-bottom:10px;padding:9px 11px;background:var(--bg-elevated);border-radius:8px}
+.at-date-main{font-size:12.5px;font-family:var(--mono);color:var(--text-200)}
+.at-date-day{font-size:11px;color:var(--text-400)}
+.at-times{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.at-time-lbl{font-size:10px;color:var(--text-400);text-transform:uppercase;letter-spacing:.04em}
+.at-time-val{font-size:12.5px;font-family:var(--mono);color:var(--text-200);margin-top:2px}
+.at-notes{font-size:12px;color:var(--text-300);margin-bottom:10px}
+.at-foot{display:flex;align-items:center;justify-content:flex-end;gap:6px;padding-top:10px;border-top:1px solid var(--border-subtle)}
 </style>
 @endpush
 
@@ -227,7 +248,7 @@
            class="btn btn-primary">Bulk Entry</a>
     </div>
     @else
-    <div style="overflow-x:auto">
+    <div class="at-table-wrap" style="overflow-x:auto">
         <table class="data-table">
             <thead>
                 <tr>
@@ -318,6 +339,72 @@
                 @endforeach
             </tbody>
         </table>
+    </div>
+
+    {{-- Mobile card list (shown only <768px, table above hides itself) --}}
+    <div class="at-mobile-list">
+    @foreach($attendances as $att)
+    <div class="at-card">
+        <div class="at-top">
+            <div class="at-id">
+                <div class="at-av">{{ strtoupper(substr($att->staff->name, 0, 1)) }}</div>
+                <div style="min-width:0">
+                    <div class="at-name">{{ $att->staff->name }}</div>
+                    @if($att->staff->designation)
+                    <div class="at-desig">{{ $att->staff->designation }}</div>
+                    @endif
+                </div>
+            </div>
+            <span class="status-badge badge-{{ $att->status_color }}">{{ $att->status_label }}</span>
+        </div>
+        <div class="at-date">
+            <div class="at-date-main">{{ $att->date->format('d M Y') }}</div>
+            <div class="at-date-day">{{ $att->date->format('l') }}</div>
+        </div>
+        <div class="at-times">
+            <div>
+                <div class="at-time-lbl">Clock In</div>
+                <div class="at-time-val">{{ $att->clock_in?->format('h:i A') ?? '—' }}</div>
+            </div>
+            <div>
+                <div class="at-time-lbl">Clock Out</div>
+                <div class="at-time-val">{{ $att->clock_out?->format('h:i A') ?? '—' }}</div>
+            </div>
+            <div>
+                <div class="at-time-lbl">Worked</div>
+                <div class="at-time-val">{{ $att->worked_hours ?? '—' }}</div>
+            </div>
+        </div>
+        @if($att->notes)
+        <div class="at-notes">{{ Str::limit($att->notes, 60) }}</div>
+        @endif
+        <div class="at-foot">
+            <a href="{{ route('tenant.screenshots.show', ['tenant' => $tenantSlug, 'attendance' => $att]) }}"
+               class="btn btn-secondary btn-sm btn-icon">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:13px;height:13px">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/>
+                </svg>
+            </a>
+            <a href="{{ route('tenant.attendances.edit', ['tenant' => $tenantSlug, 'attendance' => $att->id]) }}"
+               class="btn btn-secondary btn-sm btn-icon">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:13px;height:13px">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/>
+                </svg>
+            </a>
+            <form method="POST"
+                  action="{{ route('tenant.attendances.destroy', ['tenant' => $tenantSlug, 'attendance' => $att->id]) }}"
+                  onsubmit="return confirm('Delete karna chahte ho?')">
+                @csrf @method('DELETE')
+                <button type="submit" class="btn btn-secondary btn-sm btn-icon"
+                        style="color:var(--red)">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:13px;height:13px">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
+                    </svg>
+                </button>
+            </form>
+        </div>
+    </div>
+    @endforeach
     </div>
 
     {{-- Pagination --}}

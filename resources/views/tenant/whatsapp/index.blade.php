@@ -35,6 +35,22 @@
 .recent-table td { padding:12px 16px; font-size:13px; color:var(--text-100); border-bottom:1px solid var(--border-subtle); }
 .recent-table tr:last-child td { border-bottom:none; }
 .recent-table tbody tr:hover td { background:var(--bg-elevated); }
+
+/* ── MOBILE WHATSAPP CARDS (list view, <768px) ────────────────── */
+.wa-mobile-list{display:none}
+@media(max-width:768px){
+    .wa-table-wrap{display:none}
+    .wa-mobile-list{display:flex;flex-direction:column;gap:10px;padding:14px}
+}
+.wa-card{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--r-md);padding:14px}
+.wa-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
+.wa-to{font-size:14px;font-weight:700;color:var(--text-100);line-height:1.3;word-break:break-word}
+.wa-phone{font-size:11.5px;color:var(--text-400);margin-top:2px;font-family:var(--mono)}
+.wa-status{font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.wa-message{font-size:12.5px;color:var(--text-200);margin-bottom:10px;padding:9px 11px;background:var(--bg-elevated);border-radius:8px;word-break:break-word}
+.wa-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:11.5px;padding-top:10px;border-top:1px solid var(--border-subtle)}
+.wa-meta-lbl{color:var(--text-400)}
+.wa-meta-val{color:var(--text-200);font-weight:600}
 </style>
 @endpush
 
@@ -121,7 +137,7 @@
         No messages sent yet
     </div>
     @else
-    <div style="overflow-x:auto">
+    <div class="wa-table-wrap" style="overflow-x:auto">
         <table class="recent-table data-table">
             <thead>
                 <tr>
@@ -158,6 +174,28 @@
                 @endforeach
             </tbody>
         </table>
+    </div>
+
+    {{-- Mobile card list (shown only <768px, table above hides itself) --}}
+    <div class="wa-mobile-list">
+    @foreach($recentLogs as $log)
+    @php $sc = match($log->status) { 'sent'=>['green','Sent'], 'failed'=>['red','Failed'], 'pending'=>['amber','Pending'], default=>['text-300','—'] }; @endphp
+    <div class="wa-card">
+        <div class="wa-top">
+            <div style="min-width:0">
+                <div class="wa-to">{{ $log->to_name ?? $log->to_phone }}</div>
+                <div class="wa-phone">{{ $log->to_phone }}</div>
+            </div>
+            <span class="wa-status" style="background:var(--{{ $sc[0] }}-dim);color:var(--{{ $sc[0] }})">{{ $sc[1] }}</span>
+        </div>
+        <div class="wa-message">{{ $log->message }}</div>
+        <div class="wa-meta">
+            <span><span class="wa-meta-lbl">Template: </span><span class="wa-meta-val">{{ $log->template?->name ?? '—' }}</span></span>
+            <span><span class="wa-meta-lbl">Sent by: </span><span class="wa-meta-val">{{ $log->sentBy?->name ?? '—' }}</span></span>
+            <span style="color:var(--text-400);font-family:var(--mono)">{{ $log->created_at->diffForHumans() }}</span>
+        </div>
+    </div>
+    @endforeach
     </div>
     @endif
 </div>

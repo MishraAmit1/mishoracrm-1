@@ -38,6 +38,23 @@
 
 .model-chip{font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;background:var(--bg-elevated);border:1px solid var(--border-default);color:var(--text-300)}
 .user-av{width:26px;height:26px;border-radius:50%;background:var(--accent-dim);color:var(--accent);font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* ── MOBILE AUDIT LOG CARDS (list view, <768px) ────────────────── */
+.al-mobile-list{display:none}
+@media(max-width:768px){
+    .al-table-wrap{display:none}
+    .al-mobile-list{display:flex;flex-direction:column;gap:10px;padding:14px}
+}
+.al-card{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--r-md);padding:14px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.al-card:active{border-color:var(--accent)}
+.al-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
+.al-time{font-size:11px;color:var(--text-300);font-family:var(--mono);white-space:nowrap;text-align:right}
+.al-time-abs{font-size:10.5px;color:var(--text-400);margin-top:2px}
+.al-desc{font-size:13px;color:var(--text-100);line-height:1.4;margin-bottom:10px;word-break:break-word}
+.al-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.al-user{display:flex;align-items:center;gap:6px;min-width:0}
+.al-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:10px;border-top:1px solid var(--border-subtle)}
+.al-ip{font-size:11px;font-family:var(--mono);color:var(--text-300)}
 </style>
 @endpush
 
@@ -97,7 +114,7 @@
 
 {{-- Table --}}
 <div class="card" style="padding:0;overflow:hidden">
-    <div style="overflow-x:auto">
+    <div class="al-table-wrap" style="overflow-x:auto">
         <table class="data-table">
             <thead>
                 <tr>
@@ -165,6 +182,47 @@
                 @endforelse
             </tbody>
         </table>
+    </div>
+
+    {{-- Mobile card list (shown only <768px, table above hides itself) --}}
+    <div class="al-mobile-list">
+        @forelse($logs as $log)
+        <div class="al-card" onclick="window.location='{{ route('tenant.audit-logs.show', $log->id) }}'">
+            <div class="al-top">
+                <span class="a-badge {{ $log->action }}">
+                    <i data-feather="{{ $log->action_icon }}" style="width:11px;height:11px"></i>
+                    {{ $log->action }}
+                </span>
+                <div class="al-time">
+                    {{ $log->created_at->diffForHumans() }}
+                    <div class="al-time-abs">{{ $log->created_at->format('d M Y, H:i') }}</div>
+                </div>
+            </div>
+            <div class="al-desc">{{ $log->description ?? '—' }}</div>
+            <div class="al-meta">
+                @if($log->model_type)
+                    <span class="model-chip">{{ $log->model_short_name }}{{ $log->model_id ? ' #'.$log->model_id : '' }}</span>
+                @else
+                    <span style="color:var(--text-400);font-size:11px">—</span>
+                @endif
+                <div class="al-user">
+                    @if($log->user)
+                        <span class="user-av">{{ strtoupper(substr($log->user->name, 0, 2)) }}</span>
+                        <span style="font-size:12px;color:var(--text-200)">{{ $log->user->name }}</span>
+                    @else
+                        <span style="font-size:12px;color:var(--text-400)">System</span>
+                    @endif
+                </div>
+            </div>
+            <div class="al-foot">
+                <span class="al-ip">{{ $log->ip_address ?? '—' }}</span>
+                <a href="{{ route('tenant.audit-logs.show', $log->id) }}" class="btn btn-ghost btn-xs"
+                   onclick="event.stopPropagation()">View</a>
+            </div>
+        </div>
+        @empty
+        <div style="text-align:center;padding:40px 20px;color:var(--text-400)">No audit logs found.</div>
+        @endforelse
     </div>
 
     {{-- Pagination --}}

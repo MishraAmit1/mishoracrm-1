@@ -35,6 +35,20 @@
 .st-success { color:#16a34a; }
 .st-failed { color:#dc2626; }
 .st-skipped { color:#9ca3af; }
+
+/* ── MOBILE INSTAGRAM CARDS (list view, <768px) ───────────────── */
+.ig-mobile-list{display:none}
+@media(max-width:768px){
+    .ig-table-wrap{display:none}
+    .ig-mobile-list{display:flex;flex-direction:column;gap:10px;padding:14px}
+}
+.ig-card{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--r-md);padding:14px}
+.ig-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
+.ig-user{font-size:13px;font-weight:700;color:var(--text-100);line-height:1.3;word-break:break-word}
+.ig-msg{font-size:12px;color:var(--text-400);margin-top:2px;word-break:break-word}
+.ig-msg-lbl{color:var(--text-400);font-weight:600;text-transform:uppercase;font-size:10px;letter-spacing:.04em}
+.ig-msgs{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;padding:9px 11px;background:var(--bg-elevated);border-radius:8px}
+.ig-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:11.5px;padding-top:10px;border-top:1px solid var(--border-subtle)}
 </style>
 @endpush
 
@@ -148,7 +162,7 @@
             No activity yet. Connect your Instagram account and set up automations to get started.
         </div>
     @else
-    <div style="overflow-x:auto;">
+    <div class="ig-table-wrap" style="overflow-x:auto;">
         <table class="log-table data-table">
             <thead>
                 <tr>
@@ -173,6 +187,28 @@
                 @endforeach
             </tbody>
         </table>
+    </div>
+
+    {{-- Mobile card list (shown only <768px, table above hides itself) --}}
+    <div class="ig-mobile-list">
+    @foreach($recentLogs as $log)
+    <div class="ig-card">
+        <div class="ig-top">
+            <div style="min-width:0">
+                <span class="ev-badge ev-{{ $log->event_type }}">{{ str_replace('_',' ',ucfirst($log->event_type)) }}</span>
+                <div class="ig-user">{{ $log->instagram_username ?? $log->instagram_user_id ?? '—' }}</div>
+            </div>
+            <span class="st-{{ $log->status }}" style="font-size:12px;font-weight:700;white-space:nowrap;flex-shrink:0">{{ ucfirst($log->status) }}</span>
+        </div>
+        <div class="ig-msgs">
+            <div><span class="ig-msg-lbl">In: </span><span class="ig-msg">{{ $log->incoming_text ?? '—' }}</span></div>
+            <div><span class="ig-msg-lbl">Out: </span><span class="ig-msg">{{ $log->outgoing_text ?? '—' }}</span></div>
+        </div>
+        <div class="ig-meta">
+            <span style="color:var(--text-400)">{{ $log->created_at->diffForHumans() }}</span>
+        </div>
+    </div>
+    @endforeach
     </div>
     @endif
 </div>

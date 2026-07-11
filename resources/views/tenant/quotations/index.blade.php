@@ -42,6 +42,29 @@
 .empty-icon  { font-size:40px; margin-bottom:12px; }
 .empty-title { font-size:15px; font-weight:700; color:var(--text-100); margin-bottom:6px; }
 .empty-sub   { font-size:13px; color:var(--text-300); margin-bottom:20px; }
+
+/* ── MOBILE QUOTATION CARDS (<768px) ──────────────────────────── */
+.quotations-mobile-list{display:none}
+@media(max-width:768px){
+    .quotations-table-wrap{display:none}
+    .quotations-mobile-list{display:flex;flex-direction:column;gap:10px;padding:14px}
+}
+.qt-card{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--r-md);padding:14px;transition:border-color .15s}
+.qt-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px}
+.qt-id{min-width:0}
+.qt-number{font-size:14px;font-weight:700;color:var(--text-100);text-decoration:none;word-break:break-word}
+.qt-sub{font-size:11.5px;color:var(--text-400);margin-top:2px}
+.qt-badges{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0}
+.qt-amount{font-size:13.5px;font-weight:700;color:var(--accent);font-family:var(--mono)}
+.qt-contact{display:flex;flex-direction:column;gap:2px;margin-bottom:10px;padding:9px 11px;background:var(--bg-elevated);border-radius:8px}
+.qt-contact-name{font-size:13px;font-weight:600;color:var(--text-100)}
+.qt-contact-sub{font-size:11.5px;color:var(--text-400)}
+.qt-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px;font-size:11.5px}
+.qt-meta-lbl{color:var(--text-400)}
+.qt-meta-val{color:var(--text-200);font-weight:600}
+.qt-disc{color:var(--green);font-weight:600}
+.qt-foot{display:flex;align-items:center;justify-content:flex-end;gap:8px;padding-top:10px;border-top:1px solid var(--border-subtle)}
+.qt-acts{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 </style>
 @endpush
 
@@ -125,7 +148,7 @@
         <a href="{{ route('tenant.quotations.create') }}" class="btn btn-primary">Create Quotation</a>
     </div>
     @else
-    <div style="overflow-x:auto">
+    <div class="quotations-table-wrap" style="overflow-x:auto">
         <table class="data-table">
             <thead>
                 <tr>
@@ -269,6 +292,112 @@
                 @endforeach
             </tbody>
         </table>
+    </div>
+
+    {{-- Mobile card list (shown only <768px, table above hides itself) --}}
+    <div class="quotations-mobile-list">
+    @foreach($quotations as $q)
+    @php $s = $statuses[$q->status] ?? ['color'=>'text-300','bg'=>'bg-elevated','label'=>ucfirst($q->status)]; @endphp
+    <div class="qt-card">
+        <div class="qt-top">
+            <div class="qt-id">
+                <a href="{{ route('tenant.quotations.show', $q->id) }}" class="qt-number">{{ $q->number }}</a>
+                <div class="qt-sub">{{ $q->created_at->format('d M Y') }}</div>
+            </div>
+            <div class="qt-badges">
+                <span class="badge"
+                      style="background:var(--{{ $s['bg'] }});color:var(--{{ $s['color'] }});padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:600">
+                    {{ $s['label'] }}
+                </span>
+                <span class="qt-amount">{{ $q->formatted_total }}</span>
+            </div>
+        </div>
+
+        <div class="qt-contact">
+            @if($q->contact)
+            <div class="qt-contact-name">{{ $q->contact->name }}</div>
+            @if($q->contact->company)
+            <div class="qt-contact-sub">{{ $q->contact->company }}</div>
+            @endif
+            @elseif($q->lead)
+            <div class="qt-contact-name">{{ $q->lead->name }}</div>
+            <div class="qt-contact-sub">Lead</div>
+            @else
+            <div class="qt-contact-sub">No contact linked</div>
+            @endif
+        </div>
+
+        <div class="qt-meta">
+            <span>
+                <span class="qt-meta-lbl">Valid until: </span>
+                <span class="qt-meta-val" style="{{ $q->isExpired() ? 'color:var(--red)' : '' }}">
+                    {{ $q->valid_until?->format('d M Y') ?? '—' }}{{ $q->isExpired() ? ' · Expired' : '' }}
+                </span>
+            </span>
+            @if($q->discount > 0)
+            <span class="qt-disc">-₹{{ number_format($q->discount,0) }} disc.</span>
+            @endif
+        </div>
+
+        <div class="qt-foot">
+            <div class="qt-acts">
+                {{-- View --}}
+                <a href="{{ route('tenant.quotations.show', $q->id) }}"
+                   class="btn btn-secondary btn-sm btn-icon" title="View">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                </a>
+
+                {{-- PDF --}}
+                <a href="{{ route('tenant.quotations.pdf', $q->id) }}"
+                   class="btn btn-secondary btn-sm btn-icon" title="Download PDF" target="_blank">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+                    </svg>
+                </a>
+
+                {{-- Edit --}}
+                @if(!in_array($q->status, ['accepted']))
+                <a href="{{ route('tenant.quotations.edit', $q->id) }}"
+                   class="btn btn-secondary btn-sm btn-icon" title="Edit">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/>
+                    </svg>
+                </a>
+                @endif
+
+                {{-- Convert to Invoice --}}
+                @if($q->status === 'accepted' && !$q->invoice)
+                <form method="POST" action="{{ route('tenant.quotations.convert', $q->id) }}">
+                    @csrf
+                    <button type="submit" class="btn btn-secondary btn-sm"
+                            style="color:var(--green);font-size:12px"
+                            title="Convert to Invoice"
+                            onclick="return confirm('Convert to Invoice?')">
+                        → Invoice
+                    </button>
+                </form>
+                @endif
+
+                {{-- Delete --}}
+                @if($q->status === 'draft')
+                <form method="POST" action="{{ route('tenant.quotations.destroy', $q->id) }}"
+                      onsubmit="return confirm('Delete {{ $q->number }}?')">
+                    @csrf @method('DELETE')
+                    <button type="submit" class="btn btn-secondary btn-sm btn-icon"
+                            style="color:var(--red)" title="Delete">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
+                        </svg>
+                    </button>
+                </form>
+                @endif
+            </div>
+        </div>
+    </div>
+    @endforeach
     </div>
 
     {{-- Pagination --}}

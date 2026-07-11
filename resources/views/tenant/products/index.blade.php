@@ -19,6 +19,24 @@
     .prod-table td { display:flex; align-items:center; justify-content:space-between; gap:12px; text-align:right; max-width:none !important; white-space:normal !important; }
     .prod-table td::before { content:attr(data-label); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.4px; color:var(--text-400); text-align:left; flex-shrink:0; }
 }
+
+/* ── MOBILE PRODUCT CARDS (<768px) ────────────────────────────── */
+.products-mobile-list{display:none}
+@media(max-width:768px){
+    .products-table-wrap{display:none}
+    .products-mobile-list{display:flex;flex-direction:column;gap:10px;padding:0}
+}
+.pr-card{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--r-md);padding:14px}
+.pr-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
+.pr-name{font-size:14px;font-weight:700;color:var(--text-100);word-break:break-word}
+.pr-code{font-size:11.5px;color:var(--text-400);font-family:var(--mono);margin-top:2px}
+.pr-desc{font-size:12.5px;color:var(--text-300);margin-bottom:10px;overflow-wrap:anywhere}
+.pr-info{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;padding:9px 11px;background:var(--bg-elevated);border-radius:8px}
+.pr-info-item{display:flex;flex-direction:column;gap:2px;min-width:70px}
+.pr-info-lbl{font-size:10.5px;color:var(--text-400);text-transform:uppercase;letter-spacing:.3px}
+.pr-info-val{font-size:12.5px;color:var(--text-200);font-weight:600;font-family:var(--mono)}
+.pr-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:10px;border-top:1px solid var(--border-subtle)}
+.pr-acts{display:flex;align-items:center;gap:6px;flex-shrink:0}
 </style>
 @endpush
 
@@ -48,6 +66,7 @@
     @endif
 </form>
 
+<div class="products-table-wrap">
 <table class="prod-table">
     <thead>
         <tr>
@@ -102,6 +121,67 @@
         @endforelse
     </tbody>
 </table>
+</div>
+
+{{-- Mobile card list (shown only <768px, table above hides itself) --}}
+<div class="products-mobile-list">
+@forelse($products as $p)
+<div class="pr-card">
+    <div class="pr-top">
+        <div>
+            <div class="pr-name">{{ $p->name }}</div>
+            @if($p->product_code)<div class="pr-code">{{ $p->product_code }}</div>@endif
+        </div>
+        @if($p->is_active)
+            <span class="badge-active">Active</span>
+        @else
+            <span class="badge-inactive">Inactive</span>
+        @endif
+    </div>
+    @if($p->description)
+    <div class="pr-desc">{{ $p->description }}</div>
+    @endif
+    <div class="pr-info">
+        <div class="pr-info-item">
+            <span class="pr-info-lbl">Rate</span>
+            <span class="pr-info-val">₹{{ number_format($p->rate, 2) }}</span>
+        </div>
+        <div class="pr-info-item">
+            <span class="pr-info-lbl">GST</span>
+            <span class="pr-info-val">{{ $p->tax_percent }}%</span>
+        </div>
+        <div class="pr-info-item">
+            <span class="pr-info-lbl">Unit</span>
+            <span class="pr-info-val">{{ $p->unit ?: '—' }}</span>
+        </div>
+        @if($p->hsn)
+        <div class="pr-info-item">
+            <span class="pr-info-lbl">HSN</span>
+            <span class="pr-info-val">{{ $p->hsn }}</span>
+        </div>
+        @endif
+    </div>
+    <div class="pr-foot">
+        <span></span>
+        <div class="pr-acts">
+            <a href="{{ route('tenant.products.edit', $p->id) }}" class="btn btn-secondary btn-sm">Edit</a>
+            <form method="POST" action="{{ route('tenant.products.destroy', $p->id) }}"
+                  onsubmit="return confirm('Delete this product?')">
+                @csrf @method('DELETE')
+                <button class="btn btn-sm" type="submit"
+                        style="background:var(--red-dim);color:var(--red);border:1px solid rgba(255,82,87,.25)">
+                    Del
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+@empty
+<div style="text-align:center;padding:40px;color:var(--text-400)">
+    No products yet. <a href="{{ route('tenant.products.create') }}" style="color:var(--accent)">Add your first product</a>.
+</div>
+@endforelse
+</div>
 
 <div style="margin-top:14px">{{ $products->links() }}</div>
 

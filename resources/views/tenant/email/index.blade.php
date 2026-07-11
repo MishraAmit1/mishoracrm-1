@@ -8,6 +8,22 @@
 @media(max-width:500px) { .email-stats { grid-template-columns:repeat(2,1fr); } }
 .email-quick-actions { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:24px; }
 @media(max-width:700px) { .email-quick-actions { grid-template-columns:1fr; } }
+
+/* ── MOBILE EMAIL CARDS (list view, <768px) ──────────────────── */
+.email-mobile-list{display:none}
+@media(max-width:768px){
+    .email-table-wrap{display:none}
+    .email-mobile-list{display:flex;flex-direction:column;gap:10px;padding:14px}
+}
+.em-card{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--r-md);padding:14px}
+.em-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
+.em-to{font-size:14px;font-weight:700;color:var(--text-100);line-height:1.3;word-break:break-word}
+.em-email{font-size:11.5px;color:var(--text-400);margin-top:2px;word-break:break-all}
+.em-status{font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.em-subject{font-size:12.5px;color:var(--text-200);margin-bottom:10px;padding:9px 11px;background:var(--bg-elevated);border-radius:8px;word-break:break-word}
+.em-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:11.5px;padding-top:10px;border-top:1px solid var(--border-subtle)}
+.em-meta-lbl{color:var(--text-400)}
+.em-meta-val{color:var(--text-200);font-weight:600}
 </style>
 @endpush
 
@@ -77,7 +93,7 @@
     @if($recentLogs->isEmpty())
     <div style="padding:40px;text-align:center;color:var(--text-300);font-size:13px">No emails sent yet</div>
     @else
-    <div style="overflow-x:auto">
+    <div class="email-table-wrap" style="overflow-x:auto">
         <table class="data-table">
             <thead>
                 <tr><th>To</th><th>Subject</th><th>Template</th><th>Sent By</th><th>Time</th><th>Status</th></tr>
@@ -101,6 +117,28 @@
                 @endforeach
             </tbody>
         </table>
+    </div>
+
+    {{-- Mobile card list (shown only <768px, table above hides itself) --}}
+    <div class="email-mobile-list">
+    @foreach($recentLogs as $log)
+    @php $sc = match($log->status) { 'sent'=>['green','Sent'], 'failed'=>['red','Failed'], default=>['amber','Pending'] }; @endphp
+    <div class="em-card">
+        <div class="em-top">
+            <div style="min-width:0">
+                <div class="em-to">{{ $log->to_name ?? $log->to_email }}</div>
+                <div class="em-email">{{ $log->to_email }}</div>
+            </div>
+            <span class="em-status" style="background:var(--{{ $sc[0] }}-dim);color:var(--{{ $sc[0] }})">{{ $sc[1] }}</span>
+        </div>
+        <div class="em-subject">{{ $log->subject }}</div>
+        <div class="em-meta">
+            <span><span class="em-meta-lbl">Template: </span><span class="em-meta-val">{{ $log->template?->name ?? '—' }}</span></span>
+            <span><span class="em-meta-lbl">Sent by: </span><span class="em-meta-val">{{ $log->sentBy?->name ?? '—' }}</span></span>
+            <span style="color:var(--text-400);font-family:var(--mono)">{{ $log->created_at->diffForHumans() }}</span>
+        </div>
+    </div>
+    @endforeach
     </div>
     @endif
 </div>

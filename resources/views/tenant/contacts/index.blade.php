@@ -124,6 +124,30 @@
 .grid-view { display:block; }
 .grid-view.hidden { display:none; }
 
+/* ── MOBILE CONTACT CARDS (list/table view, <768px) ───────────── */
+.ct-mobile-list{display:none}
+@media(max-width:768px){
+    .ct-table-wrap{display:none}
+    .ct-mobile-list{display:flex;flex-direction:column;gap:10px;padding:14px}
+}
+.ct-card{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--r-md);padding:14px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.ct-card:active{border-color:var(--accent)}
+.ct-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px}
+.ct-id{display:flex;align-items:center;gap:10px;min-width:0}
+.ct-avatar{width:38px;height:38px;border-radius:50%;background:var(--accent-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex-shrink:0}
+.ct-name{font-size:14px;font-weight:700;color:var(--text-100);line-height:1.3;word-break:break-word}
+.ct-email{font-size:11.5px;color:var(--text-400);margin-top:2px}
+.ct-contact{display:flex;flex-direction:column;gap:2px;margin-bottom:10px;padding:9px 11px;background:var(--bg-elevated);border-radius:8px}
+.ct-phone{font-size:12.5px;font-family:var(--mono);color:var(--text-200)}
+.ct-co{font-size:11.5px;color:var(--text-400)}
+.ct-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px;font-size:11.5px}
+.ct-meta-lbl{color:var(--text-400)}
+.ct-meta-val{color:var(--text-200);font-weight:600}
+.ct-stats-row{display:flex;gap:14px;margin-bottom:10px;font-size:11.5px;color:var(--text-300)}
+.ct-stats-row b{color:var(--text-100);font-family:var(--mono)}
+.ct-foot{display:flex;align-items:center;justify-content:flex-end;gap:6px;padding-top:10px;border-top:1px solid var(--border-subtle)}
+.ct-acts{display:flex;align-items:center;gap:6px;flex-shrink:0}
+
 /* Empty state */
 .empty-state { padding:60px 20px; text-align:center; }
 .empty-icon  { font-size:40px; margin-bottom:12px; }
@@ -412,7 +436,7 @@
            class="btn btn-primary">Add Contact</a>
     </div>
     @else
-    <div style="overflow-x:auto">
+    <div class="ct-table-wrap" style="overflow-x:auto">
         <table class="data-table">
             <thead>
                 <tr>
@@ -478,6 +502,56 @@
                 @endforeach
             </tbody>
         </table>
+    </div>
+
+    {{-- Mobile card list (shown only <768px, table above hides itself) --}}
+    <div class="ct-mobile-list">
+    @foreach($contacts as $contact)
+    <div class="ct-card" onclick="window.location='{{ route('tenant.contacts.show', ['tenant' => $tenantSlug, 'id' => $contact->id]) }}'">
+        <div class="ct-top">
+            <div class="ct-id">
+                <div class="ct-avatar">{{ strtoupper(substr($contact->name,0,1)) }}</div>
+                <div style="min-width:0">
+                    <div class="ct-name">{{ $contact->name }}</div>
+                    @if($contact->email)<div class="ct-email">{{ $contact->email }}</div>@endif
+                </div>
+            </div>
+        </div>
+        <div class="ct-contact">
+            <div class="ct-phone">{{ $contact->phone }}</div>
+            <div class="ct-co">{{ $contact->company ?? '—' }}</div>
+        </div>
+        <div class="ct-meta">
+            <span><span class="ct-meta-lbl">City: </span><span class="ct-meta-val">{{ $contact->city ?? '—' }}</span></span>
+            <span style="color:var(--text-400);font-family:var(--mono)">{{ $contact->created_at->diffForHumans() }}</span>
+        </div>
+        <div class="ct-stats-row">
+            <span><b>{{ $contact->deals_count }}</b> Deals</span>
+            <span><b>{{ $contact->invoices_count }}</b> Invoices</span>
+        </div>
+        <div class="ct-foot" onclick="event.stopPropagation()">
+            <div class="ct-acts">
+                <a href="{{ route('tenant.contacts.show', ['tenant' => $tenantSlug, 'id' => $contact->id]) }}"
+                   class="btn btn-secondary btn-sm btn-icon">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                </a>
+                <a href="{{ route('tenant.contacts.edit', ['tenant' => $tenantSlug, 'id' => $contact->id]) }}"
+                   class="btn btn-secondary btn-sm btn-icon">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/></svg>
+                </a>
+                <form method="POST"
+                      action="{{ route('tenant.contacts.destroy', ['tenant' => $tenantSlug, 'id' => $contact->id]) }}"
+                      onsubmit="return confirm('Delete {{ addslashes($contact->name) }}?')">
+                    @csrf @method('DELETE')
+                    <button type="submit" class="btn btn-secondary btn-sm btn-icon"
+                            style="color:var(--red)">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    @endforeach
     </div>
 
     @if($contacts->hasPages())

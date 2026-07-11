@@ -273,6 +273,29 @@
 .di-empty-title { font-size: 14px; font-weight: 600; color: var(--text-100); margin-bottom: 5px; }
 .di-empty-sub   { font-size: 13px; color: var(--text-300); margin-bottom: 16px; }
 
+/* ── MOBILE DEAL CARDS (list view, <768px) ────────────────────── */
+.dm-mobile-list{display:none}
+@media(max-width:768px){
+    .dm-table-wrap{display:none}
+    .dm-mobile-list{display:flex;flex-direction:column;gap:10px;padding:14px}
+}
+.dm-card{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:10px;padding:14px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.dm-card:active{border-color:var(--accent)}
+.dm-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
+.dm-id{display:flex;align-items:flex-start;gap:10px;min-width:0}
+.dm-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.dm-title{font-size:14px;font-weight:700;color:var(--text-100);line-height:1.3;word-break:break-word}
+.dm-contact{font-size:11.5px;color:var(--text-400);margin-top:2px}
+.dm-badges{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0}
+.dm-value{font-family:'DM Mono',monospace;font-size:14px;font-weight:700;color:var(--text-100)}
+.dm-prob-wrap{margin-bottom:10px}
+.dm-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px;font-size:11.5px}
+.dm-meta-lbl{color:var(--text-400)}
+.dm-meta-val{color:var(--text-200);font-weight:600}
+.dm-cnts{display:flex;gap:8px}
+.dm-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:10px;border-top:1px solid var(--border-subtle)}
+.dm-acts{display:flex;align-items:center;gap:6px;flex-shrink:0}
+
 /* Aging badge */
 .age-badge {
     display: inline-flex; align-items: center; gap: 3px;
@@ -582,7 +605,7 @@ $allTotal = $stageSummary->sum('total');
         <a href="{{ route('tenant.deals.create') }}" class="btn btn-primary">Add Deal</a>
     </div>
     @else
-    <div style="overflow-x:auto">
+    <div class="dm-table-wrap" style="overflow-x:auto">
     <table class="di-table">
         <thead><tr>
             <th style="width:36px;padding:9px 8px 9px 16px">
@@ -689,6 +712,72 @@ $allTotal = $stageSummary->sum('total');
         </tbody>
     </table>
     </div>
+
+    {{-- Mobile card list (shown only <768px, table above hides itself) --}}
+    <div class="dm-mobile-list">
+    @foreach($deals as $i => $deal)
+    @php
+        [$avBg,$avTx]=$avColors[$i%4];
+        $stg=$cfgStages[$deal->stage]??$cfgStages['new'];
+        $prob=(int)($deal->probability??$stg['probability']);
+        $pColor=$probColor($prob);
+        $assInit=$deal->assignedTo?$initials($deal->assignedTo->name):'';
+    @endphp
+    <div class="dm-card" onclick="window.location='{{ route('tenant.deals.show',$deal->id) }}'">
+        <div class="dm-top">
+            <div class="dm-id">
+                <div class="dm-avatar" style="background:{{ $avBg }};color:{{ $avTx }}">{{ $deal->contact ? strtoupper(substr($deal->contact->name,0,1)) : '₹' }}</div>
+                <div style="min-width:0">
+                    <div class="dm-title">{{ $deal->title }}</div>
+                    @if($deal->contact)
+                    <div class="dm-contact">{{ $deal->contact->name }}{{ $deal->contact->company ? ' · '.$deal->contact->company : '' }}</div>
+                    @endif
+                </div>
+            </div>
+            <div class="dm-badges">
+                <span class="st-badge" style="background:{{ $stg['bg'] }};color:{{ $stg['text_color'] }};border:1px solid {{ $stg['color'] }}30">{{ $stg['label'] }}</span>
+                <span class="dm-value">₹{{ number_format($deal->value) }}</span>
+            </div>
+        </div>
+        <div class="dm-prob-wrap">
+            <div class="lp-wrap">
+                <div class="lp-track"><div class="lp-fill" style="width:{{ $prob }}%;background:{{ $pColor }}"></div></div>
+                <span style="font-family:'DM Mono',monospace;font-size:11.5px;color:var(--text-300);min-width:32px">{{ $prob }}%</span>
+            </div>
+        </div>
+        <div class="dm-meta">
+            <span>
+                <span class="dm-meta-lbl">Close: </span>
+                @if($deal->expected_close_date)
+                @php $cd=\Carbon\Carbon::parse($deal->expected_close_date); $ov=$cd->isPast()&&!in_array($deal->stage,['won','lost']); @endphp
+                <span class="dm-meta-val" style="{{ $ov?'color:#E24B4A':'' }}">{{ $cd->format('M d, Y') }}</span>
+                @else <span class="dm-meta-val">—</span> @endif
+            </span>
+            <span class="dm-cnts">
+                @if($deal->tasks_count)<span><i class="ti ti-checkbox" style="font-size:11px"></i> {{ $deal->tasks_count }}</span>@endif
+                @if($deal->followups_count)<span><i class="ti ti-calendar" style="font-size:11px"></i> {{ $deal->followups_count }}</span>@endif
+            </span>
+        </div>
+        <div class="dm-foot">
+            <div style="display:flex;align-items:center;gap:6px;min-width:0">
+                @if($deal->assignedTo)
+                <div style="width:22px;height:22px;border-radius:50%;background:{{ $avBg }};color:{{ $avTx }};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0">{{ $assInit }}</div>
+                <span style="font-size:12px;color:var(--text-200);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $deal->assignedTo->name }}</span>
+                @else<span style="font-size:12px;color:var(--text-400)">Unassigned</span>@endif
+            </div>
+            <div class="dm-acts" onclick="event.stopPropagation()">
+                <a href="{{ route('tenant.deals.show',$deal->id) }}" class="act-btn" title="View"><i class="ti ti-eye" style="font-size:13px"></i></a>
+                <a href="{{ route('tenant.deals.edit',$deal->id) }}" class="act-btn" title="Edit"><i class="ti ti-edit" style="font-size:13px"></i></a>
+                <form method="POST" action="{{ route('tenant.deals.destroy',$deal->id) }}" style="display:inline" onsubmit="return confirm('Delete this deal?')">
+                    @csrf @method('DELETE')
+                    <button type="submit" class="act-btn del" title="Delete"><i class="ti ti-trash" style="font-size:13px"></i></button>
+                </form>
+            </div>
+        </div>
+    </div>
+    @endforeach
+    </div>
+
     @if($deals->hasPages())
     <div class="pag-wrap">
         <span class="pag-info">Showing <strong>{{ $deals->firstItem() }}–{{ $deals->lastItem() }}</strong> of <strong>{{ number_format($deals->total()) }}</strong> deals</span>

@@ -160,6 +160,19 @@
 }
 #reqBackdrop .req-close-btn:hover { color: var(--text-100); border-color: var(--border-default); }
 #reqBackdrop .req-close-btn svg { width: 13px; height: 13px; }
+
+/* ── MOBILE REQUEST CARDS (<768px) ────────────────────────────── */
+.automation-mobile-list{display:none}
+@media(max-width:768px){
+    .automation-table-wrap{display:none}
+    .automation-mobile-list{display:flex;flex-direction:column;gap:10px;padding:14px}
+}
+.au-card{background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:var(--r-md);padding:14px}
+.au-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
+.au-title{font-size:13.5px;font-weight:700;color:var(--text-100);word-break:break-word}
+.au-sub{font-size:11.5px;color:var(--text-400);margin-top:2px}
+.au-contact{font-size:12px;color:var(--text-300);margin-bottom:10px;padding:9px 11px;background:var(--bg-elevated);border-radius:8px}
+.au-foot{display:flex;align-items:center;justify-content:flex-end;font-size:11.5px;color:var(--text-400);padding-top:10px;border-top:1px solid var(--border-subtle)}
 </style>
 @endpush
 
@@ -269,7 +282,8 @@
     <h2>My Requests</h2>
     <p>Track your submitted automation requests</p>
 </div>
-<div class="card" style="margin-bottom:28px;overflow-x:auto;">
+<div class="card" style="margin-bottom:28px;">
+<div class="automation-table-wrap" style="overflow-x:auto;">
     <table class="data-table">
         <thead>
             <tr>
@@ -298,6 +312,26 @@
             @endforeach
         </tbody>
     </table>
+</div>
+
+{{-- Mobile card list (shown only <768px, table above hides itself) --}}
+<div class="automation-mobile-list">
+@foreach($myRequests as $req)
+<div class="au-card">
+    <div class="au-top">
+        <div>
+            <div class="au-title">{{ $req->template?->title ?? 'Custom Request' }}</div>
+            <div class="au-sub">{{ $req->business_type }}</div>
+        </div>
+        <span class="req-status {{ $req->status }}">
+            {{ ucfirst(str_replace('_', ' ', $req->status)) }}
+        </span>
+    </div>
+    <div class="au-contact">{{ ucfirst($req->contact_preference) }}: {{ $req->contact_value }}</div>
+    <div class="au-foot">{{ $req->created_at->diffForHumans() }}</div>
+</div>
+@endforeach
+</div>
 </div>
 @endif
 

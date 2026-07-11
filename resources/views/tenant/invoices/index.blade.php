@@ -37,6 +37,29 @@
 .pg-btn.disabled { opacity:.4; pointer-events:none; }
 
 .empty-state { padding:60px 20px; text-align:center; color:var(--text-300); font-size:13px; }
+
+/* ── MOBILE INVOICE CARDS (<768px) ─────────────────────────────── */
+.iv-mobile-list{display:none}
+@media(max-width:768px){
+    .iv-table-wrap{display:none}
+    .iv-mobile-list{display:flex;flex-direction:column;gap:10px;padding:14px}
+}
+.iv-card{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--r-md);padding:14px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.iv-card:active{border-color:var(--accent)}
+.iv-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px}
+.iv-num{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--accent)}
+.iv-quo{font-size:11px;color:var(--text-400);margin-top:2px}
+.iv-contact{font-size:12.5px;font-weight:600;color:var(--text-100);margin-top:4px}
+.iv-company{font-size:11.5px;color:var(--text-300)}
+.iv-amounts{display:flex;flex-direction:column;gap:2px;margin-bottom:10px;padding:9px 11px;background:var(--bg-elevated);border-radius:8px}
+.iv-amt-row{display:flex;align-items:center;justify-content:space-between;font-size:12.5px}
+.iv-amt-lbl{color:var(--text-400)}
+.iv-amt-val{font-family:var(--mono);font-weight:700;color:var(--text-100)}
+.iv-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px;font-size:11.5px}
+.iv-meta-lbl{color:var(--text-400)}
+.iv-meta-val{color:var(--text-200);font-weight:600}
+.iv-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:10px;border-top:1px solid var(--border-subtle)}
+.iv-acts{display:flex;align-items:center;gap:6px;flex-shrink:0}
 </style>
 @endpush
 
@@ -133,7 +156,7 @@
         </a>
     </div>
     @else
-    <div style="overflow-x:auto">
+    <div class="iv-table-wrap" style="overflow-x:auto">
         <table class="data-table">
             <thead>
                 <tr>
@@ -214,6 +237,67 @@
                 @endforeach
             </tbody>
         </table>
+    </div>
+
+    {{-- Mobile card list (shown only <768px, table above hides itself) --}}
+    <div class="iv-mobile-list">
+    @foreach($invoices as $inv)
+    @php
+        $sc      = $statusCfg[$inv->status] ?? ['label'=>ucfirst($inv->status),'color'=>'accent','bg'=>'accent-dim'];
+        $isOD    = $inv->isOverdue();
+        $paidPct = $inv->total > 0 ? min(100, round(($inv->paid_amount / $inv->total) * 100)) : 0;
+    @endphp
+    <div class="iv-card" onclick="window.location='{{ route('tenant.invoices.show', $inv->id) }}'">
+        <div class="iv-top">
+            <div style="min-width:0">
+                <div class="iv-num">{{ $inv->number }}</div>
+                @if($inv->quotation)
+                <div class="iv-quo">From {{ $inv->quotation->number }}</div>
+                @endif
+                <div class="iv-contact">{{ $inv->contact?->name ?? '—' }}</div>
+                @if($inv->contact?->company)
+                <div class="iv-company">{{ $inv->contact->company }}</div>
+                @endif
+            </div>
+            <span class="badge" style="background:var(--{{ $sc['bg'] }});color:var(--{{ $sc['color'] }});flex-shrink:0">
+                {{ $isOD ? 'Overdue' : $sc['label'] }}
+            </span>
+        </div>
+        <div class="iv-amounts">
+            <div class="iv-amt-row">
+                <span class="iv-amt-lbl">Amount</span>
+                <span class="iv-amt-val">₹{{ number_format($inv->total, 2) }}</span>
+            </div>
+            @if($inv->paid_amount > 0)
+            <div class="iv-amt-row">
+                <span class="iv-amt-lbl">Paid</span>
+                <span class="iv-amt-val" style="color:var(--green)">₹{{ number_format($inv->paid_amount, 2) }}</span>
+            </div>
+            <div class="pay-mini">
+                <div class="pay-mini-fill" style="width:{{ $paidPct }}%"></div>
+            </div>
+            @endif
+        </div>
+        <div class="iv-meta">
+            <span><span class="iv-meta-lbl">Date: </span><span class="iv-meta-val">{{ $inv->date?->format('d M Y') ?? '—' }}</span></span>
+            <span>
+                <span class="iv-meta-lbl">Due: </span>
+                <span class="iv-meta-val" style="{{ $isOD ? 'color:var(--red)' : '' }}">{{ $inv->due_date?->format('d M Y') ?? '—' }}</span>
+            </span>
+        </div>
+        <div class="iv-foot" onclick="event.stopPropagation()">
+            <div></div>
+            <div class="iv-acts">
+                <a href="{{ route('tenant.invoices.pdf', $inv->id) }}" target="_blank"
+                   class="btn btn-secondary btn-sm" title="PDF">📄</a>
+                @if(!$inv->isPaid())
+                <a href="{{ route('tenant.invoices.edit', $inv->id) }}"
+                   class="btn btn-secondary btn-sm" title="Edit">✎</a>
+                @endif
+            </div>
+        </div>
+    </div>
+    @endforeach
     </div>
 
     @if($invoices->hasPages())

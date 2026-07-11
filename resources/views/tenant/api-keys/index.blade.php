@@ -199,6 +199,20 @@
 .m-post   { background:rgba(34,197,94,.15);  color:#4ade80; }
 .m-put    { background:rgba(251,191,36,.15);  color:#fbbf24; }
 .m-delete { background:rgba(239,68,68,.15);   color:#f87171; }
+
+/* ── MOBILE API KEY CARDS (list view, <768px) ──────────────────────── */
+.ak-mobile-list{display:none}
+@media(max-width:768px){
+    .ak-table-wrap{display:none}
+    .ak-mobile-list{display:flex;flex-direction:column;gap:10px;padding:16px}
+}
+.ak-card{background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:var(--r-md);padding:14px}
+.ak-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.ak-label{font-size:14px;font-weight:700;color:var(--text-100)}
+.ak-key-box{margin-bottom:10px}
+.ak-meta{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;font-size:12px;color:var(--text-300)}
+.ak-meta-lbl{color:var(--text-400)}
+.ak-foot{display:flex;align-items:center;justify-content:flex-end;gap:6px;padding-top:10px;border-top:1px solid var(--border-subtle)}
 </style>
 @endpush
 
@@ -281,6 +295,7 @@
             No API keys yet. Generate one above to get started.
         </div>
         @else
+        <div class="ak-table-wrap" style="overflow-x:auto">
         <table class="keys-table data-table">
             <thead>
                 <tr>
@@ -367,6 +382,78 @@
                 @endforeach
             </tbody>
         </table>
+        </div>
+
+        {{-- Mobile card list (shown only <768px, table above hides itself) --}}
+        <div class="ak-mobile-list">
+            @foreach($apiKeys as $key)
+            <div class="ak-card">
+                <div class="ak-top">
+                    <span class="ak-label">{{ $key->name }}</span>
+                    @if($key->is_active)
+                        <span class="badge badge-active">
+                            <span class="badge-dot"></span> Active
+                        </span>
+                    @else
+                        <span class="badge badge-inactive">
+                            <span class="badge-dot"></span> Inactive
+                        </span>
+                    @endif
+                </div>
+                <div class="ak-key-box">
+                    <div class="key-box">
+                        <span class="key-value" id="key-mobile-{{ $key->id }}" title="{{ $key->key }}">
+                            {{ substr($key->key, 0, 18) }}••••••••••••••••
+                        </span>
+                        <button class="copy-btn" onclick="copyKey('{{ $key->key }}', this)" title="Copy full key">
+                            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75"/>
+                            </svg>
+                            Copy
+                        </button>
+                    </div>
+                </div>
+                <div class="ak-meta">
+                    <span><span class="ak-meta-lbl">Last used:</span> {{ $key->last_used_at ? $key->last_used_at->diffForHumans() : '—' }}</span>
+                    <span><span class="ak-meta-lbl">Created:</span> {{ $key->created_at->format('d M Y') }}@if($key->creator) by {{ $key->creator->name }}@endif</span>
+                </div>
+                <div class="ak-foot">
+                    <div class="row-actions">
+                        {{-- Toggle active/inactive --}}
+                        <form method="POST" action="{{ route('tenant.api-keys.toggle', $key->id) }}">
+                            @csrf
+                            <button type="submit" class="btn-sm btn-outline" title="{{ $key->is_active ? 'Deactivate' : 'Activate' }}">
+                                @if($key->is_active)
+                                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                                    </svg>
+                                    Deactivate
+                                @else
+                                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    Activate
+                                @endif
+                            </button>
+                        </form>
+
+                        {{-- Delete --}}
+                        <form method="POST" action="{{ route('tenant.api-keys.destroy', $key->id) }}"
+                              onsubmit="return confirm('Revoke and permanently delete this API key? Any integration using it will stop working.')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn-sm btn-danger">
+                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
+                                </svg>
+                                Revoke
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            @endforeach
+        </div>
         @endif
     </div>
 

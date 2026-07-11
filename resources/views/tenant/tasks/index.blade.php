@@ -176,6 +176,25 @@
 .di-empty-icon { width:46px; height:46px; border-radius:12px; background:var(--bg-elevated); display:flex; align-items:center; justify-content:center; margin:0 auto 12px; }
 .di-empty-title { font-size:14px; font-weight:600; color:var(--text-100); margin-bottom:5px; }
 .di-empty-sub   { font-size:13px; color:var(--text-300); margin-bottom:16px; }
+
+/* ── MOBILE TASK CARDS (list view, <768px) ────────────────────── */
+.tk-mobile-list{display:none}
+@media(max-width:768px){
+    .tk-table-wrap{display:none}
+    .tk-mobile-list{display:flex;flex-direction:column;gap:10px;padding:14px}
+}
+.tk-card{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:10px;padding:14px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.tk-card:active{border-color:var(--accent)}
+.tk-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
+.tk-title{font-size:14px;font-weight:700;color:var(--text-100);line-height:1.3;word-break:break-word}
+.tk-desc{font-size:11.5px;color:var(--text-400);margin-top:3px;line-height:1.4}
+.tk-badges{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0}
+.tk-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px;font-size:11.5px}
+.tk-meta-lbl{color:var(--text-400)}
+.tk-meta-val{color:var(--text-200);font-weight:600}
+.tk-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:10px;border-top:1px solid var(--border-subtle)}
+.tk-assigned{display:flex;align-items:center;gap:6px;min-width:0}
+.tk-acts{display:flex;align-items:center;gap:6px;flex-shrink:0}
 </style>
 @endpush
 
@@ -459,7 +478,7 @@
             <a href="{{ route('tenant.tasks.create') }}" class="btn btn-primary">Add Task</a>
         </div>
         @else
-        <div style="overflow-x:auto">
+        <div class="tk-table-wrap" style="overflow-x:auto">
             <table class="di-table">
                 <thead>
                     <tr>
@@ -548,6 +567,65 @@
                     @endforeach
                 </tbody>
             </table>
+        </div>
+
+        {{-- Mobile card list (shown only <768px, table above hides itself) --}}
+        <div class="tk-mobile-list">
+        @foreach($tasks as $i => $task)
+        @php
+            [$avBg,$avTx] = $avColors[$i % 4];
+            $status   = $cfgStages[$task->status]   ?? ['label'=>ucfirst($task->status),'color'=>'#999','bg'=>'#eee','text_color'=>'#555'];
+            $priority = $cfgPriorities[$task->priority] ?? null;
+            $taskInitials = $task->assignedTo ? $initials($task->assignedTo->name) : '';
+        @endphp
+        <div class="tk-card" onclick="window.location='{{ route('tenant.tasks.show', $task->id) }}'">
+            <div class="tk-top">
+                <div style="min-width:0">
+                    <div class="tk-title">{{ $task->title }}</div>
+                    @if($task->description)
+                    <div class="tk-desc">{{ \Illuminate\Support\Str::limit($task->description, 80) }}</div>
+                    @endif
+                </div>
+                <div class="tk-badges">
+                    <span class="st-badge" style="background:{{ $status['bg'] }};color:{{ $status['text_color'] }};border:1px solid {{ $status['color'] }}30">{{ $status['label'] }}</span>
+                    @if($priority)
+                    <span class="st-badge" style="background:{{ $priority['bg'] }};color:{{ $priority['color'] }};border:1px solid {{ $priority['color'] }}30">{{ $priority['label'] }}</span>
+                    @endif
+                </div>
+            </div>
+            <div class="tk-meta">
+                <span>
+                    <span class="tk-meta-lbl">Due: </span>
+                    @if($task->due_at)
+                    <span class="tk-meta-val" style="{{ \Carbon\Carbon::parse($task->due_at)->isPast() && $task->status !== 'completed' ? 'color:var(--red)' : '' }}">{{ \Carbon\Carbon::parse($task->due_at)->format('d M Y, h:i A') }}</span>
+                    @else <span class="tk-meta-val">—</span> @endif
+                </span>
+            </div>
+            <div class="tk-foot">
+                <div class="tk-assigned">
+                    @if($task->assignedTo)
+                    <div class="tc-av" style="background:{{ $avBg }};color:{{ $avTx }}">{{ substr($taskInitials,0,2) }}</div>
+                    <span style="font-size:12px;color:var(--text-200);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $task->assignedTo->name }}</span>
+                    @else<span style="font-size:12px;color:var(--text-400)">Unassigned</span>@endif
+                </div>
+                <div class="tk-acts" onclick="event.stopPropagation()">
+                    <a href="{{ route('tenant.tasks.show', $task->id) }}" class="act-btn">
+                        <i class="ti ti-eye"></i>
+                    </a>
+                    <a href="{{ route('tenant.tasks.edit', $task->id) }}" class="act-btn">
+                        <i class="ti ti-edit"></i>
+                    </a>
+                    <form method="POST" action="{{ route('tenant.tasks.destroy', $task->id) }}"
+                          style="display:inline" onsubmit="return confirm('Delete this task?')">
+                        @csrf @method('DELETE')
+                        <button type="submit" class="act-btn del">
+                            <i class="ti ti-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        @endforeach
         </div>
 
         {{-- Pagination --}}
