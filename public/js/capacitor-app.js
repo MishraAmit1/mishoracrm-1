@@ -65,8 +65,8 @@
     }
 
 })();
-console.log("Capacitor Object:", window.Capacitor);
+alert("Capacitor Object:", window.Capacitor);
 
-console.log("Plugins:", window.Capacitor?.Plugins);
+alert("Plugins:", window.Capacitor?.Plugins);
 
-console.log("Push Plugin:", window.Capacitor?.Plugins?.PushNotifications);
+alert("Push Plugin:", window.Capacitor?.Plugins?.PushNotifications);
