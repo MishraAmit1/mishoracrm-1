@@ -1,10 +1,25 @@
-import { Capacitor } from '@capacitor/core';
-import { PushNotifications } from '@capacitor/push-notifications';
+function getCapacitor() {
+    return window.Capacitor || window.CapacitorCore;
+}
 
 async function initPush() {
 
-    if (!Capacitor.isNativePlatform()) {
+    const Capacitor = getCapacitor();
+
+    alert("Capacitor Object: " + !!Capacitor);
+    alert("Plugins: " + !!Capacitor?.Plugins);
+    alert("Push Plugin: " + !!Capacitor?.Plugins?.PushNotifications);
+    alert("Is Native Platform: " + !!Capacitor?.isNativePlatform?.());
+
+    if (!Capacitor || !Capacitor.isNativePlatform()) {
         console.log("Not running inside Capacitor");
+        return;
+    }
+
+    const PushNotifications = Capacitor.Plugins?.PushNotifications;
+
+    if (!PushNotifications) {
+        console.log("PushNotifications plugin not available");
         return;
     }
 
@@ -69,9 +84,3 @@ async function initPush() {
 }
 
 document.addEventListener("DOMContentLoaded", initPush);
-alert("Capacitor Object:", window.Capacitor);
-
-alert("Plugins:", window.Capacitor?.Plugins);
-
-alert("Push Plugin:", window.Capacitor?.Plugins?.PushNotifications);
-alert("Is Native Platform:", Capacitor.isNativePlatform());
