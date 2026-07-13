@@ -10,7 +10,8 @@ async function initPush() {
     alert("Plugins: " + !!Capacitor?.Plugins);
     alert("Push Plugin: " + !!Capacitor?.Plugins?.PushNotifications);
     alert("Is Native Platform: " + !!Capacitor?.isNativePlatform?.());
-
+    alert(Capacitor.getPlatform());
+    alert(PushNotifications);
     if (!Capacitor || !Capacitor.isNativePlatform()) {
         console.log("Not running inside Capacitor");
         return;
