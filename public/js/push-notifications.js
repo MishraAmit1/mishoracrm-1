@@ -12,14 +12,6 @@ async function initPush() {
         return;
     }
 
-    const permission = await PushNotifications.requestPermissions();
-
-    alert("Step 3 - Permission " + JSON.stringify(permission));
-
-    await PushNotifications.register();
-
-    alert("Step 4 - register() called");
-
     PushNotifications.addListener("registration", (token) => {
         alert("Step 5 - TOKEN " + token.value);
     });
@@ -27,6 +19,14 @@ async function initPush() {
     PushNotifications.addListener("registrationError", (error) => {
         alert("Step 6 - Registration Error " + JSON.stringify(error));
     });
+
+    const permission = await PushNotifications.requestPermissions();
+
+    alert("Step 3 - Permission " + JSON.stringify(permission));
+
+    await PushNotifications.register();
+
+    alert("Step 4 - register() called");
 }
 
 document.addEventListener("DOMContentLoaded", initPush);
