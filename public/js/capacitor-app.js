@@ -7,12 +7,12 @@ async function initPush() {
     const Capacitor = getCapacitor();
     const PushNotifications = Capacitor?.Plugins?.PushNotifications;
 
-    alert('Push Notification: ' + !!PushNotifications);
-    alert("Capacitor Object: " + !!Capacitor);
-    alert("Plugins: " + !!Capacitor?.Plugins);
-    alert("Push Plugin: " + !!Capacitor?.Plugins?.PushNotifications);
-    alert("Is Native Platform: " + !!Capacitor?.isNativePlatform?.());
-    alert("Platform: " + Capacitor?.getPlatform?.());
+    // alert('Push Notification: ' + !!PushNotifications);
+    // alert("Capacitor Object: " + !!Capacitor);
+    // alert("Plugins: " + !!Capacitor?.Plugins);
+    // alert("Push Plugin: " + !!Capacitor?.Plugins?.PushNotifications);
+    // alert("Is Native Platform: " + !!Capacitor?.isNativePlatform?.());
+    // alert("Platform: " + Capacitor?.getPlatform?.());
 
     if (!Capacitor || !Capacitor.isNativePlatform()) {
         console.log("Not running inside Capacitor");
