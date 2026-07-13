@@ -31,12 +31,23 @@ class DeviceTokenController extends Controller
                 'platform'    => $request->platform,
                 'app_version' => $request->app_version,
                 'is_active'   => true,
-                'last_used_at'=> now(),
+                'last_used_at' => now(),
             ]
         );
 
         return response()->json([
             'success' => true,
+        ]);
+    }
+
+    public function destroy(Request $request)
+    {
+        DeviceToken::where('user_id', auth()->id())
+            ->where('fcm_token', $request->fcm_token)
+            ->delete();
+
+        return response()->json([
+            'status' => true
         ]);
     }
 }

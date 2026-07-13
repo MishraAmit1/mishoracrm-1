@@ -81,6 +81,10 @@ class User extends Authenticatable
             ? asset('storage/avatars/' . $this->avatar)
             : null;
     }
+    public function deviceTokens()
+    {
+        return $this->hasMany(DeviceToken::class);
+    }
 
     // ── Override BelongsToTenant for superadmin ───────────────────
     // Superadmin ke liye tenant scope apply nahi hona chahiye

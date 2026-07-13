@@ -381,7 +381,15 @@
             initSelect2();
 
         });
-        
+
+    </script>
+    {{-- capicitor --}}
+    <script type="module">
+        import { Capacitor } from 'https://cdn.jsdelivr.net/npm/@capacitor/core@latest/dist/index.js';
+
+        window.CapacitorCore = Capacitor;
+
+        console.log("Capacitor Core Loaded", Capacitor);
     </script>
     <script src="{{ asset('js/capacitor-app.js') }}"></script>
     <script src="{{ asset('js/push-notifications.js') }}"></script>

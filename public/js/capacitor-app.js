@@ -1,72 +1,77 @@
-(function () {
+import { Capacitor } from '@capacitor/core';
+import { PushNotifications } from '@capacitor/push-notifications';
 
-    console.log("Capacitor Helper Loaded");
+async function initPush() {
 
-    window.CapacitorHelper = {
-
-        isCapacitor() {
-            return !!window.Capacitor;
-        },
-
-        isAndroid() {
-            return window.Capacitor?.getPlatform?.() === "android";
-        },
-
-        isIOS() {
-            return window.Capacitor?.getPlatform?.() === "ios";
-        },
-
-        isMobileApp() {
-            return this.isCapacitor();
-        }
-
-    };
-
-    if (!CapacitorHelper.isCapacitor()) return;
-
-    var html = document.documentElement;
-    html.classList.add('is-capacitor-app');
-    if (CapacitorHelper.isAndroid()) html.classList.add('is-android-app');
-    if (CapacitorHelper.isIOS()) html.classList.add('is-ios-app');
-
-    /* ── Hardware back button (Android) ─────────────────────────────
-       Close any open overlay first; otherwise go back in app history;
-       only exit the app from the dashboard (nothing left to go back to). */
-    var App = window.Capacitor?.Plugins?.App;
-    if (App && App.addListener) {
-        App.addListener('backButton', function () {
-            var openDrop = document.querySelector('.drop-menu.open');
-            var bellDrop = document.getElementById('bellDropdown');
-            var sidebar = document.getElementById('sidebar');
-            var confirmBackdrop = document.getElementById('confirmBackdrop');
-
-            if (confirmBackdrop && confirmBackdrop.style.display !== 'none') {
-                if (typeof closeConfirm === 'function') closeConfirm();
-                return;
-            }
-            if (bellDrop && bellDrop.style.display === 'block') {
-                bellDrop.style.display = 'none';
-                return;
-            }
-            if (openDrop) {
-                openDrop.classList.remove('open');
-                return;
-            }
-            if (sidebar && sidebar.classList.contains('mobile-open') && typeof closeMobile === 'function') {
-                closeMobile();
-                return;
-            }
-            if (window.history.length > 1) {
-                window.history.back();
-                return;
-            }
-            App.exitApp();
-        });
+    if (!Capacitor.isNativePlatform()) {
+        console.log("Not running inside Capacitor");
+        return;
     }
 
-})();
+    let permission = await PushNotifications.requestPermissions();
+
+    if (permission.receive !== 'granted') {
+        console.log("Notification Permission Denied");
+        return;
+    }
+
+    await PushNotifications.register();
+
+    PushNotifications.addListener('registration', async (token) => {
+
+        console.log("FCM TOKEN:", token.value);
+
+        await fetch('/device-token', {
+
+            method: 'POST',
+
+            headers: {
+
+                'Content-Type': 'application/json',
+
+                'X-CSRF-TOKEN':
+                    document.querySelector('meta[name="csrf-token"]').content,
+
+                'Accept': 'application/json'
+
+            },
+
+            body: JSON.stringify({
+
+                fcm_token: token.value,
+
+                platform: Capacitor.getPlatform()
+
+            })
+
+        });
+
+    });
+
+    PushNotifications.addListener('registrationError', err => {
+
+        console.error(err);
+
+    });
+
+    PushNotifications.addListener('pushNotificationReceived', notification => {
+
+        console.log(notification);
+
+    });
+
+    PushNotifications.addListener('pushNotificationActionPerformed', action => {
+
+        console.log(action);
+
+    });
+
+}
+
+document.addEventListener("DOMContentLoaded", initPush);
 alert("Capacitor Object:", window.Capacitor);
 
 alert("Plugins:", window.Capacitor?.Plugins);
 
 alert("Push Plugin:", window.Capacitor?.Plugins?.PushNotifications);
+alert("Is Native Platform:", Capacitor.isNativePlatform());
