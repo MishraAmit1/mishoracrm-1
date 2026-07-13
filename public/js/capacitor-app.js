@@ -5,19 +5,19 @@ function getCapacitor() {
 async function initPush() {
 
     const Capacitor = getCapacitor();
-    alert('Push Notification',PushNotifications);
+    const PushNotifications = Capacitor?.Plugins?.PushNotifications;
+
+    alert('Push Notification: ' + !!PushNotifications);
     alert("Capacitor Object: " + !!Capacitor);
     alert("Plugins: " + !!Capacitor?.Plugins);
     alert("Push Plugin: " + !!Capacitor?.Plugins?.PushNotifications);
     alert("Is Native Platform: " + !!Capacitor?.isNativePlatform?.());
-    alert(Capacitor.getPlatform());
-    
+    alert("Platform: " + Capacitor?.getPlatform?.());
+
     if (!Capacitor || !Capacitor.isNativePlatform()) {
         console.log("Not running inside Capacitor");
         return;
     }
-
-    const PushNotifications = Capacitor.Plugins?.PushNotifications;
 
     if (!PushNotifications) {
         console.log("PushNotifications plugin not available");
