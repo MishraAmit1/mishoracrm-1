@@ -26,7 +26,7 @@ class TaskRequest extends FormRequest
             'description'            => ['nullable', 'string', 'max:5000'],
             'status'                 => ['required', 'in:pending,in_progress,completed,cancelled'],
             'priority'               => ['required', 'in:low,medium,high'],
-            'taskable_type'          => ['nullable', 'in:App\Models\Lead,App\Models\Contact,App\Models\Deal'],
+            'taskable_type'          => ['nullable', 'in:lead,contact,deal,App\Models\Lead,App\Models\Contact,App\Models\Deal'],
             'taskable_id'            => ['nullable', 'integer'],
             'assigned_to'            => ['nullable', 'exists:users,id'],
             'due_at'                 => ['nullable', 'date'],

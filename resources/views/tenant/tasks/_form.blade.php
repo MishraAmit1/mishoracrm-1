@@ -269,7 +269,7 @@ $secColors = [
                 @foreach($field['options'] as $key => $label)
 
                 <option value="{{ $key }}"
-                        {{ $fVal == $key ? 'selected' : '' }}>
+                        {{ $fVal == $key || $fVal == $label ? 'selected' : '' }}>
 
                     {{ $label }}
 

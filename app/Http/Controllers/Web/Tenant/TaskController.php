@@ -183,6 +183,25 @@ class TaskController extends Controller
 
         $data = $request->validated();
 
+        if (!empty($data['taskable_type'])) {
+            if ($data['taskable_type'] === 'lead') {
+                $data['taskable_type'] = 'App\Models\Lead';
+            } elseif ($data['taskable_type'] === 'contact') {
+                $data['taskable_type'] = 'App\Models\Contact';
+            } elseif ($data['taskable_type'] === 'deal') {
+                $data['taskable_type'] = 'App\Models\Deal';
+            }
+        } else {
+            // The edit form doesn't reliably resubmit the existing relation,
+            // so an empty selection means "unchanged", not "clear it" —
+            // taskable_type/taskable_id are NOT NULL columns.
+            unset($data['taskable_type'], $data['taskable_id']);
+        }
+
+        if (($data['status'] ?? null) === 'completed' && empty($data['completed_at'])) {
+            $data['completed_at'] = now()->toDateString();
+        }
+
         $task->update($data);
 
         return redirect()->route('tenant.tasks.show', $task->id)->with('success', 'Task updated successfully.');
