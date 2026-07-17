@@ -27,6 +27,7 @@ use Kreait\Firebase\Messaging\Notification as FirebaseNotification;
 // ══════════════════════════════════════════════════════════════════
 
 Route::get('/', fn() => view('welcome'))->name('home');
+Route::get('/privacy-policy', fn() => view('legal.privacy-policy'))->name('privacy-policy');
 Route::get('/firebase-test', function (\Illuminate\Http\Request $request, Messaging $messaging) {
     try {
         $token = $request->query('token')
