@@ -1,8 +1,8 @@
-alert("Step 1 - Script Loaded");
+// alert("Step 1 - Script Loaded");
 
 async function initPush() {
 
-    alert("Step 2 - initPush");
+  //  alert("Step 2 - initPush");
 
     const Capacitor = window.Capacitor || window.CapacitorCore;
     const PushNotifications = Capacitor?.Plugins?.PushNotifications;
