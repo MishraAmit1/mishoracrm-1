@@ -23,6 +23,7 @@ class QuotationRequest extends FormRequest
             'items.*.description' => ['nullable', 'string', 'max:500'],
             'items.*.quantity'    => ['required', 'numeric', 'min:0.01'],
             'items.*.rate'        => ['required', 'numeric', 'min:0'],
+            'items.*.tax_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'items.*.amount'      => ['required', 'numeric', 'min:0'],
             'discount'            => ['nullable', 'numeric', 'min:0'],
             'tax_percent'         => ['nullable', 'numeric', 'min:0', 'max:100'],

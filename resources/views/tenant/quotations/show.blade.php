@@ -293,11 +293,12 @@
                         <thead>
                             <tr>
                                 <th style="width:5%">#</th>
-                                <th style="width:30%">Item / Service</th>
-                                <th style="width:25%">Description</th>
-                                <th style="width:10%;text-align:right">Qty</th>
-                                <th style="width:15%;text-align:right">Rate (₹)</th>
-                                <th style="width:15%;text-align:right">Amount (₹)</th>
+                                <th style="width:25%">Item / Service</th>
+                                <th style="width:22%">Description</th>
+                                <th style="width:9%;text-align:right">Qty</th>
+                                <th style="width:13%;text-align:right">Rate (₹)</th>
+                                <th style="width:10%;text-align:right">GST %</th>
+                                <th style="width:16%;text-align:right">Amount (₹)</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -312,6 +313,7 @@
                                 </td>
                                 <td class="td-right td-num" data-label="Qty">{{ number_format($item['quantity'] ?? 0, 2) }}</td>
                                 <td class="td-right td-num" data-label="Rate (₹)">{{ number_format($item['rate'] ?? 0, 2) }}</td>
+                                <td class="td-right td-num" data-label="GST %">{{ number_format($item['tax_percent'] ?? $quotation->tax_percent ?? 0, 1) }}%</td>
                                 <td class="td-right" style="font-family:'DM Mono',monospace;font-weight:600;color:var(--text-100)" data-label="Amount (₹)">
                                     {{ number_format($item['amount'] ?? 0, 2) }}
                                 </td>

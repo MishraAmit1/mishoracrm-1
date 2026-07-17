@@ -108,7 +108,6 @@
 @php
     $qConfig    = config('quotation');
     $statuses   = $qConfig['statuses'];
-    $taxOptions = $qConfig['tax_options'];
     $itemCols   = $qConfig['item_columns'];
     $currentStatus = old('status', $quotation->status);
     $existingItems = old('items', $quotation->items ?? []);
@@ -335,17 +334,8 @@
                             </tr>
                             <tr>
                                 <td>
-                                    Tax
-                                    <select name="tax_percent" id="taxSelect"
-                                            class="qf-input qf-sel"
-                                            style="width:110px;display:inline-block;margin-left:6px;height:28px;padding:2px 8px;font-size:12.5px"
-                                            onchange="recalcTotals()">
-                                        @foreach($taxOptions as $rate => $label)
-                                        <option value="{{ $rate }}" {{ old('tax_percent', $quotation->tax_percent ?? 18) == $rate ? 'selected':'' }}>
-                                            {{ $label }}
-                                        </option>
-                                        @endforeach
-                                    </select>
+                                    GST (<span id="dispTaxPct">{{ number_format($quotation->tax_percent ?? 18, 1) }}</span>%)
+                                    <input type="hidden" name="tax_percent" id="taxPercentHidden" value="{{ old('tax_percent', $quotation->tax_percent ?? 18) }}">
                                 </td>
                                 <td id="displayTax" style="color:#1D9E75">+₹{{ number_format($quotation->tax_amount ?? 0, 2) }}</td>
                             </tr>
@@ -507,10 +497,8 @@ window.fillRowFromProduct = function(i, p) {
     row.querySelector(`[name="items[${i}][name]"]`).value        = p.name;
     row.querySelector(`[name="items[${i}][description]"]`).value = p.description || '';
     row.querySelector(`[name="items[${i}][rate]"]`).value        = p.rate;
-    const taxHid = row.querySelector(`[name="items[${i}][tax_percent]"]`);
-    if (taxHid) taxHid.value = p.tax_percent;
-    const taxSel = document.getElementById('taxSelect');
-    if (taxSel) taxSel.value = p.tax_percent;
+    const taxInput = row.querySelector(`[name="items[${i}][tax_percent]"]`);
+    if (taxInput) taxInput.value = p.tax_percent;
     calcRowAmount(i);
     markDirty();
 };
@@ -518,7 +506,7 @@ window.fillRowFromProduct = function(i, p) {
 function addItemRow(name='', desc='', qty=1, rate=0, taxPct=''){
     const i    = rowIndex++;
     const amt  = (parseFloat(qty)||0) * (parseFloat(rate)||0);
-    const gst  = taxPct !== '' ? taxPct : (document.getElementById('taxSelect')?.value || 18);
+    const gst  = taxPct !== '' ? taxPct : 18;
     const tbody = document.getElementById('itemsBody');
     const tr   = document.createElement('tr');
     tr.id      = 'row_' + i;
@@ -530,8 +518,8 @@ function addItemRow(name='', desc='', qty=1, rate=0, taxPct=''){
         <td><input type="text" name="items[${i}][description]" class="item-input" placeholder="Optional description" value="${esc(desc)}"/></td>
         <td><input type="number" name="items[${i}][quantity]" class="item-input" placeholder="1" value="${qty}" min="0.01" step="0.01" required oninput="calcRowAmount(${i})"/></td>
         <td><input type="number" name="items[${i}][rate]" class="item-input" placeholder="0.00" value="${rate}" min="0" step="0.01" required oninput="calcRowAmount(${i})"/></td>
+        <td><input type="number" name="items[${i}][tax_percent]" class="item-input" placeholder="18" value="${gst}" min="0" max="100" step="0.1" oninput="recalcTotals()"/></td>
         <td>
-            <input type="hidden" name="items[${i}][tax_percent]" value="${gst}"/>
             <input type="number" name="items[${i}][amount]" class="item-input item-amount-input" id="amt_${i}" value="${amt.toFixed(2)}" readonly/>
         </td>
         <td><button type="button" class="del-row-btn" onclick="delRow(${i})" title="Remove"><i class="ti ti-trash" style="font-size:13px"></i></button></td>
@@ -557,21 +545,35 @@ window.delRow = function(i){
 };
 
 window.recalcTotals = function(){
-    let sub = 0;
-    document.querySelectorAll('[name$="[amount]"]').forEach(el => sub += parseFloat(el.value)||0);
-    const disc    = parseFloat(document.getElementById('discountInput')?.value)||0;
-    const taxPct  = parseFloat(document.getElementById('taxSelect')?.value)||0;
-    const taxable = Math.max(0, sub-disc);
-    const taxAmt  = (taxable*taxPct)/100;
-    const total   = taxable + taxAmt;
+    let sub   = 0;
+    let taxAmt = 0;
+
+    document.querySelectorAll('#itemsBody tr').forEach(tr => {
+        const qty    = parseFloat(tr.querySelector('[name$="[quantity]"]')?.value)    || 0;
+        const rate   = parseFloat(tr.querySelector('[name$="[rate]"]')?.value)        || 0;
+        const taxPct = parseFloat(tr.querySelector('[name$="[tax_percent]"]')?.value) || 0;
+        const rowAmt = qty * rate;
+        sub    += rowAmt;
+        taxAmt += rowAmt * taxPct / 100;
+    });
+
+    const disc      = parseFloat(document.getElementById('discountInput')?.value)||0;
+    const afterDisc = Math.max(0, sub-disc);
+    const discRatio = sub > 0 ? afterDisc / sub : 1;
+    taxAmt          = taxAmt * discRatio;
+    const total     = afterDisc + taxAmt;
+    const avgTaxPct = afterDisc > 0 ? (taxAmt / afterDisc * 100) : 0;
+
     const fmt = n => '₹'+n.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
     document.getElementById('displaySubtotal').textContent = fmt(sub);
     document.getElementById('displayDiscount').textContent = '-'+fmt(disc);
     document.getElementById('displayTax').textContent      = '+'+fmt(taxAmt);
+    document.getElementById('dispTaxPct').textContent      = avgTaxPct.toFixed(1);
     document.getElementById('displayTotal').innerHTML      = '<strong>'+fmt(total)+'</strong>';
     document.getElementById('hiddenSubtotal').value   = sub.toFixed(2);
     document.getElementById('hiddenTaxAmount').value  = taxAmt.toFixed(2);
     document.getElementById('hiddenTotal').value      = total.toFixed(2);
+    document.getElementById('taxPercentHidden').value = avgTaxPct.toFixed(2);
     document.getElementById('sidebarTotal').textContent = fmt(total);
 };
 

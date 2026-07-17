@@ -449,10 +449,11 @@ $words    = toIndianWords($total);
         <thead>
             <tr>
                 <th style="width:5%">#</th>
-                <th style="width:27%">Item / Service</th>
-                <th style="width:25%">Description</th>
-                <th class="c" style="width:9%">Qty</th>
-                <th class="r" style="width:16%">Rate (&#8377;)</th>
+                <th style="width:24%">Item / Service</th>
+                <th style="width:22%">Description</th>
+                <th class="c" style="width:8%">Qty</th>
+                <th class="r" style="width:14%">Rate (&#8377;)</th>
+                <th class="c" style="width:9%">GST %</th>
                 <th class="r" style="width:18%">Amount (&#8377;)</th>
             </tr>
         </thead>
@@ -474,11 +475,12 @@ $words    = toIndianWords($total);
                     </td>
                     <td class="c">{{ number_format((float)($item['quantity'] ?? 0), 2) }}</td>
                     <td class="r">{{ number_format((float)($item['rate']     ?? 0), 2) }}</td>
+                    <td class="c">{{ number_format((float)($item['tax_percent'] ?? $taxPct), 1) }}%</td>
                     <td class="a">{{ number_format((float)($item['amount']   ?? 0), 2) }}</td>
                 </tr>
             @empty
                 <tr class="o">
-                    <td colspan="6" style="text-align:center;padding:24px;color:#d1d5db;font-style:italic;background:#f9fafb">
+                    <td colspan="7" style="text-align:center;padding:24px;color:#d1d5db;font-style:italic;background:#f9fafb">
                         No items added to this quotation.
                     </td>
                 </tr>

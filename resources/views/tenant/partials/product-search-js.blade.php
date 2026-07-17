@@ -121,7 +121,7 @@ window.buildProductSearch = function(rowIndex, containerEl) {
         fillRowFromProduct(rowIndex, p);
 
         /* show badge, hide input */
-        const label = (p.product_code ? '[' + p.product_code + '] ' : '') + p.name;
+        const label = (p.product_code ? '[' + p.product_code + '] ' : '') + p.name + ' · GST ' + p.tax_percent + '%';
         badgeTxt.textContent = label;
         badge.classList.add('show');
         input.value = '';

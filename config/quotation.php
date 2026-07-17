@@ -94,11 +94,12 @@ return [
     |--------------------------------------------------------------------------
     */
     'item_columns' => [
-        ['key' => 'name',        'label' => 'Item / Service',  'width' => '30%'],
-        ['key' => 'description', 'label' => 'Description',     'width' => '25%'],
-        ['key' => 'quantity',    'label' => 'Qty',             'width' => '10%'],
-        ['key' => 'rate',        'label' => 'Rate (₹)',        'width' => '15%'],
-        ['key' => 'amount',      'label' => 'Amount (₹)',      'width' => '15%'],
+        ['key' => 'name',        'label' => 'Item / Service',  'width' => '24%'],
+        ['key' => 'description', 'label' => 'Description',     'width' => '20%'],
+        ['key' => 'quantity',    'label' => 'Qty',             'width' => '9%'],
+        ['key' => 'rate',        'label' => 'Rate (₹)',        'width' => '13%'],
+        ['key' => 'tax_percent', 'label' => 'GST %',           'width' => '10%'],
+        ['key' => 'amount',      'label' => 'Amount (₹)',      'width' => '19%'],
         ['key' => 'actions',     'label' => '',                'width' => '5%'],
     ],
 

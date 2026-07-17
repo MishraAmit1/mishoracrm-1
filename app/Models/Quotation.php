@@ -115,20 +115,39 @@ class Quotation extends Model
     // ── Calculate totals from items ───────────────────────────────
     public static function calculateTotals(array $items, float $discount = 0, float $taxPercent = 18): array
     {
-        $subtotal = collect($items)->sum(fn($item) =>
-            ($item['quantity'] ?? 0) * ($item['rate'] ?? 0)
-        );
+        $subtotal  = 0;
+        $taxAmount = 0;
+
+        foreach ($items as $item) {
+            $qty    = (float) ($item['quantity'] ?? 0);
+            $rate   = (float) ($item['rate'] ?? 0);
+            $rowAmt = $qty * $rate;
+            $subtotal += $rowAmt;
+
+            // Each product/line item carries its own GST rate — fall back to
+            // the document-level rate only when a row doesn't specify one.
+            $itemTax = isset($item['tax_percent']) && $item['tax_percent'] !== ''
+                ? (float) $item['tax_percent']
+                : $taxPercent;
+            $taxAmount += $rowAmt * $itemTax / 100;
+        }
 
         $discountedSubtotal = $subtotal - $discount;
-        $taxAmount          = ($discountedSubtotal * $taxPercent) / 100;
-        $total              = $discountedSubtotal + $taxAmount;
+        $discRatio = $subtotal > 0 ? $discountedSubtotal / $subtotal : 1;
+        $taxAmount = round($taxAmount * $discRatio, 2);
+        $total     = round($discountedSubtotal + $taxAmount, 2);
+
+        // Blended effective tax % — for display only; actual tax is computed per item above.
+        $effectiveTaxPct = $discountedSubtotal > 0
+            ? round($taxAmount / $discountedSubtotal * 100, 2)
+            : $taxPercent;
 
         return [
             'subtotal'    => round($subtotal, 2),
             'discount'    => round($discount, 2),
-            'tax_percent' => $taxPercent,
-            'tax_amount'  => round($taxAmount, 2),
-            'total'       => round($total, 2),
+            'tax_percent' => $effectiveTaxPct,
+            'tax_amount'  => $taxAmount,
+            'total'       => $total,
         ];
     }
 

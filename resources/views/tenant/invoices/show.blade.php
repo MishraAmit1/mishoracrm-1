@@ -158,11 +158,11 @@
                                 </td>
 
                                 <td data-label="Tax">
-                                    {{ $invoice->tax_percent }}%
+                                    {{ $item['tax_percent'] ?? $invoice->tax_percent }}%
                                 </td>
 
                                 <td data-label="Total">
-                                    {{-- ₹{{ number_format($item['amount'], 2) }} --}}
+                                    ₹{{ number_format($item['amount'] ?? ($item['quantity'] * $item['rate']), 2) }}
                                 </td>
 
                             </tr>
