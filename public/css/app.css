@@ -590,6 +590,32 @@ select.form-control option { background: var(--bg-elevated); color: var(--text-1
 .toggle.on::after { left: 18px; }
 .toggle-label { font-size: 13px; color: var(--text-200); }
 
+/* ── Pagination (Bootstrap 5 markup from Paginator::useBootstrapFive) ── */
+.pagination {
+  display: flex; flex-wrap: wrap; align-items: center;
+  gap: 4px; list-style: none; margin: 16px 0 0; padding: 0;
+}
+.pagination .page-item .page-link {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 34px; height: 34px; padding: 0 10px;
+  border-radius: 8px; border: 1px solid var(--border-default);
+  background: var(--bg-surface); color: var(--text-200);
+  font-size: 13px; text-decoration: none;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.pagination .page-item .page-link:hover {
+  background: var(--bg-hover); border-color: var(--border-strong); color: var(--text-100);
+}
+.pagination .page-item.active .page-link {
+  background: var(--accent); border-color: var(--accent); color: #fff;
+}
+.pagination .page-item.disabled .page-link {
+  color: var(--text-400); background: transparent; cursor: default;
+}
+.pagination .page-item.disabled .page-link:hover {
+  background: transparent; border-color: var(--border-default); color: var(--text-400);
+}
+
 /* ── Stat cards ─────────────────────────────────────────────────── */
 .stats-grid {
   display: grid;
