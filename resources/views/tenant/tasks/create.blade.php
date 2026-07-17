@@ -354,6 +354,12 @@ $activeStatusData = $cfgStatuses[$activeStatus];
 
                     'isEdit' => false,
 
+                    'contacts' => $contacts,
+
+                    'leads' => $leads,
+
+                    'deals' => $deals,
+
                 ])
 
                 {{-- FOOTER --}}
@@ -604,7 +610,7 @@ $activeStatusData = $cfgStatuses[$activeStatus];
     |--------------------------------------------------------------------------
     */
     const reqKeys = @json(
-        collect(config('tasks.fields'))
+        collect(config('task_fields.fields'))
             ->where('required', true)
             ->pluck('key')
             ->values()

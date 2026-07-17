@@ -576,6 +576,12 @@ $activeStatusData =
 
                     'isEdit' => true,
 
+                    'contacts' => $contacts,
+
+                    'leads' => $leads,
+
+                    'deals' => $deals,
+
                 ])
 
                 {{-- FOOTER --}}

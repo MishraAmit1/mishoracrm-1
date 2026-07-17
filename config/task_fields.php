@@ -128,9 +128,9 @@ return [
             'required'  => false,
             'section'   => 'relations',
             'options'   => [
-                'lead'    => 'App\Models\Lead',
-                'contact' => 'App\Models\Contact',
-                'deal'    => 'App\Models\Deal',
+                'lead'    => 'Lead',
+                'contact' => 'Contact',
+                'deal'    => 'Deal',
             ],
             'span'      => 'half',
         ],
@@ -158,7 +158,7 @@ return [
         [
             'key'       => 'due_at',
             'label'     => 'Due Date',
-            'type'      => 'datetime',
+            'type'      => 'date',
             'required'  => false,
             'section'   => 'timeline',
             'span'      => 'half',
@@ -167,7 +167,7 @@ return [
         [
             'key'       => 'completed_at',
             'label'     => 'Completed At',
-            'type'      => 'datetime',
+            'type'      => 'date',
             'required'  => false,
             'section'   => 'timeline',
             'span'      => 'half',

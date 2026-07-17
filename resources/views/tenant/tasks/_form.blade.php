@@ -26,7 +26,19 @@ $grouped = $cfgFields->groupBy('section');
 | Current Value Helper
 |--------------------------------------------------------------------------
 */
-$val = fn(string $key) => old($key, $model->{$key} ?? '');
+$val = function (string $key, string $type = 'text') use ($model) {
+    $raw = old($key, $model->{$key} ?? '');
+
+    if ($type === 'date' && $raw) {
+        try {
+            return \Illuminate\Support\Carbon::parse($raw)->format('Y-m-d');
+        } catch (\Throwable $e) {
+            return '';
+        }
+    }
+
+    return $raw;
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -118,7 +130,7 @@ $secColors = [
 
         @php
 
-            $fVal = $val($field['key']);
+            $fVal = $val($field['key'], $field['type']);
 
             $hasErr = $errors->has($field['key']);
 
@@ -266,10 +278,18 @@ $secColors = [
                     — Select Type —
                 </option>
 
+                @php
+                    $taskableFqcn = [
+                        'lead'    => 'App\Models\Lead',
+                        'contact' => 'App\Models\Contact',
+                        'deal'    => 'App\Models\Deal',
+                    ];
+                @endphp
+
                 @foreach($field['options'] as $key => $label)
 
                 <option value="{{ $key }}"
-                        {{ $fVal == $key || $fVal == $label ? 'selected' : '' }}>
+                        {{ $fVal == $key || $fVal == ($taskableFqcn[$key] ?? null) ? 'selected' : '' }}>
 
                     {{ $label }}
 
@@ -287,6 +307,7 @@ $secColors = [
 
             <select id="df_taskable_id"
                     name="taskable_id"
+                    data-current="{{ $fVal }}"
                     class="df-input df-sel {{ $hasErr ? 'is-err' : '' }}">
 
                 <option value="">
@@ -401,6 +422,50 @@ $secColors = [
         });
 
     });
+
+})();
+</script>
+
+
+{{-- ═══════════════════════════════════════
+     RELATED RECORD (taskable_id) JS
+═══════════════════════════════════════ --}}
+<script>
+(function(){
+
+    const typeSelect = document.getElementById('df_taskable_type');
+    const idSelect    = document.getElementById('df_taskable_id');
+
+    if (!typeSelect || !idSelect) return;
+
+    const records = {
+        lead: @json($leads->map(fn($l) => ['id' => $l->id, 'label' => $l->name])->values()),
+        contact: @json($contacts->map(fn($c) => ['id' => $c->id, 'label' => $c->company ? "{$c->name} — {$c->company}" : $c->name])->values()),
+        deal: @json($deals->map(fn($d) => ['id' => $d->id, 'label' => $d->title])->values()),
+    };
+
+    function populateRecords(preserveCurrent){
+        const type = typeSelect.value;
+        const current = idSelect.dataset.current || '';
+
+        idSelect.innerHTML = '<option value="">— Select Record —</option>';
+        idSelect.disabled = !type;
+
+        (records[type] || []).forEach(item => {
+            const opt = document.createElement('option');
+            opt.value = item.id;
+            opt.textContent = item.label;
+            if (preserveCurrent && String(item.id) === String(current)) {
+                opt.selected = true;
+            }
+            idSelect.appendChild(opt);
+        });
+    }
+
+    typeSelect.addEventListener('change', () => populateRecords(false));
+
+    // Initial load — keep the currently linked record selected (edit form)
+    populateRecords(true);
 
 })();
 </script>

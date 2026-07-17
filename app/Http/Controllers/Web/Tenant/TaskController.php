@@ -100,13 +100,22 @@ class TaskController extends Controller
         ]);
     }
 
+    private function getRelatableRecords(): array
+    {
+        $tenantId = auth()->user()->tenant_id;
+
+        return [
+            'contacts' => Contact::where('tenant_id', $tenantId)->orderBy('name')->get(['id', 'name', 'company']),
+            'leads'    => Lead::where('tenant_id', $tenantId)->orderBy('name')->get(['id', 'name']),
+            'deals'    => Deal::where('tenant_id', $tenantId)->orderBy('created_at')->get(['id', 'title']),
+        ];
+    }
+
     // create method
     public function create(Request $request)
     {
         $staffList = $this->getStaffList();
-        $contacts  = Contact::orderBy('name')->get(['id', 'name', 'company']);
-        $leads     = Lead::orderBy('name')->get(['id', 'name']);
-        $deals     = Deal::orderBy('created_at')->get(['id', 'title']); 
+        ['contacts' => $contacts, 'leads' => $leads, 'deals' => $deals] = $this->getRelatableRecords();
 
         // Pre-fill contact/lead if coming from their pages
         $contact = $request->filled('contact_id')
@@ -132,6 +141,25 @@ class TaskController extends Controller
         return view('tenant.tasks.create', compact('staffList', 'contacts', 'leads', 'deals', 'contact', 'lead', 'deal'));
     }
 
+    private function normalizeTaskable(array $data): array
+    {
+        $map = [
+            'lead'    => 'App\Models\Lead',
+            'contact' => 'App\Models\Contact',
+            'deal'    => 'App\Models\Deal',
+        ];
+
+        if (!empty($data['taskable_type']) && !empty($data['taskable_id'])) {
+            $data['taskable_type'] = $map[$data['taskable_type']] ?? $data['taskable_type'];
+            $data['taskable_id']   = (int) $data['taskable_id'];
+        } else {
+            $data['taskable_type'] = null;
+            $data['taskable_id']   = null;
+        }
+
+        return $data;
+    }
+
     // store method
     public function store(TaskRequest $request): RedirectResponse
     {
@@ -143,21 +171,8 @@ class TaskController extends Controller
         if ($data['status'] === 'completed' && empty($data['completed_at'])) {
             $data['completed_at'] = now()->toDateString();
         }
-        if(!empty($data['taskable_type'])) {
-           if($data['taskable_type'] === 'lead'){
-                $data['taskable_type'] = 'App\Models\Lead';
-           }
-           elseif($data['taskable_type'] === 'contact'){
-                $data['taskable_type'] = 'App\Models\Contact';
-           }
-            elseif($data['taskable_type'] === 'deal'){
-                $data['taskable_type'] = 'App\Models\Deal';   
-         }
-        } else {
-            $data['taskable_type'] = null;
-            $data['taskable_id'] = null;
-        }
 
+        $data = $this->normalizeTaskable($data);
 
         Task::create($data);
 
@@ -174,7 +189,8 @@ class TaskController extends Controller
     {
         $task      = $this->findTask($id);
         $staffList = $this->getStaffList();
-        return view('tenant.tasks.edit', compact('task', 'staffList'));
+        ['contacts' => $contacts, 'leads' => $leads, 'deals' => $deals] = $this->getRelatableRecords();
+        return view('tenant.tasks.edit', compact('task', 'staffList', 'contacts', 'leads', 'deals'));
     }
 
     public function update(TaskRequest $request, int|string $id)
@@ -183,20 +199,7 @@ class TaskController extends Controller
 
         $data = $request->validated();
 
-        if (!empty($data['taskable_type'])) {
-            if ($data['taskable_type'] === 'lead') {
-                $data['taskable_type'] = 'App\Models\Lead';
-            } elseif ($data['taskable_type'] === 'contact') {
-                $data['taskable_type'] = 'App\Models\Contact';
-            } elseif ($data['taskable_type'] === 'deal') {
-                $data['taskable_type'] = 'App\Models\Deal';
-            }
-        } else {
-            // The edit form doesn't reliably resubmit the existing relation,
-            // so an empty selection means "unchanged", not "clear it" —
-            // taskable_type/taskable_id are NOT NULL columns.
-            unset($data['taskable_type'], $data['taskable_id']);
-        }
+        $data = $this->normalizeTaskable($data);
 
         if (($data['status'] ?? null) === 'completed' && empty($data['completed_at'])) {
             $data['completed_at'] = now()->toDateString();

@@ -4,6 +4,12 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Create workspace — CrmPro</title>
+<script>
+(function () {
+  var saved = localStorage.getItem('crm_theme');
+  if (saved) document.documentElement.dataset.theme = saved;
+})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="{{ asset('css/auth.css') }}"/>
@@ -329,9 +335,8 @@ function toggleTheme() {
   localStorage.setItem('crm_theme', isD ? 'light' : 'dark');
 }
 (function() {
-  const t = localStorage.getItem('crm_theme') || 'dark';
-  document.documentElement.dataset.theme = t;
-  if (t === 'light') { document.getElementById('ico-moon').style.display='none'; document.getElementById('ico-sun').style.display=''; }
+  // Theme itself is already applied in <head> to avoid a flash; just sync the icon.
+  if (document.documentElement.dataset.theme === 'light') { document.getElementById('ico-moon').style.display='none'; document.getElementById('ico-sun').style.display=''; }
 })();
 
 // Steps

@@ -7,6 +7,14 @@
     <meta name="csrf-token" content="{{ csrf_token() }}" />
     <title>@yield('title', 'Dashboard') — {{ Auth::user()?->tenant?->name ?? 'CrmPro' }}</title>
 
+    <script>
+        // Apply saved theme before first paint to avoid a dark/light flash on reload
+        (function () {
+            var saved = localStorage.getItem('crm_theme');
+            if (saved) document.documentElement.dataset.theme = saved;
+        })();
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
         href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap"
@@ -166,10 +174,8 @@
             if (sun) sun.style.display = isDark ? '' : 'none';
         }
         (function () {
-            const saved = localStorage.getItem('crm_theme');
-            if (!saved) return;
-            document.documentElement.dataset.theme = saved;
-            if (saved === 'light') {
+            // Theme itself is already applied in <head> to avoid a flash; just sync the icon.
+            if (document.documentElement.dataset.theme === 'light') {
                 const moon = document.getElementById('ico-moon');
                 const sun = document.getElementById('ico-sun');
                 if (moon) moon.style.display = 'none';
