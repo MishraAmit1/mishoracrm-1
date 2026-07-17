@@ -14,7 +14,6 @@ class InstagramSetting extends Model
         'instagram_account_id',
         'page_id',
         'webhook_verify_token',
-        'n8n_webhook_url',
         'is_connected',
         'token_expires_at',
     ];

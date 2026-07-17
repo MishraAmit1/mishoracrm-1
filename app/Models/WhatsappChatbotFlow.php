@@ -16,7 +16,6 @@ class WhatsappChatbotFlow extends Model
         'keyword_match',
         'response_message',
         'quick_replies',
-        'n8n_webhook_url',
         'is_default',
         'is_active',
         'triggered_count',

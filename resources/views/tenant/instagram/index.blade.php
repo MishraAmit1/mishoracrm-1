@@ -31,7 +31,6 @@
 .ev-dm_sent { background:#d1fae5; color:#065f46; }
 .ev-automation_triggered { background:#ede9fe; color:#5b21b6; }
 .ev-chatbot_triggered { background:#fce7f3; color:#831843; }
-.ev-n8n_triggered { background:#f0fdf4; color:#166534; }
 .st-success { color:#16a34a; }
 .st-failed { color:#dc2626; }
 .st-skipped { color:#9ca3af; }
@@ -56,7 +55,7 @@
 <div class="page-header">
     <div>
         <h1 class="page-title">Instagram Automation</h1>
-        <p class="page-sub">Manage comment replies, DM chatbot, and n8n workflows</p>
+        <p class="page-sub">Manage comment replies and DM chatbot automation</p>
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
         @if($settings->is_connected)
@@ -135,7 +134,7 @@
         </div>
         <div>
             <div class="qa-label">Settings</div>
-            <div class="qa-sub">API credentials & n8n</div>
+            <div class="qa-sub">API credentials</div>
         </div>
     </a>
     <a href="{{ route('tenant.instagram.logs') }}" class="qa-card">

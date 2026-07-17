@@ -114,10 +114,8 @@
     <a href="#instagram-flow">3. Instagram Flow — Comment → DM</a>
     <a href="#chatbot-flow">4. Instagram Chatbot — DM keyword reply</a>
     <a href="#whatsapp-flow">5. WhatsApp Chatbot Flow</a>
-    <a href="#n8n-flow">6. n8n Integration Flow (WhatsApp only)</a>
-    <a href="#setup-steps">7. Step-by-step Setup</a>
-    <a href="#methods">8. Controller Methods Reference</a>
-    <a href="#payloads">9. n8n Payload Examples</a>
+    <a href="#setup-steps">6. Step-by-step Setup</a>
+    <a href="#methods">7. Controller Methods Reference</a>
 </div>
 
 {{-- ══════════════════════════════════════════════════════ --}}
@@ -154,7 +152,7 @@
         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:18px;height:18px;">
             <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/>
         </svg>
-        <span><strong>Note:</strong> Instagram Automation ab n8n workflow use nahi karta — matching aur action dono fully Laravel backend mein hote hain (koi external webhook dependency nahi). n8n integration sirf <a href="#n8n-flow">WhatsApp Chatbot flows</a> ke liye available hai.</span>
+        <span><strong>Note:</strong> Instagram aur WhatsApp dono automation ab n8n workflow use nahi karte — matching aur action dono fully Laravel backend mein hote hain (koi external webhook dependency nahi).</span>
     </div>
 </div>
 
@@ -447,78 +445,27 @@
 </div>
 
 {{-- ══════════════════════════════════════════════════════ --}}
-{{-- 6. n8n INTEGRATION FLOW                               --}}
-{{-- ══════════════════════════════════════════════════════ --}}
-<div class="g-section" id="n8n-flow">
-    <div class="g-section-head">
-        <div class="g-section-num">6</div>
-        <div>
-            <div class="g-section-title">n8n Integration Flow (WhatsApp only)</div>
-            <div class="g-section-sub">2 levels mein n8n webhook support</div>
-        </div>
-    </div>
-
-    <div class="tip-box warn" style="margin-bottom:16px;">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:18px;height:18px;">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
-        </svg>
-        <span><strong>Instagram Automation n8n use nahi karta.</strong> Yeh section sirf WhatsApp ke liye hai. Instagram comment/DM automation fully Laravel backend mein process hota hai — koi n8n webhook involved nahi.</span>
-    </div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
-        <div style="padding:14px 16px;border:1.5px solid #a78bfa;background:#faf5ff;border-radius:var(--r-md);">
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#7c3aed;margin-bottom:6px;">Level 1 — Global</div>
-            <div style="font-size:13px;font-weight:700;color:#4c1d95;margin-bottom:4px;">WhatsApp API Settings mein</div>
-            <div style="font-size:12px;color:#6d28d9;line-height:1.5;">Tenant ka ek global n8n URL. <strong>Har incoming WhatsApp message</strong> par n8n ko call jaata hai.</div>
-        </div>
-        <div style="padding:14px 16px;border:1.5px solid #7dd3fc;background:#f0f9ff;border-radius:var(--r-md);">
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#0284c7;margin-bottom:6px;">Level 2 — Per Chatbot Flow</div>
-            <div style="font-size:13px;font-weight:700;color:#0c4a6e;margin-bottom:4px;">WhatsApp Chatbot flow mein</div>
-            <div style="font-size:12px;color:#075985;line-height:1.5;">Jab <strong>specific chatbot flow match</strong> ho, n8n call hoga. Reply bhi jayega aur n8n bhi trigger hoga — dono ek saath.</div>
-        </div>
-    </div>
-
-    <div style="font-size:13px;font-weight:700;color:var(--text-200);margin-bottom:10px;">n8n ko payload milta hai POST body mein (JSON):</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div>
-            <div class="pill pill-green" style="margin-bottom:8px;">WhatsApp Message Received</div>
-            <div class="payload-box">{
-  <span class="key">"event"</span>: <span class="str">"whatsapp_message_received"</span>,
-  <span class="key">"wa_id"</span>: <span class="str">"919876543210"</span>,
-  <span class="key">"message"</span>: <span class="str">"hi there"</span>,
-  <span class="key">"tenant_id"</span>: <span class="num">3</span>
-}</div>
-        </div>
-        <div>
-            <div class="pill pill-blue" style="margin-bottom:8px;">WhatsApp Chatbot Flow Triggered</div>
-            <div class="payload-box">{
-  <span class="key">"event"</span>: <span class="str">"whatsapp_chatbot_triggered"</span>,
-  <span class="key">"wa_id"</span>: <span class="str">"919876543210"</span>,
-  <span class="key">"contact_name"</span>: <span class="str">"Raj Sharma"</span>,
-  <span class="key">"message"</span>: <span class="str">"price?"</span>,
-  <span class="key">"flow_name"</span>: <span class="str">"Price Inquiry"</span>
-}</div>
-        </div>
-    </div>
-
-    <div class="tip-box info" style="margin-top:16px;">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:18px;height:18px;">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/>
-        </svg>
-        <span><strong>n8n mein kya kar sakte ho:</strong> Is payload se CRM mein lead banao, Slack notification bhejo, Google Sheets update karo, email trigger karo, ya koi bhi complex logic — n8n ke 400+ integrations se.</span>
-    </div>
-</div>
-
-{{-- ══════════════════════════════════════════════════════ --}}
-{{-- 7. SETUP STEPS                                         --}}
+{{-- 6. SETUP STEPS                                         --}}
 {{-- ══════════════════════════════════════════════════════ --}}
 <div class="g-section" id="setup-steps">
     <div class="g-section-head">
-        <div class="g-section-num">7</div>
+        <div class="g-section-num">6</div>
         <div>
             <div class="g-section-title">Step-by-step Setup</div>
             <div class="g-section-sub">Pehli baar setup karne ke liye complete guide</div>
         </div>
+    </div>
+
+    <div class="tip-box info" style="margin-bottom:16px;">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:18px;height:18px;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/>
+        </svg>
+        <span>
+            <strong>Do alag roles hain:</strong>
+            <strong>Super Admin</strong> ek baar poore platform ke liye Meta App setup karta hai (Super Admin → Platform Settings → Meta App).
+            Uske baad har <strong>Tenant Admin</strong> apni Instagram/WhatsApp account sirf QR code scan karke khud connect kar sakta hai — koi token copy-paste nahi karna padta.
+            Neeche dono cards mein sirf <strong>Tenant Admin</strong> ke steps hain (assuming Super Admin ne apna setup complete kar liya hai).
+        </span>
     </div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
@@ -532,46 +479,45 @@
                     <li class="step-item">
                         <div class="step-num">1</div>
                         <div class="step-body">
-                            <div class="step-title">Meta Developer Account banao</div>
-                            <div class="step-desc"><a href="https://developers.facebook.com" target="_blank">developers.facebook.com</a> pe jao → New App banao → Business type select karo</div>
+                            <div class="step-title">Confirm Instagram Business account ready hai</div>
+                            <div class="step-desc">Aapka Instagram account <strong>Business/Creator</strong> type ho aur ek <strong>Facebook Page</strong> se linked ho jiske aap admin hain.</div>
                         </div>
                     </li>
                     <li class="step-item">
                         <div class="step-num">2</div>
                         <div class="step-body">
-                            <div class="step-title">Instagram Basic Display ya Messenger add karo</div>
-                            <div class="step-desc">App mein "Instagram" product add karo. Facebook Page aur Instagram Business account connect karo.</div>
+                            <div class="step-title">QR code generate karo</div>
+                            <div class="step-desc"><a href="{{ route('tenant.instagram.settings') }}">Instagram → Settings</a> pe jao → <strong>"Generate QR Code"</strong> click karo.</div>
                         </div>
                     </li>
                     <li class="step-item">
                         <div class="step-num">3</div>
                         <div class="step-body">
-                            <div class="step-title">Page Access Token lo</div>
-                            <div class="step-desc">Graph API Explorer se long-lived Page Access Token generate karo. Instagram Account ID bhi note karo.</div>
+                            <div class="step-title">Phone se scan karo</div>
+                            <div class="step-desc">Phone camera se QR scan karo → apne Facebook account se login karo (wahi jo Page manage karta hai) → permissions allow karo.</div>
                         </div>
                     </li>
                     <li class="step-item">
                         <div class="step-num">4</div>
                         <div class="step-body">
-                            <div class="step-title">CRM Settings mein credentials dalo</div>
-                            <div class="step-desc"><a href="{{ route('tenant.instagram.settings') }}">Instagram → Settings</a> page pe jao — App ID, App Secret, Page ID, Instagram Account ID, Access Token fill karo → Save</div>
+                            <div class="step-title">Auto-connect ho jayega</div>
+                            <div class="step-desc">Page ID, Instagram Account ID, Access Token — sab automatically fill ho jayenge. Koi token copy-paste nahi karna. Page automatically "Connected" dikhayega.</div>
                         </div>
                     </li>
                     <li class="step-item">
                         <div class="step-num">5</div>
                         <div class="step-body">
-                            <div class="step-title">Webhook register karo</div>
-                            <div class="step-desc">Meta App → Webhooks → Instagram → Edit. Webhook URL aur Verify Token copy karke paste karo. Subscribe karo: <strong>messages</strong>, <strong>comments</strong></div>
-                        </div>
-                    </li>
-                    <li class="step-item">
-                        <div class="step-num">6</div>
-                        <div class="step-body">
                             <div class="step-title">Test Connection → Automations banao</div>
-                            <div class="step-desc">Settings pe "Test Connection" click karo. Connected dikhe toh <a href="{{ route('tenant.instagram.automations') }}">Automations</a> mein jao aur pehla rule banao.</div>
+                            <div class="step-desc">Settings pe "Test Connection" click karo. Connected dikhe toh <a href="{{ route('tenant.instagram.automations') }}">Automations</a> ya <a href="{{ route('tenant.instagram.chatbot') }}">Chatbot</a> mein jao aur pehla rule/flow banao.</div>
                         </div>
                     </li>
                 </ul>
+                <div class="tip-box info" style="margin-top:6px;">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:16px;height:16px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/>
+                    </svg>
+                    <span>"QR code generate nahi ho raha" error aaye toh iska matlab Super Admin ne abhi tak Meta App credentials save nahi kiye — unse contact karo.</span>
+                </div>
             </div>
         </div>
 
@@ -585,50 +531,56 @@
                     <li class="step-item">
                         <div class="step-num">1</div>
                         <div class="step-body">
-                            <div class="step-title">Meta Business Suite pe WhatsApp add karo</div>
-                            <div class="step-desc">Meta Developers App mein WhatsApp product add karo. Business phone number verify karo.</div>
+                            <div class="step-title">Coexistence enable karo (phone pe)</div>
+                            <div class="step-desc">Apne WhatsApp Business App mein: Settings → Business Tools → WhatsApp Business API → <strong>"Continue using WhatsApp Business App"</strong> select karo. Isse phone app aur CRM dono ek saath kaam karenge.</div>
                         </div>
                     </li>
                     <li class="step-item">
                         <div class="step-num">2</div>
                         <div class="step-body">
-                            <div class="step-title">System User + Permanent Token</div>
-                            <div class="step-desc">Business Manager mein System User banao. Usse WhatsApp permission do. Permanent (never-expiring) token generate karo.</div>
+                            <div class="step-title">QR code generate karo</div>
+                            <div class="step-desc"><a href="{{ route('tenant.whatsapp.api-settings') }}">WhatsApp → API Settings</a> pe jao → <strong>"Connect Now"</strong> click karo.</div>
                         </div>
                     </li>
                     <li class="step-item">
                         <div class="step-num">3</div>
                         <div class="step-body">
-                            <div class="step-title">CRM WA API Settings mein credentials</div>
-                            <div class="step-desc"><a href="{{ route('tenant.whatsapp.api-settings') }}">WhatsApp → API Settings</a> pe Phone Number ID, WABA ID, Access Token dalo → Chatbot enable karo → Save</div>
+                            <div class="step-title">Phone se scan karo</div>
+                            <div class="step-desc">Phone camera se QR scan karo → Facebook account se login karo (jo WhatsApp Business Account manage karta hai) → permissions allow karo.</div>
                         </div>
                     </li>
                     <li class="step-item">
                         <div class="step-num">4</div>
                         <div class="step-body">
-                            <div class="step-title">Webhook register karo</div>
-                            <div class="step-desc">Meta App → WhatsApp → Configuration → Webhook. Callback URL aur Verify Token paste karo. Subscribe: <strong>messages</strong></div>
+                            <div class="step-title">Auto-connect ho jayega</div>
+                            <div class="step-desc">Phone Number ID, WABA ID, Access Token — sab automatically fill ho jayenge.</div>
                         </div>
                     </li>
                     <li class="step-item">
                         <div class="step-num">5</div>
                         <div class="step-body">
-                            <div class="step-title">Chatbot flows banao</div>
-                            <div class="step-desc"><a href="{{ route('tenant.whatsapp.chatbot') }}">WhatsApp → Chatbot</a> page pe keyword flows add karo. Ek default flow zaroor rakho (fallback).</div>
+                            <div class="step-title">Chatbot enable karo aur flows banao</div>
+                            <div class="step-desc">API Settings pe <strong>"Enable Chatbot"</strong> tick karke Save karo. Phir <a href="{{ route('tenant.whatsapp.chatbot') }}">WhatsApp → Chatbot</a> page pe keyword flows add karo. Ek default flow zaroor rakho (fallback).</div>
                         </div>
                     </li>
                 </ul>
+                <div class="tip-box info" style="margin-top:6px;">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:16px;height:16px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/>
+                    </svg>
+                    <span>"QR code generate nahi ho raha" error aaye toh iska matlab Super Admin ne abhi tak Meta App credentials save nahi kiye — unse contact karo.</span>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 {{-- ══════════════════════════════════════════════════════ --}}
-{{-- 8. METHODS REFERENCE                                   --}}
+{{-- 7. METHODS REFERENCE                                   --}}
 {{-- ══════════════════════════════════════════════════════ --}}
 <div class="g-section" id="methods">
     <div class="g-section-head">
-        <div class="g-section-num">8</div>
+        <div class="g-section-num">7</div>
         <div>
             <div class="g-section-title">Controller Methods Reference</div>
             <div class="g-section-sub">Har method kya karta hai</div>
@@ -649,6 +601,10 @@
                 <tr><td><code class="method-name">index()</code></td><td>GET /instagram</td><td>Dashboard: stats + recent logs. Settings ka is_connected check karta hai.</td></tr>
                 <tr><td><code class="method-name">settings()</code></td><td>GET /instagram/settings</td><td>Settings form show karta hai — credentials, webhook URLs.</td></tr>
                 <tr><td><code class="method-name">saveSettings()</code></td><td>POST /instagram/settings</td><td>Credentials save karta hai. Agar webhook_verify_token nahi hai toh generate karta hai.</td></tr>
+                <tr><td><code class="method-name">oauthGenerateQr()</code></td><td>POST /instagram/oauth/qr</td><td>Platform Meta App ID/Secret (Super Admin ne set kiya) se ek random state banata hai, cache mein tenant_id ke saath 10 min ke liye store karta hai, aur QR scan URL return karta hai.</td></tr>
+                <tr><td><code class="method-name">oauthStart()</code></td><td>GET /instagram/oauth/start (public)</td><td>Phone browser yahan khulta hai jab QR scan hota hai. Facebook OAuth dialog pe redirect karta hai requested permissions ke saath.</td></tr>
+                <tr><td><code class="method-name">oauthCallback()</code></td><td>GET /instagram/oauth/callback (public)</td><td>Meta yahan redirect karta hai. Access token exchange karta hai, Facebook Page dhundhta hai, linked Instagram Business Account nikaalta hai, aur <code>InstagramSetting</code> mein sab save kar deta hai.</td></tr>
+                <tr><td><code class="method-name">oauthStatus()</code></td><td>GET /instagram/oauth/status</td><td>CRM tab (jahan QR dikha tha) ye poll karta hai ki connect ho gaya ya nahi — polling se hi "Connected!" state dikhta hai.</td></tr>
                 <tr><td><code class="method-name">testConnection()</code></td><td>POST /instagram/test-connection</td><td>Graph API call karke account info fetch karta hai. is_connected update karta hai.</td></tr>
                 <tr><td><code class="method-name">automations()</code></td><td>GET /instagram/automations</td><td>Tenant ki saari automations list karta hai — active/inactive ke saath.</td></tr>
                 <tr><td><code class="method-name">storeAutomation()</code></td><td>POST /instagram/automations</td><td>Naya automation create karta hai. Keywords comma-separated se array mein convert.</td></tr>
@@ -678,7 +634,7 @@
                 <tr><td><code class="method-name">handle()</code></td><td>POST /webhook/instagram</td><td>Saare Meta events receive karta hai. messaging → handleDm(), changes.comments → handleComment().</td></tr>
                 <tr><td><code class="method-name">handleDm()</code> (private)</td><td>—</td><td>DM event process karta hai: automations check → chatbot check → reply. Log banata hai.</td></tr>
                 <tr><td><code class="method-name">handleComment()</code> (private)</td><td>—</td><td>Comment event process karta hai: automations check → execute. Log banata hai.</td></tr>
-                <tr><td><code class="method-name">executeAutomation()</code> (private)</td><td>—</td><td>Automation run karta hai — send_dm / reply_comment. Log update karta hai. (n8n support 2026-07 mein hata diya gaya.)</td></tr>
+                <tr><td><code class="method-name">executeAutomation()</code> (private)</td><td>—</td><td>Automation run karta hai — send_dm / reply_comment. Log update karta hai.</td></tr>
             </tbody>
         </table>
         </div>
@@ -698,61 +654,10 @@
                 <tr><td><code class="method-name">InstagramService::replyToComment()</code></td><td>Comment ID ke /{commentId}/replies endpoint pe POST karta hai.</td></tr>
                 <tr><td><code class="method-name">InstagramService::getAccountInfo()</code></td><td>Account details fetch karta hai — test connection ke liye.</td></tr>
                 <tr><td><code class="method-name">InstagramService::getRecentMedia()</code></td><td>Graph API se recent posts (id, caption, thumbnail_url, permalink) fetch karta hai — Post Picker gallery ke liye.</td></tr>
-                <tr><td><code class="method-name">WhatsappChatbotService::handleIncomingMessage()</code></td><td>WA message ke liye matching flow dhundhta hai, n8n trigger karta hai, aur reply bhejta hai.</td></tr>
+                <tr><td><code class="method-name">WhatsappChatbotService::handleIncomingMessage()</code></td><td>WA message ke liye matching flow dhundhta hai aur reply bhejta hai.</td></tr>
                 <tr><td><code class="method-name">WhatsappChatbotService::sendMessage()</code></td><td>Meta Cloud API ke through WhatsApp message bhejta hai.</td></tr>
-                <tr><td><code class="method-name">N8nService::trigger()</code></td><td>Kisi bhi n8n webhook URL pe 5s timeout ke saath POST karta hai JSON payload ke saath. <strong>Ab sirf WhatsApp chatbot flows use karte hain</strong> — Instagram se unhook kar diya gaya hai.</td></tr>
             </tbody>
         </table>
-        </div>
-    </div>
-</div>
-
-{{-- ══════════════════════════════════════════════════════ --}}
-{{-- 9. PAYLOAD EXAMPLES                                    --}}
-{{-- ══════════════════════════════════════════════════════ --}}
-<div class="g-section" id="payloads">
-    <div class="g-section-head">
-        <div class="g-section-num">9</div>
-        <div>
-            <div class="g-section-title">n8n Payload Examples (WhatsApp only)</div>
-            <div class="g-section-sub">n8n mein ye data milega — Instagram ke liye ab koi n8n payload nahi banta</div>
-        </div>
-    </div>
-
-    <div style="display:grid;gap:14px;">
-        <div>
-            <div style="font-size:12.5px;font-weight:700;color:var(--text-200);margin-bottom:6px;">
-                ① WhatsApp — Chatbot flow trigger hone pe (per-flow n8n URL)
-            </div>
-            <div class="payload-box">{
-  <span class="key">"event"</span>: <span class="str">"whatsapp_chatbot_triggered"</span>,
-  <span class="key">"wa_id"</span>: <span class="str">"919876543210"</span>,             <span class="comment">// phone number</span>
-  <span class="key">"contact_name"</span>: <span class="str">"Rahul Sharma"</span>,        <span class="comment">// WhatsApp display name</span>
-  <span class="key">"message"</span>: <span class="str">"price list chahiye"</span>,
-  <span class="key">"flow_name"</span>: <span class="str">"Price Inquiry"</span>             <span class="comment">// flow ka naam</span>
-}</div>
-        </div>
-
-        <div>
-            <div style="font-size:12.5px;font-weight:700;color:var(--text-200);margin-bottom:6px;">
-                ② Global WhatsApp webhook (har incoming message pe)
-            </div>
-            <div class="payload-box">{
-  <span class="key">"event"</span>: <span class="str">"whatsapp_message_received"</span>,
-  <span class="key">"wa_id"</span>: <span class="str">"919876543210"</span>,
-  <span class="key">"message"</span>: <span class="str">"hello"</span>,
-  <span class="key">"tenant_id"</span>: <span class="num">3</span>
-}</div>
-        </div>
-    </div>
-
-    <div class="tip-box info" style="margin-top:16px;">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:18px;height:18px;">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/>
-        </svg>
-        <div>
-            <strong>n8n mein lead automatically create karna ho toh:</strong><br>
-            n8n mein ek HTTP Request node se aapka CRM API call karo with the payload data. Ya n8n ke built-in CRM integrations use karo. Payload mein <code>wa_id</code> ya <code>user_id</code> se contact identify hoga.
         </div>
     </div>
 </div>

@@ -12,7 +12,6 @@ class WhatsappSetting extends Model
         'waba_id',
         'access_token',
         'webhook_verify_token',
-        'n8n_webhook_url',
         'chatbot_enabled',
         'is_connected',
     ];

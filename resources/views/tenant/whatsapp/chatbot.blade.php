@@ -74,7 +74,6 @@ input:checked + .toggle-slider:before { transform:translateX(16px); }
                     <div class="flow-name">
                         {{ $flow->name }}
                         @if($flow->is_default) <span class="default-badge">Default</span> @endif
-                        @if($flow->n8n_webhook_url) <span style="background:#d1fae5;color:#065f46;border-radius:99px;padding:1px 7px;font-size:11px;font-weight:600;">n8n</span> @endif
                     </div>
                     <div class="flow-kw">
                         @foreach($flow->trigger_keywords ?? [] as $kw)
@@ -154,11 +153,6 @@ input:checked + .toggle-slider:before { transform:translateX(16px); }
                     <textarea name="response_message" id="flowResponse" class="form-input" rows="5" required placeholder="Welcome! How can we help you today?"></textarea>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">n8n Webhook URL <span style="font-weight:400;color:var(--text-300);">(optional)</span></label>
-                    <input type="url" name="n8n_webhook_url" id="flowN8n" class="form-input" placeholder="https://n8n.io/webhook/...">
-                    <span class="form-hint">Call n8n AND send the response message</span>
-                </div>
-                <div class="form-group">
                     <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
                         <input type="checkbox" name="is_default" id="flowDefault" value="1">
                         <span class="form-label" style="margin:0;">Default flow (fallback)</span>
@@ -182,7 +176,6 @@ const flowData = {
         keywords: @json(implode(', ', $flow->trigger_keywords ?? [])),
         match: @json($flow->keyword_match),
         response: @json($flow->response_message),
-        n8n: @json($flow->n8n_webhook_url ?? ''),
         is_default: {{ $flow->is_default ? 'true' : 'false' }},
     },
     @endforeach
@@ -198,7 +191,6 @@ function openEditModal(id) {
     document.getElementById('flowKeywords').value = f.keywords;
     document.getElementById('flowMatch').value = f.match;
     document.getElementById('flowResponse').value = f.response;
-    document.getElementById('flowN8n').value = f.n8n;
     document.getElementById('flowDefault').checked = f.is_default;
     document.getElementById('formCard').scrollIntoView({ behavior: 'smooth' });
 }

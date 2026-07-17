@@ -243,8 +243,7 @@
                 <div style="font-size:12px;color:#166534;line-height:1.5;">
                     ✓ Chatbot auto-reply karta hai<br>
                     ✓ Incoming messages webhook pe aate hain<br>
-                    ✓ CRM se messages bhejna<br>
-                    ✓ n8n automation trigger hoti hai
+                    ✓ CRM se messages bhejna
                 </div>
             </div>
         </div>
@@ -583,7 +582,7 @@
     </div>
 
     <div class="card">
-        <div class="card-header"><h3 class="card-title">Chatbot &amp; n8n</h3></div>
+        <div class="card-header"><h3 class="card-title">Chatbot</h3></div>
         <div class="card-body">
             <div class="form-group">
                 <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;">
@@ -593,11 +592,6 @@
                         <div style="font-size:12px;color:var(--text-300);margin-top:2px;">Incoming messages pe keyword-based auto-reply</div>
                     </div>
                 </label>
-            </div>
-            <div class="form-group" style="margin-top:18px;">
-                <label class="form-label">n8n Webhook URL <span style="font-weight:400;color:var(--text-300);font-size:12px;">(optional)</span></label>
-                <input type="url" name="n8n_webhook_url" class="form-input" value="{{ $settings->n8n_webhook_url }}" placeholder="https://your-n8n.com/webhook/xxxx">
-                <span class="form-hint">Har incoming message is URL pe forward hoga</span>
             </div>
         </div>
     </div>

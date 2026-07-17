@@ -57,27 +57,6 @@ class WhatsappChatbotService
 
         $matchedFlow->incrementTriggered();
 
-        // Trigger n8n if configured
-        if ($matchedFlow->n8n_webhook_url) {
-            app(N8nService::class)->trigger($matchedFlow->n8n_webhook_url, [
-                'event'        => 'whatsapp_chatbot_triggered',
-                'wa_id'        => $waId,
-                'contact_name' => $contactName,
-                'message'      => $messageText,
-                'flow_name'    => $matchedFlow->name,
-            ]);
-        }
-
-        // Also check tenant-level n8n webhook
-        if ($this->settings->n8n_webhook_url) {
-            app(N8nService::class)->trigger($this->settings->n8n_webhook_url, [
-                'event'        => 'whatsapp_message_received',
-                'wa_id'        => $waId,
-                'message'      => $messageText,
-                'tenant_id'    => $this->settings->tenant_id,
-            ]);
-        }
-
         return $this->sendMessage($waId, $matchedFlow->response_message);
     }
 

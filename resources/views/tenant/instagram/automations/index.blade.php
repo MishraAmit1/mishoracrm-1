@@ -18,7 +18,6 @@
 .action-badge { display:inline-flex; padding:2px 8px; border-radius:99px; font-size:11px; font-weight:600; }
 .a-send_dm { background:#ede9fe; color:#5b21b6; }
 .a-reply_comment { background:#fce7f3; color:#831843; }
-.a-trigger_n8n { background:#f0fdf4; color:#166534; }
 .toggle-switch { position:relative; display:inline-block; width:36px; height:20px; }
 .toggle-switch input { opacity:0; width:0; height:0; }
 .toggle-slider { position:absolute; cursor:pointer; inset:0; background:#d1d5db; border-radius:99px; transition:.2s; }

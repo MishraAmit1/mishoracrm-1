@@ -16,7 +16,8 @@ Do tarah ke automations hain:
 
 **Poora processing Laravel backend me hota hai — koi n8n / external workflow engine
 involved nahi hai.** (Pehle ek optional n8n escape-hatch tha jo 2026-07 me hata diya
-gaya — is decision ka reason niche "Why no n8n" section me hai.)
+gaya, aur usi cleanup me WhatsApp chatbot module se bhi n8n hata diya gaya — is decision
+ka reason niche "Why no n8n" section me hai.)
 
 ---
 
@@ -106,7 +107,6 @@ resources/views/tenant/instagram/
 | `action_type`       | enum    | `send_dm` \| `reply_comment` (`trigger_n8n` value still exists in DB for old rows, no longer offered in UI) |
 | `dm_message`        | text, nullable |                                                                 |
 | `comment_reply`     | text, nullable |                                                                 |
-| `n8n_webhook_url`   | string, nullable | **legacy/unused** — kept in DB, not read/written by app code anymore |
 | `is_active`         | boolean |                                                                      |
 | `triggered_count`   | int     | incremented every time this automation fires                       |
 
@@ -119,7 +119,6 @@ resources/views/tenant/instagram/
 | `instagram_account_id`   | string  | IG Business Account ID                    |
 | `page_id`                | string  | linked Facebook Page ID                   |
 | `webhook_verify_token`   | string  | random 32-char, used in Meta webhook verify |
-| `n8n_webhook_url`        | string, nullable | **legacy/unused** column, UI removed |
 | `is_connected`           | boolean |                                            |
 
 ---
@@ -144,14 +143,15 @@ diya gaya:
   tenant-level auto-fire) dono delete kar diye gaye.
 - Views se "Trigger n8n workflow" option aur "n8n Integration" settings card hata diya.
 
-**DB columns jaan-boojh kar nahi hataye gaye** (`n8n_webhook_url` on both tables,
-`trigger_n8n` enum value) — koi destructive migration nahi ki gayi taaki existing rows
-safe rahein. Wo bas ab unused hain. Agar future me clean-up karna ho to ek migration
-chahiye hogi jo enum se value drop kare aur column drop kare — abhi zaroorat nahi thi.
-
-`N8nService` khud delete nahi kiya gaya kyunki WhatsApp chatbot module abhi bhi use
-karta hai (`app/Services/WhatsappChatbotService.php`) — sirf Instagram ke code paths se
-usko unhook kiya gaya hai.
+**Update (2026-07-17):** n8n ab WhatsApp chatbot module se bhi puri tarah hata diya gaya
+hai — `WhatsappChatbotService::handleIncomingMessage()` se dono n8n trigger blocks
+(per-flow aur tenant-level) remove kar diye gaye. `N8nService` class delete kar di gayi
+hai (koi call site nahi bacha). `n8n_webhook_url` column ab `whatsapp_settings`,
+`whatsapp_chatbot_flows`, `whatsapp_chatbot_sessions`, `instagram_settings`, aur
+`instagram_automations` — paanchon tables se migration ke through drop kar diya gaya hai
+(`2026_07_17_120000_drop_n8n_webhook_url_columns.php`). `action_type = trigger_n8n` enum
+value DB me legacy rows ke liye reh sakta hai, lekin UI/validation kabhi se ise accept
+nahi karta.
 
 ---
 

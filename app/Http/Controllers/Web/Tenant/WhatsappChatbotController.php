@@ -36,7 +36,6 @@ class WhatsappChatbotController extends Controller
         $request->validate([
             'phone_number_id' => ['nullable', 'string', 'max:100'],
             'waba_id'         => ['nullable', 'string', 'max:100'],
-            'n8n_webhook_url' => ['nullable', 'url', 'max:500'],
             'chatbot_enabled' => ['nullable', 'boolean'],
         ]);
 
@@ -47,7 +46,6 @@ class WhatsappChatbotController extends Controller
         if ($request->filled('waba_id'))         $settings->waba_id = $request->waba_id;
         if (!$settings->webhook_verify_token)    $settings->webhook_verify_token = Str::random(32);
 
-        $settings->n8n_webhook_url  = $request->n8n_webhook_url;
         $settings->chatbot_enabled  = (bool) $request->chatbot_enabled;
         $settings->save();
 
@@ -256,7 +254,6 @@ class WhatsappChatbotController extends Controller
             'trigger_keywords' => ['required', 'string'],
             'keyword_match'    => ['required', 'in:any,exact,contains'],
             'response_message' => ['required', 'string', 'max:4096'],
-            'n8n_webhook_url'  => ['nullable', 'url', 'max:500'],
             'is_default'       => ['nullable'],
         ]);
 
@@ -268,7 +265,6 @@ class WhatsappChatbotController extends Controller
             'trigger_keywords' => $keywords,
             'keyword_match'    => $request->keyword_match,
             'response_message' => $request->response_message,
-            'n8n_webhook_url'  => $request->n8n_webhook_url,
             'is_default'       => (bool) $request->is_default,
             'is_active'        => true,
         ]);
@@ -287,7 +283,6 @@ class WhatsappChatbotController extends Controller
             'trigger_keywords' => ['required', 'string'],
             'keyword_match'    => ['required', 'in:any,exact,contains'],
             'response_message' => ['required', 'string', 'max:4096'],
-            'n8n_webhook_url'  => ['nullable', 'url'],
             'is_default'       => ['nullable'],
         ]);
 
@@ -298,7 +293,6 @@ class WhatsappChatbotController extends Controller
             'trigger_keywords' => $keywords,
             'keyword_match'    => $request->keyword_match,
             'response_message' => $request->response_message,
-            'n8n_webhook_url'  => $request->n8n_webhook_url,
             'is_default'       => (bool) $request->is_default,
         ]);
 

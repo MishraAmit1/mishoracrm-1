@@ -15,7 +15,6 @@
 .ev-dm_sent { background:#d1fae5; color:#065f46; }
 .ev-automation_triggered { background:#ede9fe; color:#5b21b6; }
 .ev-chatbot_triggered { background:#fce7f3; color:#831843; }
-.ev-n8n_triggered { background:#f0fdf4; color:#166534; }
 .st-success { color:#16a34a; font-weight:600; }
 .st-failed { color:#dc2626; font-weight:600; }
 .st-skipped { color:#9ca3af; font-weight:600; }
@@ -40,7 +39,6 @@
         <option value="dm_sent" {{ request('event_type')==='dm_sent'?'selected':'' }}>DM Sent</option>
         <option value="automation_triggered" {{ request('event_type')==='automation_triggered'?'selected':'' }}>Automation Triggered</option>
         <option value="chatbot_triggered" {{ request('event_type')==='chatbot_triggered'?'selected':'' }}>Chatbot Triggered</option>
-        <option value="n8n_triggered" {{ request('event_type')==='n8n_triggered'?'selected':'' }}>n8n Triggered</option>
     </select>
     <select name="status" onchange="this.form.submit()">
         <option value="">All Statuses</option>

@@ -19,7 +19,6 @@ class InstagramAutomation extends Model
         'action_type',
         'dm_message',
         'comment_reply',
-        'n8n_webhook_url',
         'is_active',
         'triggered_count',
     ];
