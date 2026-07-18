@@ -321,6 +321,7 @@
                 </span>
                 <span class="sb-label">Email</span>
             </a>
+            @if(auth()->user()?->user_type === 'tenant_admin')
             <a href="{{ route('tenant.instagram.index') }}"
                class="sb-item {{ request()->routeIs('tenant.instagram.*') ? 'active' : '' }}">
                 <span class="sb-icon">
@@ -331,6 +332,7 @@
                 </span>
                 <span class="sb-label">Instagram</span>
             </a>
+            @endif
         </div>
 
         {{-- HR --}}

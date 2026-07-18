@@ -15,6 +15,7 @@
 .ev-dm_sent { background:#d1fae5; color:#065f46; }
 .ev-automation_triggered { background:#ede9fe; color:#5b21b6; }
 .ev-chatbot_triggered { background:#fce7f3; color:#831843; }
+.ev-oauth_connect { background:#e0e7ff; color:#3730a3; }
 .st-success { color:#16a34a; font-weight:600; }
 .st-failed { color:#dc2626; font-weight:600; }
 .st-skipped { color:#9ca3af; font-weight:600; }
@@ -39,6 +40,7 @@
         <option value="dm_sent" {{ request('event_type')==='dm_sent'?'selected':'' }}>DM Sent</option>
         <option value="automation_triggered" {{ request('event_type')==='automation_triggered'?'selected':'' }}>Automation Triggered</option>
         <option value="chatbot_triggered" {{ request('event_type')==='chatbot_triggered'?'selected':'' }}>Chatbot Triggered</option>
+        <option value="oauth_connect" {{ request('event_type')==='oauth_connect'?'selected':'' }}>Connect Attempt</option>
     </select>
     <select name="status" onchange="this.form.submit()">
         <option value="">All Statuses</option>

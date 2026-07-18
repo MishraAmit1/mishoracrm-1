@@ -357,16 +357,21 @@ class InstagramController extends Controller
     {
         $state = $request->query('state');
         $code  = $request->query('code');
+        $data  = cache("ig_oauth_{$state}");
 
         if ($request->query('error')) {
+            $message = $request->query('error_description', 'Authorization denied.');
+            $this->logOauthFailure($data['tenant_id'] ?? null, $message, $request->query(), $state);
+
             return view('tenant.instagram.oauth_result', [
                 'success' => false,
-                'message' => $request->query('error_description', 'Authorization denied.'),
+                'message' => $message,
             ]);
         }
 
-        $data = cache("ig_oauth_{$state}");
         if (!$data) {
+            $this->logOauthFailure(null, 'QR code expired or state not found when Meta redirected back.', ['state' => $state], $state);
+
             return view('tenant.instagram.oauth_result', [
                 'success' => false,
                 'message' => 'QR code expired. Please generate a new one.',
@@ -381,68 +386,186 @@ class InstagramController extends Controller
                 'client_secret' => $data['app_secret'],
                 'redirect_uri'  => $callbackUrl,
                 'code'          => $code,
-            ])->json();
+            ]);
 
-            if (empty($tokenRes['access_token'])) {
-                throw new \Exception($tokenRes['error']['message'] ?? 'Failed to get access token.');
+            $tokenJson = $tokenRes->json();
+
+            if (!$tokenRes->successful() || empty($tokenJson['access_token'])) {
+                throw new \Exception($tokenJson['error']['message'] ?? ('Failed to get access token (HTTP ' . $tokenRes->status() . ').'));
             }
 
             $longRes = Http::get('https://graph.facebook.com/v19.0/oauth/access_token', [
                 'grant_type'        => 'fb_exchange_token',
                 'client_id'         => $data['app_id'],
                 'client_secret'     => $data['app_secret'],
-                'fb_exchange_token' => $tokenRes['access_token'],
+                'fb_exchange_token' => $tokenJson['access_token'],
             ])->json();
 
-            $longToken = $longRes['access_token'] ?? $tokenRes['access_token'];
+            $longToken = $longRes['access_token'] ?? $tokenJson['access_token'];
 
             $pagesRes = Http::get('https://graph.facebook.com/v19.0/me/accounts', [
                 'access_token' => $longToken,
-            ])->json();
+            ]);
 
-            if (empty($pagesRes['data'])) {
+            $pagesJson = $pagesRes->json();
+
+            if (!$pagesRes->successful()) {
+                throw new \Exception($pagesJson['error']['message'] ?? ('Failed to fetch Facebook Pages (HTTP ' . $pagesRes->status() . ').'));
+            }
+
+            if (empty($pagesJson['data'])) {
                 throw new \Exception('No Facebook Pages found. Link a Page to your Instagram Business account first.');
             }
 
-            $page      = $pagesRes['data'][0];
-            $pageId    = $page['id'];
-            $pageToken = $page['access_token'];
+            // Resolve the linked Instagram Business Account for every Page the
+            // user manages — a user can admin more than one Page, and each may
+            // have a different Instagram account attached.
+            $candidates = [];
+            foreach ($pagesJson['data'] as $page) {
+                $igRes = Http::get("https://graph.facebook.com/v19.0/{$page['id']}", [
+                    'fields'       => 'instagram_business_account',
+                    'access_token' => $page['access_token'],
+                ])->json();
 
-            $igRes = Http::get("https://graph.facebook.com/v19.0/{$pageId}", [
-                'fields'       => 'instagram_business_account',
-                'access_token' => $pageToken,
-            ])->json();
+                $igAccountId = $igRes['instagram_business_account']['id'] ?? null;
 
-            $igAccountId = $igRes['instagram_business_account']['id'] ?? null;
-
-            if (!$igAccountId) {
-                throw new \Exception('No Instagram Business Account linked to this Facebook Page.');
+                if ($igAccountId) {
+                    $candidates[] = [
+                        'page_id'              => $page['id'],
+                        'page_name'            => $page['name'] ?? $page['id'],
+                        'page_token'           => $page['access_token'],
+                        'instagram_account_id' => $igAccountId,
+                    ];
+                }
             }
 
-            $settings = InstagramSetting::firstOrNew(['tenant_id' => $data['tenant_id']]);
-            $settings->tenant_id            = $data['tenant_id'];
-            $settings->access_token         = $pageToken;
-            $settings->page_id              = $pageId;
-            $settings->instagram_account_id = $igAccountId;
-            $settings->is_connected         = true;
-            if (!$settings->webhook_verify_token) {
-                $settings->webhook_verify_token = Str::random(32);
+            if (empty($candidates)) {
+                throw new \Exception('No Instagram Business Account linked to any of your Facebook Pages.');
             }
-            $settings->save();
+
+            // More than one eligible Page → let the user pick which one to connect
+            // instead of silently binding whichever Meta returned first.
+            if (count($candidates) > 1) {
+                cache()->put("ig_oauth_pages_{$state}", $candidates, now()->addMinutes(10));
+
+                return view('tenant.instagram.oauth_select_page', [
+                    'state' => $state,
+                    'pages' => $candidates,
+                ]);
+            }
+
+            $this->persistInstagramConnection($data['tenant_id'], $candidates[0]);
 
             cache()->put("ig_oauth_done_{$state}", true, now()->addMinutes(5));
             cache()->forget("ig_oauth_{$state}");
+
+            $this->logOauthSuccess($data['tenant_id'], $candidates[0]);
 
             return view('tenant.instagram.oauth_result', [
                 'success' => true,
                 'message' => 'Instagram account connected! You can close this window.',
             ]);
         } catch (\Throwable $e) {
+            $this->logOauthFailure($data['tenant_id'] ?? null, $e->getMessage(), ['state' => $state], $state);
+
             return view('tenant.instagram.oauth_result', [
                 'success' => false,
                 'message' => $e->getMessage(),
             ]);
         }
+    }
+
+    // ── OAuth — Select Page (public — phone browser, only when the user
+    //    manages more than one eligible Facebook Page) ─────────────────
+    public function oauthSelectPage(Request $request): View
+    {
+        $state  = $request->query('state');
+        $pageId = $request->query('page_id');
+
+        $data       = cache("ig_oauth_{$state}");
+        $candidates = cache("ig_oauth_pages_{$state}");
+
+        if (!$data || !$candidates) {
+            $this->logOauthFailure(null, 'Page selection link expired before the user picked a Page.', ['state' => $state], $state);
+
+            return view('tenant.instagram.oauth_result', [
+                'success' => false,
+                'message' => 'This selection link has expired. Please generate a new QR code.',
+            ]);
+        }
+
+        $chosen = collect($candidates)->firstWhere('page_id', $pageId);
+
+        if (!$chosen) {
+            $this->logOauthFailure($data['tenant_id'], 'Selected page_id did not match any cached candidate.', ['state' => $state, 'page_id' => $pageId], $state);
+
+            return view('tenant.instagram.oauth_result', [
+                'success' => false,
+                'message' => 'Invalid page selection.',
+            ]);
+        }
+
+        $this->persistInstagramConnection($data['tenant_id'], $chosen);
+
+        cache()->put("ig_oauth_done_{$state}", true, now()->addMinutes(5));
+        cache()->forget("ig_oauth_{$state}");
+        cache()->forget("ig_oauth_pages_{$state}");
+
+        $this->logOauthSuccess($data['tenant_id'], $chosen);
+
+        return view('tenant.instagram.oauth_result', [
+            'success' => true,
+            'message' => 'Instagram account connected! You can close this window.',
+        ]);
+    }
+
+    // ── OAuth — persist the chosen Page/Instagram account for a tenant ──
+    private function persistInstagramConnection(int $tenantId, array $chosen): void
+    {
+        $settings = InstagramSetting::firstOrNew(['tenant_id' => $tenantId]);
+        $settings->tenant_id            = $tenantId;
+        $settings->access_token         = $chosen['page_token'];
+        $settings->page_id              = $chosen['page_id'];
+        $settings->instagram_account_id = $chosen['instagram_account_id'];
+        $settings->is_connected         = true;
+        if (!$settings->webhook_verify_token) {
+            $settings->webhook_verify_token = Str::random(32);
+        }
+        $settings->save();
+    }
+
+    // ── OAuth — record a connect attempt so it shows up on the Logs page
+    //    instead of only flashing on the phone screen for a few seconds ──
+    private function logOauthFailure(?int $tenantId, string $message, array $context = [], ?string $state = null): void
+    {
+        // Let the desktop tab (which is polling oauthStatus) surface the
+        // failure within seconds instead of only waiting out the 10-minute
+        // countdown with no explanation.
+        if ($state) {
+            cache()->put("ig_oauth_failed_{$state}", $message, now()->addMinutes(10));
+        }
+
+        if (!$tenantId) {
+            return;
+        }
+
+        InstagramLog::create([
+            'tenant_id'     => $tenantId,
+            'event_type'    => 'oauth_connect',
+            'status'        => 'failed',
+            'error_message' => $message,
+            'raw_payload'   => $context,
+        ]);
+    }
+
+    private function logOauthSuccess(int $tenantId, array $chosen): void
+    {
+        InstagramLog::create([
+            'tenant_id'     => $tenantId,
+            'event_type'    => 'oauth_connect',
+            'status'        => 'success',
+            'outgoing_text' => "Connected page \"{$chosen['page_name']}\" (page_id={$chosen['page_id']}, ig_account={$chosen['instagram_account_id']})",
+        ]);
     }
 
     // ── OAuth — Poll status (authenticated) ───────────────────────
@@ -457,6 +580,12 @@ class InstagramController extends Controller
                 'instagram_account_id' => $settings->instagram_account_id,
                 'page_id'              => $settings->page_id,
             ]);
+        }
+
+        if ($failMessage = cache("ig_oauth_failed_{$state}")) {
+            cache()->forget("ig_oauth_failed_{$state}");
+
+            return response()->json(['connected' => false, 'failed' => true, 'message' => $failMessage]);
         }
 
         return response()->json(['connected' => false]);

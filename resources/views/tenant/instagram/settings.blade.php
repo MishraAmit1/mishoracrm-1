@@ -280,6 +280,12 @@ function startPolling() {
                 document.getElementById('qrDone').style.display = 'block';
                 document.getElementById('qrSetupCard').classList.add('connected');
                 setTimeout(() => location.reload(), 1800);
+            } else if (data.failed) {
+                clearInterval(qrPollTimer);
+                clearInterval(qrCountdownTimer);
+                document.getElementById('qrConnecting').style.display = 'none';
+                document.getElementById('qrTimer').textContent = 'Connection failed: ' + data.message;
+                document.getElementById('qrTimer').style.color = '#dc2626';
             }
         })
         .catch(() => {});

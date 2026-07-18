@@ -101,8 +101,9 @@ Route::get('/webhook/leads/{token}',  [LeadWebhookController::class, 'verify'])-
 Route::post('/webhook/leads/{token}', [LeadWebhookController::class, 'handle'])->name('webhook.leads');
 
 // ── Instagram OAuth (no auth — phone browser redirected here by Meta) ──
-Route::get('/instagram/oauth/start',    [Tenant\InstagramController::class, 'oauthStart'])->name('instagram.oauth.start');
-Route::get('/instagram/oauth/callback', [Tenant\InstagramController::class, 'oauthCallback'])->name('instagram.oauth.callback');
+Route::get('/instagram/oauth/start',       [Tenant\InstagramController::class, 'oauthStart'])->name('instagram.oauth.start');
+Route::get('/instagram/oauth/callback',    [Tenant\InstagramController::class, 'oauthCallback'])->name('instagram.oauth.callback');
+Route::get('/instagram/oauth/select-page', [Tenant\InstagramController::class, 'oauthSelectPage'])->name('instagram.oauth.select-page');
 
 // ── WhatsApp OAuth (no auth — phone browser redirected here by Meta) ──
 Route::get('/whatsapp/oauth/start',    [Tenant\WhatsappChatbotController::class, 'oauthStart'])->name('whatsapp.oauth.start');
@@ -433,8 +434,8 @@ Route::middleware(['tenant', 'auth', 'subscription'])
             });
         });
 
-        // ── Instagram Automation ──────────────────────────────────
-        Route::prefix('instagram')->name('instagram.')->group(function () {
+        // ── Instagram Automation (tenant_admin only) ──────────────
+        Route::prefix('instagram')->name('instagram.')->middleware(['role:tenant_admin'])->group(function () {
             Route::get('/',                                [Tenant\InstagramController::class, 'index'])->name('index');
             Route::get('/settings',                        [Tenant\InstagramController::class, 'settings'])->name('settings');
             Route::post('/settings',                       [Tenant\InstagramController::class, 'saveSettings'])->name('settings.save');
