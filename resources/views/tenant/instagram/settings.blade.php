@@ -212,17 +212,28 @@ function testConnection() {
     })
     .then(r => r.json())
     .then(data => {
+        console.log('[Instagram Test Connection] full response:', data);
+
         if (data.success) {
             const sub = data.subscription;
+            if (sub?.success) {
+                console.log('[Instagram Test Connection] Webhook subscription: OK');
+            } else {
+                console.error('[Instagram Test Connection] Webhook subscription FAILED:', sub?.body ?? sub);
+            }
             const subMsg = sub?.success
                 ? 'Webhook subscription: OK'
-                : 'Webhook subscription FAILED (this is why chatbot/automations won\'t fire): ' + JSON.stringify(sub?.body ?? sub);
+                : 'Webhook subscription FAILED (this is why chatbot/automations won\'t fire) — full details logged in the browser console (F12).';
             alert('Connected! Account: @' + (data.account?.username ?? '') + '\n\n' + subMsg);
         } else {
-            alert('Failed: ' + data.message);
+            console.error('[Instagram Test Connection] Failed:', data);
+            alert('Failed: ' + data.message + ' — full details logged in the browser console (F12).');
         }
     })
-    .catch(() => alert('Request failed. Check console.'))
+    .catch(err => {
+        console.error('[Instagram Test Connection] Request error:', err);
+        alert('Request failed. Check console.');
+    })
     .finally(() => { btn.textContent = 'Test Connection'; btn.disabled = false; });
 }
 
