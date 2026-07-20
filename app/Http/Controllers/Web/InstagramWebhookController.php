@@ -63,9 +63,14 @@ class InstagramWebhookController extends Controller
         }
 
         foreach ($payload['entry'] ?? [] as $entry) {
-            $pageId = $entry['id'] ?? null;
+            // Meta's Instagram webhook payloads send the Instagram Business
+            // Account ID as entry.id (not the linked Facebook Page ID) —
+            // match on either so both event shapes resolve to a tenant.
+            $entryId = $entry['id'] ?? null;
 
-            $setting = InstagramSetting::where('page_id', $pageId)->first();
+            $setting = InstagramSetting::where('instagram_account_id', $entryId)
+                ->orWhere('page_id', $entryId)
+                ->first();
             if (!$setting) continue;
 
             // Handle messaging (DMs)
