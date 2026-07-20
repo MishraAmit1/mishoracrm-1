@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Models\ErrorLog;
 use App\Models\InstagramAutomation;
 use App\Models\InstagramChatbotFlow;
 use App\Models\InstagramLog;
@@ -39,6 +40,23 @@ class InstagramWebhookController extends Controller
     public function handle(Request $request): Response
     {
         $payload = $request->all();
+
+        // Diagnostic trail, visible under Superadmin → Error Logs — this is
+        // the only way to tell "Meta never reached us" apart from "Meta
+        // reached us but entry.id didn't match any tenant's page_id", since
+        // both look identical (silence) from the CRM's own Instagram Logs.
+        ErrorLog::create([
+            'tenant_id'       => null,
+            'exception_class' => 'InstagramWebhookReceived',
+            'http_status'     => 200,
+            'message'         => 'Instagram webhook payload received',
+            'url'             => $request->fullUrl(),
+            'method'          => $request->method(),
+            'request_data'    => $payload,
+            'ip_address'      => $request->ip(),
+            'user_agent'      => mb_substr($request->userAgent() ?? '', 0, 255),
+            'created_at'      => now(),
+        ]);
 
         if (($payload['object'] ?? '') !== 'instagram') {
             return response('ok', 200);
