@@ -20,6 +20,14 @@
 .st-failed { color:#dc2626; font-weight:600; }
 .st-skipped { color:#9ca3af; font-weight:600; }
 .msg-cell { max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.detail-btn { cursor:pointer; background:none; border:none; color:var(--accent,#6366f1); font-size:11px; text-decoration:underline; padding:0; margin-left:6px; }
+.log-modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1000; align-items:center; justify-content:center; padding:20px; }
+.log-modal-backdrop.open { display:flex; }
+.log-modal { background:var(--bg-surface,#fff); border-radius:12px; max-width:640px; width:100%; max-height:80vh; display:flex; flex-direction:column; }
+.log-modal-header { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid var(--border-subtle); }
+.log-modal-header h3 { font-size:15px; margin:0; }
+.log-modal-body { padding:16px 18px; overflow:auto; }
+.log-modal-body pre { white-space:pre-wrap; word-break:break-all; font-size:12px; background:var(--bg-subtle); padding:12px; border-radius:8px; }
 </style>
 @endpush
 
@@ -85,7 +93,12 @@
                     <td class="msg-cell" title="{{ $log->incoming_text }}" data-label="Incoming">{{ $log->incoming_text ?? '—' }}</td>
                     <td class="msg-cell" title="{{ $log->outgoing_text }}" data-label="Outgoing">{{ $log->outgoing_text ?? '—' }}</td>
                     <td data-label="Status"><span class="st-{{ $log->status }}">{{ ucfirst($log->status) }}</span></td>
-                    <td class="msg-cell" style="color:var(--danger);" title="{{ $log->error_message }}" data-label="Error">{{ $log->error_message ? Str::limit($log->error_message, 40) : '—' }}</td>
+                    <td class="msg-cell" style="color:var(--danger);" title="{{ $log->error_message }}" data-label="Error">
+                        {{ $log->error_message ? Str::limit($log->error_message, 40) : '—' }}
+                        @if($log->raw_payload)
+                            <button type="button" class="detail-btn" onclick='showLogDetail(@json($log->error_message), @json($log->raw_payload))'>view</button>
+                        @endif
+                    </td>
                     <td style="white-space:nowrap;color:var(--text-300);font-size:12px;" data-label="Time">{{ $log->created_at->format('d M H:i') }}</td>
                 </tr>
                 @endforeach
@@ -97,4 +110,27 @@
     </div>
     @endif
 </div>
+
+<div class="log-modal-backdrop" id="logModalBackdrop" onclick="if(event.target===this) closeLogDetail()">
+    <div class="log-modal">
+        <div class="log-modal-header">
+            <h3 id="logModalTitle">Details</h3>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="closeLogDetail()">Close</button>
+        </div>
+        <div class="log-modal-body">
+            <pre id="logModalBody"></pre>
+        </div>
+    </div>
+</div>
+
+<script>
+function showLogDetail(message, payload) {
+    document.getElementById('logModalTitle').textContent = message || 'Details';
+    document.getElementById('logModalBody').textContent = JSON.stringify(payload, null, 2);
+    document.getElementById('logModalBackdrop').classList.add('open');
+}
+function closeLogDetail() {
+    document.getElementById('logModalBackdrop').classList.remove('open');
+}
+</script>
 @endsection
