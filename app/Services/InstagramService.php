@@ -109,7 +109,7 @@ class InstagramService
     public function subscribeWebhookDetailed(): array
     {
         $response = Http::post(self::GRAPH_URL . '/' . $this->settings->page_id . '/subscribed_apps', [
-            'subscribed_fields' => 'messages,comments,mention',
+            'subscribed_fields' => 'messages,comments,mentions',
             'access_token'      => $this->settings->access_token,
         ]);
 
