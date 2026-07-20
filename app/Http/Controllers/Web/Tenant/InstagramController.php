@@ -40,14 +40,33 @@ class InstagramController extends Controller
         $recentLogs = InstagramLog::where('tenant_id', $this->tenantId())
             ->latest()->limit(10)->get();
 
-        return view('tenant.instagram.index', compact('settings', 'stats', 'recentLogs'));
+        $accountInfo = $this->fetchAccountInfo($settings);
+
+        return view('tenant.instagram.index', compact('settings', 'stats', 'recentLogs', 'accountInfo'));
     }
 
     // ── Settings — show ───────────────────────────────────────────
     public function settings(): View
     {
         $settings = InstagramSetting::forTenant($this->tenantId());
-        return view('tenant.instagram.settings', compact('settings'));
+        $accountInfo = $this->fetchAccountInfo($settings);
+
+        return view('tenant.instagram.settings', compact('settings', 'accountInfo'));
+    }
+
+    // ── Fetch the connected account's username/profile so tenant admins
+    //    can see WHICH Instagram account is linked, not just a numeric ID ──
+    private function fetchAccountInfo(InstagramSetting $settings): ?array
+    {
+        if (!$settings->is_connected || !$settings->instagram_account_id) {
+            return null;
+        }
+
+        try {
+            return InstagramService::forTenant($settings->tenant_id)->getAccountInfo();
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
     // ── Settings — save ───────────────────────────────────────────
@@ -83,6 +102,10 @@ class InstagramController extends Controller
 
             InstagramSetting::where('tenant_id', $this->tenantId())
                 ->update(['is_connected' => true]);
+
+            // Re-subscribe on every test — cheap, idempotent, and repairs
+            // connections that were made before webhook subscription existed.
+            $service->subscribeWebhook();
 
             return response()->json(['success' => true, 'account' => $info]);
         } catch (\Throwable $e) {
@@ -536,6 +559,11 @@ class InstagramController extends Controller
             $settings->webhook_verify_token = Str::random(32);
         }
         $settings->save();
+
+        // A Page won't deliver any webhook events (messages/comments) until it
+        // explicitly subscribes the app to those fields — without this,
+        // automations/chatbot flows never fire even with everything else set up.
+        InstagramService::forTenant($tenantId)->subscribeWebhook();
     }
 
     // ── Strip access tokens out of a Graph API response before it gets

@@ -60,7 +60,8 @@
     <div style="display:flex;gap:8px;align-items:center;">
         @if($settings->is_connected)
             <span class="conn-badge connected">
-                <span style="width:7px;height:7px;background:#16a34a;border-radius:50%;"></span> Connected
+                <span style="width:7px;height:7px;background:#16a34a;border-radius:50%;"></span>
+                Connected{{ $accountInfo['username'] ?? null ? ' as @'.$accountInfo['username'] : '' }}
             </span>
         @else
             <span class="conn-badge disconnected">

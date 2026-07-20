@@ -49,8 +49,21 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
             </svg>
         </div>
-        <div style="font-weight:700;font-size:16px;color:#16a34a;">Instagram Connected</div>
-        <div style="font-size:13px;color:var(--text-300);margin-top:4px;">Account ID: {{ $settings->instagram_account_id }} &nbsp;|&nbsp; Page ID: {{ $settings->page_id }}</div>
+        <div style="font-weight:700;font-size:16px;color:#16a34a;">
+            Instagram Connected
+            @if($accountInfo['username'] ?? null)
+                — {{ '@' . $accountInfo['username'] }}
+            @endif
+        </div>
+        @if($accountInfo['profile_picture_url'] ?? null)
+            <img src="{{ $accountInfo['profile_picture_url'] }}" alt="" style="width:48px;height:48px;border-radius:50%;margin:10px auto 0;display:block;object-fit:cover;">
+        @endif
+        <div style="font-size:13px;color:var(--text-300);margin-top:4px;">
+            @if($accountInfo['followers_count'] ?? null)
+                {{ number_format($accountInfo['followers_count']) }} followers &nbsp;|&nbsp;
+            @endif
+            Account ID: {{ $settings->instagram_account_id }} &nbsp;|&nbsp; Page ID: {{ $settings->page_id }}
+        </div>
         <button type="button" class="btn btn-sm" style="margin-top:14px;" onclick="startQrFlow()">Reconnect / Change Account</button>
     @else
         <div style="font-size:22px;margin-bottom:8px;">

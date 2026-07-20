@@ -85,7 +85,7 @@
                     <td data-label="Event"><span class="ev-badge ev-{{ $log->event_type }}">{{ str_replace('_',' ',ucfirst($log->event_type)) }}</span></td>
                     <td data-label="User">
                         @if($log->instagram_username)
-                            <span title="{{ $log->instagram_user_id }}">@{{ $log->instagram_username }}</span>
+                            <span title="{{ $log->instagram_user_id }}">{{ '@' . $log->instagram_username }}</span>
                         @else
                             <span style="color:var(--text-300);">{{ $log->instagram_user_id ?? '—' }}</span>
                         @endif
