@@ -26,6 +26,13 @@ class InstagramService
     // Send DM to an Instagram user
     public function sendDm(string $recipientIgId, string $message): bool
     {
+        return $this->sendDmDetailed($recipientIgId, $message)['success'];
+    }
+
+    // Same as sendDm() but returns the raw Graph API response too, so
+    // callers can store the actual failure reason instead of a flat bool.
+    public function sendDmDetailed(string $recipientIgId, string $message): array
+    {
         $response = Http::post(self::GRAPH_URL . '/' . $this->settings->instagram_account_id . '/messages', [
             'recipient'          => ['id' => $recipientIgId],
             'message'            => ['text' => $message],
@@ -39,14 +46,23 @@ class InstagramService
                 'recipient' => $recipientIgId,
                 'error'     => $response->json(),
             ]);
-            return false;
         }
 
-        return true;
+        return [
+            'success' => $response->successful(),
+            'status'  => $response->status(),
+            'body'    => $response->json(),
+        ];
     }
 
     // Reply to a comment on a post
     public function replyToComment(string $commentId, string $message): bool
+    {
+        return $this->replyToCommentDetailed($commentId, $message)['success'];
+    }
+
+    // Same as replyToComment() but returns the raw Graph API response too.
+    public function replyToCommentDetailed(string $commentId, string $message): array
     {
         $response = Http::post(self::GRAPH_URL . '/' . $commentId . '/replies', [
             'message'      => $message,
@@ -59,10 +75,13 @@ class InstagramService
                 'comment_id' => $commentId,
                 'error'      => $response->json(),
             ]);
-            return false;
         }
 
-        return true;
+        return [
+            'success' => $response->successful(),
+            'status'  => $response->status(),
+            'body'    => $response->json(),
+        ];
     }
 
     // Get recent posts/media for the automation post picker

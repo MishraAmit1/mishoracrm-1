@@ -144,8 +144,12 @@ class InstagramWebhookController extends Controller
 
         try {
             $service = new InstagramService($setting);
-            $sent    = $service->sendDm($senderId, $matched->response_message);
-            $log->update(['outgoing_text' => $matched->response_message, 'status' => $sent ? 'success' : 'failed']);
+            $result  = $service->sendDmDetailed($senderId, $matched->response_message);
+            $log->update([
+                'outgoing_text' => $matched->response_message,
+                'status'        => $result['success'] ? 'success' : 'failed',
+                'error_message' => $result['success'] ? null : json_encode($result['body']),
+            ]);
         } catch (\Throwable $e) {
             $log->update(['status' => 'failed', 'error_message' => $e->getMessage()]);
         }
@@ -206,18 +210,20 @@ class InstagramWebhookController extends Controller
             $service = new InstagramService($setting);
 
             if ($automation->action_type === 'send_dm' && $automation->dm_message) {
-                $sent = $service->sendDm($userId, $automation->dm_message);
+                $result = $service->sendDmDetailed($userId, $automation->dm_message);
                 $log->update([
                     'outgoing_text' => $automation->dm_message,
-                    'status'        => $sent ? 'success' : 'failed',
+                    'status'        => $result['success'] ? 'success' : 'failed',
+                    'error_message' => $result['success'] ? null : json_encode($result['body']),
                 ]);
             }
 
             if ($automation->action_type === 'reply_comment' && $commentId && $automation->comment_reply) {
-                $sent = $service->replyToComment($commentId, $automation->comment_reply);
+                $result = $service->replyToCommentDetailed($commentId, $automation->comment_reply);
                 $log->update([
                     'outgoing_text' => $automation->comment_reply,
-                    'status'        => $sent ? 'success' : 'failed',
+                    'status'        => $result['success'] ? 'success' : 'failed',
+                    'error_message' => $result['success'] ? null : json_encode($result['body']),
                 ]);
             }
         } catch (\Throwable $e) {
