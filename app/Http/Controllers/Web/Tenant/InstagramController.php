@@ -378,6 +378,8 @@ class InstagramController extends Controller
             ]);
         }
 
+        $debugContext = ['state' => $state];
+
         try {
             $callbackUrl = route('instagram.oauth.callback');
 
@@ -402,12 +404,14 @@ class InstagramController extends Controller
             ])->json();
 
             $longToken = $longRes['access_token'] ?? $tokenJson['access_token'];
+            $debugContext['long_token_exchange'] = $this->redactTokens($longRes);
 
             $pagesRes = Http::get('https://graph.facebook.com/v19.0/me/accounts', [
                 'access_token' => $longToken,
             ]);
 
             $pagesJson = $pagesRes->json();
+            $debugContext['pages_response'] = $this->redactTokens($pagesJson);
 
             if (!$pagesRes->successful()) {
                 throw new \Exception($pagesJson['error']['message'] ?? ('Failed to fetch Facebook Pages (HTTP ' . $pagesRes->status() . ').'));
@@ -466,7 +470,7 @@ class InstagramController extends Controller
                 'message' => 'Instagram account connected! You can close this window.',
             ]);
         } catch (\Throwable $e) {
-            $this->logOauthFailure($data['tenant_id'] ?? null, $e->getMessage(), ['state' => $state], $state);
+            $this->logOauthFailure($data['tenant_id'] ?? null, $e->getMessage(), $debugContext, $state);
 
             return view('tenant.instagram.oauth_result', [
                 'success' => false,
@@ -532,6 +536,26 @@ class InstagramController extends Controller
             $settings->webhook_verify_token = Str::random(32);
         }
         $settings->save();
+    }
+
+    // ── Strip access tokens out of a Graph API response before it gets
+    //    written to instagram_logs — logs are viewable in the CRM UI and
+    //    must never hold live Facebook/Instagram credentials ────────────
+    private function redactTokens(mixed $value): mixed
+    {
+        if (!is_array($value)) {
+            return $value;
+        }
+
+        unset($value['access_token']);
+
+        foreach ($value as $key => $item) {
+            if (is_array($item)) {
+                $value[$key] = $this->redactTokens($item);
+            }
+        }
+
+        return $value;
     }
 
     // ── OAuth — record a connect attempt so it shows up on the Logs page
