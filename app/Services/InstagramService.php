@@ -101,12 +101,23 @@ class InstagramService
     // Subscribe page to webhooks
     public function subscribeWebhook(): bool
     {
+        return $this->subscribeWebhookDetailed()['success'];
+    }
+
+    // Same as subscribeWebhook() but returns the raw Graph API response too,
+    // so callers can surface the actual error instead of a flat true/false.
+    public function subscribeWebhookDetailed(): array
+    {
         $response = Http::post(self::GRAPH_URL . '/' . $this->settings->page_id . '/subscribed_apps', [
             'subscribed_fields' => 'messages,comments,mention',
             'access_token'      => $this->settings->access_token,
         ]);
 
-        return $response->successful();
+        return [
+            'success' => $response->successful(),
+            'status'  => $response->status(),
+            'body'    => $response->json(),
+        ];
     }
 
     // Verify token matches our stored token

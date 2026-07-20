@@ -105,9 +105,13 @@ class InstagramController extends Controller
 
             // Re-subscribe on every test — cheap, idempotent, and repairs
             // connections that were made before webhook subscription existed.
-            $service->subscribeWebhook();
+            $subscription = $service->subscribeWebhookDetailed();
 
-            return response()->json(['success' => true, 'account' => $info]);
+            return response()->json([
+                'success'      => true,
+                'account'      => $info,
+                'subscription' => $subscription,
+            ]);
         } catch (\Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()]);
         }

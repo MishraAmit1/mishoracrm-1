@@ -213,7 +213,11 @@ function testConnection() {
     .then(r => r.json())
     .then(data => {
         if (data.success) {
-            alert('Connected! Account: @' + (data.account?.username ?? ''));
+            const sub = data.subscription;
+            const subMsg = sub?.success
+                ? 'Webhook subscription: OK'
+                : 'Webhook subscription FAILED (this is why chatbot/automations won\'t fire): ' + JSON.stringify(sub?.body ?? sub);
+            alert('Connected! Account: @' + (data.account?.username ?? '') + '\n\n' + subMsg);
         } else {
             alert('Failed: ' + data.message);
         }
