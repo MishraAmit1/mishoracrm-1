@@ -197,7 +197,7 @@ return [
         'in_app'   => ['label' => 'In-App Bell',  'icon' => 'bell',    'enabled' => true],
         'email'    => ['label' => 'Email',         'icon' => 'mail',    'enabled' => true],
         'whatsapp' => ['label' => 'WhatsApp',      'icon' => 'message', 'enabled' => true],
-        'slack'    => ['label' => 'Slack',         'icon' => 'slack',   'enabled' => false], // future
+        'slack'    => ['label' => 'Slack',         'icon' => 'slack',   'enabled' => true],
     ],
 
     // ── Icon map (Heroicons names) ────────────────────────────────

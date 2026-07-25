@@ -71,12 +71,12 @@ class NotificationService
             $channels[] = 'whatsapp';
         }
 
-        // ── Slack channel (future) ────────────────────────────────
+        // ── Slack channel ──────────────────────────────────────────
         if (
             NotificationPreference::isEnabled($recipient->id, $tenantId, $type, 'slack')
             && config('notifications.channels.slack.enabled')
         ) {
-            $this->sendSlack($title, $message, $url, $data);
+            $this->sendSlack($tenantId, $title, $message, $url);
             $channels[] = 'slack';
         }
 
@@ -168,13 +168,10 @@ class NotificationService
         }
     }
 
-    // ── Slack channel handler (future) ────────────────────────────
-    private function sendSlack(string $title, string $message, ?string $url, array $data): void
+    // ── Slack channel handler ───────────────────────────────────────
+    private function sendSlack(int $tenantId, string $title, string $message, ?string $url): void
     {
-        // TODO: Integrate Slack Webhook
-        // $webhookUrl = config('services.slack.webhook_url');
-        // Http::post($webhookUrl, ['text' => "*{$title}*\n{$message}"]);
-        Log::info("Slack notification (not integrated yet): {$title}");
+        \App\Services\SlackService::send($tenantId, $title, $message, $url);
     }
 
     // ── Email HTML template ───────────────────────────────────────

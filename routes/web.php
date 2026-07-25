@@ -624,6 +624,16 @@ Route::middleware(['tenant', 'auth', 'subscription'])
                 Route::post('/regenerate-token', 'regenerateToken')->name('regenerate-token');
             });
 
+        // ── Slack Notifications (tenant_admin only) ────────────────
+        Route::prefix('slack')->name('slack.')->middleware(['role:tenant_admin'])
+            ->controller(Tenant\SlackController::class)->group(function () {
+                Route::get('/',           'index')->name('index');
+                Route::post('/',          'store')->name('store');
+                Route::post('/toggle',    'toggle')->name('toggle');
+                Route::post('/test',      'test')->name('test');
+                Route::delete('/',        'destroy')->name('destroy');
+            });
+
         // ── AI & Workflow Automation ───────────────────────────────
         Route::get('/automation',         [Tenant\AutomationController::class, 'index'])->name('automation.index');
         Route::post('/automation/request', [Tenant\AutomationController::class, 'request'])->name('automation.request');
