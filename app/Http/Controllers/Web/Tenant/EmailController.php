@@ -12,7 +12,6 @@ use App\Services\EmailService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -342,20 +341,20 @@ class EmailController extends Controller
         return response()->json($result);
     }
 
-    // ── Send an email using tenant's own SMTP if connected, else system mailer ──
+    // ── Send an email using the tenant's own connected SMTP ──────────
+    // No fallback to the system mailer here on purpose: until the tenant
+    // connects their SMTP in Email Settings, sending must fail loudly
+    // instead of silently "succeeding" via the system mailer.
     private function dispatchEmail(string $toEmail, string $toName, string $subject, string $html): void
     {
         $settings = EmailSetting::where('tenant_id', $this->tenantId())
             ->where('is_connected', true)
             ->first();
 
-        if ($settings && $settings->smtp_host) {
-            EmailService::dispatch($settings, $toEmail, $toName, $subject, $html);
-            return;
+        if (!$settings || !$settings->smtp_host) {
+            throw new \Exception('Email not connected. Please connect your SMTP in Email Settings first.');
         }
 
-        Mail::send([], [], function ($mail) use ($toEmail, $toName, $subject, $html) {
-            $mail->to($toEmail, $toName)->subject($subject)->html($html);
-        });
+        EmailService::dispatch($settings, $toEmail, $toName, $subject, $html);
     }
 }
