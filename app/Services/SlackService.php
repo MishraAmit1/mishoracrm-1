@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 class SlackService
 {
-    public static function send(int $tenantId, string $title, string $message, ?string $url = null): void
+    public static function send(int $tenantId, string $title, string $message, ?string $url = null, ?string $assignedTo = null): void
     {
         $config = TenantSlackConfig::where('tenant_id', $tenantId)
             ->where('is_active', true)
@@ -19,7 +19,7 @@ class SlackService
         }
 
         try {
-            static::post($config->webhook_url, $title, $message, $url);
+            static::post($config->webhook_url, $title, $message, $url, $assignedTo);
         } catch (\Exception $e) {
             // already logged in post()
         }
@@ -39,9 +39,12 @@ class SlackService
         }
     }
 
-    private static function post(string $webhookUrl, string $title, string $message, ?string $url = null)
+    private static function post(string $webhookUrl, string $title, string $message, ?string $url = null, ?string $assignedTo = null)
     {
         $text = "*{$title}*\n{$message}";
+        if ($assignedTo) {
+            $text .= "\n👤 Assigned to: {$assignedTo}";
+        }
         if ($url) {
             $text .= "\n<{$url}|View in CRM>";
         }

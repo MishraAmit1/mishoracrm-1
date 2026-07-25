@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Web\Tenant;
 use App\Http\Controllers\Controller;
 use App\Models\Contact;
 use App\Models\EmailLog;
+use App\Models\EmailSetting;
 use App\Models\EmailTemplate;
 use App\Models\Lead;
+use App\Services\EmailService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -134,11 +136,7 @@ class EmailController extends Controller
         $error  = null;
 
         try {
-            Mail::send([], [], function ($mail) use ($request) {
-                $mail->to($request->to_email, $request->to_name)
-                     ->subject($request->subject)
-                     ->html($request->body);
-            });
+            $this->dispatchEmail($request->to_email, $request->to_name ?? '', $request->subject, $request->body);
         } catch (\Exception $e) {
             $status = 'failed';
             $error  = $e->getMessage();
@@ -220,11 +218,7 @@ class EmailController extends Controller
             $error  = null;
 
             try {
-                Mail::send([], [], function ($mail) use ($record, $rendered) {
-                    $mail->to($record->email, $record->name)
-                         ->subject($rendered['subject'])
-                         ->html($rendered['body']);
-                });
+                $this->dispatchEmail($record->email, $record->name ?? '', $rendered['subject'], $rendered['body']);
                 $sent++;
             } catch (\Exception $e) {
                 $status = 'failed';
@@ -286,5 +280,82 @@ class EmailController extends Controller
         ]);
 
         return response()->json($rendered);
+    }
+
+    // ── SMTP Settings — connect your own email ──────────────────────
+    public function settings(): View
+    {
+        $settings = EmailSetting::forTenant($this->tenantId());
+
+        return view('tenant.email.settings', compact('settings'));
+    }
+
+    public function saveSettings(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'smtp_host'       => ['required', 'string', 'max:255'],
+            'smtp_port'       => ['required', 'integer', 'min:1', 'max:65535'],
+            'smtp_encryption' => ['required', 'in:tls,ssl,none'],
+            'smtp_username'   => ['required', 'string', 'max:255'],
+            'smtp_password'   => ['nullable', 'string', 'max:255'],
+            'from_address'    => ['required', 'email', 'max:255'],
+            'from_name'       => ['required', 'string', 'max:255'],
+        ]);
+
+        $settings = EmailSetting::forTenant($this->tenantId());
+
+        if (!$settings->exists && !$request->filled('smtp_password')) {
+            return back()->withErrors(['smtp_password' => 'Password is required.'])->withInput();
+        }
+
+        $settings->tenant_id       = $this->tenantId();
+        $settings->smtp_host       = $request->smtp_host;
+        $settings->smtp_port       = $request->smtp_port;
+        $settings->smtp_encryption = $request->smtp_encryption === 'none' ? null : $request->smtp_encryption;
+        $settings->smtp_username   = $request->smtp_username;
+        if ($request->filled('smtp_password')) {
+            $settings->smtp_password = $request->smtp_password;
+        }
+        $settings->from_address = $request->from_address;
+        $settings->from_name    = $request->from_name;
+        $settings->save();
+
+        return back()->with('success', 'Email (SMTP) settings saved. Ab "Test Connection" karke confirm kar lein.');
+    }
+
+    public function testConnection(): JsonResponse
+    {
+        $settings = EmailSetting::forTenant($this->tenantId());
+
+        if (!$settings->exists || !$settings->smtp_host) {
+            return response()->json(['success' => false, 'message' => 'Pehle SMTP settings save karein.']);
+        }
+
+        $result = EmailService::test($settings, auth()->user()->email);
+
+        $settings->last_tested_at = now();
+        if ($result['success']) {
+            $settings->is_connected = true;
+        }
+        $settings->save();
+
+        return response()->json($result);
+    }
+
+    // ── Send an email using tenant's own SMTP if connected, else system mailer ──
+    private function dispatchEmail(string $toEmail, string $toName, string $subject, string $html): void
+    {
+        $settings = EmailSetting::where('tenant_id', $this->tenantId())
+            ->where('is_connected', true)
+            ->first();
+
+        if ($settings && $settings->smtp_host) {
+            EmailService::dispatch($settings, $toEmail, $toName, $subject, $html);
+            return;
+        }
+
+        Mail::send([], [], function ($mail) use ($toEmail, $toName, $subject, $html) {
+            $mail->to($toEmail, $toName)->subject($subject)->html($html);
+        });
     }
 }

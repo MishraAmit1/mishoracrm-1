@@ -509,6 +509,11 @@ Route::middleware(['tenant', 'auth', 'subscription'])
             Route::post('bulk',                [Tenant\EmailController::class, 'sendBulk'])->name('bulk.send');
             Route::get('logs',                 [Tenant\EmailController::class, 'logs'])->name('logs');
             Route::post('preview-template',    [Tenant\EmailController::class, 'previewTemplate'])->name('preview');
+
+            // SMTP connect settings (tenant_admin only)
+            Route::get('settings',             [Tenant\EmailController::class, 'settings'])->name('settings')->middleware(['role:tenant_admin']);
+            Route::post('settings',            [Tenant\EmailController::class, 'saveSettings'])->name('settings.save')->middleware(['role:tenant_admin']);
+            Route::post('settings/test',       [Tenant\EmailController::class, 'testConnection'])->name('settings.test')->middleware(['role:tenant_admin']);
         });
 
         // Reports

@@ -76,7 +76,7 @@ class NotificationService
             NotificationPreference::isEnabled($recipient->id, $tenantId, $type, 'slack')
             && config('notifications.channels.slack.enabled')
         ) {
-            $this->sendSlack($tenantId, $title, $message, $url);
+            $this->sendSlack($tenantId, $title, $message, $url, $recipient->name);
             $channels[] = 'slack';
         }
 
@@ -135,13 +135,23 @@ class NotificationService
     }
 
     // ── Email channel handler ─────────────────────────────────────
+    // Uses the tenant's own connected SMTP (App\Services\EmailService) when
+    // available, otherwise falls back to the system mailer.
     private function sendEmail(User $user, string $title, string $message, ?string $url, array $data): void
     {
+        $html = $this->emailHtml($title, $message, $url);
+
+        $sentViaTenant = \App\Services\EmailService::send($user->tenant_id, $user->email, $user->name, $title, $html);
+
+        if ($sentViaTenant) {
+            return;
+        }
+
         try {
-            \Illuminate\Support\Facades\Mail::send([], [], function ($mail) use ($user, $title, $message, $url) {
+            \Illuminate\Support\Facades\Mail::send([], [], function ($mail) use ($user, $title, $html) {
                 $mail->to($user->email, $user->name)
                      ->subject($title)
-                     ->html($this->emailHtml($title, $message, $url));
+                     ->html($html);
             });
         } catch (\Exception $e) {
             Log::error("Notification email failed: " . $e->getMessage());
@@ -169,9 +179,9 @@ class NotificationService
     }
 
     // ── Slack channel handler ───────────────────────────────────────
-    private function sendSlack(int $tenantId, string $title, string $message, ?string $url): void
+    private function sendSlack(int $tenantId, string $title, string $message, ?string $url, string $assignedTo): void
     {
-        \App\Services\SlackService::send($tenantId, $title, $message, $url);
+        \App\Services\SlackService::send($tenantId, $title, $message, $url, $assignedTo);
     }
 
     // ── Email HTML template ───────────────────────────────────────
