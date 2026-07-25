@@ -162,7 +162,7 @@ class EmailController extends Controller
         }
 
         return redirect()
-            ->route('email.logs')
+            ->route('tenant.email.logs')
             ->with('success', "Email sent to {$request->to_email}.");
     }
 
