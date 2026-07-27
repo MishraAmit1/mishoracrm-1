@@ -164,7 +164,7 @@
 <script>
 var quillBulkBody = new Quill('#quillBulkBody', {
     theme: 'snow',
-    placeholder: 'Dear {{name}}, ...',
+    placeholder: 'Dear @{{name}}, ...',
     modules: {
         toolbar: [
             [{ header: [1, 2, 3, false] }],
