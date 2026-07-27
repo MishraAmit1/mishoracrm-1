@@ -1,6 +1,20 @@
 @extends('layouts.app')
 @section('title', 'Bulk Email')
 
+@push('styles')
+<link href="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.snow.min.css" rel="stylesheet"/>
+<style>
+.quill-wrap { border:1.5px solid var(--border-default); border-radius:var(--r-sm); overflow:hidden; }
+.quill-wrap .ql-toolbar { background:var(--bg-elevated); border:none; border-bottom:1px solid var(--border-subtle); padding:8px 10px; }
+.quill-wrap .ql-container { border:none; font-size:13.5px; background:var(--bg-input); }
+.quill-wrap .ql-editor { color:var(--text-100); min-height:160px; padding:14px 16px; line-height:1.7; }
+.quill-wrap .ql-editor.ql-blank::before { color:var(--text-400); font-style:normal; }
+.quill-wrap .ql-stroke { stroke:var(--text-300) !important; }
+.quill-wrap .ql-fill   { fill:var(--text-300) !important; }
+.quill-wrap .ql-picker-label { color:var(--text-300) !important; }
+</style>
+@endpush
+
 @section('content')
 
 <div class="page-head">
@@ -89,13 +103,16 @@
                         onchange="loadTemplate(this)">
                     <option value="">— No Template —</option>
                     @foreach($templates as $tpl)
-                    <option value="{{ $tpl->id }}"
-                            data-subject="{{ $tpl->subject }}"
-                            data-body="{{ addslashes($tpl->body) }}">
+                    <option value="{{ $tpl->id }}" data-subject="{{ $tpl->subject }}">
                         {{ $tpl->name }}
                     </option>
                     @endforeach
                 </select>
+
+                {{-- Hidden raw template bodies (kept outside the <option> tags so the HTML isn't escaped) --}}
+                @foreach($templates as $tpl)
+                <template id="tplbody_{{ $tpl->id }}">{!! $tpl->body !!}</template>
+                @endforeach
             </div>
 
             {{-- Subject + Body --}}
@@ -104,9 +121,10 @@
                 <input type="text" name="subject" id="bulkSubject"
                        style="width:100%;padding:10px 13px;background:var(--bg-input);border:1.5px solid var(--border-default);border-radius:var(--r-sm);color:var(--text-100);font-family:var(--font);font-size:14px;outline:none;margin-bottom:12px"
                        placeholder="Email subject..." required/>
-                <textarea name="body" id="bulkBody"
-                          style="width:100%;padding:10px 13px;background:var(--bg-input);border:1.5px solid var(--border-default);border-radius:var(--r-sm);color:var(--text-100);font-family:var(--font);font-size:13.5px;line-height:1.6;outline:none;resize:vertical;min-height:160px"
-                          placeholder="Dear @{{name}},..." required></textarea>
+                <textarea name="body" id="bulkBody" style="display:none" required></textarea>
+                <div class="quill-wrap">
+                    <div id="quillBulkBody"></div>
+                </div>
                 <div style="font-size:11.5px;color:var(--text-400);margin-top:6px">
                     Variables @{{name}}, @{{company}}, @{{email}}, @{{business}} auto-replaced per recipient
                 </div>
@@ -142,7 +160,24 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.min.js"></script>
 <script>
+var quillBulkBody = new Quill('#quillBulkBody', {
+    theme: 'snow',
+    placeholder: 'Dear {{name}}, ...',
+    modules: {
+        toolbar: [
+            [{ header: [1, 2, 3, false] }],
+            ['bold', 'italic', 'underline', 'strike'],
+            [{ color: [] }, { background: [] }],
+            [{ align: [] }],
+            [{ list: 'ordered' }, { list: 'bullet' }],
+            ['link'],
+            ['clean']
+        ]
+    }
+});
+
 let currentType = 'leads';
 
 function switchType(type){
@@ -191,14 +226,21 @@ function loadTemplate(sel){
     const opt = sel.options[sel.selectedIndex];
     if(opt.value){
         document.getElementById('bulkSubject').value = opt.dataset.subject || '';
-        document.getElementById('bulkBody').value    = opt.dataset.body || '';
+        const tmpl = document.getElementById('tplbody_' + opt.value);
+        quillBulkBody.clipboard.dangerouslyPasteHTML(tmpl ? tmpl.innerHTML : '');
+        quillBulkBody.history.clear();
         document.getElementById('tplSummary').textContent = opt.textContent.trim();
     } else {
+        quillBulkBody.setContents([]);
         document.getElementById('tplSummary').textContent = 'None';
     }
 }
 
 function confirmSend(){
+    const html = quillBulkBody.root.innerHTML;
+    if (!html || html === '<p><br></p>') { alert('Email body is required.'); return false; }
+    document.getElementById('bulkBody').value = html;
+
     const count = document.querySelectorAll('.rec-check:checked').length;
     if(count === 0){ alert('Please select at least one recipient.'); return false; }
     return confirm(`Send email to ${count} recipients?`);
