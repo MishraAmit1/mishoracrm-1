@@ -212,8 +212,8 @@ class EmailController extends Controller
             ];
 
             $rendered = [
-                'subject' => EmailTemplate::fill($request->subject, $vars),
-                'body'    => EmailTemplate::fill($request->body, $vars),
+                'subject' => EmailTemplate::substituteVariables($request->subject, $vars),
+                'body'    => EmailTemplate::substituteVariables($request->body, $vars),
             ];
 
             $status = 'sent';

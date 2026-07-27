@@ -179,7 +179,7 @@ class WhatsappController extends Controller
             if (!$record) continue;
 
             // Replace {{variables}} in the actual submitted message per recipient
-            $message = WhatsappTemplate::fill($request->message, [
+            $message = WhatsappTemplate::substituteVariables($request->message, [
                 'name'       => $record->name ?? '',
                 'company'    => $record->company ?? '',
                 'phone'      => $record->phone ?? '',

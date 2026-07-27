@@ -23,7 +23,7 @@ class EmailTemplate extends Model
     }
  
     // Replace {{variables}} with actual values in any piece of text
-    public static function fill(string $text, array $data): string
+    public static function substituteVariables(string $text, array $data): string
     {
         foreach ($data as $key => $value) {
             $text = str_replace('{{' . $key . '}}', $value ?? '', $text);
@@ -34,8 +34,8 @@ class EmailTemplate extends Model
     public function render(array $data): array
     {
         return [
-            'subject' => self::fill($this->subject, $data),
-            'body'    => self::fill($this->body, $data),
+            'subject' => self::substituteVariables($this->subject, $data),
+            'body'    => self::substituteVariables($this->body, $data),
         ];
     }
  

@@ -23,7 +23,7 @@ class WhatsappTemplate extends Model
     }
 
     // Replace {{variables}} with actual values in any piece of text
-    public static function fill(string $text, array $data): string
+    public static function substituteVariables(string $text, array $data): string
     {
         foreach ($data as $key => $value) {
             $text = str_replace('{{' . $key . '}}', $value ?? '', $text);
@@ -33,7 +33,7 @@ class WhatsappTemplate extends Model
 
     public function render(array $data): string
     {
-        return self::fill($this->body, $data);
+        return self::substituteVariables($this->body, $data);
     }
 
     public static function categories(): array
