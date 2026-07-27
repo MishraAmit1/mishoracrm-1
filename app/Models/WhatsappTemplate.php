@@ -22,14 +22,18 @@ class WhatsappTemplate extends Model
         return $this->hasMany(WhatsappLog::class, 'template_id');
     }
 
-    // Replace {{variables}} with actual values
+    // Replace {{variables}} with actual values in any piece of text
+    public static function fill(string $text, array $data): string
+    {
+        foreach ($data as $key => $value) {
+            $text = str_replace('{{' . $key . '}}', $value ?? '', $text);
+        }
+        return $text;
+    }
+
     public function render(array $data): string
     {
-        $body = $this->body;
-        foreach ($data as $key => $value) {
-            $body = str_replace('{{' . $key . '}}', $value, $body);
-        }
-        return $body;
+        return self::fill($this->body, $data);
     }
 
     public static function categories(): array

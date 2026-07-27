@@ -22,17 +22,21 @@ class EmailTemplate extends Model
         return $this->hasMany(EmailLog::class, 'template_id');
     }
  
+    // Replace {{variables}} with actual values in any piece of text
+    public static function fill(string $text, array $data): string
+    {
+        foreach ($data as $key => $value) {
+            $text = str_replace('{{' . $key . '}}', $value ?? '', $text);
+        }
+        return $text;
+    }
+
     public function render(array $data): array
     {
-        $subject = $this->subject;
-        $body    = $this->body;
- 
-        foreach ($data as $key => $value) {
-            $subject = str_replace('{{' . $key . '}}', $value, $subject);
-            $body    = str_replace('{{' . $key . '}}', $value, $body);
-        }
- 
-        return compact('subject', 'body');
+        return [
+            'subject' => self::fill($this->subject, $data),
+            'body'    => self::fill($this->body, $data),
+        ];
     }
  
     public static function categories(): array

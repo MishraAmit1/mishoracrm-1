@@ -166,10 +166,8 @@ class WhatsappController extends Controller
             'type'        => ['required', 'in:leads,contacts'],
         ]);
 
-        $bulkId    = Str::uuid();
-        $template  = $request->template_id
-            ? WhatsappTemplate::find($request->template_id)
-            : null;
+        $bulkId = Str::uuid();
+        $today  = now()->format('d M Y');
 
         $logs = [];
 
@@ -180,16 +178,17 @@ class WhatsappController extends Controller
 
             if (!$record) continue;
 
-            // Render template variables
-            $message = $template
-                ? $template->render([
-                    'name'        => $record->name,
-                    'company'     => $record->company ?? '',
-                    'phone'       => $record->phone,
-                    'business'    => auth()->user()->tenant->name,
-                    'agent_name'  => auth()->user()->name,
-                ])
-                : $request->message;
+            // Replace {{variables}} in the actual submitted message per recipient
+            $message = WhatsappTemplate::fill($request->message, [
+                'name'       => $record->name ?? '',
+                'company'    => $record->company ?? '',
+                'phone'      => $record->phone ?? '',
+                'email'      => $record->email ?? '',
+                'amount'     => $record->lead_value ?? '',
+                'date'       => $today,
+                'business'   => auth()->user()->tenant->name,
+                'agent_name' => auth()->user()->name,
+            ]);
 
             $logs[] = [
                 'tenant_id'   => $this->tenantId(),

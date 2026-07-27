@@ -186,10 +186,8 @@ class EmailController extends Controller
             'type'        => ['required', 'in:leads,contacts'],
         ]);
 
-        $bulkId   = Str::uuid();
-        $template = $request->template_id
-            ? EmailTemplate::find($request->template_id)
-            : null;
+        $bulkId = Str::uuid();
+        $today  = now()->format('d M Y');
 
         $sent   = 0;
         $failed = 0;
@@ -201,17 +199,22 @@ class EmailController extends Controller
 
             if (!$record || !$record->email) continue;
 
-            // Render template
-            $rendered = $template
-                ? $template->render([
-                    'name'       => $record->name,
-                    'company'    => $record->company ?? '',
-                    'email'      => $record->email,
-                    'business'   => auth()->user()->tenant->name,
-                    'agent_name' => auth()->user()->name,
-                    'date'       => now()->format('d M Y'),
-                ])
-                : ['subject' => $request->subject, 'body' => $request->body];
+            // Replace {{variables}} in the actual submitted subject/body per recipient
+            $vars = [
+                'name'       => $record->name ?? '',
+                'company'    => $record->company ?? '',
+                'email'      => $record->email ?? '',
+                'phone'      => $record->phone ?? '',
+                'amount'     => $record->lead_value ?? '',
+                'date'       => $today,
+                'business'   => auth()->user()->tenant->name,
+                'agent_name' => auth()->user()->name,
+            ];
+
+            $rendered = [
+                'subject' => EmailTemplate::fill($request->subject, $vars),
+                'body'    => EmailTemplate::fill($request->body, $vars),
+            ];
 
             $status = 'sent';
             $error  = null;
