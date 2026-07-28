@@ -8,11 +8,14 @@ use App\Models\Invoice;
 use App\Models\InvoicePdfSetting;
 use App\Models\Product;
 use App\Models\Quotation;
+use App\Services\EmailService;
 use App\Services\InvoicePdfTemplateRenderer;
+use App\Services\NotificationService;
 use App\Services\WebhookService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\View\View;
 
 class InvoiceController extends Controller
@@ -154,7 +157,7 @@ class InvoiceController extends Controller
     public function show(int|string $id): View
     {
         $invoice = $this->findInvoice($id);
-        $invoice->load(['contact', 'quotation', 'createdBy']);
+        $invoice->load(['contact', 'quotation', 'createdBy', 'payments.recordedBy']);
 
         $tenant   = auth()->user()->tenant;
         $statuses = Invoice::statuses();
@@ -279,43 +282,10 @@ class InvoiceController extends Controller
         return back()->with('success', 'Invoice status updated.');
     }
 
-    // ── Record payment ────────────────────────────────────────────
-    public function recordPayment(Request $request, int|string $id): RedirectResponse
+    // ── Build the invoice PDF (default or tenant's custom template) ─
+    private function buildInvoicePdf(Invoice $invoice)
     {
-        $request->validate([
-            'paid_amount' => ['required', 'numeric', 'min:0.01'],
-            'paid_at'     => ['required', 'date'],
-            'payment_note'=> ['nullable', 'string', 'max:255'],
-        ]);
-
-        $invoice    = $this->findInvoice($id);
-        $newPaid    = round($invoice->paid_amount + $request->paid_amount, 2);
-        $newStatus  = $newPaid >= $invoice->total ? 'paid' : 'partial';
-
-        $invoice->update([
-            'paid_amount' => min($newPaid, $invoice->total),
-            'paid_at'     => $newStatus === 'paid' ? $request->paid_at : $invoice->paid_at,
-            'status'      => $newStatus,
-        ]);
-
-        if ($newStatus === 'paid') {
-            WebhookService::fire('invoice.paid', $invoice->tenant_id, [
-                'id'           => $invoice->id,
-                'number'       => $invoice->number,
-                'total'        => $invoice->total,
-                'paid_at'      => $request->paid_at,
-                'contact_name' => $invoice->contact?->name,
-            ]);
-        }
-
-        return back()->with('success', 'Payment recorded. Status: ' . ucfirst($newStatus));
-    }
-
-    // ── Download PDF ──────────────────────────────────────────────
-    public function pdf(int|string $id)
-    {
-        $invoice = $this->findInvoice($id);
-        $invoice->load(['contact', 'createdBy', 'quotation']);
+        $invoice->loadMissing(['contact', 'createdBy', 'quotation']);
         $tenant = auth()->user()->tenant;
 
         $pdfSettings = InvoicePdfSetting::where('tenant_id', $this->tenantId())->first();
@@ -323,19 +293,25 @@ class InvoiceController extends Controller
         if ($pdfSettings && $pdfSettings->use_custom_template && $pdfSettings->custom_html) {
             $renderedHtml = InvoicePdfTemplateRenderer::render($pdfSettings->custom_html, $invoice, $tenant);
 
-            $pdf = Pdf::loadView('tenant.invoices.custom-pdf', [
+            return Pdf::loadView('tenant.invoices.custom-pdf', [
                 'invoice'      => $invoice,
                 'renderedHtml' => $renderedHtml,
                 'fontFamily'   => $pdfSettings->font_family,
                 'primaryColor' => $pdfSettings->primary_color,
                 'accentColor'  => $pdfSettings->accent_color,
             ])->setPaper('a4', 'portrait');
-        } else {
-            $pdf = Pdf::loadView('tenant.invoices.pdf', compact('invoice', 'tenant'))
-                      ->setPaper('a4', 'portrait');
         }
 
-        return $pdf->download("Invoice-{$invoice->number}.pdf");
+        return Pdf::loadView('tenant.invoices.pdf', compact('invoice', 'tenant'))
+                  ->setPaper('a4', 'portrait');
+    }
+
+    // ── Download PDF ──────────────────────────────────────────────
+    public function pdf(int|string $id)
+    {
+        $invoice = $this->findInvoice($id);
+
+        return $this->buildInvoicePdf($invoice)->download("Invoice-{$invoice->number}.pdf");
     }
 
     // ── Send via email ────────────────────────────────────────────
@@ -348,9 +324,95 @@ class InvoiceController extends Controller
             return back()->with('error', 'Contact has no email address.');
         }
 
-        // TODO: Dispatch SendInvoiceEmail job
-        $invoice->update(['status' => 'sent']);
+        $tenant  = auth()->user()->tenant;
+        $email   = $invoice->contact->email;
+        $name    = $invoice->contact->name;
+        $subject = "Invoice {$invoice->number} from {$tenant->name}";
+        $html    = "<p>Dear {$name},</p>"
+            . "<p>Please find attached invoice <strong>{$invoice->number}</strong> for "
+            . "<strong>₹" . number_format($invoice->total, 2) . "</strong>, due on "
+            . "{$invoice->due_date?->format('d M Y')}.</p>"
+            . "<p>Thank you for your business.</p><p>{$tenant->name}</p>";
 
-        return back()->with('success', "Invoice sent to {$invoice->contact->email}.");
+        $pdfContent = $this->buildInvoicePdf($invoice)->output();
+        $attachments = [[
+            'content' => $pdfContent,
+            'name'    => "Invoice-{$invoice->number}.pdf",
+            'mime'    => 'application/pdf',
+        ]];
+
+        $sent = EmailService::send($invoice->tenant_id, $email, $name, $subject, $html, $attachments);
+
+        if (!$sent) {
+            try {
+                Mail::send([], [], function ($mail) use ($email, $name, $subject, $html, $pdfContent, $invoice) {
+                    $mail->to($email, $name)
+                         ->subject($subject)
+                         ->html($html)
+                         ->attachData($pdfContent, "Invoice-{$invoice->number}.pdf", ['mime' => 'application/pdf']);
+                });
+            } catch (\Exception $e) {
+                return back()->with('error', "Could not send email: {$e->getMessage()}");
+            }
+        }
+
+        if ($invoice->status === 'draft') {
+            $invoice->update(['status' => 'sent']);
+        }
+
+        return back()->with('success', "Invoice sent to {$email}.");
+    }
+
+    // ── Record payment ────────────────────────────────────────────
+    public function recordPayment(Request $request, int|string $id): RedirectResponse
+    {
+        $invoice = $this->findInvoice($id);
+
+        $request->validate([
+            'amount'  => ['required', 'numeric', 'min:0.01', 'max:' . $invoice->due_amount],
+            'method'  => ['required', 'in:' . implode(',', array_keys(Invoice::paymentMethods()))],
+            'paid_at' => ['required', 'date'],
+            'note'    => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $invoice->payments()->create([
+            'amount'      => $request->amount,
+            'method'      => $request->method,
+            'paid_at'     => $request->paid_at,
+            'note'        => $request->note,
+            'recorded_by' => auth()->id(),
+        ]);
+
+        $paidAmount = $invoice->payments()->sum('amount');
+        $newStatus  = $paidAmount >= $invoice->total ? 'paid' : 'partial';
+
+        $invoice->update([
+            'paid_amount' => $paidAmount,
+            'status'      => $newStatus,
+            'paid_at'     => $newStatus === 'paid' ? $request->paid_at : $invoice->paid_at,
+        ]);
+
+        if ($newStatus === 'paid') {
+            WebhookService::fire('invoice.paid', $invoice->tenant_id, [
+                'id'           => $invoice->id,
+                'number'       => $invoice->number,
+                'total'        => $invoice->total,
+                'paid_at'      => $request->paid_at,
+                'contact_name' => $invoice->contact?->name,
+            ]);
+
+            if ($invoice->createdBy) {
+                app(NotificationService::class)->send(
+                    'invoice.paid',
+                    $invoice->createdBy,
+                    ['number' => $invoice->number, 'amount' => number_format($invoice->total, 2)],
+                    null,
+                    route('tenant.invoices.show', $invoice->id),
+                    $invoice
+                );
+            }
+        }
+
+        return back()->with('success', 'Payment recorded. Status: ' . ucfirst($newStatus));
     }
 }

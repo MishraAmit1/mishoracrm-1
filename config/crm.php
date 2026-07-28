@@ -84,6 +84,14 @@ return [
         ],
         'default_tax'     => 18,
         'default_due_days' => 30,
+        'payment_methods' => [
+            'cash'          => 'Cash',
+            'card'          => 'Card',
+            'bank_transfer' => 'Bank Transfer',
+            'upi'           => 'UPI',
+            'cheque'        => 'Cheque',
+            'other'         => 'Other',
+        ],
     ],
 
     // ── Task ──────────────────────────────────────────────────────

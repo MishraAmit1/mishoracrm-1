@@ -171,6 +171,14 @@ return [
             'channels' => ['in_app', 'email'],
             'message'  => '💰 Invoice {{number}} paid — ₹{{amount}} received',
         ],
+        'invoice.payment_due' => [
+            'label'    => 'Payment Due Soon',
+            'icon'     => 'clock',
+            'color'    => 'amber',
+            'group'    => 'Invoices',
+            'channels' => ['in_app', 'email'],
+            'message'  => 'Invoice {{number}} — ₹{{amount}} due on {{date}}',
+        ],
         'invoice.overdue' => [
             'label'    => 'Invoice Overdue',
             'icon'     => 'alert-triangle',

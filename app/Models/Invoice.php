@@ -6,6 +6,7 @@ use App\BelongsToTenant;
 use App\HasAuditLog;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Invoice extends Model
@@ -31,6 +32,8 @@ class Invoice extends Model
         'status',
         'razorpay_payment_id',
         'paid_at',
+        'due_reminded_at',
+        'overdue_reminded_at',
         'created_by',
     ];
 
@@ -39,6 +42,8 @@ class Invoice extends Model
         'date'        => 'date',
         'due_date'    => 'date',
         'paid_at'     => 'datetime',
+        'due_reminded_at'     => 'datetime',
+        'overdue_reminded_at' => 'datetime',
         'subtotal'    => 'decimal:2',
         'discount'    => 'decimal:2',
         'tax_percent' => 'decimal:2',
@@ -69,6 +74,11 @@ class Invoice extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function payments(): HasMany
+    {
+        return $this->hasMany(InvoicePayment::class)->latest('paid_at');
+    }
+
     // ── Scopes ────────────────────────────────────────────────────
 
     public function scopeStatus($query, string $status)
@@ -80,6 +90,20 @@ class Invoice extends Model
     {
         return $query->whereIn('status', ['sent', 'partial'])
                      ->where('due_date', '<', now());
+    }
+
+    public function scopeDueForPaymentReminder($query)
+    {
+        return $query->whereIn('status', ['sent', 'partial'])
+                     ->whereNull('due_reminded_at')
+                     ->whereBetween('due_date', [now()->startOfDay(), now()->addDays(3)->endOfDay()]);
+    }
+
+    public function scopeOverdueForPaymentReminder($query)
+    {
+        return $query->whereIn('status', ['sent', 'partial'])
+                     ->whereNull('overdue_reminded_at')
+                     ->where('due_date', '<', now()->startOfDay());
     }
 
     public function scopeThisMonth($query)
@@ -179,5 +203,10 @@ class Invoice extends Model
     public static function statuses(): array
     {
         return config('crm.invoice.statuses');
+    }
+
+    public static function paymentMethods(): array
+    {
+        return config('crm.invoice.payment_methods');
     }
 }

@@ -345,6 +345,8 @@ Route::middleware(['tenant', 'auth', 'subscription'])
                 Route::delete('/{id}', 'destroy')->name('destroy');
                 Route::post('/{id}/status', 'updateStatus')->name('update_status');
                 Route::get('/{id}/pdf', 'pdf')->name('pdf');
+                Route::post('/{id}/send', 'send')->name('send');
+                Route::post('/{id}/record-payment', 'recordPayment')->name('record_payment');
             });
         });
 

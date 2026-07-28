@@ -14,3 +14,6 @@ Schedule::job(new SyncIndiaMartLeadsJob)->everyThirtyMinutes();
 
 // ── Follow-up due/overdue reminders — every 5 minutes ─────────────
 Schedule::command('followups:remind')->everyFiveMinutes();
+
+// ── Invoice payment due/overdue reminders — daily ─────────────────
+Schedule::command('invoices:remind-payments')->daily();

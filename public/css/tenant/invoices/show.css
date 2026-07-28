@@ -364,6 +364,52 @@
 }
 
 /* ────────────────────────────────────────────────────────────────
+   RECORD PAYMENT FORM
+──────────────────────────────────────────────────────────────── */
+.pay-form{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+}
+
+.field{
+    display:flex;
+    flex-direction:column;
+    gap:7px;
+}
+
+.field-label{
+    font-size:12.5px;
+    font-weight:600;
+    color:var(--text-200);
+    text-transform:uppercase;
+    letter-spacing:.3px;
+}
+
+.field-input{
+    padding:10px 13px;
+    background:var(--bg-input);
+    border:1.5px solid var(--border-default);
+    border-radius:var(--r-sm);
+    color:var(--text-100);
+    font-family:var(--font);
+    font-size:14px;
+    outline:none;
+    transition:border-color .15s, box-shadow .15s;
+    width:100%;
+}
+
+.field-input:focus{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px var(--accent-dim);
+}
+
+.field-select{
+    -webkit-appearance:none;
+    cursor:pointer;
+}
+
+/* ────────────────────────────────────────────────────────────────
    EMPTY STATE
 ──────────────────────────────────────────────────────────────── */
 .empty-state{

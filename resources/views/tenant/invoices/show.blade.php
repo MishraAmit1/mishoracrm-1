@@ -33,9 +33,19 @@
                 Download PDF
             </a>
 
-            <button class="btn btn-success">
+            @if($invoice->contact?->email)
+            <form method="POST" action="{{ route('tenant.invoices.send', $invoice->id) }}"
+                  onsubmit="return confirm('Send this invoice to {{ $invoice->contact->email }}?')">
+                @csrf
+                <button type="submit" class="btn btn-success">
+                    Send Invoice
+                </button>
+            </form>
+            @else
+            <button class="btn btn-success" disabled title="Contact has no email address">
                 Send Invoice
             </button>
+            @endif
 
         </div>
 
@@ -177,6 +187,59 @@
 
             </div>
 
+            {{-- PAYMENT HISTORY --}}
+            <div class="card mt-4">
+
+                <div class="card-head">
+                    Payment History
+                </div>
+
+                <div class="card-body p-0">
+
+                    @if($invoice->payments->isEmpty())
+
+                    <div class="empty-state">
+                        <div class="empty-sub">No payments recorded yet.</div>
+                    </div>
+
+                    @else
+
+                    <table class="invoice-table">
+
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Method</th>
+                                <th>Amount</th>
+                                <th>Note</th>
+                                <th>Recorded By</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            @foreach($invoice->payments as $payment)
+
+                            <tr>
+                                <td data-label="Date">{{ $payment->paid_at->format('d M Y') }}</td>
+                                <td data-label="Method">{{ \App\Models\Invoice::paymentMethods()[$payment->method] ?? ucfirst($payment->method) }}</td>
+                                <td data-label="Amount">₹{{ number_format($payment->amount, 2) }}</td>
+                                <td data-label="Note">{{ $payment->note ?: '-' }}</td>
+                                <td data-label="Recorded By">{{ $payment->recordedBy?->name ?? '-' }}</td>
+                            </tr>
+
+                            @endforeach
+
+                        </tbody>
+
+                    </table>
+
+                    @endif
+
+                </div>
+
+            </div>
+
         </div>
 
         {{-- RIGHT --}}
@@ -222,6 +285,55 @@
                 </div>
 
             </div>
+
+            {{-- RECORD PAYMENT --}}
+            @if($invoice->due_amount > 0)
+            <div class="card mt-4">
+
+                <div class="card-head">
+                    Record Payment
+                </div>
+
+                <div class="card-body">
+
+                    <form method="POST" action="{{ route('tenant.invoices.record_payment', $invoice->id) }}" class="pay-form">
+                        @csrf
+
+                        <div class="field">
+                            <label class="field-label">Amount</label>
+                            <input type="number" step="0.01" min="0.01" max="{{ $invoice->due_amount }}"
+                                   name="amount" value="{{ $invoice->due_amount }}" class="field-input" required>
+                        </div>
+
+                        <div class="field">
+                            <label class="field-label">Method</label>
+                            <select name="method" class="field-input field-select" required>
+                                @foreach(\App\Models\Invoice::paymentMethods() as $key => $label)
+                                <option value="{{ $key }}">{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label class="field-label">Paid On</label>
+                            <input type="date" name="paid_at" value="{{ now()->format('Y-m-d') }}" class="field-input" required>
+                        </div>
+
+                        <div class="field">
+                            <label class="field-label">Note</label>
+                            <input type="text" name="note" maxlength="255" class="field-input" placeholder="Optional">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" style="width:100%;margin-top:4px;">
+                            Record Payment
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+            @endif
 
             {{-- NOTES --}}
             <div class="card mt-4">
