@@ -168,7 +168,7 @@ class InvoiceController extends Controller
     }
 
     // ── Edit ──────────────────────────────────────────────────────
-    public function edit(int|string $id): View
+    public function edit(int|string $id): View|RedirectResponse
     {
         $invoice = $this->findInvoice($id);
 
