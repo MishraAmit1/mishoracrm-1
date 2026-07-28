@@ -132,6 +132,8 @@
 }
 .avatar-upload:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-dim); }
 .avatar-upload svg { width:14px; height:14px; }
+.avatar-upload.is-uploading { opacity:.6; pointer-events:none; }
+.avatar-error { font-size:12px; color:var(--red); font-weight:500; margin-top:6px; }
 
 /* ── Password strength ───────────────────────────────────────────── */
 .pw-wrap { position:relative; }
@@ -293,17 +295,41 @@
                         <form method="POST" action="{{ route('tenant.settings.avatar') }}"
                               enctype="multipart/form-data" id="avatarForm">
                             @csrf
-                            <label class="avatar-upload">
+                            <label class="avatar-upload" id="avatarUploadLabel">
                                 <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
                                 </svg>
-                                Change Photo
+                                <span id="avatarUploadLabelText">Change Photo</span>
                                 <input type="file" name="avatar" accept="image/*"
-                                       style="display:none" onchange="this.form.submit()"/>
+                                       style="display:none" id="avatarInput"/>
                             </label>
                         </form>
+                        @error('avatar')
+                            <div class="avatar-error">{{ $message }}</div>
+                        @enderror
                     </div>
                 </div>
+
+                <script>
+                    document.getElementById('avatarInput')?.addEventListener('change', function () {
+                        const file = this.files[0];
+                        if (!file) return;
+
+                        const maxBytes = 2 * 1024 * 1024; // must match SettingsController@uploadAvatar 'max:2048'
+                        if (file.size > maxBytes) {
+                            alert('Image is too large. Please choose a file under 2 MB.');
+                            this.value = '';
+                            return;
+                        }
+
+                        const label = document.getElementById('avatarUploadLabel');
+                        const labelText = document.getElementById('avatarUploadLabelText');
+                        label.classList.add('is-uploading');
+                        labelText.textContent = 'Uploading...';
+
+                        this.form.submit();
+                    });
+                </script>
 
                 {{-- Profile form --}}
                 <form method="POST" action="{{ route('tenant.settings.profile') }}">
