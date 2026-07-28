@@ -390,47 +390,156 @@
 /* ────────────────────────────────────────────────────────────────
    RECORD PAYMENT FORM
 ──────────────────────────────────────────────────────────────── */
-.pay-form{
-    display:flex;
-    flex-direction:column;
-    gap:14px;
+.pay-table{
+    width:100%;
+    border-collapse:collapse;
 }
 
-.field{
-    display:flex;
-    flex-direction:column;
-    gap:7px;
-}
-
-.field-label{
-    font-size:12.5px;
-    font-weight:600;
-    color:var(--text-200);
+.pay-table th{
+    padding:8px 10px;
+    text-align:left;
+    font-size:11px;
+    font-weight:700;
+    color:var(--text-400);
     text-transform:uppercase;
-    letter-spacing:.3px;
+    letter-spacing:.4px;
+    border-bottom:1px solid var(--border-subtle);
+    white-space:nowrap;
 }
 
-.field-input{
-    padding:10px 13px;
+.pay-table td{
+    padding:6px 6px;
+    vertical-align:middle;
+}
+
+.pay-input{
+    padding:8px 10px;
     background:var(--bg-input);
     border:1.5px solid var(--border-default);
     border-radius:var(--r-sm);
     color:var(--text-100);
     font-family:var(--font);
-    font-size:14px;
+    font-size:13.5px;
     outline:none;
-    transition:border-color .15s, box-shadow .15s;
+    transition:border-color .15s;
     width:100%;
 }
 
-.field-input:focus{
+.pay-input:focus{
     border-color:var(--accent);
-    box-shadow:0 0 0 3px var(--accent-dim);
 }
 
-.field-select{
-    -webkit-appearance:none;
+.pay-input.right{
+    text-align:right;
+}
+
+.del-row{
+    padding:6px 8px;
+    border:none;
+    background:var(--red-dim);
+    color:var(--red);
+    border-radius:var(--r-sm);
     cursor:pointer;
+    font-size:13px;
+    transition:background .15s;
+    flex-shrink:0;
+}
+
+.del-row:hover{
+    background:var(--red);
+    color:#fff;
+}
+
+.add-row-btn{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding:9px 14px;
+    border:1.5px dashed var(--accent);
+    background:none;
+    color:var(--accent);
+    border-radius:var(--r-sm);
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    font-family:var(--font);
+    transition:background .15s;
+    margin-top:10px;
+}
+
+.add-row-btn:hover{
+    background:var(--accent-dim);
+}
+
+.totals-box{
+    background:var(--bg-elevated);
+    border-radius:var(--r-sm);
+    padding:16px;
+}
+
+.total-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:6px 0;
+    border-bottom:1px solid var(--border-subtle);
+    font-size:13.5px;
+}
+
+.total-row:last-child{
+    border-bottom:none;
+    padding-top:10px;
+    margin-top:4px;
+}
+
+.total-row.grand{
+    font-size:15px;
+    font-weight:800;
+    color:var(--text-100);
+}
+
+.total-label{
+    color:var(--text-200);
+}
+
+.total-value{
+    font-family:var(--mono);
+    font-weight:600;
+    color:var(--text-100);
+}
+
+@media(max-width:640px){
+    .pay-table thead{
+        display:none;
+    }
+    .pay-table, .pay-table tbody{
+        display:block;
+        width:100%;
+    }
+    .pay-table tr{
+        display:block;
+        margin-bottom:12px;
+        padding:12px;
+        background:var(--bg-elevated);
+        border:1px solid var(--border-default);
+        border-radius:var(--r-md);
+    }
+    .pay-table td{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:10px;
+        padding:6px 0;
+    }
+    .pay-table td::before{
+        content:attr(data-label);
+        font-size:11px;
+        font-weight:700;
+        text-transform:uppercase;
+        letter-spacing:0.4px;
+        color:var(--text-400);
+        flex-shrink:0;
+    }
 }
 
 /* ────────────────────────────────────────────────────────────────

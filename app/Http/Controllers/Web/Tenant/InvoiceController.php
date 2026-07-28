@@ -363,33 +363,44 @@ class InvoiceController extends Controller
         return back()->with('success', "Invoice sent to {$email}.");
     }
 
-    // ── Record payment ────────────────────────────────────────────
+    // ── Record payment(s) — one or more line items in a single submit ─
     public function recordPayment(Request $request, int|string $id): RedirectResponse
     {
         $invoice = $this->findInvoice($id);
 
         $request->validate([
-            'amount'  => ['required', 'numeric', 'min:0.01', 'max:' . $invoice->due_amount],
-            'method'  => ['required', 'in:' . implode(',', array_keys(Invoice::paymentMethods()))],
-            'paid_at' => ['required', 'date'],
-            'note'    => ['nullable', 'string', 'max:255'],
+            'payments'               => ['required', 'array', 'min:1'],
+            'payments.*.amount'      => ['required', 'numeric', 'min:0.01'],
+            'payments.*.method'      => ['required', 'in:' . implode(',', array_keys(Invoice::paymentMethods()))],
+            'payments.*.paid_at'     => ['required', 'date'],
+            'payments.*.note'        => ['nullable', 'string', 'max:255'],
         ]);
 
-        $invoice->payments()->create([
-            'amount'      => $request->amount,
-            'method'      => $request->method,
-            'paid_at'     => $request->paid_at,
-            'note'        => $request->note,
-            'recorded_by' => auth()->id(),
-        ]);
+        $rows      = $request->payments;
+        $newTotal  = collect($rows)->sum('amount');
 
-        $paidAmount = $invoice->payments()->sum('amount');
-        $newStatus  = $paidAmount >= $invoice->total ? 'paid' : 'partial';
+        if (round($newTotal, 2) > round($invoice->due_amount, 2) + 0.01) {
+            return back()->with('error', 'Total payment amount exceeds the due amount.')->withInput();
+        }
+
+        foreach ($rows as $row) {
+            $invoice->payments()->create([
+                'amount'      => $row['amount'],
+                'method'      => $row['method'],
+                'paid_at'     => $row['paid_at'],
+                'note'        => $row['note'] ?? null,
+                'recorded_by' => auth()->id(),
+            ]);
+        }
+
+        $paidAmount   = $invoice->payments()->sum('amount');
+        $newStatus    = $paidAmount >= $invoice->total ? 'paid' : 'partial';
+        $latestPaidAt = collect($rows)->max('paid_at');
 
         $invoice->update([
             'paid_amount' => $paidAmount,
             'status'      => $newStatus,
-            'paid_at'     => $newStatus === 'paid' ? $request->paid_at : $invoice->paid_at,
+            'paid_at'     => $newStatus === 'paid' ? $latestPaidAt : $invoice->paid_at,
         ]);
 
         if ($newStatus === 'paid') {
@@ -397,7 +408,7 @@ class InvoiceController extends Controller
                 'id'           => $invoice->id,
                 'number'       => $invoice->number,
                 'total'        => $invoice->total,
-                'paid_at'      => $request->paid_at,
+                'paid_at'      => $latestPaidAt,
                 'contact_name' => $invoice->contact?->name,
             ]);
 
@@ -413,6 +424,7 @@ class InvoiceController extends Controller
             }
         }
 
-        return back()->with('success', 'Payment recorded. Status: ' . ucfirst($newStatus));
+        $count = count($rows);
+        return back()->with('success', "{$count} payment(s) recorded. Status: " . ucfirst($newStatus));
     }
 }

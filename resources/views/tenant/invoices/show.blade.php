@@ -299,36 +299,46 @@
 
                 <div class="card-body">
 
-                    <form method="POST" action="{{ route('tenant.invoices.record_payment', $invoice->id) }}" class="pay-form">
+                    <form method="POST" action="{{ route('tenant.invoices.record_payment', $invoice->id) }}" id="payForm">
                         @csrf
 
-                        <div class="field">
-                            <label class="field-label">Amount</label>
-                            <input type="number" step="0.01" min="0.01" max="{{ $invoice->due_amount }}"
-                                   name="amount" value="{{ $invoice->due_amount }}" class="field-input" required>
+                        <div style="overflow-x:auto">
+                            <table class="pay-table">
+                                <thead>
+                                    <tr>
+                                        <th>Amount (₹)</th>
+                                        <th>Method</th>
+                                        <th>Paid On</th>
+                                        <th>Note</th>
+                                        <th style="width:36px"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="payRowsBody">
+                                    {{-- rows injected by JS --}}
+                                </tbody>
+                            </table>
                         </div>
 
-                        <div class="field">
-                            <label class="field-label">Method</label>
-                            <select name="method" class="field-input field-select" required>
-                                @foreach(\App\Models\Invoice::paymentMethods() as $key => $label)
-                                <option value="{{ $key }}">{{ $label }}</option>
-                                @endforeach
-                            </select>
+                        <button type="button" class="add-row-btn" onclick="addPayRow()">
+                            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:14px;height:14px">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                            </svg>
+                            Add Payment
+                        </button>
+
+                        <div class="totals-box" style="margin-top:14px">
+                            <div class="total-row">
+                                <span class="total-label">Due Amount</span>
+                                <span class="total-value">₹{{ number_format($invoice->due_amount, 2) }}</span>
+                            </div>
+                            <div class="total-row grand">
+                                <span>Total Being Recorded</span>
+                                <span id="payRunningTotal">₹0.00</span>
+                            </div>
                         </div>
 
-                        <div class="field">
-                            <label class="field-label">Paid On</label>
-                            <input type="date" name="paid_at" value="{{ now()->format('Y-m-d') }}" class="field-input" required>
-                        </div>
-
-                        <div class="field">
-                            <label class="field-label">Note</label>
-                            <input type="text" name="note" maxlength="255" class="field-input" placeholder="Optional">
-                        </div>
-
-                        <button type="submit" class="btn btn-primary" style="width:100%;margin-top:4px;">
-                            Record Payment
+                        <button type="submit" class="btn btn-primary" style="width:100%;margin-top:14px;">
+                            Record Payment(s)
                         </button>
 
                     </form>
@@ -360,3 +370,74 @@
 </div>
 
 @endsection
+
+@if($invoice->due_amount > 0)
+@push('scripts')
+<script>
+const PAYMENT_METHODS = @json(\App\Models\Invoice::paymentMethods());
+const DUE_AMOUNT       = {{ $invoice->due_amount }};
+let payRowCount = 0;
+
+function payMethodOptions() {
+    return Object.entries(PAYMENT_METHODS)
+        .map(([key, label]) => `<option value="${key}">${label}</option>`)
+        .join('');
+}
+
+function addPayRow(amount = '') {
+    const tbody = document.getElementById('payRowsBody');
+    const i     = payRowCount++;
+    const tr    = document.createElement('tr');
+    tr.dataset.row = i;
+
+    tr.innerHTML = `
+        <td data-label="Amount">
+            <input type="number" name="payments[${i}][amount]" class="pay-input right"
+                   min="0.01" step="0.01" max="${DUE_AMOUNT}"
+                   value="${amount}" oninput="calcPayTotal()" required/>
+        </td>
+        <td data-label="Method">
+            <select name="payments[${i}][method]" class="pay-input" required>
+                ${payMethodOptions()}
+            </select>
+        </td>
+        <td data-label="Paid On">
+            <input type="date" name="payments[${i}][paid_at]" class="pay-input"
+                   value="${new Date().toISOString().slice(0,10)}" required/>
+        </td>
+        <td data-label="Note">
+            <input type="text" name="payments[${i}][note]" class="pay-input" maxlength="255" placeholder="Optional"/>
+        </td>
+        <td style="text-align:center">
+            <button type="button" class="del-row" onclick="delPayRow(this)">✕</button>
+        </td>`;
+
+    tbody.appendChild(tr);
+    calcPayTotal();
+}
+
+function delPayRow(btn) {
+    const tbody = document.getElementById('payRowsBody');
+    if (tbody.rows.length <= 1) return;
+    btn.closest('tr').remove();
+    calcPayTotal();
+}
+
+function calcPayTotal() {
+    let total = 0;
+    document.querySelectorAll('#payRowsBody [name$="[amount]"]').forEach(input => {
+        total += parseFloat(input.value) || 0;
+    });
+    const el = document.getElementById('payRunningTotal');
+    if (el) {
+        el.textContent = '₹' + total.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
+        el.style.color = total > DUE_AMOUNT + 0.01 ? 'var(--red)' : 'var(--accent)';
+    }
+}
+
+(function () {
+    addPayRow(DUE_AMOUNT);
+})();
+</script>
+@endpush
+@endif
