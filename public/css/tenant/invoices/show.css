@@ -135,6 +135,30 @@
     padding:22px;
 }
 
+.card-subhead{
+    padding:14px 22px;
+    border-top:1px solid var(--border-subtle);
+    border-bottom:1px solid var(--border-subtle);
+    background:var(--bg-elevated);
+    font-size:12px;
+    font-weight:700;
+    color:var(--text-400);
+    text-transform:uppercase;
+    letter-spacing:.5px;
+}
+
+.invoice-table th.right,
+.invoice-table td.right{
+    text-align:right;
+}
+
+.invoice-table tfoot td{
+    padding:14px 18px;
+    border-top:1px solid var(--border-subtle);
+    font-size:13px;
+    color:var(--text-100);
+}
+
 .p-0{
     padding:0 !important;
 }

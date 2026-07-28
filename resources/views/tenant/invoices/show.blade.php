@@ -185,13 +185,9 @@
 
                 </div>
 
-            </div>
-
-            {{-- PAYMENT HISTORY --}}
-            <div class="card mt-4">
-
-                <div class="card-head">
-                    Payment History
+                {{-- PAYMENTS — part of the same items card, its own line-item table --}}
+                <div class="card-subhead">
+                    Payments
                 </div>
 
                 <div class="card-body p-0">
@@ -210,9 +206,9 @@
                             <tr>
                                 <th>Date</th>
                                 <th>Method</th>
-                                <th>Amount</th>
                                 <th>Note</th>
                                 <th>Recorded By</th>
+                                <th class="right">Amount</th>
                             </tr>
                         </thead>
 
@@ -223,14 +219,21 @@
                             <tr>
                                 <td data-label="Date">{{ $payment->paid_at->format('d M Y') }}</td>
                                 <td data-label="Method">{{ \App\Models\Invoice::paymentMethods()[$payment->method] ?? ucfirst($payment->method) }}</td>
-                                <td data-label="Amount">₹{{ number_format($payment->amount, 2) }}</td>
                                 <td data-label="Note">{{ $payment->note ?: '-' }}</td>
                                 <td data-label="Recorded By">{{ $payment->recordedBy?->name ?? '-' }}</td>
+                                <td data-label="Amount" class="right">₹{{ number_format($payment->amount, 2) }}</td>
                             </tr>
 
                             @endforeach
 
                         </tbody>
+
+                        <tfoot>
+                            <tr>
+                                <td colspan="4" class="right"><strong>Total Paid</strong></td>
+                                <td class="right"><strong>₹{{ number_format($invoice->paid_amount, 2) }}</strong></td>
+                            </tr>
+                        </tfoot>
 
                     </table>
 
