@@ -156,7 +156,7 @@
             <div class="navbar__profile" id="profileBtn">
                 <div class="navbar__profile-avatar">
                     @if ($user?->avatar)
-                        <img src="{{ asset('storage/avatars/' . $user->avatar) }}" alt="{{ $user->name }}">
+                        <img src="{{ Storage::url($user->avatar) }}" alt="{{ $user->name }}">
                     @else
                         {{ strtoupper(substr($user?->name ?? 'U', 0, 2)) }}
                     @endif

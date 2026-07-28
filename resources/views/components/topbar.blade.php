@@ -104,7 +104,7 @@
         <div class="dropdown">
             <div class="tb-avatar" onclick="toggleDrop('tbUserDrop')" title="{{ auth()->user()->name }}">
                 @if(auth()->user()->avatar)
-                    <img src="{{ asset('storage/avatars/'.auth()->user()->avatar) }}" alt="avatar"/>
+                    <img src="{{ Storage::url(auth()->user()->avatar) }}" alt="avatar"/>
                 @else
                     {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
                 @endif

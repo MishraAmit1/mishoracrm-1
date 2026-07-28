@@ -78,7 +78,7 @@ class User extends Authenticatable
     public function getAvatarUrlAttribute(): ?string
     {
         return $this->avatar
-            ? asset('storage/avatars/' . $this->avatar)
+            ? \Illuminate\Support\Facades\Storage::url($this->avatar)
             : null;
     }
     public function deviceTokens()

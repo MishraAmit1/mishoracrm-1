@@ -7,6 +7,13 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
+        /* ─── PAGE / MULTI-PAGE SETUP ───
+             Bottom margin reserves space for the fixed running footer below,
+             so a second (or later) page never overlaps it. */
+        @page {
+            margin: 0 0 65px 0;
+        }
+
         body {
             font-family: DejaVu Sans, sans-serif;
             font-size: 12px;
@@ -124,6 +131,7 @@
             border-top: 3px solid #1e3a5f;
             padding: 14px 16px;
             border-radius: 2px;
+            page-break-inside: avoid;
         }
         .party-box.buyer { border-top-color: #3b82f6; }
         .party-label {
@@ -172,12 +180,17 @@
             margin-bottom: 12px;
         }
 
-        /* ─── ITEMS TABLE ─── */
+        /* ─── ITEMS TABLE ───
+             thead repeats automatically on every page dompdf breaks the table
+             across; tbody rows get page-break-inside:avoid so a single item
+             row is never split top/bottom across a page. */
         .items-table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 0;
         }
+        .items-table thead { display: table-header-group; }
+        .items-table tbody { display: table-row-group; }
         .items-table thead tr {
             background: #1e3a5f;
         }
@@ -194,7 +207,7 @@
         .items-table thead th.r { text-align: right; }
         .items-table thead th.c { text-align: center; }
 
-        .items-table tbody tr { border-bottom: 1px solid #f1f5f9; }
+        .items-table tbody tr { border-bottom: 1px solid #f1f5f9; page-break-inside: avoid; }
         .items-table tbody tr:nth-child(even) { background: #f8fafc; }
         .items-table tbody tr:last-child { border-bottom: 2px solid #e2e8f0; }
 
@@ -225,6 +238,7 @@
             border-left: 4px solid #1e3a5f;
             padding: 12px 14px;
             background: #f8fafc;
+            page-break-inside: avoid;
         }
         .bank-title {
             font-size: 10px;
@@ -283,6 +297,7 @@
             padding: 10px 16px;
             margin-top: 16px;
             font-size: 11px;
+            page-break-inside: avoid;
         }
         .amount-words-label {
             font-size: 9px;
@@ -306,6 +321,7 @@
             border-left: 4px solid #16a34a;
             padding: 12px 16px;
             margin-top: 16px;
+            page-break-inside: avoid;
         }
         .payment-received-title {
             font-size: 10px;
@@ -340,6 +356,7 @@
             padding: 10px 12px;
             background: #f8fafc;
             border: 1px solid #e2e8f0;
+            page-break-inside: avoid;
         }
 
         /* ─── SIGNATURE SECTION ─── */
@@ -348,6 +365,7 @@
             margin-top: 24px;
             border-top: 1px solid #e2e8f0;
             padding-top: 16px;
+            page-break-inside: avoid;
         }
         .sig-table { width: 100%; }
         .sig-left  { width: 48%; vertical-align: bottom; }
@@ -381,17 +399,24 @@
             margin-top: 8px;
         }
 
-        /* ─── FOOTER ─── */
+        /* ─── FOOTER ───
+             Fixed so it repeats identically on every page (including page 2+
+             when the items table overflows), instead of only printing once
+             after the last block of content. */
         .footer-bar {
+            position: fixed;
+            bottom: -65px;
+            left: 0;
+            right: 0;
             background: #1e3a5f;
             padding: 12px 32px;
-            margin-top: 24px;
         }
         .footer-inner { width: 100%; }
         .footer-left  { width: 60%; vertical-align: middle; }
         .footer-right { width: 40%; vertical-align: middle; text-align: right; }
         .footer-text  { font-size: 10px; color: #94a3b8; line-height: 1.7; }
-        .footer-page  { font-size: 10px; color: #64748b; }
+        .footer-page  { font-size: 10px; color: #94a3b8; }
+        .footer-pagenum:after { content: "Page " counter(page) " of " counter(pages); }
     </style>
 </head>
 <body>
@@ -766,6 +791,7 @@
                 <td class="footer-right">
                     <div class="footer-text" style="color:#475569;">
                         Invoice #{{ $invoice->number }} &nbsp;|&nbsp; Generated {{ now()->format('d M Y') }}
+                        &nbsp;|&nbsp; <span class="footer-pagenum"></span>
                     </div>
                 </td>
             </tr>

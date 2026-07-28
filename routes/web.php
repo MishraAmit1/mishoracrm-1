@@ -348,6 +348,13 @@ Route::middleware(['tenant', 'auth', 'subscription'])
             });
         });
 
+        // ── Invoice PDF Style (tenant_admin only) ───────────────────
+        Route::prefix('invoice-pdf-style')->name('invoice-pdf-style.')->middleware(['role:tenant_admin'])
+            ->controller(Tenant\InvoicePdfSettingController::class)->group(function () {
+                Route::get('/',  'index')->name('index');
+                Route::post('/', 'store')->name('store');
+            });
+
         // Products / Item Catalog routes
         Route::prefix('/products')->name('products.')->group(function () {
             Route::controller(Tenant\ProductController::class)->group(function () {

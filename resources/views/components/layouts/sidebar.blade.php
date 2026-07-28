@@ -236,7 +236,7 @@ Badge counts: pass from controller via shared view data.
         <div class="sidebar__user" id="sidebarUserMenu">
             <div class="sidebar__user-avatar">
                 @if ($user?->avatar)
-                    <img src="{{ asset('storage/avatars/' . $user->avatar) }}" alt="{{ $user->name }}">
+                    <img src="{{ Storage::url($user->avatar) }}" alt="{{ $user->name }}">
                 @else
                     {{ strtoupper(substr($user?->name ?? 'U', 0, 2)) }}
                 @endif

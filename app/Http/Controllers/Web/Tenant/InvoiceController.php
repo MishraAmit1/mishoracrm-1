@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Web\Tenant;
 use App\Http\Controllers\Controller;
 use App\Models\Contact;
 use App\Models\Invoice;
+use App\Models\InvoicePdfSetting;
 use App\Models\Product;
 use App\Models\Quotation;
+use App\Services\InvoicePdfTemplateRenderer;
 use App\Services\WebhookService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
@@ -316,8 +318,22 @@ class InvoiceController extends Controller
         $invoice->load(['contact', 'createdBy', 'quotation']);
         $tenant = auth()->user()->tenant;
 
-        $pdf = Pdf::loadView('tenant.invoices.pdf', compact('invoice', 'tenant'))
-                  ->setPaper('a4', 'portrait');
+        $pdfSettings = InvoicePdfSetting::where('tenant_id', $this->tenantId())->first();
+
+        if ($pdfSettings && $pdfSettings->use_custom_template && $pdfSettings->custom_html) {
+            $renderedHtml = InvoicePdfTemplateRenderer::render($pdfSettings->custom_html, $invoice, $tenant);
+
+            $pdf = Pdf::loadView('tenant.invoices.custom-pdf', [
+                'invoice'      => $invoice,
+                'renderedHtml' => $renderedHtml,
+                'fontFamily'   => $pdfSettings->font_family,
+                'primaryColor' => $pdfSettings->primary_color,
+                'accentColor'  => $pdfSettings->accent_color,
+            ])->setPaper('a4', 'portrait');
+        } else {
+            $pdf = Pdf::loadView('tenant.invoices.pdf', compact('invoice', 'tenant'))
+                      ->setPaper('a4', 'portrait');
+        }
 
         return $pdf->download("Invoice-{$invoice->number}.pdf");
     }

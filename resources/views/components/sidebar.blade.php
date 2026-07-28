@@ -430,7 +430,7 @@
         <div class="sb-user" onclick="toggleDrop('userMenuDrop')">
             <div class="sb-avatar">
                 @if(auth()->user()->avatar)
-                    <img src="{{ asset('storage/avatars/'.auth()->user()->avatar) }}" alt="avatar"/>
+                    <img src="{{ Storage::url(auth()->user()->avatar) }}" alt="avatar"/>
                 @else
                     {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
                 @endif
