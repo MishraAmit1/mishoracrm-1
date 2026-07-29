@@ -82,7 +82,7 @@ return [
             'icon'     => 'clock',
             'color'    => 'amber',
             'group'    => 'Follow-ups',
-            'channels' => ['in_app', 'whatsapp'],
+            'channels' => ['in_app', 'whatsapp', 'push'],
             'message'  => 'Follow-up with {{name}} is due now',
         ],
         'followup.overdue' => [
@@ -90,7 +90,7 @@ return [
             'icon'     => 'alert-circle',
             'color'    => 'red',
             'group'    => 'Follow-ups',
-            'channels' => ['in_app', 'whatsapp'],
+            'channels' => ['in_app', 'whatsapp', 'push'],
             'message'  => 'Follow-up with {{name}} is overdue!',
         ],
         'followup.scheduled' => [

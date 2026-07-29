@@ -34,6 +34,54 @@ async function initPush() {
 
     });
 
+    // ── App open hone ke waqt bhi notification dikhaye (foreground) ───
+    PushNotifications.addListener('pushNotificationReceived', (notification) => {
+
+        const LocalNotifications = Capacitor?.Plugins?.LocalNotifications;
+
+        if (!LocalNotifications) {
+            console.log("Push received (foreground):", notification);
+            return;
+        }
+
+        LocalNotifications.schedule({
+            notifications: [{
+                id: Date.now() % 2147483647,
+                title: notification.title || 'CRM Pro',
+                body: notification.body || '',
+                extra: notification.data || {}
+            }]
+        });
+
+    });
+
+    // ── Notification tap karne par seedha related page par le jaye ────
+    PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
+
+        const url = action.notification?.data?.url
+            ?? action.notification?.extra?.url;
+
+        if (url) {
+            window.location.href = url;
+        }
+
+    });
+
+    // ── Foreground local notification tap karne par bhi navigate kare ──
+    const LocalNotifications = Capacitor?.Plugins?.LocalNotifications;
+
+    if (LocalNotifications) {
+        LocalNotifications.addListener('localNotificationActionPerformed', (action) => {
+
+            const url = action.notification?.extra?.url;
+
+            if (url) {
+                window.location.href = url;
+            }
+
+        });
+    }
+
     await PushNotifications.register();
 }
 
