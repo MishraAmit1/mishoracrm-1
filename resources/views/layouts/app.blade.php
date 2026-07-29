@@ -397,8 +397,7 @@
 
         console.log("Capacitor Core Loaded", Capacitor);
     </script>
-    <script src="{{ asset('js/capacitor-app.js') }}"></script>
-     <script src="{{ asset('js/push-notifications.js') }}"></script>
+    <script src="{{ asset('js/push-notifications.js') }}"></script>
     @stack('scripts')
 </body>
 

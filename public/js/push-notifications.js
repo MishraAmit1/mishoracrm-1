@@ -1,44 +1,18 @@
-// alert("Step 1 - Script Loaded");
-
-// async function initPush() {
-
-  //  alert("Step 2 - initPush");
-
-    // const Capacitor = window.Capacitor || window.CapacitorCore;
-    // const PushNotifications = Capacitor?.Plugins?.PushNotifications;
-
-    // if (!PushNotifications) {
-        // alert("Step 2b - PushNotifications plugin not available");
-    //     return;
-    // }
-
-    // PushNotifications.addListener("registration", (token) => {
-        // alert("Step 5 - TOKEN " + token.value);
-    // });
-
-    // PushNotifications.addListener("registrationError", (error) => {
-        // alert("Step 6 - Registration Error " + JSON.stringify(error));
-    // });
-
-    // const permission = await PushNotifications.requestPermissions();
-
-    // alert("Step 3 - Permission " + JSON.stringify(permission));
-
-    // await PushNotifications.register();
-
-    // alert("Step 4 - register() called");
-// }
-
-// document.addEventListener("DOMContentLoaded", initPush);
-// alert(window.Capacitor)
-// alert(navigator.userAgent)
-
-import { Capacitor } from '@capacitor/core';
-import { PushNotifications } from '@capacitor/push-notifications';
+function getCapacitor() {
+    return window.Capacitor || window.CapacitorCore;
+}
 
 async function initPush() {
 
-    if (!Capacitor.isNativePlatform()) {
+    const Capacitor = getCapacitor();
+    const PushNotifications = Capacitor?.Plugins?.PushNotifications;
+
+    if (!Capacitor || !Capacitor.isNativePlatform()) {
+        return;
+    }
+
+    if (!PushNotifications) {
+        console.log("PushNotifications plugin not available");
         return;
     }
 
@@ -50,22 +24,20 @@ async function initPush() {
 
     PushNotifications.addListener('registration', async (token) => {
 
-        alert("FCM Token: " + token.value);
-
-        await saveToken(token.value);
+        await saveToken(Capacitor, token.value);
 
     });
 
     PushNotifications.addListener('registrationError', (error) => {
 
-        alert("Registration Error: " + JSON.stringify(error));
+        console.error("Push registration error:", error);
 
     });
 
     await PushNotifications.register();
 }
 
-async function saveToken(token) {
+async function saveToken(Capacitor, token) {
 
     try {
 
@@ -79,7 +51,9 @@ async function saveToken(token) {
 
                 'X-CSRF-TOKEN': document
                     .querySelector('meta[name="csrf-token"]')
-                    .content
+                    .content,
+
+                'Accept': 'application/json'
 
             },
 
@@ -101,11 +75,9 @@ async function saveToken(token) {
 
         });
 
-        alert("Device token saved.");
-
     } catch (e) {
 
-        alert.error(e);
+        console.error("Failed to save device token:", e);
 
     }
 

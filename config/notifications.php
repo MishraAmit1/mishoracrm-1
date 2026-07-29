@@ -206,6 +206,7 @@ return [
         'email'    => ['label' => 'Email',         'icon' => 'mail',    'enabled' => true],
         'whatsapp' => ['label' => 'WhatsApp',      'icon' => 'message', 'enabled' => true],
         'slack'    => ['label' => 'Slack',         'icon' => 'slack',   'enabled' => true],
+        'push'     => ['label' => 'Push',          'icon' => 'bell',    'enabled' => true],
     ],
 
     // ── Icon map (Heroicons names) ────────────────────────────────

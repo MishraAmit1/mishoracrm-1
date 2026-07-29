@@ -80,6 +80,15 @@ class NotificationService
             $channels[] = 'slack';
         }
 
+        // ── Push channel ───────────────────────────────────────────
+        if (
+            NotificationPreference::isEnabled($recipient->id, $tenantId, $type, 'push')
+            && config('notifications.channels.push.enabled')
+        ) {
+            $this->sendPush($recipient, $title, $message, $url);
+            $channels[] = 'push';
+        }
+
         // Update channels_sent on notification
         if (isset($notification)) {
             $notification->update(['channels_sent' => $channels]);
@@ -182,6 +191,12 @@ class NotificationService
     private function sendSlack(int $tenantId, string $title, string $message, ?string $url, string $assignedTo): void
     {
         \App\Services\SlackService::send($tenantId, $title, $message, $url, $assignedTo);
+    }
+
+    // ── Push channel handler ────────────────────────────────────────
+    private function sendPush(User $user, string $title, string $message, ?string $url): void
+    {
+        \App\Services\PushService::send($user, $title, $message, $url);
     }
 
     // ── Email HTML template ───────────────────────────────────────

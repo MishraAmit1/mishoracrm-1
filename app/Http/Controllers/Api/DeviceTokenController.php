@@ -42,8 +42,12 @@ class DeviceTokenController extends Controller
 
     public function destroy(Request $request)
     {
+        $request->validate([
+            'device_token' => 'required|string',
+        ]);
+
         DeviceToken::where('user_id', auth()->id())
-            ->where('fcm_token', $request->fcm_token)
+            ->where('device_token', $request->device_token)
             ->delete();
 
         return response()->json([

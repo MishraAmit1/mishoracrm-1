@@ -18,48 +18,12 @@ use App\Http\Controllers\Web\SuperAdmin\LeadIntegrationController as SuperAdminL
 use App\Http\Controllers\Web\SuperAdmin\PlatformSettingController as SuperAdminPlatformSettingController;
 use App\Http\Controllers\Web\Tenant\LeadIntegrationController as TenantLeadIntegrationController;
 use Illuminate\Support\Facades\Route;
-use App\Models\DeviceToken;
-use Kreait\Firebase\Contract\Messaging;
-use Kreait\Firebase\Messaging\CloudMessage;
-use Kreait\Firebase\Messaging\Notification as FirebaseNotification;
 // ══════════════════════════════════════════════════════════════════
 // PUBLIC — Auth routes (base domain: saas-crm.test)
 // ══════════════════════════════════════════════════════════════════
 
 Route::get('/', fn() => view('welcome'))->name('home');
 Route::get('/privacy-policy', fn() => view('legal.privacy-policy'))->name('privacy-policy');
-Route::get('/firebase-test', function (\Illuminate\Http\Request $request, Messaging $messaging) {
-    try {
-        $token = $request->query('token')
-            ?? DeviceToken::where('is_active', true)->latest('last_used_at')->value('device_token');
-
-        if (!$token) {
-            return response()->json([
-                'status' => false,
-                'message' => 'No active device token found. Register a device first or pass ?token=',
-            ], 422);
-        }
-
-        $message = CloudMessage::new()
-            ->withToken($token)
-            ->withNotification(FirebaseNotification::create(
-                'Firebase Test',
-                'This is a real push notification sent from /firebase-test.'
-            ));
-
-        $messaging->send($message);
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Notification sent successfully',
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'status' => false,
-            'message' => $e->getMessage()
-        ]);
-    }
-});
 Route::middleware('auth')->post('/device-token', [DeviceTokenController::class, 'store']);
 Route::middleware('guest')->group(function () {
     Route::get('/login',  [LoginController::class, 'show'])->name('login');

@@ -12,7 +12,7 @@ class NotificationPreference extends Model
 
     protected $fillable = [
         'tenant_id', 'user_id', 'type',
-        'in_app', 'email', 'whatsapp', 'slack',
+        'in_app', 'email', 'whatsapp', 'slack', 'push',
     ];
 
     protected $casts = [
@@ -20,6 +20,7 @@ class NotificationPreference extends Model
         'email'    => 'boolean',
         'whatsapp' => 'boolean',
         'slack'    => 'boolean',
+        'push'     => 'boolean',
     ];
 
     public function user(): BelongsTo
@@ -46,6 +47,7 @@ class NotificationPreference extends Model
                 'email'    => $saved[$type]['email']     ?? in_array('email',    $cfg['channels'] ?? []),
                 'whatsapp' => $saved[$type]['whatsapp']  ?? in_array('whatsapp', $cfg['channels'] ?? []),
                 'slack'    => $saved[$type]['slack']     ?? in_array('slack',    $cfg['channels'] ?? []),
+                'push'     => $saved[$type]['push']      ?? in_array('push',     $cfg['channels'] ?? []),
             ];
         }
 

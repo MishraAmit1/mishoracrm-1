@@ -2,7 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Auth\AuthController;
-use App\Http\Controllers\Api\DeviceTokenController;
 use App\Http\Controllers\Api\Tenant\ContactController as ApiContactController;
 use App\Http\Controllers\Api\Tenant\LeadController    as ApiLeadController;
 use App\Http\Controllers\Api\Tenant\DealController    as ApiDealController;
@@ -55,5 +54,4 @@ Route::prefix('v1')->group(function () {
         Route::put('/deals/{id}',        [ApiDealController::class, 'update']);
         Route::delete('/deals/{id}',     [ApiDealController::class, 'destroy']);
     });
-  Route::middleware('auth')->post('/device-token', [DeviceTokenController::class, 'store']);
 });

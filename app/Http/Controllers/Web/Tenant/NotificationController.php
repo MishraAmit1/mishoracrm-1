@@ -141,6 +141,7 @@ class NotificationController extends Controller
                     'email'    => isset($typePrefs['email']) ? (bool) $typePrefs['email'] : false,
                     'whatsapp' => isset($typePrefs['whatsapp']) ? (bool) $typePrefs['whatsapp'] : false,
                     'slack'    => isset($typePrefs['slack']) ? (bool) $typePrefs['slack'] : false,
+                    'push'     => isset($typePrefs['push']) ? (bool) $typePrefs['push'] : false,
                 ]
             );
         }
