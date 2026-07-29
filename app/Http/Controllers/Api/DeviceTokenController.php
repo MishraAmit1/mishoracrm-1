@@ -50,4 +50,5 @@ class DeviceTokenController extends Controller
             'status' => true
         ]);
     }
+    
 }
