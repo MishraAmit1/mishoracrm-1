@@ -12,9 +12,6 @@ use Kreait\Firebase\Messaging\Notification as FirebaseNotification;
 
 class PushService
 {
-    /** Must match the channel id declared in the mobile app's AndroidManifest.xml meta-data. */
-    private const ANDROID_NOTIFICATION_CHANNEL_ID = 'fcm_default_channel';
-
     /**
      * @return array{status: string, error: ?string}
      */
@@ -30,15 +27,15 @@ class PushService
         }
 
         try {
+            // NOTE: do not set an explicit android channel_id here until the app build that
+            // declares "fcm_default_channel" in AndroidManifest.xml has rolled out to users —
+            // targeting a channel id that doesn't exist yet on-device makes Android silently
+            // drop the notification instead of falling back to FCM's own managed default channel.
             $cloudMessage = CloudMessage::new()
                 ->withNotification(FirebaseNotification::create($title, $message))
                 ->withData(array_filter(['url' => $url]))
                 ->withAndroidConfig(AndroidConfig::fromArray([
                     'priority' => 'high',
-                    'notification' => [
-                        'channel_id' => self::ANDROID_NOTIFICATION_CHANNEL_ID,
-                        'sound' => 'default',
-                    ],
                 ]));
 
             $report = app(Messaging::class)->sendMulticast($cloudMessage, $tokens);
