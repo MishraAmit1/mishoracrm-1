@@ -1,3 +1,5 @@
+const NOTIFICATION_CHANNEL_ID = 'fcm_default_channel';
+
 function getCapacitor() {
     return window.Capacitor || window.CapacitorCore;
 }
@@ -20,6 +22,25 @@ async function initPush() {
 
     if (permission.receive !== 'granted') {
         return;
+    }
+
+    // ── High-importance channel so pushes show as a heads-up banner and
+    //    wake the screen like SMS/WhatsApp, instead of just a silent tray entry.
+    if (Capacitor.getPlatform() === 'android') {
+        try {
+            await PushNotifications.createChannel({
+                id: NOTIFICATION_CHANNEL_ID,
+                name: 'Default',
+                description: 'Default notification channel',
+                importance: 5,
+                visibility: 1,
+                sound: 'default',
+                vibration: true,
+                lights: true,
+            });
+        } catch (e) {
+            console.error("Failed to create notification channel:", e);
+        }
     }
 
     PushNotifications.addListener('registration', async (token) => {
@@ -47,6 +68,7 @@ async function initPush() {
         LocalNotifications.schedule({
             notifications: [{
                 id: Date.now() % 2147483647,
+                channelId: NOTIFICATION_CHANNEL_ID,
                 title: notification.title || 'CRM Pro',
                 body: notification.body || '',
                 extra: notification.data || {}
