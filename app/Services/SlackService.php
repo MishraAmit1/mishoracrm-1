@@ -8,20 +8,24 @@ use Illuminate\Support\Facades\Log;
 
 class SlackService
 {
-    public static function send(int $tenantId, string $title, string $message, ?string $url = null, ?string $assignedTo = null): void
+    /**
+     * @return array{status: string, error: ?string}
+     */
+    public static function send(int $tenantId, string $title, string $message, ?string $url = null, ?string $assignedTo = null): array
     {
         $config = TenantSlackConfig::where('tenant_id', $tenantId)
             ->where('is_active', true)
             ->first();
 
         if (!$config) {
-            return;
+            return ['status' => 'skipped', 'error' => null];
         }
 
         try {
             static::post($config->webhook_url, $title, $message, $url, $assignedTo);
+            return ['status' => 'sent', 'error' => null];
         } catch (\Exception $e) {
-            // already logged in post()
+            return ['status' => 'failed', 'error' => $e->getMessage()];
         }
     }
 

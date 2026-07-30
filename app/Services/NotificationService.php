@@ -30,25 +30,33 @@ class NotificationService
         $title    = $this->render($typeConfig['label'],   $data);
         $message  = $this->render($typeConfig['message'], $data);
         $channels = [];
+        $channelStatus = [];
+        $channelErrors = [];
+
+        // ── History record — always created so every notification is
+        // auditable in the CRM, regardless of the recipient's channel prefs ──
+        $notification = Notification::create([
+            'tenant_id'       => $tenantId,
+            'user_id'         => $recipient->id,
+            'triggered_by'    => $triggeredBy?->id,
+            'type'            => $type,
+            'title'           => $title,
+            'message'         => $message,
+            'url'             => $url,
+            'icon'            => $typeConfig['icon'] ?? 'bell',
+            'color'           => $typeConfig['color'] ?? 'accent',
+            'notifiable_type' => $notifiable ? get_class($notifiable) : null,
+            'notifiable_id'   => $notifiable?->id,
+            'is_read'         => false,
+            'channels_sent'   => [],
+        ]);
 
         // ── In-app notification ───────────────────────────────────
         if (NotificationPreference::isEnabled($recipient->id, $tenantId, $type, 'in_app')) {
-            $notification = Notification::create([
-                'tenant_id'       => $tenantId,
-                'user_id'         => $recipient->id,
-                'triggered_by'    => $triggeredBy?->id,
-                'type'            => $type,
-                'title'           => $title,
-                'message'         => $message,
-                'url'             => $url,
-                'icon'            => $typeConfig['icon'] ?? 'bell',
-                'color'           => $typeConfig['color'] ?? 'accent',
-                'notifiable_type' => $notifiable ? get_class($notifiable) : null,
-                'notifiable_id'   => $notifiable?->id,
-                'is_read'         => false,
-                'channels_sent'   => [],
-            ]);
             $channels[] = 'in_app';
+            $channelStatus['in_app'] = 'sent';
+        } else {
+            $channelStatus['in_app'] = 'disabled';
         }
 
         // ── Email channel ─────────────────────────────────────────
@@ -57,8 +65,12 @@ class NotificationService
             && $recipient->email
             && config('notifications.channels.email.enabled')
         ) {
-            $this->sendEmail($recipient, $title, $message, $url, $data);
+            $result = $this->sendEmail($recipient, $title, $message, $url, $data);
             $channels[] = 'email';
+            $channelStatus['email'] = $result['status'];
+            if ($result['error']) $channelErrors['email'] = $result['error'];
+        } else {
+            $channelStatus['email'] = 'disabled';
         }
 
         // ── WhatsApp channel ──────────────────────────────────────
@@ -67,8 +79,12 @@ class NotificationService
             && $recipient->phone
             && config('notifications.channels.whatsapp.enabled')
         ) {
-            $this->sendWhatsapp($recipient, $message);
+            $result = $this->sendWhatsapp($recipient, $message);
             $channels[] = 'whatsapp';
+            $channelStatus['whatsapp'] = $result['status'];
+            if ($result['error']) $channelErrors['whatsapp'] = $result['error'];
+        } else {
+            $channelStatus['whatsapp'] = 'disabled';
         }
 
         // ── Slack channel ──────────────────────────────────────────
@@ -76,8 +92,12 @@ class NotificationService
             NotificationPreference::isEnabled($recipient->id, $tenantId, $type, 'slack')
             && config('notifications.channels.slack.enabled')
         ) {
-            $this->sendSlack($tenantId, $title, $message, $url, $recipient->name);
+            $result = $this->sendSlack($tenantId, $title, $message, $url, $recipient->name);
             $channels[] = 'slack';
+            $channelStatus['slack'] = $result['status'];
+            if ($result['error']) $channelErrors['slack'] = $result['error'];
+        } else {
+            $channelStatus['slack'] = 'disabled';
         }
 
         // ── Push channel ───────────────────────────────────────────
@@ -85,17 +105,21 @@ class NotificationService
             NotificationPreference::isEnabled($recipient->id, $tenantId, $type, 'push')
             && config('notifications.channels.push.enabled')
         ) {
-            $this->sendPush($recipient, $title, $message, $url);
+            $result = $this->sendPush($recipient, $title, $message, $url);
             $channels[] = 'push';
+            $channelStatus['push'] = $result['status'];
+            if ($result['error']) $channelErrors['push'] = $result['error'];
+        } else {
+            $channelStatus['push'] = 'disabled';
         }
 
-        // Update channels_sent on notification
-        if (isset($notification)) {
-            $notification->update(['channels_sent' => $channels]);
-            return $notification;
-        }
+        $notification->update([
+            'channels_sent'  => $channels,
+            'channel_status' => $channelStatus,
+            'channel_errors' => $channelErrors,
+        ]);
 
-        return null;
+        return $notification;
     }
 
     // ── Send to multiple users ────────────────────────────────────
@@ -146,30 +170,33 @@ class NotificationService
     // ── Email channel handler ─────────────────────────────────────
     // Uses the tenant's own connected SMTP (App\Services\EmailService) when
     // available, otherwise falls back to the system mailer.
-    private function sendEmail(User $user, string $title, string $message, ?string $url, array $data): void
+    private function sendEmail(User $user, string $title, string $message, ?string $url, array $data): array
     {
         $html = $this->emailHtml($title, $message, $url);
 
-        $sentViaTenant = \App\Services\EmailService::send($user->tenant_id, $user->email, $user->name, $title, $html);
-
-        if ($sentViaTenant) {
-            return;
-        }
-
         try {
+            $sentViaTenant = \App\Services\EmailService::send($user->tenant_id, $user->email, $user->name, $title, $html);
+
+            if ($sentViaTenant) {
+                return ['status' => 'sent', 'error' => null];
+            }
+
             \Illuminate\Support\Facades\Mail::send([], [], function ($mail) use ($user, $title, $html) {
                 $mail->to($user->email, $user->name)
                      ->subject($title)
                      ->html($html);
             });
+
+            return ['status' => 'sent', 'error' => null];
         } catch (\Exception $e) {
             Log::error("Notification email failed: " . $e->getMessage());
+            return ['status' => 'failed', 'error' => $e->getMessage()];
         }
     }
 
     // ── WhatsApp channel handler ──────────────────────────────────
     // When WhatsApp API integrated, replace this with API call
-    private function sendWhatsapp(User $user, string $message): void
+    private function sendWhatsapp(User $user, string $message): array
     {
         try {
             // Log for now — integrate WhatsApp API here
@@ -182,21 +209,23 @@ class NotificationService
                 'status'     => 'pending', // pending until API integrated
                 'is_bulk'    => false,
             ]);
+            return ['status' => 'pending', 'error' => null];
         } catch (\Exception $e) {
             Log::error("Notification WhatsApp failed: " . $e->getMessage());
+            return ['status' => 'failed', 'error' => $e->getMessage()];
         }
     }
 
     // ── Slack channel handler ───────────────────────────────────────
-    private function sendSlack(int $tenantId, string $title, string $message, ?string $url, string $assignedTo): void
+    private function sendSlack(int $tenantId, string $title, string $message, ?string $url, string $assignedTo): array
     {
-        \App\Services\SlackService::send($tenantId, $title, $message, $url, $assignedTo);
+        return \App\Services\SlackService::send($tenantId, $title, $message, $url, $assignedTo);
     }
 
     // ── Push channel handler ────────────────────────────────────────
-    private function sendPush(User $user, string $title, string $message, ?string $url): void
+    private function sendPush(User $user, string $title, string $message, ?string $url): array
     {
-        \App\Services\PushService::send($user, $title, $message, $url);
+        return \App\Services\PushService::send($user, $title, $message, $url);
     }
 
     // ── Email HTML template ───────────────────────────────────────

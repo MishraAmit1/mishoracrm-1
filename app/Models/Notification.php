@@ -16,13 +16,15 @@ class Notification extends Model
         'icon', 'color',
         'notifiable_type', 'notifiable_id',
         'is_read', 'read_at',
-        'channels_sent',
+        'channels_sent', 'channel_status', 'channel_errors',
     ];
 
     protected $casts = [
-        'is_read'      => 'boolean',
-        'read_at'      => 'datetime',
-        'channels_sent'=> 'array',
+        'is_read'        => 'boolean',
+        'read_at'        => 'datetime',
+        'channels_sent'  => 'array',
+        'channel_status' => 'array',
+        'channel_errors' => 'array',
     ];
 
     // ── Relationships ─────────────────────────────────────────────
