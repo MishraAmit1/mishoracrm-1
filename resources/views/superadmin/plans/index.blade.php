@@ -61,6 +61,21 @@
         </a>
     </div>
 
+    <div class="table-card" style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;margin-bottom:24px;">
+        <div>
+            <div style="font-size:14px;font-weight:700;color:var(--text-100)">Monthly Billing on Pricing Page</div>
+            <div style="font-size:12.5px;color:var(--text-400);margin-top:2px">
+                {{ $monthlyBillingEnabled ? 'Tenants can switch to Monthly billing on the "Choose Your Plan" page.' : 'Tenants only see Yearly pricing — Monthly is hidden until you enable it.' }}
+            </div>
+        </div>
+        <form action="{{ route('superadmin.plans.toggle-monthly-billing') }}" method="POST">
+            @csrf
+            <button type="submit" class="btn-sm {{ $monthlyBillingEnabled ? 'btn-del' : 'btn-toggle' }}">
+                {{ $monthlyBillingEnabled ? 'Disable Monthly Billing' : 'Enable Monthly Billing' }}
+            </button>
+        </form>
+    </div>
+
     @if(session('success'))
     <div style="background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.25);color:#16a34a;padding:12px 16px;border-radius:var(--r-md);margin-bottom:16px;font-size:13.5px;">
         {{ session('success') }}

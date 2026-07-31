@@ -245,6 +245,7 @@ input:checked + .toggle-slider:before { transform: translateX(22px); }
     @endif
 
     {{-- Billing Toggle --}}
+    @if($monthlyBillingEnabled)
     <div class="billing-toggle">
         <span class="toggle-label active" id="lbl-monthly">Monthly</span>
         <label class="toggle-switch">
@@ -253,6 +254,7 @@ input:checked + .toggle-slider:before { transform: translateX(22px); }
         </label>
         <span class="toggle-label" id="lbl-yearly">Yearly <span class="save-badge">Save 20%</span></span>
     </div>
+    @endif
 
     <div class="plans-grid">
         @foreach($plans as $plan)
@@ -275,7 +277,7 @@ input:checked + .toggle-slider:before { transform: translateX(22px); }
 
             <div class="plan-price">
                 {{-- Monthly price --}}
-                <div class="monthly-price">
+                <div class="monthly-price" @if(!$monthlyBillingEnabled) style="display:none" @endif>
                     @if($monthlyPrice == 0)
                         <span class="price-amount">Free</span>
                     @else
@@ -290,7 +292,7 @@ input:checked + .toggle-slider:before { transform: translateX(22px); }
                     @endif
                 </div>
                 {{-- Yearly price --}}
-                <div class="yearly-price" style="display:none">
+                <div class="yearly-price" @if($monthlyBillingEnabled) style="display:none" @endif>
                     @if($yearlyPrice == 0)
                         <span class="price-amount">Free</span>
                     @else
@@ -305,7 +307,7 @@ input:checked + .toggle-slider:before { transform: translateX(22px); }
                     @endif
                 </div>
                 @if($yearlyPrice > 0)
-                <div class="price-yearly-note yearly-only" style="display:none">
+                <div class="price-yearly-note yearly-only" @if($monthlyBillingEnabled) style="display:none" @endif>
                     (₹{{ number_format(($hasDiscount ? $discYearly : $yearlyPrice) / 12, 0) }}/month billed annually)
                 </div>
                 @endif
@@ -344,11 +346,13 @@ input:checked + .toggle-slider:before { transform: translateX(22px); }
                 <span class="plan-btn current-plan">Current Plan</span>
             @else
                 <a href="{{ route('tenant.subscription.checkout', [$plan->slug, 'monthly']) }}"
-                   class="plan-btn {{ $isPopular ? 'primary' : 'outline' }} monthly-btn">
+                   class="plan-btn {{ $isPopular ? 'primary' : 'outline' }} monthly-btn"
+                   @if(!$monthlyBillingEnabled) style="display:none" @endif>
                     {{ $currentSub && $currentSub->isActive() ? 'Switch to ' . $plan->name : 'Get Started' }}
                 </a>
                 <a href="{{ route('tenant.subscription.checkout', [$plan->slug, 'yearly']) }}"
-                   class="plan-btn {{ $isPopular ? 'primary' : 'outline' }} yearly-btn" style="display:none">
+                   class="plan-btn {{ $isPopular ? 'primary' : 'outline' }} yearly-btn"
+                   @if($monthlyBillingEnabled) style="display:none" @endif>
                     {{ $currentSub && $currentSub->isActive() ? 'Switch to ' . $plan->name : 'Get Started (Yearly)' }}
                 </a>
             @endif
@@ -374,6 +378,8 @@ function switchBilling(yearly) {
     document.querySelectorAll('.yearly-price, .yearly-btn, .yearly-only').forEach(el => el.style.display = yearly ? '' : 'none');
 }
 
-toggle.addEventListener('change', () => switchBilling(toggle.checked));
+if (toggle) {
+    toggle.addEventListener('change', () => switchBilling(toggle.checked));
+}
 </script>
 @endpush

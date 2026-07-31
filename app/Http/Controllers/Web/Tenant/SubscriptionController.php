@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web\Tenant;
 use App\Http\Controllers\Controller;
 use App\Models\Coupon;
 use App\Models\Plan;
+use App\Models\PlatformSetting;
 use App\Models\Subscription;
 use App\Services\RazorpayService;
 use Illuminate\Http\JsonResponse;
@@ -23,8 +24,9 @@ class SubscriptionController extends Controller
     {
         $plans      = Plan::where('is_active', true)->orderBy('sort_order')->get();
         $currentSub = Auth::user()->tenant->subscription;
+        $monthlyBillingEnabled = PlatformSetting::get('monthly_billing_enabled', '0') === '1';
 
-        return view('tenant.subscription.plans', compact('plans', 'currentSub'));
+        return view('tenant.subscription.plans', compact('plans', 'currentSub', 'monthlyBillingEnabled'));
     }
 
     // ── Current subscription ──────────────────────────────────────

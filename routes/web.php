@@ -17,12 +17,14 @@ use App\Http\Controllers\Web\LeadWebhookController;
 use App\Http\Controllers\Web\SuperAdmin\LeadIntegrationController as SuperAdminLeadIntegrationController;
 use App\Http\Controllers\Web\SuperAdmin\PlatformSettingController as SuperAdminPlatformSettingController;
 use App\Http\Controllers\Web\Tenant\LeadIntegrationController as TenantLeadIntegrationController;
+use App\Http\Controllers\Web\PricingController;
 use Illuminate\Support\Facades\Route;
 // ══════════════════════════════════════════════════════════════════
 // PUBLIC — Auth routes (base domain: saas-crm.test)
 // ══════════════════════════════════════════════════════════════════
 
 Route::get('/', fn() => view('welcome'))->name('home');
+Route::get('/pricing', [PricingController::class, 'index'])->name('pricing');
 Route::get('/privacy-policy', fn() => view('legal.privacy-policy'))->name('privacy-policy');
 Route::middleware('auth')->post('/device-token', [DeviceTokenController::class, 'store']);
 Route::middleware('guest')->group(function () {
@@ -101,6 +103,7 @@ Route::prefix('superadmin')
             Route::put('/{plan}',          'update')->name('update');
             Route::delete('/{plan}',       'destroy')->name('destroy');
             Route::post('/{plan}/toggle',  'toggle')->name('toggle');
+            Route::post('/toggle-monthly-billing', 'toggleMonthlyBilling')->name('toggle-monthly-billing');
         });
 
         // Lead Integration access control

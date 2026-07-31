@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web\SuperAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Plan;
+use App\Models\PlatformSetting;
 use App\Models\Subscription;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,8 +20,9 @@ class PlanController extends Controller
         ])->orderBy('sort_order')->get();
 
         $totalActiveSubs = Subscription::where('status', 'active')->count();
+        $monthlyBillingEnabled = PlatformSetting::get('monthly_billing_enabled', '0') === '1';
 
-        return view('superadmin.plans.index', compact('plans', 'totalActiveSubs'));
+        return view('superadmin.plans.index', compact('plans', 'totalActiveSubs', 'monthlyBillingEnabled'));
     }
 
     public function create(): View
@@ -70,6 +72,14 @@ class PlanController extends Controller
     {
         $plan->update(['is_active' => !$plan->is_active]);
         return back()->with('success', 'Plan ' . ($plan->is_active ? 'activated' : 'deactivated') . '.');
+    }
+
+    public function toggleMonthlyBilling(): RedirectResponse
+    {
+        $enabled = PlatformSetting::get('monthly_billing_enabled', '0') === '1';
+        PlatformSetting::set('monthly_billing_enabled', $enabled ? '0' : '1');
+
+        return back()->with('success', 'Monthly billing is now ' . ($enabled ? 'disabled' : 'enabled') . ' on the pricing page.');
     }
 
     // ── Helpers ───────────────────────────────────────────────────
