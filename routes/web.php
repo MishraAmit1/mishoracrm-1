@@ -207,8 +207,10 @@ Route::middleware(['tenant', 'auth', 'subscription'])
         Route::get('/search', [Tenant\SearchController::class, 'index'])->name('search');
 
         // ── Calendar ───────────────────────────────────────────────
-        Route::get('/calendar',        [Tenant\CalendarController::class, 'index'])->name('calendar.index');
-        Route::get('/calendar/events', [Tenant\CalendarController::class, 'events'])->name('calendar.events');
+        Route::get('/calendar',              [Tenant\CalendarController::class, 'index'])->name('calendar.index');
+        Route::get('/calendar/events',        [Tenant\CalendarController::class, 'events'])->name('calendar.events');
+        Route::post('/calendar/reschedule',   [Tenant\CalendarController::class, 'reschedule'])->name('calendar.reschedule');
+        Route::post('/calendar/quick-create', [Tenant\CalendarController::class, 'quickCreate'])->name('calendar.quick-create');
 
         // ── Lead Integrations ─────────────────────────────────────
         Route::prefix('lead-integrations')->name('lead-integrations.')->controller(TenantLeadIntegrationController::class)->group(function () {
