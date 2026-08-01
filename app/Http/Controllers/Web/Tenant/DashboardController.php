@@ -67,21 +67,47 @@ class DashboardController extends Controller
                 'time'   => $l->created_at->diffForHumans(),
             ])->toArray();
 
-        $myTodayTasks = Task::where(function ($q) use ($userId) {
+        $myAgendaTasks = Task::where(function ($q) use ($userId) {
                 $q->where('assigned_to', $userId)->orWhere('created_by', $userId);
             })
-            ->where('tenant_id', $user->tenant_id)
+            ->where('tenant_id', $tenantId)
             ->where(function ($q) { $q->whereDate('due_at', today())->orWhere('status', 'pending'); })
-            ->orderBy('due_at')
-            ->limit(7)
             ->get()
             ->map(fn($t) => [
-                'id'       => $t->id,
-                'text'     => $t->title,
-                'due'      => $t->due_at?->format('h:i A') ?? 'No time',
-                'done'     => $t->status === 'completed',
-                'priority' => $t->priority ?? 'medium',
-            ])->toArray();
+                'sort_time' => $t->due_at,
+                'id'        => $t->id,
+                'kind'      => 'task',
+                'text'      => $t->title,
+                'due'       => $t->due_at?->format('h:i A') ?? 'No time',
+                'done'      => $t->status === 'completed',
+                'priority'  => $t->priority ?? 'medium',
+                'url'       => route('tenant.tasks.show', $t->id),
+            ]);
+
+        $myAgendaFollowups = Followup::with(['lead', 'contact'])
+            ->where(function ($q) use ($userId) {
+                $q->where('assigned_to', $userId)->orWhere('created_by', $userId);
+            })
+            ->where('tenant_id', $tenantId)
+            ->whereDate('scheduled_at', today())
+            ->where('status', 'scheduled')
+            ->get()
+            ->map(fn($f) => [
+                'sort_time' => $f->scheduled_at,
+                'id'        => $f->id,
+                'kind'      => 'followup',
+                'text'      => (\App\Models\Followup::types()[$f->type] ?? ucfirst($f->type)) . ' — ' . ($f->lead?->name ?? $f->contact?->name ?? 'Follow-up'),
+                'due'       => $f->scheduled_at?->format('h:i A') ?? 'No time',
+                'done'      => false,
+                'priority'  => 'medium',
+                'url'       => route('tenant.followups.show', $f->id),
+            ]);
+
+        $myTodayTasks = $myAgendaTasks->concat($myAgendaFollowups)
+            ->sortBy(fn($item) => $item['sort_time'] ?? now()->addYear())
+            ->take(7)
+            ->values()
+            ->toArray();
 
         $myDealsByStage = (clone $myDeals)->selectRaw('stage, COUNT(*) as count, SUM(value) as total')
             ->groupBy('stage')->get()
@@ -97,6 +123,9 @@ class DashboardController extends Controller
 
     private function adminDashboard(Request $request, int $userId): \Illuminate\View\View|\Illuminate\Http\JsonResponse
     {
+        // Task has no BelongsToTenant scope — every Task:: query below must
+        // filter tenant_id explicitly or it leaks other tenants' task data.
+        $tenantId = auth()->user()->tenant_id;
 
         // ── Stats ─────────────────────────────────────────────────
         $stats = [
@@ -131,25 +160,26 @@ class DashboardController extends Controller
             'invoices_overdue'   => Invoice::where('status', 'overdue')->count(),
 
             // Tasks
-            'tasks_pending'      => Task::where('status', 'pending')
+            'tasks_pending'      => Task::where('tenant_id', $tenantId)
+                                        ->where('status', 'pending')
                                         ->where(function ($q) use ($userId) {
                                             $q->where('assigned_to', $userId)
                                               ->orWhere('created_by', $userId);
                                         })->count(),
-            'tasks_completed'    => Task::where('status', 'completed')
+            'tasks_completed'    => Task::where('tenant_id', $tenantId)
+                                        ->where('status', 'completed')
                                         ->whereMonth('completed_at', now()->month)
                                         ->count(),
-            'tasks_overdue'      => Task::where('status', 'pending')
+            'tasks_overdue'      => Task::where('tenant_id', $tenantId)
+                                        ->where('status', 'pending')
                                         ->whereNotNull('due_at')
                                         ->where('due_at', '<', now())
                                         ->count(),
 
             // Follow-ups
-            // 'followups_today'    => Followup::whereDate('scheduled_at', today())
-            //                                 ->where('status', 'scheduled')
-            //                                 ->count(),
-
-             'followups_today'    => 0,
+            'followups_today'    => Followup::whereDate('scheduled_at', today())
+                                            ->where('status', 'scheduled')
+                                            ->count(),
         ];
         
 
@@ -209,8 +239,9 @@ class DashboardController extends Controller
                 'time'     => $l->created_at->diffForHumans(),
             ])->toArray();
 
-        // ── Today's tasks ─────────────────────────────────────────
-        $todayTasks = Task::with('assignedTo')
+        // ── Today's Agenda (Tasks + Follow-ups, merged) ────────────
+        $agendaTasks = Task::with('assignedTo')
+            ->where('tenant_id', $tenantId)
             ->where(function ($q) use ($userId) {
                 $q->where('assigned_to', $userId)
                   ->orWhere('created_by', $userId);
@@ -219,16 +250,43 @@ class DashboardController extends Controller
                 $q->whereDate('due_at', today())
                   ->orWhere('status', 'pending');
             })
-            ->orderBy('due_at')
-            ->limit(5)
             ->get()
             ->map(fn($t) => [
-                'id'       => $t->id,
-                'text'     => $t->title,
-                'due'      => $t->due_at?->format('h:i A') ?? 'No time set',
-                'done'     => $t->status === 'completed',
-                'priority' => $t->priority,
-            ])->toArray();
+                'sort_time' => $t->due_at,
+                'id'        => $t->id,
+                'kind'      => 'task',
+                'text'      => $t->title,
+                'due'       => $t->due_at?->format('h:i A') ?? 'No time set',
+                'done'      => $t->status === 'completed',
+                'priority'  => $t->priority,
+                'url'       => route('tenant.tasks.show', $t->id),
+            ]);
+
+        $agendaFollowups = Followup::with(['lead', 'contact'])
+            ->where('tenant_id', $tenantId)
+            ->where(function ($q) use ($userId) {
+                $q->where('assigned_to', $userId)
+                  ->orWhere('created_by', $userId);
+            })
+            ->whereDate('scheduled_at', today())
+            ->where('status', 'scheduled')
+            ->get()
+            ->map(fn($f) => [
+                'sort_time' => $f->scheduled_at,
+                'id'        => $f->id,
+                'kind'      => 'followup',
+                'text'      => (\App\Models\Followup::types()[$f->type] ?? ucfirst($f->type)) . ' — ' . ($f->lead?->name ?? $f->contact?->name ?? 'Follow-up'),
+                'due'       => $f->scheduled_at?->format('h:i A') ?? 'No time set',
+                'done'      => false,
+                'priority'  => 'medium',
+                'url'       => route('tenant.followups.show', $f->id),
+            ]);
+
+        $todayTasks = $agendaTasks->concat($agendaFollowups)
+            ->sortBy(fn($item) => $item['sort_time'] ?? now()->addYear())
+            ->take(7)
+            ->values()
+            ->toArray();
 
         // ── Recent activity ───────────────────────────────────────
         // Combine recent leads + deals + tasks into one feed
@@ -244,7 +302,7 @@ class DashboardController extends Controller
             'time' => $d->updated_at,
         ]);
 
-        $actTasks = Task::where('status', 'completed')->latest('completed_at')->limit(2)->get()->map(fn($t) => [
+        $actTasks = Task::where('tenant_id', $tenantId)->where('status', 'completed')->latest('completed_at')->limit(2)->get()->map(fn($t) => [
             'type' => 'task',
             'text' => '<strong>' . e($t->assignedTo?->name ?? 'Someone') . '</strong> completed task <strong>' . e($t->title) . '</strong>',
             'time' => $t->completed_at ?? $t->updated_at,

@@ -7,6 +7,7 @@ use App\Models\Deal;
 use App\Models\Followup;
 use App\Models\Reminder;
 use App\Models\Task;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -16,7 +17,13 @@ class CalendarController extends Controller
 {
     public function index(): View
     {
-        return view('tenant.calendar.index');
+        $user = auth()->user();
+
+        $staffList = $user->user_type === 'tenant_admin'
+            ? User::where('tenant_id', $user->tenant_id)->where('is_active', true)->orderBy('name')->get(['id', 'name'])
+            : collect();
+
+        return view('tenant.calendar.index', ['staffList' => $staffList]);
     }
 
     // JSON feed consumed by FullCalendar — aggregates Followups, Tasks,
@@ -28,27 +35,33 @@ class CalendarController extends Controller
         $tenantId = $user->tenant_id;
         $isAdmin  = $user->user_type === 'tenant_admin';
 
+        // Non-admins always see only their own items. Admins see everyone by
+        // default, but can narrow to one staff member via ?staff_id= (team view).
+        $filterUserId = $isAdmin
+            ? ($request->filled('staff_id') ? (int) $request->staff_id : null)
+            : $user->id;
+
         $start = Carbon::parse($request->query('start'))->startOfDay();
         $end   = Carbon::parse($request->query('end'))->endOfDay();
 
         $followups = Followup::where('tenant_id', $tenantId)
-            ->when(!$isAdmin, fn($q) => $q->where('assigned_to', $user->id))
+            ->when($filterUserId, fn($q) => $q->where('assigned_to', $filterUserId))
             ->whereBetween('scheduled_at', [$start, $end])
             ->get();
 
         // Task has no BelongsToTenant scope — tenant_id must be filtered explicitly.
         $tasks = Task::where('tenant_id', $tenantId)
-            ->when(!$isAdmin, fn($q) => $q->where('assigned_to', $user->id))
+            ->when($filterUserId, fn($q) => $q->where('assigned_to', $filterUserId))
             ->whereBetween('due_at', [$start, $end])
             ->get();
 
         $reminders = Reminder::where('tenant_id', $tenantId)
-            ->when(!$isAdmin, fn($q) => $q->where('user_id', $user->id))
+            ->when($filterUserId, fn($q) => $q->where('user_id', $filterUserId))
             ->whereBetween('remind_at', [$start, $end])
             ->get();
 
         $deals = Deal::where('tenant_id', $tenantId)
-            ->when(!$isAdmin, fn($q) => $q->where('assigned_to', $user->id))
+            ->when($filterUserId, fn($q) => $q->where('assigned_to', $filterUserId))
             ->whereNotNull('expected_close_date')
             ->whereBetween('expected_close_date', [$start, $end])
             ->get();

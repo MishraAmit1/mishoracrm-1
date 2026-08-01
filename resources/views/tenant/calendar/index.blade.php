@@ -39,6 +39,16 @@
         <div class="page-title">Calendar</div>
         <div class="page-sub">Follow-ups, tasks, reminders and deal close dates — drag to reschedule, click a date to add.</div>
     </div>
+    @if($staffList->count())
+    <div>
+        <select class="fi" id="staffFilter" style="min-width:180px">
+            <option value="">All Staff (Team View)</option>
+            @foreach($staffList as $staff)
+            <option value="{{ $staff->id }}">{{ $staff->name }}</option>
+            @endforeach
+        </select>
+    </div>
+    @endif
 </div>
 
 <div class="cal-legend">
@@ -155,7 +165,8 @@ document.addEventListener('DOMContentLoaded', function () {
         },
         height: 'auto',
         events: function (info, successCallback, failureCallback) {
-            fetch(`{{ route('tenant.calendar.events') }}?start=${info.startStr}&end=${info.endStr}`)
+            const staffId = document.getElementById('staffFilter')?.value || '';
+            fetch(`{{ route('tenant.calendar.events') }}?start=${info.startStr}&end=${info.endStr}&staff_id=${staffId}`)
                 .then(res => res.json())
                 .then(successCallback)
                 .catch(failureCallback);
@@ -188,6 +199,10 @@ document.addEventListener('DOMContentLoaded', function () {
         },
     });
     calendarInstance.render();
+
+    document.getElementById('staffFilter')?.addEventListener('change', function () {
+        calendarInstance.refetchEvents();
+    });
 });
 </script>
 @endpush

@@ -313,26 +313,29 @@
                 @endif
             </div>
 
-            {{-- My Tasks --}}
+            {{-- My Agenda (Tasks + Follow-ups) --}}
             <div class="sd-card">
                 <div class="sd-card-head">
                     <div>
-                        <div class="sd-card-title">My Tasks</div>
-                        <div class="sd-card-sub">Pending & today's tasks</div>
+                        <div class="sd-card-title">My Agenda</div>
+                        <div class="sd-card-sub">Pending tasks & today's follow-ups</div>
                     </div>
-                    <a href="{{ route('tenant.tasks.index') }}" class="btn btn-secondary btn-sm">View all →</a>
+                    <a href="{{ route('tenant.calendar.index') }}" class="btn btn-secondary btn-sm">Open Calendar →</a>
                 </div>
                 @if(count($myTodayTasks))
                 <div class="sd-task-list">
                     @foreach($myTodayTasks as $task)
-                    <div class="sd-task">
+                    <div class="sd-task" @if($task['url'] ?? null) onclick="window.location='{{ $task['url'] }}'" style="cursor:pointer" @endif>
                         <div class="sd-task-check {{ $task['done'] ? 'done' : '' }}">
                             @if($task['done'])
                             <svg width="9" height="9" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                             @endif
                         </div>
                         <div class="sd-task-prio {{ $task['priority'] }}"></div>
-                        <span class="sd-task-text {{ $task['done'] ? 'done' : '' }}">{{ $task['text'] }}</span>
+                        <span class="sd-task-text {{ $task['done'] ? 'done' : '' }}">
+                            @if(($task['kind'] ?? 'task') === 'followup')<span style="font-size:9.5px;font-weight:700;color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 4px;margin-right:5px;text-transform:uppercase;letter-spacing:.3px">FU</span>@endif
+                            {{ $task['text'] }}
+                        </span>
                         <span class="sd-task-due">{{ $task['due'] }}</span>
                     </div>
                     @endforeach

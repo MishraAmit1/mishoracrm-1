@@ -56,7 +56,7 @@ class ReportController extends Controller
             'deals'     => Deal::whereBetween('created_at', [$from, $to])->count(),
             'revenue'   => Invoice::where('status', 'paid')->whereBetween('paid_at', [$from, $to])->sum('total'),
             'contacts'  => Contact::whereBetween('created_at', [$from, $to])->count(),
-            'tasks_done'=> Task::where('status', 'completed')->whereBetween('updated_at', [$from, $to])->count(),
+            'tasks_done'=> Task::where('tenant_id', $tid)->where('status', 'completed')->whereBetween('updated_at', [$from, $to])->count(),
             'quotations'=> Quotation::whereBetween('created_at', [$from, $to])->count(),
         ];
 
@@ -291,12 +291,12 @@ class ReportController extends Controller
             ->where('tenant_id', $tid)
             ->where('user_type', 'staff')
             ->get()
-            ->map(function ($user) use ($from, $to) {
+            ->map(function ($user) use ($from, $to, $tid) {
                 $leadsCreated  = Lead::where('created_by', $user->id)->whereBetween('created_at', [$from, $to])->count();
                 $leadsAssigned = Lead::where('assigned_to', $user->id)->whereBetween('created_at', [$from, $to])->count();
                 $dealsWon      = Deal::where('assigned_to', $user->id)->where('stage','won')->whereBetween('updated_at', [$from, $to])->count();
                 $dealValue     = Deal::where('assigned_to', $user->id)->where('stage','won')->whereBetween('updated_at', [$from, $to])->sum('value');
-                $tasksCompleted= Task::where('assigned_to', $user->id)->where('status','completed')->whereBetween('updated_at', [$from, $to])->count();
+                $tasksCompleted= Task::where('tenant_id', $tid)->where('assigned_to', $user->id)->where('status','completed')->whereBetween('updated_at', [$from, $to])->count();
                 $followupsDone = Followup::where('created_by', $user->id)->where('status','done')->whereBetween('updated_at', [$from, $to])->count();
                 $totalLeads    = Lead::where('assigned_to', $user->id)->whereBetween('created_at', [$from, $to])->count();
                 $converted     = Lead::where('assigned_to', $user->id)->where('status','converted')->whereBetween('created_at', [$from, $to])->count();

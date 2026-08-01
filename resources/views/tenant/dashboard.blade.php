@@ -410,16 +410,14 @@
 
         <div style="display:flex;flex-direction:column;gap:16px">
 
-            {{-- Tasks --}}
+            {{-- Today's Agenda (Tasks + Follow-ups) --}}
             <div class="card">
                 <div class="card-header">
                     <div>
-                        <div class="card-title">Today's Tasks</div>
-                        <div class="card-subtitle">{{ $stats['tasks_pending'] ?? 12 }} pending</div>
+                        <div class="card-title">Today's Agenda</div>
+                        <div class="card-subtitle">{{ $stats['tasks_pending'] ?? 12 }} tasks pending</div>
                     </div>
-                    {{-- <a href="{{ route('tasks.index') }}"  --}}
-                      <a href="#"
-                    class="btn btn-secondary btn-sm btn-icon">
+                    <a href="{{ route('tenant.calendar.index') }}" class="btn btn-secondary btn-sm btn-icon" title="Open Calendar">
                         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                         </svg>
@@ -428,21 +426,26 @@
                 <div class="task-list">
                     @php
                         $todayTasks = $todayTasks ?? [
-                            ['text' => 'Follow up with Priya Mehta', 'due' => '10:00 AM', 'done' => false, 'priority' => 'high'],
-                            ['text' => 'Send quotation to Amit Corp', 'due' => '12:00 PM', 'done' => true, 'priority' => 'medium'],
-                            ['text' => 'Demo call — Sunita Patel', 'due' => '02:30 PM', 'done' => false, 'priority' => 'high'],
-                            ['text' => 'Update deal stages', 'due' => '04:00 PM', 'done' => false, 'priority' => 'low'],
-                            ['text' => 'Team standup meeting', 'due' => '05:00 PM', 'done' => false, 'priority' => 'medium'],
+                            ['text' => 'Follow up with Priya Mehta', 'due' => '10:00 AM', 'done' => false, 'priority' => 'high', 'kind' => 'task', 'url' => null],
+                            ['text' => 'Send quotation to Amit Corp', 'due' => '12:00 PM', 'done' => true, 'priority' => 'medium', 'kind' => 'task', 'url' => null],
+                            ['text' => 'Demo call — Sunita Patel', 'due' => '02:30 PM', 'done' => false, 'priority' => 'high', 'kind' => 'followup', 'url' => null],
+                            ['text' => 'Update deal stages', 'due' => '04:00 PM', 'done' => false, 'priority' => 'low', 'kind' => 'task', 'url' => null],
+                            ['text' => 'Team standup meeting', 'due' => '05:00 PM', 'done' => false, 'priority' => 'medium', 'kind' => 'task', 'url' => null],
                         ];
                     @endphp
-                    @foreach($todayTasks as $t)
-                        <div class="task-item">
+                    @forelse($todayTasks as $t)
+                        <div class="task-item" @if($t['url'] ?? null) onclick="window.location='{{ $t['url'] }}'" style="cursor:pointer" @endif>
                             <div class="task-check {{ $t['done'] ? 'done' : '' }}"></div>
                             <div class="task-prio {{ $t['priority'] }}"></div>
-                            <span class="task-text {{ $t['done'] ? 'done' : '' }}">{{ $t['text'] }}</span>
+                            <span class="task-text {{ $t['done'] ? 'done' : '' }}">
+                                @if(($t['kind'] ?? 'task') === 'followup')<span style="font-size:9.5px;font-weight:700;color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 4px;margin-right:5px;text-transform:uppercase;letter-spacing:.3px">FU</span>@endif
+                                {{ $t['text'] }}
+                            </span>
                             <span class="task-due">{{ $t['due'] }}</span>
                         </div>
-                    @endforeach
+                    @empty
+                        <div style="padding:20px;text-align:center;color:var(--text-300);font-size:13px">Nothing on today's agenda 🎉</div>
+                    @endforelse
                 </div>
             </div>
 
