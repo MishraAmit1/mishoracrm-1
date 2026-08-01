@@ -108,6 +108,9 @@
             @elseif(!empty($field['hint']))
             <span class="cf-field-hint">{{ $field['hint'] }}</span>
             @endif
+            @if($field['key'] === 'phone')
+            <div id="dupWarning" style="display:none;align-items:center;gap:6px;font-size:12px;color:#BA7517;background:#FAEEDA;border:1px solid #F0D9A8;border-radius:6px;padding:6px 10px;margin-top:6px"></div>
+            @endif
         </div>
         @endforeach
     </div>

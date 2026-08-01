@@ -233,6 +233,34 @@
         text.textContent = 'Saving...';
         document.getElementById('submitBtn').disabled = true;
     });
+
+    // ── Live duplicate check (excludes this contact's own id) ─────
+    let dupTimer;
+    const dPhone = document.getElementById('field_phone');
+    const dEmail = document.getElementById('field_email');
+    const dupBox = document.getElementById('dupWarning');
+    const exceptId = {{ $contact->id }};
+
+    function checkDup(){
+        clearTimeout(dupTimer);
+        dupTimer = setTimeout(async () => {
+            const phone = dPhone?.value.trim() ?? '';
+            const email = dEmail?.value.trim() ?? '';
+            if (!phone && !email) { if (dupBox) dupBox.style.display = 'none'; return; }
+
+            const res = await crmPost("{{ route('tenant.contacts.check-duplicate') }}", { phone, email, except_id: exceptId });
+            if (!dupBox) return;
+            if (res.duplicate) {
+                dupBox.innerHTML = `This phone/email already belongs to <strong>${res.match.name}</strong>.
+                    <a href="/contacts/${res.match.id}" target="_blank" style="margin-left:auto;color:#185FA5;font-weight:600;text-decoration:none">View Contact &rarr;</a>`;
+                dupBox.style.display = 'flex';
+            } else {
+                dupBox.style.display = 'none';
+            }
+        }, 400);
+    }
+    dPhone?.addEventListener('input', checkDup);
+    dEmail?.addEventListener('input', checkDup);
 })();
 </script>
 @endpush

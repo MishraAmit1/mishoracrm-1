@@ -134,6 +134,15 @@
 .lf-field-error { font-size: 12px; color: var(--red); font-weight: 500; }
 .lf-field-hint  { font-size: 12px; color: var(--text-400); }
 
+.dup-warning {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: #BA7517; background: #FAEEDA;
+    border: 1px solid #F0D9A8; border-radius: 6px;
+    padding: 6px 10px; margin-top: 2px;
+}
+.dup-warning a { color: #185FA5; font-weight: 600; text-decoration: none; margin-left: auto; white-space: nowrap; }
+.dup-warning a:hover { text-decoration: underline; }
+
 .char-count {
     font-size: 11px; color: var(--text-400);
     text-align: right; font-family: 'DM Mono', monospace;
@@ -329,17 +338,18 @@
                             <label class="lf-label">Phone <span class="req">*</span></label>
                             <div class="lf-input-wrap">
                                 <span class="lf-prefix">+91</span>
-                                <input type="tel" name="phone"
+                                <input type="tel" name="phone" id="phone"
                                        class="lf-input has-prefix {{ $errors->has('phone') ? 'is-error' : '' }}"
                                        placeholder="98765 43210"
                                        value="{{ old('phone') }}" required />
                             </div>
                             @error('phone') <span class="lf-field-error">{{ $message }}</span> @enderror
+                            <div id="dupWarning" class="dup-warning" style="display:none"></div>
                         </div>
 
                         <div class="lf-field">
                             <label class="lf-label">Email</label>
-                            <input type="email" name="email"
+                            <input type="email" name="email" id="email"
                                    class="lf-input {{ $errors->has('email') ? 'is-error' : '' }}"
                                    placeholder="rahul@company.com"
                                    value="{{ old('email') }}" />
@@ -712,6 +722,32 @@
 
     // ── Init score on load ──
     updateScore();
+
+    // ── Live duplicate check ──
+    let dupTimer;
+    const phoneEl = document.getElementById('phone');
+    const emailEl = document.getElementById('email');
+    const dupBox  = document.getElementById('dupWarning');
+
+    function checkDup() {
+        clearTimeout(dupTimer);
+        dupTimer = setTimeout(async () => {
+            const phone = phoneEl.value.trim();
+            const email = emailEl.value.trim();
+            if (!phone && !email) { dupBox.style.display = 'none'; return; }
+
+            const res = await crmPost("{{ route('tenant.leads.check-duplicate') }}", { phone, email });
+            if (res.duplicate) {
+                dupBox.innerHTML = `This phone/email already belongs to <strong>${res.match.name}</strong>.
+                    <a href="/leads/${res.match.id}" target="_blank">View Lead &rarr;</a>`;
+                dupBox.style.display = 'flex';
+            } else {
+                dupBox.style.display = 'none';
+            }
+        }, 400);
+    }
+    phoneEl?.addEventListener('input', checkDup);
+    emailEl?.addEventListener('input', checkDup);
 })();
 </script>
 @endpush

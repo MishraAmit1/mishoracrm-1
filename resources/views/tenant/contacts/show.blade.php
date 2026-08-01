@@ -314,14 +314,14 @@
             </div>
             @endif
 
-            {{-- Follow-up History ── --}}
+            {{-- Unified Activity Timeline (follow-ups + email + WhatsApp) ── --}}
             <div class="cs-card">
                 <div class="cs-card-head" style="display:flex;align-items:center;justify-content:space-between">
                     <div class="cs-card-title">
                         <i class="ti ti-calendar-time" style="font-size:13px;margin-right:5px" aria-hidden="true"></i>
-                        Follow-up History
-                        @if($contact->followups->count())
-                        <span style="color:var(--text-400);font-weight:500;text-transform:none;letter-spacing:0">({{ $contact->followups->count() }})</span>
+                        Activity Timeline
+                        @if($timeline->count())
+                        <span style="color:var(--text-400);font-weight:500;text-transform:none;letter-spacing:0">({{ $timeline->count() }})</span>
                         @endif
                     </div>
                     <a href="{{ route('tenant.followups.create', ['contact_id' => $contact->id]) }}"
@@ -331,57 +331,7 @@
                     </a>
                 </div>
 
-                @php
-                $fuStatusMap = [
-                    'scheduled'   => ['bg'=>'#E6F1FB','color'=>'#185FA5','label'=>'Scheduled'],
-                    'done'        => ['bg'=>'#E1F5EE','color'=>'#0F6E56','label'=>'Done'],
-                    'missed'      => ['bg'=>'#FCEBEB','color'=>'#A32D2D','label'=>'Missed'],
-                    'rescheduled' => ['bg'=>'#FAEEDA','color'=>'#854F0B','label'=>'Rescheduled'],
-                ];
-                $fuTypeIconMap = [
-                    'call'     => 'ti-phone',
-                    'email'    => 'ti-mail',
-                    'whatsapp' => 'ti-brand-whatsapp',
-                    'meeting'  => 'ti-users',
-                    'other'    => 'ti-note',
-                ];
-                $sortedFollowups = $contact->followups->sortByDesc('scheduled_at');
-                @endphp
-
-                @if($sortedFollowups->isEmpty())
-                <div style="padding:26px 16px;text-align:center;color:var(--text-300);font-size:13px">
-                    No follow-ups scheduled yet for this contact.
-                </div>
-                @else
-                <div>
-                    @foreach($sortedFollowups as $fu)
-                    @php
-                        $fs  = $fuStatusMap[$fu->status] ?? ['bg'=>'#F1EFE8','color'=>'#5F5E5A','label'=>ucfirst($fu->status)];
-                        $ico = $fuTypeIconMap[$fu->type] ?? $fuTypeIconMap['other'];
-                    @endphp
-                    <div style="display:flex;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border-subtle)">
-                        <div style="width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:{{ $fs['bg'] }}">
-                            <i class="ti {{ $ico }}" style="font-size:14px;color:{{ $fs['color'] }}" aria-hidden="true"></i>
-                        </div>
-                        <div style="flex:1;min-width:0">
-                            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px">
-                                <span style="font-size:13px;font-weight:600;color:var(--text-100)">{{ \App\Models\Followup::types()[$fu->type] ?? ucfirst($fu->type) }}</span>
-                                <span class="cs-badge" style="background:{{ $fs['bg'] }};color:{{ $fs['color'] }};font-size:10.5px;padding:2px 8px">{{ $fs['label'] }}</span>
-                                <span style="font-size:11.5px;color:var(--text-300);font-family:'DM Mono',monospace">{{ $fu->scheduled_at?->format('M d, Y · g:i A') }}</span>
-                            </div>
-                            @if($fu->status === 'done' && $fu->outcome)
-                            <div style="font-size:12.5px;color:var(--text-300);line-height:1.5">{{ $fu->outcome }}</div>
-                            @elseif($fu->notes)
-                            <div style="font-size:12.5px;color:var(--text-300);line-height:1.5">{{ $fu->notes }}</div>
-                            @else
-                            <div style="font-size:12.5px;color:var(--text-400);font-style:italic">No notes added</div>
-                            @endif
-                            <a href="{{ route('tenant.followups.show', $fu) }}" style="font-size:11px;color:var(--accent,#185FA5);text-decoration:none;margin-top:3px;display:inline-block">View details →</a>
-                        </div>
-                    </div>
-                    @endforeach
-                </div>
-                @endif
+                @include('components.activity-timeline', ['entries' => $timeline])
             </div>
 
         </div>{{-- /cs-main --}}

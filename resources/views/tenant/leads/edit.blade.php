@@ -168,16 +168,17 @@
 
                 <div class="field">
                     <label class="field-label">Phone <span class="req">*</span></label>
-                    <input type="tel" name="phone"
+                    <input type="tel" name="phone" id="phone"
                            class="field-input {{ $errors->has('phone') ? 'is-error':'' }}"
                            value="{{ old('phone', $lead->phone) }}"
                            placeholder="+91 98765 43210" required/>
                     @error('phone') <span class="field-error">{{ $message }}</span> @enderror
+                    <div id="dupWarning" style="display:none;align-items:center;gap:6px;font-size:12px;color:#BA7517;background:#FAEEDA;border:1px solid #F0D9A8;border-radius:6px;padding:6px 10px;margin-top:6px"></div>
                 </div>
 
                 <div class="field">
                     <label class="field-label">Email</label>
-                    <input type="email" name="email"
+                    <input type="email" name="email" id="email"
                            class="field-input {{ $errors->has('email') ? 'is-error':'' }}"
                            value="{{ old('email', $lead->email) }}"
                            placeholder="email@example.com"/>
@@ -347,5 +348,34 @@ document.querySelector('form').addEventListener('submit', function (e) {
         if (btn) { btn.innerHTML = '⏳ Saving...'; btn.disabled = true; }
     }
 });
+
+// ── Live duplicate check (excludes this lead's own id) ────────────
+(function () {
+    let dupTimer;
+    const phoneEl = document.getElementById('phone');
+    const emailEl = document.getElementById('email');
+    const dupBox  = document.getElementById('dupWarning');
+    const exceptId = {{ $lead->id }};
+
+    function checkDup() {
+        clearTimeout(dupTimer);
+        dupTimer = setTimeout(async () => {
+            const phone = phoneEl.value.trim();
+            const email = emailEl.value.trim();
+            if (!phone && !email) { dupBox.style.display = 'none'; return; }
+
+            const res = await crmPost("{{ route('tenant.leads.check-duplicate') }}", { phone, email, except_id: exceptId });
+            if (res.duplicate) {
+                dupBox.innerHTML = `This phone/email already belongs to <strong>${res.match.name}</strong>.
+                    <a href="/leads/${res.match.id}" target="_blank" style="margin-left:auto;color:#185FA5;font-weight:600;text-decoration:none">View Lead &rarr;</a>`;
+                dupBox.style.display = 'flex';
+            } else {
+                dupBox.style.display = 'none';
+            }
+        }, 400);
+    }
+    phoneEl?.addEventListener('input', checkDup);
+    emailEl?.addEventListener('input', checkDup);
+})();
 </script>
 @endpush

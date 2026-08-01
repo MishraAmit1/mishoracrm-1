@@ -243,6 +243,8 @@ Route::middleware(['tenant', 'auth', 'subscription'])
             Route::post('/leads/duplicates/merge', [Tenant\DuplicateController::class, 'mergeLeads'])->name('leads.duplicates.merge');
         });
 
+        Route::post('/leads/check-duplicate', [Tenant\LeadController::class, 'checkDuplicate'])->name('leads.check-duplicate');
+
         Route::get('/leads/{id}',       [Tenant\LeadController::class, 'show'])->name('leads.show');
         Route::get('/leads/{id}/edit',  [Tenant\LeadController::class, 'edit'])->name('leads.edit');
         Route::put('/leads/{id}',       [Tenant\LeadController::class, 'update'])->name('leads.update');
@@ -255,7 +257,9 @@ Route::middleware(['tenant', 'auth', 'subscription'])
         Route::get('/leads/{id}/data',     [Tenant\LeadController::class, 'leadData'])->name('leads.data');
         Route::post('/leads/save-view', [Tenant\LeadController::class, 'saveView'])->name('leads.view');
         Route::patch('/leads/{id}/status',  [Tenant\LeadController::class, 'updateStatus'])->name('leads.status.update');
-        Route::post('/leads/bulk-status',       [Tenant\LeadController::class, 'bulkUpdateStatus'])->name('bulk-status');
+        Route::post('/leads/bulk-status',        [Tenant\LeadController::class, 'bulkUpdateStatus'])->name('leads.bulk-status');
+        Route::post('/leads/bulk-destroy',       [Tenant\LeadController::class, 'bulkDestroy'])->name('leads.bulk-destroy');
+        Route::post('/leads/bulk-assign',        [Tenant\LeadController::class, 'bulkAssign'])->name('leads.bulk-assign');
         Route::post('/leads/{lead}/call-log',   [Tenant\LeadController::class, 'storeCallLog'])->name('leads.call-log.store');
         // ── Follow-ups ────────────────────────────────────────────
         Route::get('/followups',           [Tenant\FollowupController::class, 'index'])->name('followups.index');
@@ -294,6 +298,8 @@ Route::middleware(['tenant', 'auth', 'subscription'])
                 Route::get('/duplicates',        'contactsIndex')->name('duplicates');
                 Route::post('/duplicates/merge', 'mergeContacts')->name('duplicates.merge');
             });
+
+            Route::post('/check-duplicate', [Tenant\ContactController::class, 'checkDuplicate'])->name('check-duplicate');
 
             Route::controller(Tenant\ContactController::class)->group(function () {
                 Route::get('/{id}', 'show')->name('show');

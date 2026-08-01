@@ -11,6 +11,7 @@ use App\Models\Lead;
 use App\Models\LeadCallLog;
 use App\Models\TenantFieldAssignment;
 use App\Models\User;
+use App\Services\DuplicateMatcher;
 use App\Services\WebhookService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -163,6 +164,8 @@ class LeadController extends Controller
             'contact',
             'deal',
             'callLogs.createdBy',
+            'emailLogs.sentBy',
+            'whatsappLogs.sentBy',
         ]);
 
         return view('tenant.leads.show', [
@@ -174,6 +177,7 @@ class LeadController extends Controller
             'customFields' => $this->getCustomFields(),
             'customValues' => CustomFieldValue::getByKeyForModel($lead),
             'isAdmin'      => auth()->user()->user_type === 'tenant_admin',
+            'timeline'     => \App\Services\ActivityTimelineService::forLead($lead),
         ]);
     }
 
@@ -370,8 +374,10 @@ class LeadController extends Controller
     }
 
     // ── Bulk update status ────────────────────────────────────────
-    public function bulkUpdateStatus(Request $request): RedirectResponse
+    public function bulkUpdateStatus(Request $request): RedirectResponse|JsonResponse
     {
+        abort_unless($request->user()->can('leads.edit_all') || $request->user()->can('leads.edit_own'), 403);
+
         $request->validate([
             'ids'         => ['required', 'array'],
             'ids.*'       => ['exists:leads,id'],
@@ -385,11 +391,71 @@ class LeadController extends Controller
             $data['lost_reason'] = $request->lost_reason;
         }
 
-        Lead::whereIn('id', $request->ids)
+        $count = Lead::whereIn('id', $request->ids)
             ->where('tenant_id', $this->tenantId())
             ->update($data);
 
+        if ($request->wantsJson()) {
+            return response()->json(['updated' => $count]);
+        }
+
         return back()->with('success', 'Statuses updated.');
+    }
+
+    // ── Bulk delete ─────────────────────────────────────────────────
+    public function bulkDestroy(Request $request): JsonResponse
+    {
+        abort_unless($request->user()->can('leads.delete'), 403);
+
+        $request->validate([
+            'ids'   => ['required', 'array'],
+            'ids.*' => ['exists:leads,id'],
+        ]);
+
+        $leads = Lead::whereIn('id', $request->ids)
+            ->where('tenant_id', $this->tenantId())
+            ->get();
+
+        $deleted = 0;
+        $skippedConverted = 0;
+
+        foreach ($leads as $lead) {
+            if ($lead->isConverted()) {
+                $skippedConverted++;
+                continue;
+            }
+            $lead->customFieldValues()->delete();
+            $lead->delete();
+            $deleted++;
+        }
+
+        return response()->json(['deleted' => $deleted, 'skipped_converted' => $skippedConverted]);
+    }
+
+    // ── Bulk assign ──────────────────────────────────────────────────
+    public function bulkAssign(Request $request): JsonResponse
+    {
+        abort_unless($request->user()->can('leads.assign'), 403);
+
+        $request->validate([
+            'ids'         => ['required', 'array'],
+            'ids.*'       => ['exists:leads,id'],
+            'assigned_to' => ['required', 'exists:users,id'],
+        ]);
+
+        $valid = User::where('id', $request->assigned_to)
+            ->where('tenant_id', $this->tenantId())
+            ->exists();
+
+        if (!$valid) {
+            return response()->json(['error' => 'Invalid staff member.'], 422);
+        }
+
+        $count = Lead::whereIn('id', $request->ids)
+            ->where('tenant_id', $this->tenantId())
+            ->update(['assigned_to' => $request->assigned_to]);
+
+        return response()->json(['assigned' => $count]);
     }
 
     // ── Lead data for Contact/Deal pre-fill (API) ─────────────────
@@ -437,6 +503,22 @@ class LeadController extends Controller
         ]);
 
         return back()->with('success', ucfirst($request->type) . ' logged successfully.');
+    }
+
+    // ── Live duplicate check (Add/Edit forms) ─────────────────────
+    public function checkDuplicate(Request $request): JsonResponse
+    {
+        $match = DuplicateMatcher::findExistingLead(
+            $this->tenantId(),
+            $request->input('phone'),
+            $request->input('email'),
+            $request->integer('except_id') ?: null
+        );
+
+        return response()->json([
+            'duplicate' => (bool) $match,
+            'match'     => $match ? ['id' => $match->id, 'name' => $match->name] : null,
+        ]);
     }
 
     // ─────────────────────────────────────────────────────────────

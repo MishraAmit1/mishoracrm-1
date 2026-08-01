@@ -266,6 +266,9 @@
                                 <span class="cf-field-hint">{{ $field['hint'] ?? '' }}</span>
                                 @endif
                             @endif
+                            @if($field['key'] === 'phone')
+                            <div id="dupWarning" style="display:none;align-items:center;gap:6px;font-size:12px;color:#BA7517;background:#FAEEDA;border:1px solid #F0D9A8;border-radius:6px;padding:6px 10px;margin-top:6px"></div>
+                            @endif
                         </div>
                         @endforeach
                     </div>
@@ -553,6 +556,33 @@
         }
     });
     @endif
+
+    // ── Live duplicate check ──────────────────────────────────────
+    let dupTimer;
+    const dPhone = document.getElementById('field_phone');
+    const dEmail = document.getElementById('field_email');
+    const dupBox = document.getElementById('dupWarning');
+
+    function checkDup(){
+        clearTimeout(dupTimer);
+        dupTimer = setTimeout(async () => {
+            const phone = dPhone?.value.trim() ?? '';
+            const email = dEmail?.value.trim() ?? '';
+            if (!phone && !email) { if (dupBox) dupBox.style.display = 'none'; return; }
+
+            const res = await crmPost("{{ route('tenant.contacts.check-duplicate') }}", { phone, email });
+            if (!dupBox) return;
+            if (res.duplicate) {
+                dupBox.innerHTML = `This phone/email already belongs to <strong>${res.match.name}</strong>.
+                    <a href="/contacts/${res.match.id}" target="_blank" style="margin-left:auto;color:#185FA5;font-weight:600;text-decoration:none">View Contact &rarr;</a>`;
+                dupBox.style.display = 'flex';
+            } else {
+                dupBox.style.display = 'none';
+            }
+        }, 400);
+    }
+    dPhone?.addEventListener('input', checkDup);
+    dEmail?.addEventListener('input', checkDup);
 
 })();
 </script>

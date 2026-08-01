@@ -9,6 +9,7 @@ use App\Models\Deal;
 use App\Models\Invoice;
 use App\Models\Lead;
 use App\Models\Quotation;
+use App\Services\DuplicateMatcher;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -109,9 +110,13 @@ class ContactController extends Controller
             'tasks.assignedTo',
             'quotations',
             'invoices',
+            'emailLogs.sentBy',
+            'whatsappLogs.sentBy',
         ]);
 
-        return view('tenant.contacts.show', compact('contact'));
+        $timeline = \App\Services\ActivityTimelineService::forContact($contact);
+
+        return view('tenant.contacts.show', compact('contact', 'timeline'));
     }
 
     // ── Edit ──────────────────────────────────────────────────────
@@ -147,6 +152,22 @@ class ContactController extends Controller
         return redirect()
             ->route('tenant.contacts.index', ['tenant' => $this->tenantSlug()])
             ->with('success', "Contact '{$name}' deleted.");
+    }
+
+    // ── Live duplicate check (Add/Edit forms) ─────────────────────
+    public function checkDuplicate(Request $request): JsonResponse
+    {
+        $match = DuplicateMatcher::findExistingContact(
+            $this->tenantId(),
+            $request->input('phone'),
+            $request->input('email'),
+            $request->integer('except_id') ?: null
+        );
+
+        return response()->json([
+            'duplicate' => (bool) $match,
+            'match'     => $match ? ['id' => $match->id, 'name' => $match->name] : null,
+        ]);
     }
 
     public function searchCustomers(Request $request): JsonResponse

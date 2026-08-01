@@ -67,6 +67,16 @@ class Contact extends Model
         return $this->hasMany(Invoice::class)->latest();
     }
 
+    public function emailLogs(): HasMany
+    {
+        return $this->hasMany(EmailLog::class)->latest();
+    }
+
+    public function whatsappLogs(): HasMany
+    {
+        return $this->hasMany(WhatsappLog::class)->latest();
+    }
+
     // ── Scopes ────────────────────────────────────────────────────
 
     public function scopeSearch($query, string $search)

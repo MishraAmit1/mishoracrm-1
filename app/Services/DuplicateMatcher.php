@@ -29,17 +29,17 @@ class DuplicateMatcher
         return $email === '' ? null : $email;
     }
 
-    public static function findExistingLead(int $tenantId, ?string $phone, ?string $email): ?Lead
+    public static function findExistingLead(int $tenantId, ?string $phone, ?string $email, ?int $exceptId = null): ?Lead
     {
-        return static::findExisting(Lead::class, $tenantId, $phone, $email);
+        return static::findExisting(Lead::class, $tenantId, $phone, $email, $exceptId);
     }
 
-    public static function findExistingContact(int $tenantId, ?string $phone, ?string $email): ?Contact
+    public static function findExistingContact(int $tenantId, ?string $phone, ?string $email, ?int $exceptId = null): ?Contact
     {
-        return static::findExisting(Contact::class, $tenantId, $phone, $email);
+        return static::findExisting(Contact::class, $tenantId, $phone, $email, $exceptId);
     }
 
-    private static function findExisting(string $modelClass, int $tenantId, ?string $phone, ?string $email)
+    private static function findExisting(string $modelClass, int $tenantId, ?string $phone, ?string $email, ?int $exceptId = null)
     {
         $normPhone = static::normalizePhone($phone);
         $normEmail = static::normalizeEmail($email);
@@ -47,6 +47,7 @@ class DuplicateMatcher
         if (!$normPhone && !$normEmail) return null;
 
         $candidates = $modelClass::where('tenant_id', $tenantId)
+            ->when($exceptId, fn($q) => $q->where('id', '!=', $exceptId))
             ->where(function ($q) use ($normPhone, $normEmail) {
                 if ($normPhone) $q->orWhere('phone', 'like', '%' . $normPhone);
                 if ($normEmail) $q->orWhereRaw('LOWER(email) = ?', [$normEmail]);

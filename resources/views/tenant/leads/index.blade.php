@@ -348,11 +348,35 @@ $strips=[
     <a href="{{ route('tenant.leads.create') }}" class="btn btn-primary">Add Lead</a>
 </div>
 @else
+<div class="bulk-bar" id="bulkBar" style="display:none;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 14px;margin-bottom:12px;background:var(--accent-dim);border:1px solid var(--accent);border-radius:var(--r-sm)">
+    <span style="font-size:12.5px;font-weight:700;color:var(--text-100)"><span id="bulkCount">0</span> selected</span>
+    @can('leads.edit_all')
+    <select id="bulkStatusSelect" class="fi">
+        <option value="">Set status...</option>
+        <option value="new">New</option>
+        <option value="contacted">Contacted</option>
+        <option value="qualified">Qualified</option>
+        <option value="lost">Lost</option>
+    </select>
+    @endcan
+    @can('leads.assign')
+    <select id="bulkAssignSelect" class="fi">
+        <option value="">Assign to...</option>
+        @foreach($staffList as $staff)
+        <option value="{{ $staff->id }}">{{ $staff->name }}</option>
+        @endforeach
+    </select>
+    @endcan
+    @can('leads.delete')
+    <button type="button" class="btn btn-secondary btn-sm" id="bulkDeleteBtn" style="color:var(--red)">Delete</button>
+    @endcan
+    <button type="button" class="btn btn-secondary btn-sm" id="bulkClearBtn" style="margin-left:auto">Clear selection</button>
+</div>
 <div class="leads-table-wrap" style="overflow-x:auto">
 <table class="data-table">
 <thead>
 <tr>
-    <th style="width:32px"></th>
+    <th style="width:32px"><input type="checkbox" id="selectAllRows"></th>
     <th><a class="sort-link" href="{{ route('tenant.leads.index',array_merge(request()->all(),['sort'=>'name','dir'=>request('sort')==='name'&&request('dir')==='asc'?'desc':'asc'])) }}">Name {{ request('sort')==='name'?(request('dir')==='asc'?'↑':'↓'):'' }}</a></th>
     <th>Contact</th>
     <th>Source</th>
@@ -373,9 +397,9 @@ $priC=$lead->priority==='high'?'var(--red)':($lead->priority==='medium'?'var(--a
 $src=$sources[$lead->source]??null;
 $srcL=is_array($src)?($src['label']??ucfirst($lead->source)):($src??ucfirst($lead->source));
 @endphp
-<tr onclick="window.location='{{ route('tenant.leads.show',$lead->id) }}'">
-    <td style="padding:11px 6px 11px 14px">
-        <div class="prio-dot {{ $lead->priority }}"></div>
+<tr onclick="window.location='{{ route('tenant.leads.show',$lead->id) }}'" data-id="{{ $lead->id }}">
+    <td onclick="event.stopPropagation()" style="padding:11px 6px 11px 14px">
+        <input type="checkbox" class="row-select" value="{{ $lead->id }}">
     </td>
     <td style="padding-left:4px" data-label="Name">
         <div style="display:flex;align-items:center;gap:9px">
@@ -774,6 +798,77 @@ document.querySelectorAll('.k-card').forEach(card => {
         if (isDragging) return;
         const url = this.dataset.url;
         if (url) window.location.href = url;
+    });
+});
+
+/* ── Bulk select (List view) ───────────────────────────────── */
+const selectAll   = document.getElementById('selectAllRows');
+const bulkBar      = document.getElementById('bulkBar');
+const bulkCountEl  = document.getElementById('bulkCount');
+
+function rowCheckboxes() {
+    return Array.from(document.querySelectorAll('.row-select'));
+}
+function selectedIds() {
+    return rowCheckboxes().filter(cb => cb.checked).map(cb => cb.value);
+}
+function refreshBulkBar() {
+    const ids = selectedIds();
+    bulkCountEl.textContent = ids.length;
+    bulkBar.style.display = ids.length ? 'flex' : 'none';
+    if (selectAll) selectAll.checked = ids.length > 0 && ids.length === rowCheckboxes().length;
+}
+
+rowCheckboxes().forEach(cb => cb.addEventListener('change', refreshBulkBar));
+selectAll?.addEventListener('change', function () {
+    rowCheckboxes().forEach(cb => cb.checked = this.checked);
+    refreshBulkBar();
+});
+document.getElementById('bulkClearBtn')?.addEventListener('click', function () {
+    rowCheckboxes().forEach(cb => cb.checked = false);
+    refreshBulkBar();
+});
+
+async function bulkPost(url, extra) {
+    const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' },
+        body: JSON.stringify(Object.assign({ ids: selectedIds() }, extra || {})),
+    });
+    return res.json();
+}
+
+document.getElementById('bulkStatusSelect')?.addEventListener('change', async function () {
+    const status = this.value;
+    if (!status) return;
+    const res = await bulkPost('{{ route("tenant.leads.bulk-status") }}', { status });
+    toast(`${res.updated ?? 0} lead(s) updated.`, 'success');
+    setTimeout(() => window.location.reload(), 700);
+});
+
+document.getElementById('bulkAssignSelect')?.addEventListener('change', async function () {
+    const assignedTo = this.value;
+    if (!assignedTo) return;
+    const res = await bulkPost('{{ route("tenant.leads.bulk-assign") }}', { assigned_to: assignedTo });
+    toast(`${res.assigned ?? 0} lead(s) assigned.`, 'success');
+    setTimeout(() => window.location.reload(), 700);
+});
+
+document.getElementById('bulkDeleteBtn')?.addEventListener('click', function () {
+    const ids = selectedIds();
+    if (!ids.length) return;
+    confirmAction({
+        title: 'Delete selected leads?',
+        message: `${ids.length} lead(s) will be deleted. Converted leads in the selection will be skipped.`,
+        ok: 'Delete',
+        danger: true,
+        onConfirm: async () => {
+            const res = await bulkPost('{{ route("tenant.leads.bulk-destroy") }}');
+            let msg = `${res.deleted ?? 0} lead(s) deleted.`;
+            if (res.skipped_converted) msg += ` ${res.skipped_converted} converted lead(s) skipped.`;
+            toast(msg, 'success');
+            setTimeout(() => window.location.reload(), 700);
+        },
     });
 });
 

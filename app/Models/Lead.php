@@ -92,6 +92,16 @@ class Lead extends TenantModel
         return $this->belongsTo(Contact::class);
     }
 
+    public function emailLogs(): HasMany
+    {
+        return $this->hasMany(EmailLog::class)->latest();
+    }
+
+    public function whatsappLogs(): HasMany
+    {
+        return $this->hasMany(WhatsappLog::class)->latest();
+    }
+
     // ── Scopes ────────────────────────────────────────────────────
 
     public function scopeStatus($query, string $status)
