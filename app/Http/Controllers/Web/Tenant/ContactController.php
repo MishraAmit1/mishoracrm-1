@@ -34,18 +34,23 @@ class ContactController extends Controller
         return auth()->user()->tenant->subdomain;
     }
 
+    // ── Shared filtered query (index page + export reuse this) ────
+    public static function filteredQuery(int $tenantId, array $filters): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = Contact::where('tenant_id', $tenantId);
+
+        if (!empty($filters['search'])) $query->search($filters['search']);
+        if (!empty($filters['city']))   $query->where('city', $filters['city']);
+
+        return $query;
+    }
+
     // ── Index ─────────────────────────────────────────────────────
     public function index(Request $request): View
     {
-        $query = Contact::with('lead')->withCount(['deals', 'followups', 'invoices'])->where('tenant_id', auth()->user()->tenant_id);
-
-        if ($request->filled('search')) {
-            $query->search($request->search);
-        }
-
-        if ($request->filled('city')) {
-            $query->where('city', $request->city);
-        }
+        $query = self::filteredQuery(auth()->user()->tenant_id, $request->all())
+            ->with('lead')
+            ->withCount(['deals', 'followups', 'invoices']);
 
         // Sort
         $sort    = $request->get('sort', 'created_at');

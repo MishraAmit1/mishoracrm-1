@@ -202,6 +202,14 @@ Route::middleware(['tenant', 'auth', 'subscription'])
         Route::get('/dashboard', [Tenant\DashboardController::class, 'index'])
             ->name('dashboard');
 
+        // ── Global Search ─────────────────────────────────────────
+        // Path must be exactly /search — the topbar JS hardcodes this URL.
+        Route::get('/search', [Tenant\SearchController::class, 'index'])->name('search');
+
+        // ── Calendar ───────────────────────────────────────────────
+        Route::get('/calendar',        [Tenant\CalendarController::class, 'index'])->name('calendar.index');
+        Route::get('/calendar/events', [Tenant\CalendarController::class, 'events'])->name('calendar.events');
+
         // ── Lead Integrations ─────────────────────────────────────
         Route::prefix('lead-integrations')->name('lead-integrations.')->controller(TenantLeadIntegrationController::class)->group(function () {
             Route::get('/',                      'index')->name('index');
@@ -218,6 +226,23 @@ Route::middleware(['tenant', 'auth', 'subscription'])
         Route::get('/leads',            [Tenant\LeadController::class, 'index'])->name('leads.index');
         Route::get('/leads/create',     [Tenant\LeadController::class, 'create'])->name('leads.create');
         Route::post('/leads',           [Tenant\LeadController::class, 'store'])->name('leads.store');
+
+        // Import / Export / Duplicates — static segments must be registered
+        // before /leads/{id} below, which has no numeric constraint.
+        Route::middleware('permission:leads.import')->group(function () {
+            Route::get('/leads/import',          [Tenant\LeadImportController::class, 'show'])->name('leads.import');
+            Route::post('/leads/import/preview', [Tenant\LeadImportController::class, 'preview'])->name('leads.import.preview');
+            Route::post('/leads/import/confirm', [Tenant\LeadImportController::class, 'confirm'])->name('leads.import.confirm');
+            Route::get('/leads/import/template', [Tenant\LeadImportController::class, 'template'])->name('leads.import.template');
+        });
+        Route::get('/leads/export', [Tenant\LeadImportController::class, 'export'])
+            ->name('leads.export')->middleware('permission:leads.export');
+
+        Route::middleware('permission:leads.merge')->group(function () {
+            Route::get('/leads/duplicates',        [Tenant\DuplicateController::class, 'leadsIndex'])->name('leads.duplicates');
+            Route::post('/leads/duplicates/merge', [Tenant\DuplicateController::class, 'mergeLeads'])->name('leads.duplicates.merge');
+        });
+
         Route::get('/leads/{id}',       [Tenant\LeadController::class, 'show'])->name('leads.show');
         Route::get('/leads/{id}/edit',  [Tenant\LeadController::class, 'edit'])->name('leads.edit');
         Route::put('/leads/{id}',       [Tenant\LeadController::class, 'update'])->name('leads.update');
@@ -253,6 +278,24 @@ Route::middleware(['tenant', 'auth', 'subscription'])
                 Route::get('/', 'index')->name('index');
                 Route::get('/create', 'create')->name('create');
                 Route::post('/', 'store')->name('store');
+            });
+
+            // Import / Export / Duplicates — static segments, must precede /{id} below.
+            Route::middleware('permission:contacts.import')->controller(Tenant\ContactImportController::class)->group(function () {
+                Route::get('/import',          'show')->name('import');
+                Route::post('/import/preview', 'preview')->name('import.preview');
+                Route::post('/import/confirm', 'confirm')->name('import.confirm');
+                Route::get('/import/template', 'template')->name('import.template');
+            });
+            Route::get('/export', [Tenant\ContactImportController::class, 'export'])
+                ->name('export')->middleware('permission:contacts.export');
+
+            Route::middleware('permission:contacts.merge')->controller(Tenant\DuplicateController::class)->group(function () {
+                Route::get('/duplicates',        'contactsIndex')->name('duplicates');
+                Route::post('/duplicates/merge', 'mergeContacts')->name('duplicates.merge');
+            });
+
+            Route::controller(Tenant\ContactController::class)->group(function () {
                 Route::get('/{id}', 'show')->name('show');
                 Route::get('/{id}/edit', 'edit')->name('edit');
                 Route::put('/{id}', 'update')->name('update');
@@ -262,6 +305,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
                 Route::get('/search', 'searchCustomers')->name('search');
             });
         });
+
         // ── Deals (uncomment when ready) ──────────────────────────
         // Route::get('/deals', ...)->name('deals.index');
 

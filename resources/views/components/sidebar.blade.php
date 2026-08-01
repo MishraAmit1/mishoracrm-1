@@ -199,7 +199,7 @@
         {{-- Work --}}
         <div class="sb-section-label">Work</div>
 
-        <a href="{{ route('tenant.tasks.index') }}" 
+        <a href="{{ route('tenant.tasks.index') }}"
            class="sb-item {{ request()->routeIs('tenant.tasks.*') ? 'active' : '' }}">
             <span class="sb-icon">
                 <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
@@ -207,6 +207,16 @@
                 </svg>
             </span>
             <span class="sb-label">Tasks</span>
+        </a>
+
+        <a href="{{ route('tenant.calendar.index') }}"
+           class="sb-item {{ request()->routeIs('tenant.calendar.*') ? 'active' : '' }}">
+            <span class="sb-icon">
+                <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/>
+                </svg>
+            </span>
+            <span class="sb-label">Calendar</span>
         </a>
 
         {{-- Automation --}}

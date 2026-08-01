@@ -53,27 +53,35 @@ class LeadController extends Controller
             ->exists() ? (int) $assigneeId : null;
     }
 
+    // ── Shared filtered query (index page + export reuse this) ────
+    public static function filteredQuery(int $tenantId, array $filters, bool $isAdmin, ?int $currentUserId): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = Lead::where('tenant_id', $tenantId);
+
+        if (!$isAdmin && $currentUserId) {
+            $query->where('assigned_to', $currentUserId);
+        }
+
+        if (!empty($filters['search']))      $query->search($filters['search']);
+        if (!empty($filters['status']))      $query->where('status',      $filters['status']);
+        if (!empty($filters['source']))      $query->where('source',      $filters['source']);
+        if (!empty($filters['priority']))    $query->where('priority',    $filters['priority']);
+        if (!empty($filters['assigned_to'])) $query->where('assigned_to', $filters['assigned_to']);
+        if (!empty($filters['date_from']))   $query->whereDate('created_at', '>=', $filters['date_from']);
+        if (!empty($filters['date_to']))     $query->whereDate('created_at', '<=', $filters['date_to']);
+
+        return $query;
+    }
+
     // ── Index ─────────────────────────────────────────────────────
     public function index(Request $request): View
     {
         $user    = auth()->user();
         $isAdmin = $user->user_type === 'tenant_admin';
 
-        $query = Lead::with(['assignedTo'])
-            ->withCount(['followups'])
-            ->where('tenant_id', $this->tenantId());
-
-        if (!$isAdmin) {
-            $query->where('assigned_to', $user->id);
-        }
-
-        if ($request->filled('search'))      $query->search($request->search);
-        if ($request->filled('status'))      $query->where('status',      $request->status);
-        if ($request->filled('source'))      $query->where('source',      $request->source);
-        if ($request->filled('priority'))    $query->where('priority',    $request->priority);
-        if ($request->filled('assigned_to')) $query->where('assigned_to', $request->assigned_to);
-        if ($request->filled('date_from'))   $query->whereDate('created_at', '>=', $request->date_from);
-        if ($request->filled('date_to'))     $query->whereDate('created_at', '<=', $request->date_to);
+        $query = self::filteredQuery($this->tenantId(), $request->all(), $isAdmin, $user->id)
+            ->with(['assignedTo'])
+            ->withCount(['followups']);
 
         $allowed = ['name', 'created_at', 'status', 'priority', 'source'];
         $sort    = in_array($request->get('sort'), $allowed) ? $request->get('sort') : 'created_at';

@@ -31,6 +31,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'leads.assign',           // Kisi bhi staff ko assign karo
             'leads.convert',          // Lead ko contact mein convert karo
             'leads.export',
+            'leads.import',
+            'leads.merge',            // Duplicate leads merge karo
 
             // ── Contacts ─────────────────────────────────────────
             'contacts.view_own',
@@ -40,6 +42,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'contacts.edit_all',
             'contacts.delete',
             'contacts.export',
+            'contacts.import',
+            'contacts.merge',         // Duplicate contacts merge karo
 
             // ── Deals ─────────────────────────────────────────────
             'deals.view_own',
