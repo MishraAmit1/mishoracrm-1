@@ -88,6 +88,9 @@
                     <td style="max-width:200px" data-label="Message">
                         <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px;color:var(--text-200)">
                             {{ $log->message }}
+                            @if($log->attachment_name)
+                            <span title="{{ $log->attachment_name }} ({{ $log->media_type }})" style="margin-left:4px">📎</span>
+                            @endif
                         </div>
                     </td>
                     <td style="font-size:12px;color:var(--text-300)" data-label="Template">{{ $log->template?->name ?? '—' }}</td>

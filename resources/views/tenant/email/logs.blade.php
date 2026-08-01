@@ -61,6 +61,9 @@
                     </td>
                     <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px" data-label="Subject">
                         {{ $log->subject }}
+                        @if($log->attachment_names)
+                        <span title="{{ $log->attachment_names }}" style="margin-left:4px;color:var(--text-400)">📎</span>
+                        @endif
                     </td>
                     <td style="font-size:12px;color:var(--text-300)" data-label="Template">{{ $log->template?->name ?? '—' }}</td>
                     <td data-label="Type">

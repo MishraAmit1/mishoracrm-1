@@ -75,7 +75,7 @@
 
     {{-- Form --}}
     <div class="form-card">
-        <form method="POST" action="{{ route('tenant.whatsapp.bulk.send') }}" id="bulkForm">
+        <form method="POST" action="{{ route('tenant.whatsapp.bulk.send') }}" id="bulkForm" enctype="multipart/form-data">
             @csrf
 
             {{-- Recipients type --}}
@@ -172,6 +172,13 @@
                 </div>
             </div>
 
+            {{-- Attachment --}}
+            <div class="form-section">
+                <div class="fs-title">Attachment (Optional)</div>
+                <input type="file" name="attachment" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx" class="field-input">
+                <div style="font-size:11.5px;color:var(--text-400);margin-top:6px">One image or document, up to 16MB — sent to every recipient.</div>
+            </div>
+
             <div class="form-actions">
                 <a href="{{ route('tenant.whatsapp.index') }}" class="btn btn-secondary">Cancel</a>
                 <button type="submit" class="btn btn-primary" id="submitBtn"
@@ -206,9 +213,15 @@
         </div>
 
         <div style="padding:14px 16px">
-            <div style="background:var(--amber-dim);border:1px solid rgba(248,184,78,.3);border-radius:var(--r-sm);padding:12px;font-size:12px;color:var(--amber)">
-                ⚠️ Messages will be logged. WhatsApp Business API required for automated delivery.
+            @if($isConnected ?? false)
+            <div style="background:var(--green-dim);border:1px solid rgba(29,158,117,.3);border-radius:var(--r-sm);padding:12px;font-size:12px;color:var(--green)">
+                ✅ WhatsApp API connected — messages send for real. One attachment (if added) goes to every recipient.
             </div>
+            @else
+            <div style="background:var(--amber-dim);border:1px solid rgba(248,184,78,.3);border-radius:var(--r-sm);padding:12px;font-size:12px;color:var(--amber)">
+                ⚠️ WhatsApp API is not connected — connect it in <a href="{{ route('tenant.whatsapp.api-settings') }}" style="color:inherit;text-decoration:underline;font-weight:600">API Settings</a> before sending.
+            </div>
+            @endif
         </div>
     </div>
 

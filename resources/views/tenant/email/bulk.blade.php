@@ -31,7 +31,7 @@
 <div style="display:grid;grid-template-columns:1fr 300px;gap:16px">
 
     <div style="background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--r-lg);overflow:hidden">
-        <form method="POST" action="{{ route('tenant.email.bulk.send') }}" id="bulkForm">
+        <form method="POST" action="{{ route('tenant.email.bulk.send') }}" id="bulkForm" enctype="multipart/form-data">
             @csrf
 
             {{-- Recipients --}}
@@ -127,6 +127,13 @@
                 </div>
                 <div style="font-size:11.5px;color:var(--text-400);margin-top:6px">
                     Variables @{{name}}, @{{company}}, @{{email}}, @{{business}} auto-replaced per recipient
+                </div>
+
+                <div style="margin-top:14px">
+                    <label style="font-size:12.5px;font-weight:600;color:var(--text-200);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:6px">Attachments</label>
+                    <input type="file" name="attachments[]" multiple accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx"
+                           style="width:100%;padding:9px 12px;background:var(--bg-input);border:1.5px solid var(--border-default);border-radius:var(--r-sm);color:var(--text-100);font-family:var(--font);font-size:13px">
+                    <span style="font-size:11.5px;color:var(--text-400)">Up to 5 files, 10MB each — same attachment(s) sent to every recipient.</span>
                 </div>
             </div>
 

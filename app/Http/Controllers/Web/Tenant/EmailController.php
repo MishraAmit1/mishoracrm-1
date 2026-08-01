@@ -122,38 +122,43 @@ class EmailController extends Controller
     public function send(Request $request): RedirectResponse
     {
         $request->validate([
-            'to_email'    => ['required', 'email'],
-            'to_name'     => ['nullable', 'string'],
-            'subject'     => ['required', 'string'],
-            'body'        => ['required', 'string'],
-            'lead_id'     => ['nullable', 'exists:leads,id'],
-            'contact_id'  => ['nullable', 'exists:contacts,id'],
-            'template_id' => ['nullable', 'exists:email_templates,id'],
+            'to_email'      => ['required', 'email'],
+            'to_name'       => ['nullable', 'string'],
+            'subject'       => ['required', 'string'],
+            'body'          => ['required', 'string'],
+            'lead_id'       => ['nullable', 'exists:leads,id'],
+            'contact_id'    => ['nullable', 'exists:contacts,id'],
+            'template_id'   => ['nullable', 'exists:email_templates,id'],
+            'attachments'   => ['nullable', 'array', 'max:5'],
+            'attachments.*' => ['file', 'max:10240', 'mimes:jpg,jpeg,png,pdf,doc,docx,xls,xlsx'],
         ]);
+
+        $attachments = $this->collectAttachments($request);
 
         $status = 'sent';
         $error  = null;
 
         try {
-            $this->dispatchEmail($request->to_email, $request->to_name ?? '', $request->subject, $request->body);
+            $this->dispatchEmail($request->to_email, $request->to_name ?? '', $request->subject, $request->body, $attachments);
         } catch (\Exception $e) {
             $status = 'failed';
             $error  = $e->getMessage();
         }
 
         EmailLog::create([
-            'tenant_id'   => $this->tenantId(),
-            'template_id' => $request->template_id,
-            'lead_id'     => $request->lead_id,
-            'contact_id'  => $request->contact_id,
-            'sent_by'     => auth()->id(),
-            'to_email'    => $request->to_email,
-            'to_name'     => $request->to_name,
-            'subject'     => $request->subject,
-            'body'        => $request->body,
-            'status'      => $status,
-            'error_message' => $error,
-            'sent_at'     => now(),
+            'tenant_id'        => $this->tenantId(),
+            'template_id'      => $request->template_id,
+            'lead_id'          => $request->lead_id,
+            'contact_id'       => $request->contact_id,
+            'sent_by'          => auth()->id(),
+            'to_email'         => $request->to_email,
+            'to_name'          => $request->to_name,
+            'subject'          => $request->subject,
+            'body'             => $request->body,
+            'status'           => $status,
+            'error_message'    => $error,
+            'attachment_names' => $attachments ? implode(', ', array_column($attachments, 'name')) : null,
+            'sent_at'          => now(),
         ]);
 
         if ($status === 'failed') {
@@ -179,12 +184,18 @@ class EmailController extends Controller
     public function sendBulk(Request $request): RedirectResponse
     {
         $request->validate([
-            'recipients'  => ['required', 'array', 'min:1'],
-            'subject'     => ['required', 'string'],
-            'body'        => ['required', 'string'],
-            'template_id' => ['nullable', 'exists:email_templates,id'],
-            'type'        => ['required', 'in:leads,contacts'],
+            'recipients'    => ['required', 'array', 'min:1'],
+            'subject'       => ['required', 'string'],
+            'body'          => ['required', 'string'],
+            'template_id'   => ['nullable', 'exists:email_templates,id'],
+            'type'          => ['required', 'in:leads,contacts'],
+            'attachments'   => ['nullable', 'array', 'max:5'],
+            'attachments.*' => ['file', 'max:10240', 'mimes:jpg,jpeg,png,pdf,doc,docx,xls,xlsx'],
         ]);
+
+        // Read the uploaded files once — reused for every recipient below.
+        $attachments     = $this->collectAttachments($request);
+        $attachmentNames = $attachments ? implode(', ', array_column($attachments, 'name')) : null;
 
         $bulkId = Str::uuid();
         $today  = now()->format('d M Y');
@@ -220,7 +231,7 @@ class EmailController extends Controller
             $error  = null;
 
             try {
-                $this->dispatchEmail($record->email, $record->name ?? '', $rendered['subject'], $rendered['body']);
+                $this->dispatchEmail($record->email, $record->name ?? '', $rendered['subject'], $rendered['body'], $attachments);
                 $sent++;
             } catch (\Exception $e) {
                 $status = 'failed';
@@ -229,25 +240,26 @@ class EmailController extends Controller
             }
 
             EmailLog::create([
-                'tenant_id'     => $this->tenantId(),
-                'template_id'   => $request->template_id,
-                'lead_id'       => $request->type === 'leads' ? $id : null,
-                'contact_id'    => $request->type === 'contacts' ? $id : null,
-                'sent_by'       => auth()->id(),
-                'to_email'      => $record->email,
-                'to_name'       => $record->name,
-                'subject'       => $rendered['subject'],
-                'body'          => $rendered['body'],
-                'status'        => $status,
-                'error_message' => $error,
-                'is_bulk'       => true,
-                'bulk_id'       => $bulkId,
-                'sent_at'       => now(),
+                'tenant_id'        => $this->tenantId(),
+                'template_id'      => $request->template_id,
+                'lead_id'          => $request->type === 'leads' ? $id : null,
+                'contact_id'       => $request->type === 'contacts' ? $id : null,
+                'sent_by'          => auth()->id(),
+                'to_email'         => $record->email,
+                'to_name'          => $record->name,
+                'subject'          => $rendered['subject'],
+                'body'             => $rendered['body'],
+                'status'           => $status,
+                'error_message'    => $error,
+                'attachment_names' => $attachmentNames,
+                'is_bulk'          => true,
+                'bulk_id'          => $bulkId,
+                'sent_at'          => now(),
             ]);
         }
 
         return redirect()
-            ->route('email.logs')
+            ->route('tenant.email.logs')
             ->with('success', "{$sent} emails sent." . ($failed > 0 ? " {$failed} failed." : ''));
     }
 
@@ -348,7 +360,7 @@ class EmailController extends Controller
     // No fallback to the system mailer here on purpose: until the tenant
     // connects their SMTP in Email Settings, sending must fail loudly
     // instead of silently "succeeding" via the system mailer.
-    private function dispatchEmail(string $toEmail, string $toName, string $subject, string $html): void
+    private function dispatchEmail(string $toEmail, string $toName, string $subject, string $html, array $attachments = []): void
     {
         $settings = EmailSetting::where('tenant_id', $this->tenantId())
             ->where('is_connected', true)
@@ -358,6 +370,20 @@ class EmailController extends Controller
             throw new \Exception('Email not connected. Please connect your SMTP in Email Settings first.');
         }
 
-        EmailService::dispatch($settings, $toEmail, $toName, $subject, $html);
+        EmailService::dispatch($settings, $toEmail, $toName, $subject, $html, $attachments);
+    }
+
+    // ── Build the attachments array EmailService::dispatch() expects ─
+    private function collectAttachments(Request $request): array
+    {
+        return collect($request->file('attachments', []))
+            ->filter()
+            ->map(fn($file) => [
+                'content' => file_get_contents($file->getRealPath()),
+                'name'    => $file->getClientOriginalName(),
+                'mime'    => $file->getMimeType(),
+            ])
+            ->values()
+            ->all();
     }
 }

@@ -75,11 +75,18 @@
     </div>
 </div>
 
+@unless($isConnected ?? false)
+<div style="background:var(--amber-dim);border:1px solid rgba(248,184,78,.3);border-radius:var(--r-sm);padding:12px 16px;font-size:12.5px;color:var(--amber);margin-bottom:16px">
+    ⚠️ WhatsApp API is not connected — messages won't send until you connect it in
+    <a href="{{ route('tenant.whatsapp.api-settings') }}" style="color:inherit;text-decoration:underline;font-weight:600">API Settings</a>.
+</div>
+@endunless
+
 <div class="send-layout">
 
     {{-- Form --}}
     <div class="form-card">
-        <form method="POST" action="{{ route('tenant.whatsapp.send.store') }}" id="sendForm">
+        <form method="POST" action="{{ route('tenant.whatsapp.send.store') }}" id="sendForm" enctype="multipart/form-data">
             @csrf
 
             {{-- Recipient --}}
@@ -164,6 +171,13 @@
                 </div>
             </div>
 
+            {{-- Attachment --}}
+            <div class="form-section">
+                <div class="fs-title">Attachment (Optional)</div>
+                <input type="file" name="attachment" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx" class="field-input">
+                <div style="font-size:11.5px;color:var(--text-400);margin-top:6px">One image or document, up to 16MB.</div>
+            </div>
+
             <div class="form-actions">
                 <a href="{{ route('tenant.whatsapp.index') }}" class="btn btn-secondary">Cancel</a>
                 <button type="submit" class="btn btn-primary" onclick="return syncMessage()"
@@ -171,7 +185,7 @@
                     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:15px;height:15px">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z"/>
                     </svg>
-                    Open in WhatsApp
+                    Send via WhatsApp
                 </button>
             </div>
         </form>

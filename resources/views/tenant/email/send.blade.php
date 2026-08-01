@@ -69,7 +69,7 @@
 <div class="send-layout">
 
     <div class="form-card">
-        <form method="POST" action="{{ route('tenant.email.send.store') }}" id="sendForm">
+        <form method="POST" action="{{ route('tenant.email.send.store') }}" id="sendForm" enctype="multipart/form-data">
             @csrf
 
             {{-- Recipient --}}
@@ -164,6 +164,12 @@
                     <div class="quill-wrap">
                         <div id="quillEmailSend"></div>
                     </div>
+                </div>
+
+                <div class="field">
+                    <label class="field-label">Attachments</label>
+                    <input type="file" name="attachments[]" multiple accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx" class="field-input">
+                    <span style="font-size:12px;color:var(--text-400)">Up to 5 files, 10MB each.</span>
                 </div>
             </div>
 

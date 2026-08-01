@@ -24,6 +24,7 @@ class EmailLog extends Model
         'error_message',
         'is_bulk',
         'bulk_id',
+        'attachment_names',
         'sent_at',
     ];
 

@@ -84,6 +84,64 @@ class WhatsappChatbotService
         return true;
     }
 
+    // Upload a local file to Meta's media endpoint, returns the media id
+    // (or null on failure) — required before a media message can reference it.
+    public function uploadMedia(string $filePath, string $mimeType): ?string
+    {
+        $response = Http::withToken($this->settings->access_token)
+            ->attach('file', file_get_contents($filePath), basename($filePath))
+            ->post(self::GRAPH_URL . '/' . $this->settings->phone_number_id . '/media', [
+                'messaging_product' => 'whatsapp',
+                'type'              => $mimeType,
+            ]);
+
+        if ($response->failed()) {
+            Log::error('WhatsApp media upload failed', [
+                'tenant_id' => $this->settings->tenant_id,
+                'error'     => $response->json(),
+            ]);
+            return null;
+        }
+
+        return $response->json('id');
+    }
+
+    // Send an image/document message referencing an already-uploaded media id.
+    public function sendMediaMessage(string $waId, string $mediaId, string $type, ?string $caption = null, ?string $filename = null): bool
+    {
+        $payload = [
+            'messaging_product' => 'whatsapp',
+            'recipient_type'    => 'individual',
+            'to'                => $waId,
+            'type'              => $type,
+        ];
+
+        $payload[$type] = $type === 'document'
+            ? array_filter(['id' => $mediaId, 'filename' => $filename, 'caption' => $caption])
+            : array_filter(['id' => $mediaId, 'caption' => $caption]);
+
+        $response = Http::withToken($this->settings->access_token)
+            ->post(self::GRAPH_URL . '/' . $this->settings->phone_number_id . '/messages', $payload);
+
+        if ($response->failed()) {
+            Log::error('WhatsApp media message failed', [
+                'tenant_id' => $this->settings->tenant_id,
+                'to'        => $waId,
+                'error'     => $response->json(),
+            ]);
+            return false;
+        }
+
+        return true;
+    }
+
+    // WhatsApp Cloud API only distinguishes "image" from "document" for the
+    // media types this app allows sending (jpg/png vs pdf/doc/xls etc).
+    public static function mediaTypeForMime(string $mime): string
+    {
+        return str_starts_with($mime, 'image/') ? 'image' : 'document';
+    }
+
     // Verify webhook token
     public function verifyWebhookToken(string $token): bool
     {
