@@ -114,7 +114,7 @@ class NotificationController extends Controller
         $prefs    = NotificationPreference::getForUser(Auth::id(), Auth::user()->tenant_id);
         $types    = config('notifications.types');
         $channels = config('notifications.channels');
-        $groups   = collect($types)->groupBy(fn($t) => $t['group'] ?? 'Other');
+        $groups   = collect($types)->groupBy(fn($t) => $t['group'] ?? 'Other', true);
 
         return view('tenant.notifications.preferences', compact(
             'prefs', 'types', 'channels', 'groups'

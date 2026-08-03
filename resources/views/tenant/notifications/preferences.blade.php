@@ -75,6 +75,46 @@
 .sel-btn:hover { background:var(--accent); color:#fff; }
 
 .form-footer { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; background:var(--bg-elevated); border-top:1px solid var(--border-subtle); }
+
+.col-cell { width:72px; text-align:center; flex-shrink:0; }
+
+/* ── Mobile ───────────────────────────────────────────────────────── */
+@media(max-width:768px) {
+    /* Column headers only make sense aligned above a horizontal row of
+       toggles; once rows stack, each toggle already carries its own
+       channel name, so the header row is pure redundant width. */
+    .col-headers { display:none; }
+
+    .ch-pills { gap:8px; margin-bottom:18px; }
+    .ch-pill  { padding:8px 12px; font-size:12px; }
+
+    .group-header { padding:9px 16px; }
+
+    .pref-row { flex-direction:column; align-items:stretch; padding:14px 16px; gap:12px; }
+
+    .pref-channels {
+        display:grid;
+        grid-template-columns:repeat(auto-fit, minmax(62px, 1fr));
+        gap:8px;
+        width:100%;
+    }
+    .toggle-card, .toggle-card.is-disabled { width:auto; }
+    .toggle-card-name { font-size:9px; line-height:1.25; word-break:break-word; text-align:center; }
+
+    .sel-all-row { flex-direction:column; align-items:stretch; padding:12px 16px; gap:10px; }
+    .sel-all-channels {
+        display:grid;
+        grid-template-columns:repeat(auto-fit, minmax(62px, 1fr));
+        gap:8px;
+        width:100%;
+    }
+    .sel-all-channels .col-cell { width:auto; }
+    .sel-btn { width:auto; padding:7px 4px; }
+
+    .form-footer { flex-direction:column; align-items:stretch; gap:12px; padding:14px 16px; }
+    .form-footer > div { width:100%; display:flex; gap:10px; }
+    .form-footer > div .btn { flex:1; justify-content:center; }
+}
 </style>
 @endpush
 
@@ -83,7 +123,7 @@
 @php
     $channelDefs = config('notifications.channels');
     $types       = config('notifications.types');
-    $groups      = collect($types)->groupBy(fn($t) => $t['group'] ?? 'Other');
+    $groups      = collect($types)->groupBy(fn($t) => $t['group'] ?? 'Other', true);
 
     $channelIcons = [
         'in_app'   => '<path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/>',
@@ -125,7 +165,7 @@
             <div class="col-header-info">Notification Type</div>
             <div style="display:flex;gap:8px;flex-shrink:0">
                 @foreach($channelDefs as $key => $ch)
-                <div style="width:72px;text-align:center">
+                <div class="col-cell">
                     <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
                         <svg fill="none" stroke="currentColor" stroke-width="1.75"
                              viewBox="0 0 24 24" style="width:16px;height:16px;color:{{ $ch['enabled'] ? 'var(--text-200)':'var(--text-400)' }}">
@@ -151,7 +191,7 @@
             </div>
             <div class="sel-all-channels">
                 @foreach($channelDefs as $key => $ch)
-                <div style="width:72px;display:flex;justify-content:center">
+                <div class="col-cell" style="display:flex;justify-content:center">
                     @if($ch['enabled'])
                     <button type="button" class="sel-btn" id="selall_{{ $key }}" data-channel="{{ $key }}" onclick="toggleAll('{{ $key }}', this)">
                         All ON
@@ -220,7 +260,7 @@
                 </label>
                 @else
                 {{-- Disabled channel --}}
-                <div class="toggle-card is-disabled" style="width:72px">
+                <div class="toggle-card is-disabled">
                     <div class="sw">
                         <div class="sw-track">
                             <div class="sw-thumb"></div>
