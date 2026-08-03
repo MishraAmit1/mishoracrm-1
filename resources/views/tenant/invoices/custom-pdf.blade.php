@@ -45,7 +45,7 @@
         .totals-table { width: 100%; max-width: 320px; border-collapse: collapse; margin: 12px 0; float: right; font-family: "DejaVu Sans", sans-serif; }
         .totals-table td { padding: 7px 12px; font-size: 12px; }
         .totals-table .t-label { color: #64748b; }
-        .totals-table .t-value { text-align: right; font-weight: 600; }
+        .totals-table .t-value { text-align: right; font-weight: bold; }
         .totals-table .total-final-row td { background: {{ $accentColor }}; font-size: 14px; font-weight: bold; }
 
         /* ── Bank details ── */

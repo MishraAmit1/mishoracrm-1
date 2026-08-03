@@ -166,7 +166,7 @@
         }
         .party-company {
             font-size: 12px;
-            font-weight: 600;
+            font-weight: bold;
             color: #334155;
             margin-bottom: 3px;
         }
@@ -244,7 +244,7 @@
             color: #94a3b8;
             font-size: 11px;
         }
-        .item-desc-main { font-size: 12px; font-weight: 600; color: #0f172a; }
+        .item-desc-main { font-size: 12px; font-weight: bold; color: #0f172a; }
         .item-desc-sub  { font-size: 10px; color: #94a3b8; margin-top: 2px; }
         .item-hsn       { font-size: 10px; color: #64748b; margin-top: 2px; }
 
@@ -279,8 +279,8 @@
         .totals-table td { padding: 7px 12px; font-size: 12px; }
         .totals-table tr { border-bottom: 1px solid #f1f5f9; }
         .t-label { color: #64748b; }
-        .t-value { text-align: right; font-weight: 600; color: #1e293b; }
-        .t-discount { text-align: right; font-weight: 600; color: #dc2626; }
+        .t-value { text-align: right; font-weight: bold; color: #1e293b; }
+        .t-discount { text-align: right; font-weight: bold; color: #dc2626; }
         .t-gst-label { color: #64748b; font-size: 11px; }
 
         .total-final-row td {
@@ -304,7 +304,7 @@
         .paid-row td {
             background: #f0fdf4;
             color: #15803d;
-            font-weight: 600;
+            font-weight: bold;
             padding: 8px 12px;
         }
         .paid-row .t-value { color: #15803d; text-align: right; }
@@ -329,7 +329,7 @@
         }
         .amount-words-text {
             font-size: 12px;
-            font-weight: 600;
+            font-weight: bold;
             color: #1e293b;
             font-style: italic;
         }
@@ -615,7 +615,7 @@
                         <td class="r">{{ number_format($rate, 2) }}</td>
                         <td class="c">{{ number_format($taxPct, 0) }}%</td>
                         <td class="r">{{ number_format($lineGst, 2) }}</td>
-                        <td class="r" style="font-weight:600; color:#0f172a;">
+                        <td class="r" style="font-weight:bold; color:#0f172a;">
                             {{ number_format($lineTotal, 2) }}
                         </td>
                     </tr>

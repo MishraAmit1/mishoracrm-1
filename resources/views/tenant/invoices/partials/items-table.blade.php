@@ -34,7 +34,7 @@
                 <td class="r">{{ number_format($rate, 2) }}</td>
                 <td class="c">{{ number_format($taxPct, 0) }}%</td>
                 <td class="r">{{ number_format($lineGst, 2) }}</td>
-                <td class="r" style="font-weight:600;">{{ number_format($lineTotal, 2) }}</td>
+                <td class="r" style="font-weight:bold;">{{ number_format($lineTotal, 2) }}</td>
             </tr>
         @endforeach
     </tbody>
