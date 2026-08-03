@@ -18,7 +18,7 @@
 .fc-event{cursor:pointer;border:none}
 
 /* ── Quick-create modal ── */
-.qc-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center}
+.qc-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;padding:20px;box-sizing:border-box}
 .qc-backdrop.open{display:flex}
 .qc-modal{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:14px;width:100%;max-width:380px;padding:20px}
 .qc-title{font-size:14px;font-weight:700;color:var(--text-100);margin-bottom:4px}
@@ -30,6 +30,72 @@
 .qc-label{font-size:11.5px;font-weight:600;color:var(--text-200);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px}
 .qc-input{width:100%;padding:8px 10px;background:var(--bg-input);border:1.5px solid var(--border-default);border-radius:7px;color:var(--text-100);font-family:var(--font);font-size:13px}
 .qc-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.cal-fab{display:none}
+
+/* ── Mobile ───────────────────────────────────────────────────────── */
+@media(max-width:768px) {
+    .page-head select#staffFilter { width:100%; min-width:0; }
+
+    .cal-legend { gap:10px; margin-bottom:10px; }
+    .cal-legend-item { font-size:11px; gap:5px; }
+
+    .cal-card { padding:10px; border-radius:12px; }
+
+    /* Stack the toolbar into three centered rows — title, then nav,
+       then view switcher — instead of squeezing all three into one
+       row where the buttons wrap mid-word or spill off screen. */
+    .fc .fc-toolbar.fc-header-toolbar {
+        flex-direction:column;
+        align-items:stretch;
+        gap:10px;
+        margin-bottom:14px !important;
+    }
+    .fc .fc-toolbar-chunk { display:flex; justify-content:center; }
+    .fc .fc-toolbar-title { font-size:15px; text-align:center; }
+    .fc .fc-button { padding:6px 10px; font-size:12px; }
+    .fc .fc-button-group { flex-wrap:wrap; justify-content:center; }
+    .fc .fc-today-button { text-transform:capitalize; }
+
+    /* Footer view-switcher reads like a native app's segmented tab bar.
+       footerToolbar only populates the center slot, but FullCalendar
+       still renders empty left/right chunks and flexes all three
+       equally — leaving the (empty) outer two eating 2/3 of the width.
+       Only the center chunk, which actually holds the buttons, should
+       grow; the empty ones must collapse to 0. */
+    .fc .fc-footer-toolbar { margin-top:14px !important; }
+    .fc .fc-footer-toolbar .fc-toolbar-chunk:first-child,
+    .fc .fc-footer-toolbar .fc-toolbar-chunk:last-child { flex:0 0 0 !important; }
+    .fc .fc-footer-toolbar .fc-toolbar-chunk:nth-child(2) { flex:1 1 auto !important; }
+    .fc .fc-footer-toolbar .fc-button-group {
+        display:flex !important; flex-direction:row !important; width:100% !important;
+    }
+    .fc .fc-footer-toolbar .fc-button-group .fc-button { flex:1 !important; }
+
+    .fc .fc-daygrid-day-number { font-size:11px; padding:4px; }
+    .fc .fc-col-header-cell-cushion { font-size:11px; padding:6px 2px; }
+    .fc-event { font-size:10.5px; padding:1px 2px; }
+    .fc-daygrid-event-dot { margin:0 3px; }
+    /* Long-press-to-drag is unreliable on touch inside a cramped month
+       grid — the list view below is what mobile users actually get,
+       so month-grid dragging is a desktop-only affordance anyway. */
+    .fc-daygrid-day-frame { min-height:64px; }
+
+    .fc-list-event-title, .fc-list-event-time { font-size:12.5px; }
+    .fc-list-day-cushion { font-size:12px; padding:8px 10px !important; }
+
+    .qc-backdrop { padding:16px; align-items:flex-end; }
+    .qc-modal { max-width:100%; border-radius:16px 16px 0 0; padding-bottom:max(20px, env(safe-area-inset-bottom)); }
+
+    .cal-fab {
+        display:flex; align-items:center; justify-content:center;
+        position:fixed; right:20px; bottom:calc(24px + env(safe-area-inset-bottom));
+        width:52px; height:52px; border-radius:50%;
+        background:var(--accent); color:#fff; border:none;
+        box-shadow:0 8px 24px rgba(0,0,0,.32);
+        cursor:pointer; z-index:60;
+    }
+    .cal-fab svg { width:24px; height:24px; }
+}
 </style>
 @endpush
 
@@ -62,6 +128,12 @@
 <div class="cal-card">
     <div id="calendar" data-tenant-tz="{{ auth()->user()->tenant->timezone ?? 'Asia/Kolkata' }}"></div>
 </div>
+
+{{-- Mobile-only quick-add FAB: mobile defaults to the agenda/list view,
+     which has no date cells to click, so this is the only way to add. --}}
+<button type="button" class="cal-fab" id="calFab" onclick="qcOpen(new Date().toISOString().slice(0,10))" title="Quick add">
+    <svg fill="none" stroke="currentColor" stroke-width="2.25" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+</button>
 
 {{-- Quick-create modal --}}
 <div class="qc-backdrop" id="qcBackdrop">
@@ -154,15 +226,22 @@ async function qcSave() {
 
 document.addEventListener('DOMContentLoaded', function () {
     const el = document.getElementById('calendar');
+    // Month grid needs real screen width to be usable — on a phone a
+    // native calendar app shows an agenda list by default, so mirror
+    // that instead of cramming a 7-column grid into ~340px.
+    const isMobile = window.matchMedia('(max-width:768px)').matches;
+
     calendarInstance = new FullCalendar.Calendar(el, {
-        initialView: 'dayGridMonth',
+        initialView: isMobile ? 'listWeek' : 'dayGridMonth',
         timeZone: el.dataset.tenantTz || 'local',
-        editable: true,
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,listWeek',
-        },
+        editable: !isMobile,
+        headerToolbar: isMobile
+            ? { left: 'prev,next', center: 'title', right: 'today' }
+            : { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listWeek' },
+        footerToolbar: isMobile
+            ? { left: '', center: 'dayGridMonth,timeGridWeek,listWeek', right: '' }
+            : false,
+        buttonText: { today: 'Today', month: 'Month', week: 'Week', list: 'Agenda' },
         height: 'auto',
         events: function (info, successCallback, failureCallback) {
             const staffId = document.getElementById('staffFilter')?.value || '';

@@ -20,8 +20,12 @@
         h1, h2, h3 { color: {{ $primaryColor }}; margin: 10px 0; }
         img { max-width: 100%; }
 
-        /* ── Items table ── */
-        .items-table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+        /* ── Items table ──
+             Forced to DejaVu Sans regardless of the tenant's chosen body font:
+             dompdf does not fall back per-glyph, so a Base-14 font like
+             Helvetica/Times/Courier silently drops the ₹ (U+20B9) glyph it
+             doesn't contain. DejaVu Sans has it in both weights. */
+        .items-table { width: 100%; border-collapse: collapse; margin: 12px 0; font-family: "DejaVu Sans", sans-serif; }
         .items-table thead { display: table-header-group; }
         .items-table tbody { display: table-row-group; }
         .items-table thead tr { background: {{ $primaryColor }}; }
@@ -37,8 +41,8 @@
         .items-table tbody td.r { text-align: right; }
         .items-table tbody td.c { text-align: center; }
 
-        /* ── Totals ── */
-        .totals-table { width: 100%; max-width: 320px; border-collapse: collapse; margin: 12px 0; float: right; }
+        /* ── Totals ── (forced to DejaVu Sans — see items-table comment above) */
+        .totals-table { width: 100%; max-width: 320px; border-collapse: collapse; margin: 12px 0; float: right; font-family: "DejaVu Sans", sans-serif; }
         .totals-table td { padding: 7px 12px; font-size: 12px; }
         .totals-table .t-label { color: #64748b; }
         .totals-table .t-value { text-align: right; font-weight: 600; }

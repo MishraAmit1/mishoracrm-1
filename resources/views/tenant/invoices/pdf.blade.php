@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>Tax Invoice – {{ $invoice->number }}</title>
+    @php
+        $primaryColor    = $pdfSettings->primary_color ?? '#1e3a5f';
+        $accentColor     = $pdfSettings->accent_color  ?? '#3b82f6';
+        $logoPosition    = $pdfSettings->logo_position ?? 'left';
+        $footerNote      = $pdfSettings->footer_note ?? null;
+        $showBankDetails = $pdfSettings->show_bank_details ?? true;
+        $showTaxSummary  = $pdfSettings->show_tax_summary ?? true;
+        $fontFamily      = $pdfSettings->font_family ?? 'DejaVu Sans';
+    @endphp
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -15,7 +24,7 @@
         }
 
         body {
-            font-family: DejaVu Sans, sans-serif;
+            font-family: "{{ $fontFamily }}", "DejaVu Sans", sans-serif;
             font-size: 12px;
             color: #1e293b;
             background: #ffffff;
@@ -30,7 +39,7 @@
 
         /* ─── TOP HEADER BAR ─── */
         .header-bar {
-            background: #1e3a5f;
+            background: {{ $primaryColor }};
             width: 100%;
             padding: 22px 32px;
         }
@@ -82,9 +91,7 @@
         .accent-stripe {
             width: 100%;
             height: 4px;
-            background: linear-gradient(to right, #3b82f6, #06b6d4);
-            /* DomPDF fallback */
-            background: #3b82f6;
+            background: {{ $accentColor }};
         }
 
         /* ─── INVOICE META BAND ─── */
@@ -114,11 +121,20 @@
             margin-top: 2px;
         }
         .meta-value.overdue { color: #dc2626; }
-        .meta-value.status-paid    { color: #16a34a; }
-        .meta-value.status-sent    { color: #2563eb; }
-        .meta-value.status-draft   { color: #64748b; }
-        .meta-value.status-partial { color: #d97706; }
-        .meta-value.status-overdue { color: #dc2626; }
+
+        .status-badge {
+            display: inline-block;
+            padding: 3px 11px;
+            border-radius: 9px;
+            font-size: 10.5px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+        .status-badge.status-paid    { background: #dcfce7; color: #16a34a; }
+        .status-badge.status-sent    { background: #dbeafe; color: #2563eb; }
+        .status-badge.status-draft   { background: #f1f5f9; color: #64748b; }
+        .status-badge.status-partial { background: #fef3c7; color: #d97706; }
+        .status-badge.status-overdue { background: #fee2e2; color: #dc2626; }
 
         /* ─── BODY CONTENT ─── */
         .body-content { padding: 24px 32px; }
@@ -128,12 +144,12 @@
         .party-cell { width: 48%; vertical-align: top; }
         .party-box {
             border: 1px solid #e2e8f0;
-            border-top: 3px solid #1e3a5f;
+            border-top: 3px solid {{ $primaryColor }};
             padding: 14px 16px;
             border-radius: 2px;
             page-break-inside: avoid;
         }
-        .party-box.buyer { border-top-color: #3b82f6; }
+        .party-box.buyer { border-top-color: {{ $accentColor }}; }
         .party-label {
             font-size: 9px;
             font-weight: bold;
@@ -174,8 +190,8 @@
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 1.5px;
-            color: #1e3a5f;
-            border-bottom: 2px solid #1e3a5f;
+            color: {{ $primaryColor }};
+            border-bottom: 2px solid {{ $primaryColor }};
             padding-bottom: 5px;
             margin-bottom: 12px;
         }
@@ -188,11 +204,15 @@
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 0;
+            /* Pinned to DejaVu Sans regardless of $fontFamily above: dompdf
+               doesn't fall back per-glyph, so a Base-14 font (Helvetica/
+               Times/Courier) would silently drop the ₹ (U+20B9) glyph. */
+            font-family: "DejaVu Sans", sans-serif;
         }
         .items-table thead { display: table-header-group; }
         .items-table tbody { display: table-row-group; }
         .items-table thead tr {
-            background: #1e3a5f;
+            background: {{ $primaryColor }};
         }
         .items-table thead th {
             padding: 10px 10px;
@@ -235,7 +255,7 @@
 
         .bank-box {
             border: 1px solid #e2e8f0;
-            border-left: 4px solid #1e3a5f;
+            border-left: 4px solid {{ $primaryColor }};
             padding: 12px 14px;
             background: #f8fafc;
             page-break-inside: avoid;
@@ -245,7 +265,7 @@
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 1px;
-            color: #1e3a5f;
+            color: {{ $primaryColor }};
             margin-bottom: 8px;
         }
         .bank-row {
@@ -255,7 +275,7 @@
         }
         .bank-row span { font-weight: bold; color: #1e293b; min-width: 100px; display: inline-block; }
 
-        .totals-table { width: 100%; border-collapse: collapse; }
+        .totals-table { width: 100%; border-collapse: collapse; font-family: "DejaVu Sans", sans-serif; }
         .totals-table td { padding: 7px 12px; font-size: 12px; }
         .totals-table tr { border-bottom: 1px solid #f1f5f9; }
         .t-label { color: #64748b; }
@@ -264,7 +284,7 @@
         .t-gst-label { color: #64748b; font-size: 11px; }
 
         .total-final-row td {
-            background: #1e3a5f;
+            background: {{ $primaryColor }};
             color: #ffffff;
             font-size: 14px;
             font-weight: bold;
@@ -293,7 +313,7 @@
         .amount-words {
             background: #f1f5f9;
             border: 1px solid #e2e8f0;
-            border-left: 4px solid #3b82f6;
+            border-left: 4px solid {{ $accentColor }};
             padding: 10px 16px;
             margin-top: 16px;
             font-size: 11px;
@@ -322,6 +342,7 @@
             padding: 12px 16px;
             margin-top: 16px;
             page-break-inside: avoid;
+            font-family: "DejaVu Sans", sans-serif;
         }
         .payment-received-title {
             font-size: 10px;
@@ -408,7 +429,7 @@
             bottom: -65px;
             left: 0;
             right: 0;
-            background: #1e3a5f;
+            background: {{ $primaryColor }};
             padding: 12px 32px;
         }
         .footer-inner { width: 100%; }
@@ -428,7 +449,7 @@
     <div class="header-bar">
         <table class="header-inner">
             <tr>
-                <td class="header-left">
+                <td class="header-left" style="text-align:{{ $logoPosition === 'left' ? 'left' : ($logoPosition === 'right' ? 'right' : 'center') }};">
                     @if($tenant->logo)
                         <img src="{{ public_path('storage/' . $tenant->logo) }}"
                              alt="{{ $tenant->name }}"
@@ -478,8 +499,8 @@
                 </td>
                 <td class="meta-cell" style="text-align:right;">
                     <div class="meta-label">Status</div>
-                    <div class="meta-value status-{{ $invoice->status }}">
-                        {{ strtoupper($invoice->status) }}
+                    <div class="meta-value" style="margin-top:4px;">
+                        <span class="status-badge status-{{ $invoice->status }}">{{ strtoupper($invoice->status) }}</span>
                         @if($invoice->isOverdue()) &nbsp;⚠ @endif
                     </div>
                 </td>
@@ -608,7 +629,8 @@
                 {{-- BANK DETAILS --}}
                 <td class="bank-cell">
 
-                    @if(isset($tenant->settings['bank_name']) || isset($tenant->settings['account_number']))
+                    @php $hasBankDetails = $showBankDetails && (isset($tenant->settings['bank_name']) || isset($tenant->settings['account_number'])); @endphp
+                    @if($hasBankDetails)
                     <div class="bank-box">
                         <div class="bank-title">Payment / Bank Details</div>
                         @if(isset($tenant->settings['bank_name']))
@@ -630,17 +652,17 @@
                     @endif
 
                     {{-- AMOUNT IN WORDS --}}
-                    <div class="amount-words" style="margin-top: {{ isset($tenant->settings['bank_name']) ? '12px' : '0px' }};">
+                    <div class="amount-words" style="margin-top: {{ $hasBankDetails ? '12px' : '0px' }};">
                         <div class="amount-words-label">Total Amount (in words)</div>
                         <div class="amount-words-text">
-                            INR {{ \App\Helpers\NumberToWords::convert($invoice->total) }} Only
+                            {{ \App\Helpers\NumberToWords::convert($invoice->total) }} Only
                         </div>
                     </div>
 
                     {{-- QUOTATION REF --}}
                     @if($invoice->quotation)
                         <div style="margin-top:10px; font-size:10px; color:#94a3b8;">
-                            Against Quotation: <strong style="color:#1e3a5f;">{{ $invoice->quotation->number }}</strong>
+                            Against Quotation: <strong style="color:{{ $primaryColor }};">{{ $invoice->quotation->number }}</strong>
                         </div>
                     @endif
 
@@ -668,22 +690,29 @@
                         @endif
 
                         {{-- GST Split --}}
-                        @php
-                            $cgst = round($invoice->tax_amount / 2, 2);
-                            $sgst = round($invoice->tax_amount / 2, 2);
-                        @endphp
-                        <tr>
-                            <td class="t-gst-label">CGST ({{ number_format($invoice->tax_percent / 2, 1) }}%)</td>
-                            <td class="t-value" style="font-size:11px; color:#64748b;">₹ {{ number_format($cgst, 2) }}</td>
-                        </tr>
-                        <tr>
-                            <td class="t-gst-label">SGST ({{ number_format($invoice->tax_percent / 2, 1) }}%)</td>
-                            <td class="t-value" style="font-size:11px; color:#64748b;">₹ {{ number_format($sgst, 2) }}</td>
-                        </tr>
-                        <tr>
-                            <td class="t-label">Total GST ({{ number_format($invoice->tax_percent, 0) }}%)</td>
-                            <td class="t-value">₹ {{ number_format($invoice->tax_amount, 2) }}</td>
-                        </tr>
+                        @if($showTaxSummary)
+                            @php
+                                $cgst = round($invoice->tax_amount / 2, 2);
+                                $sgst = round($invoice->tax_amount / 2, 2);
+                            @endphp
+                            <tr>
+                                <td class="t-gst-label">CGST ({{ number_format($invoice->tax_percent / 2, 1) }}%)</td>
+                                <td class="t-value" style="font-size:11px; color:#64748b;">₹ {{ number_format($cgst, 2) }}</td>
+                            </tr>
+                            <tr>
+                                <td class="t-gst-label">SGST ({{ number_format($invoice->tax_percent / 2, 1) }}%)</td>
+                                <td class="t-value" style="font-size:11px; color:#64748b;">₹ {{ number_format($sgst, 2) }}</td>
+                            </tr>
+                            <tr>
+                                <td class="t-label">Total GST ({{ number_format($invoice->tax_percent, 0) }}%)</td>
+                                <td class="t-value">₹ {{ number_format($invoice->tax_amount, 2) }}</td>
+                            </tr>
+                        @else
+                            <tr>
+                                <td class="t-label">GST ({{ number_format($invoice->tax_percent, 0) }}%)</td>
+                                <td class="t-value">₹ {{ number_format($invoice->tax_amount, 2) }}</td>
+                            </tr>
+                        @endif
 
                         {{-- GRAND TOTAL --}}
                         <tr class="total-final-row">
@@ -741,6 +770,11 @@
                 @endif
             </tr>
         </table>
+        @endif
+
+        {{-- ── TENANT'S CUSTOM FOOTER NOTE ── --}}
+        @if($footerNote)
+        <div class="nt-body" style="margin-top:16px; white-space:pre-line;">{{ $footerNote }}</div>
         @endif
 
         {{-- ── SIGNATURE SECTION ── --}}

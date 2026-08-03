@@ -65,7 +65,7 @@ class InvoicePdfTemplateRenderer
             'totals_block'    => view('tenant.invoices.partials.totals-block', compact('invoice'))->render(),
             'bank_details'    => view('tenant.invoices.partials.bank-details', compact('tenant'))->render(),
             'signature_block' => view('tenant.invoices.partials.signature-block', compact('invoice', 'tenant'))->render(),
-            'amount_in_words' => '<div style="font-size:12px;font-weight:600;font-style:italic;">INR '
+            'amount_in_words' => '<div style="font-size:12px;font-weight:600;font-style:italic;">'
                 . e(NumberToWords::convert($invoice->total)) . ' Only</div>',
         ];
     }

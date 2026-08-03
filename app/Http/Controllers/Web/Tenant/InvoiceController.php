@@ -302,7 +302,11 @@ class InvoiceController extends Controller
             ])->setPaper('a4', 'portrait');
         }
 
-        return Pdf::loadView('tenant.invoices.pdf', compact('invoice', 'tenant'))
+        return Pdf::loadView('tenant.invoices.pdf', [
+                    'invoice'     => $invoice,
+                    'tenant'      => $tenant,
+                    'pdfSettings' => $pdfSettings,
+                  ])
                   ->setPaper('a4', 'portrait');
     }
 
