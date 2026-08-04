@@ -62,8 +62,6 @@
             line-height: 1.5;
         }
 
-        .page { width: 100%; }
-
         /* ─── HEADER ───
              Renders once at the top of page 1 (standard across invoicing
              tools — Zoho/QuickBooks/Xero don't repeat the full branded
@@ -294,15 +292,20 @@
         }
 
         /* ─── BOTTOM-FIXED: signature + footer stack ───
-             One fixed element (not two) so the offset math stays simple:
-             bottom:-118px exactly matches the @page bottom margin above,
-             the same proven "offset == reserved margin" pattern used for
-             the header. Signature and footer are ordinary flow children
-             *inside* this fixed box, so they always stack the same way
-             regardless of page content — this is what pins the signature
-             to a fixed spot at the bottom of every page instead of
-             floating wherever the preceding content happens to end. */
-        .bottom-fixed { position: fixed; bottom: -118px; left: 0; right: 0; height: 118px; }
+             `top` (not `bottom`) is deliberate: dompdf's positioner for a
+             fixed block-level element only ever reads `top`/`left` — a
+             `bottom` offset is silently ignored, which made this element
+             render once instead of repeating on every page (confirmed by
+             reading dompdf's own Positioner\Absolute::position()). A4
+             page height at the configured 96dpi is 841.89pt / 0.75 =
+             1122.52px; anchoring 118px (this block's own height) up from
+             that bottom edge keeps it flush on every page regardless of
+             content length. Signature and footer are ordinary flow
+             children *inside* this one fixed box, so they always stack
+             the same way — this is what pins the signature to a fixed
+             spot at the bottom instead of floating wherever the
+             preceding content happens to end. */
+        .bottom-fixed { position: fixed; top: 1004.52px; left: 0; right: 0; height: 118px; }
 
         .signature-section { width: 100%; height: 80px; padding: 10px 32px 0 32px; border-top: 1px solid #e2e8f0; }
         .sig-table { width: 100%; }
@@ -330,7 +333,6 @@
     </style>
 </head>
 <body>
-<div class="page">
 
     {{-- ════════════════════════════════════════════
          HEADER
@@ -694,6 +696,5 @@
         </div>
     </div>
 
-</div>
 </body>
 </html>
