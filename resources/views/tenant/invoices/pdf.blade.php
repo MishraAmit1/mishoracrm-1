@@ -39,18 +39,16 @@
            or explicit `bold`, never a numeric weight. */
 
         @page {
-            /* dompdf reliably supports only ONE position:fixed element
-               repeating across pages — two (a fixed header + fixed
-               footer) causes one of them to silently stop repeating.
-               So the footer+signature stack (see BOTTOM-FIXED) is the
-               one fixed element; the full header only renders on page 1
-               (standard for invoicing tools — Zoho/QuickBooks/Xero all
-               do this), and continuation pages get a slim running strip
-               folded into the items-table's thead instead, which uses
-               dompdf's separate, reliable table-header-repeat mechanism. */
+            /* The full header only renders on page 1 (standard for
+               invoicing tools — Zoho/QuickBooks/Xero all do this);
+               continuation pages get a slim running strip folded into
+               the items-table's thead instead (reliable, native repeat
+               mechanism). Only the branded footer bar is fixed/repeating
+               — the signature renders once, in normal flow, wherever the
+               last page's content actually ends (see SIGNATURE below). */
             margin-top: 0;
             margin-right: 0;
-            margin-bottom: 118px;
+            margin-bottom: 40px;
             margin-left: 0;
         }
 
@@ -75,17 +73,17 @@
             width: 100%;
             padding: 16px 32px;
         }
-        .header-inner { width: 100%; }
-        .header-left  { vertical-align: top; width: 62%; text-align: {{ $logoPosition === 'left' ? 'left' : ($logoPosition === 'right' ? 'right' : 'center') }}; }
-        .header-right { vertical-align: top; width: 38%; text-align: right; }
+        .header-inner { width: 100%; table-layout: fixed; }
+        .header-left  { vertical-align: top; width: 58%; text-align: {{ $logoPosition === 'left' ? 'left' : ($logoPosition === 'right' ? 'right' : 'center') }}; overflow: hidden; }
+        .header-right { vertical-align: top; width: 42%; text-align: right; }
 
-        .company-logo   { max-height: 42px; max-width: 160px; margin-bottom: 7px; }
-        .company-name   { font-size: 18px; font-weight: bold; color: #ffffff; letter-spacing: 0.3px; }
-        .company-tagline{ font-size: 9px; color: #b8c4d9; margin-top: 3px; }
-        .company-contact{ font-size: 9px; color: #cbd5e1; margin-top: 6px; line-height: 1.7; }
+        .company-logo   { max-height: 40px; max-width: 150px; margin-bottom: 6px; }
+        .company-name   { font-size: 17px; font-weight: bold; color: #ffffff; letter-spacing: 0.2px; word-wrap: break-word; }
+        .company-tagline{ font-size: 8.5px; color: #b8c4d9; margin-top: 3px; }
+        .company-contact{ font-size: 8.5px; color: #cbd5e1; margin-top: 6px; line-height: 1.65; }
 
-        .invoice-heading { font-size: 17px; font-weight: bold; color: #ffffff; letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; }
-        .invoice-sub      { font-size: 9px; color: #b8c4d9; margin-top: 4px; letter-spacing: 0.3px; }
+        .invoice-heading { font-size: 14px; font-weight: bold; color: #ffffff; letter-spacing: 0.6px; text-transform: uppercase; white-space: nowrap; }
+        .invoice-sub      { font-size: 8.5px; color: #b8c4d9; margin-top: 4px; letter-spacing: 0.2px; }
 
         /* ─── META BAND ─── */
         .meta-band { background: #f1f5f9; border-bottom: 1px solid #e2e8f0; padding: 9px 32px; }
@@ -279,9 +277,9 @@
         .notes-gap { width: 3%; }
         .block-body {
             font-size: 10.5px;
-            color: #64748b;
-            line-height: 1.5;
-            padding: 7px 12px;
+            color: #334155;
+            line-height: 1.6;
+            padding: 9px 13px;
             background: #f8fafc;
             border: 1px solid #e2e8f0;
             page-break-inside: avoid;
@@ -291,40 +289,38 @@
             white-space: pre-line;
         }
 
-        /* ─── BOTTOM-FIXED: signature + footer stack ───
-             `top` (not `bottom`) is deliberate: dompdf's positioner for a
-             fixed block-level element only ever reads `top`/`left` — a
-             `bottom` offset is silently ignored, which made this element
-             render once instead of repeating on every page (confirmed by
-             reading dompdf's own Positioner\Absolute::position()). A4
-             page height at the configured 96dpi is 841.89pt / 0.75 =
-             1122.52px; anchoring 118px (this block's own height) up from
-             that bottom edge keeps it flush on every page regardless of
-             content length. Signature and footer are ordinary flow
-             children *inside* this one fixed box, so they always stack
-             the same way — this is what pins the signature to a fixed
-             spot at the bottom instead of floating wherever the
-             preceding content happens to end. */
-        .bottom-fixed { position: fixed; top: 1004.52px; left: 0; right: 0; height: 118px; }
-
-        .signature-section { width: 100%; height: 80px; padding: 10px 32px 0 32px; border-top: 1px solid #e2e8f0; }
+        /* ─── SIGNATURE ───
+             Ordinary flow content (not fixed) — it renders exactly once,
+             wherever the last page's content ends, instead of repeating
+             on every page. page-break-inside:avoid keeps it from ever
+             being split across a page boundary. */
+        .signature-section { width: 100%; margin-top: 16px; padding-top: 10px; border-top: 1px solid #e2e8f0; page-break-inside: avoid; }
         .sig-table { width: 100%; }
-        .sig-left  { width: 55%; vertical-align: top; }
-        .sig-right { width: 45%; vertical-align: top; text-align: right; }
+        .sig-left  { width: 55%; vertical-align: bottom; }
+        .sig-right { width: 45%; vertical-align: bottom; text-align: right; }
         .sig-box {
             border: 1px solid #e2e8f0;
-            padding: 5px 16px;
+            padding: 8px 18px;
             display: inline-block;
             text-align: center;
-            min-width: 180px;
+            min-width: 185px;
         }
-        .declaration { font-size: 9px; color: #94a3b8; line-height: 1.4; }
-        .sig-space { height: 16px; border-bottom: 1px solid #cbd5e1; margin: 3px 0; }
+        .declaration { font-size: 9.5px; color: #94a3b8; line-height: 1.5; }
+        .sig-space { height: 26px; border-bottom: 1px solid #cbd5e1; margin: 4px 0; }
         .sig-name { font-size: 11px; font-weight: bold; color: #1e293b; }
         .sig-designation { font-size: 9.5px; color: #94a3b8; }
 
-        /* ─── RUNNING FOOTER ─── */
-        .footer-bar { height: 34px; background: {{ $primaryColor }}; padding: 8px 32px; }
+        /* ─── RUNNING FOOTER ───
+             The one fixed/repeating element. `top` (not `bottom`) is
+             deliberate: dompdf's positioner for a fixed block-level
+             element only ever reads `top`/`left` — a `bottom` offset is
+             silently ignored and renders the element once instead of on
+             every page (confirmed by reading dompdf's own
+             Positioner\Absolute::position()). A4 page height at the
+             configured 96dpi is 841.89pt / 0.75 = 1122.52px; anchoring
+             34px (this bar's own height) up from that edge keeps it
+             flush on every page. */
+        .footer-bar { position: fixed; top: 1088.52px; left: 0; right: 0; height: 34px; background: {{ $primaryColor }}; padding: 8px 32px; }
         .footer-inner { width: 100%; }
         .footer-left  { width: 62%; vertical-align: middle; }
         .footer-right { width: 38%; vertical-align: middle; text-align: right; }
@@ -641,15 +637,9 @@
         <div class="block-body tenant-note">{{ $footerNote }}</div>
         @endif
 
-    </div>{{-- /body-content --}}
-
-    {{-- ════════════════════════════════════════════
-         BOTTOM-FIXED: signature + running footer.
-         Fixed as one block so the signature always sits in the same
-         spot at the bottom of every page (not wherever content happens
-         to end), with the branded footer bar right below it.
-    ════════════════════════════════════════════ --}}
-    <div class="bottom-fixed">
+        {{-- ── SIGNATURE SECTION ──
+             Normal flow, not fixed: renders exactly once, wherever the
+             last page's content ends. --}}
         <div class="signature-section">
             <table class="sig-table">
                 <tr>
@@ -674,26 +664,30 @@
             </table>
         </div>
 
-        <div class="footer-bar">
-            <table class="footer-inner">
-                <tr>
-                    <td class="footer-left">
-                        <div class="footer-text">
-                            {{ $tenant->name }}
-                            @if($tenant->email) &nbsp;|&nbsp; {{ $tenant->email }} @endif
-                            @if($tenant->phone) &nbsp;|&nbsp; {{ $tenant->phone }} @endif
-                            @if(isset($tenant->settings['gstin'])) &nbsp;|&nbsp; GSTIN: {{ $tenant->settings['gstin'] }} @endif
-                        </div>
-                    </td>
-                    <td class="footer-right">
-                        <div class="footer-text">
-                            Invoice #{{ $invoice->number }} &nbsp;|&nbsp; Generated {{ now()->format('d M Y') }}
-                            &nbsp;|&nbsp; <span class="footer-pagenum"></span>
-                        </div>
-                    </td>
-                </tr>
-            </table>
-        </div>
+    </div>{{-- /body-content --}}
+
+    {{-- ════════════════════════════════════════════
+         RUNNING FOOTER — fixed, repeats on every page.
+    ════════════════════════════════════════════ --}}
+    <div class="footer-bar">
+        <table class="footer-inner">
+            <tr>
+                <td class="footer-left">
+                    <div class="footer-text">
+                        {{ $tenant->name }}
+                        @if($tenant->email) &nbsp;|&nbsp; {{ $tenant->email }} @endif
+                        @if($tenant->phone) &nbsp;|&nbsp; {{ $tenant->phone }} @endif
+                        @if(isset($tenant->settings['gstin'])) &nbsp;|&nbsp; GSTIN: {{ $tenant->settings['gstin'] }} @endif
+                    </div>
+                </td>
+                <td class="footer-right">
+                    <div class="footer-text">
+                        Invoice #{{ $invoice->number }} &nbsp;|&nbsp; Generated {{ now()->format('d M Y') }}
+                        &nbsp;|&nbsp; <span class="footer-pagenum"></span>
+                    </div>
+                </td>
+            </tr>
+        </table>
     </div>
 
 </body>
