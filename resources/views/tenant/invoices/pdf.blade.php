@@ -64,30 +64,34 @@
              Renders once at the top of page 1 (standard across invoicing
              tools — Zoho/QuickBooks/Xero don't repeat the full branded
              header either). Continuation pages get a slim running strip
-             instead — see the items-table thead's extra row below. The
-             accent stripe is folded into this element's own border-bottom
-             rather than a separate div.
+             instead — see the items-table thead's extra row below.
 
-             Deliberately a single full-width stack, NOT a two-column
-             table with the company block on one side and "Tax Invoice"
-             in a narrow side column — a percentage-width column can, in
-             some viewers, visually crowd its content against the edge.
-             Everything here is 100% of the header's own width, so there
-             is no narrower sub-column for text to ever run out of room
-             in, regardless of company name length or viewer quirks. */
+             Logo + company name and "TAX INVOICE" share one row, both
+             vertically centered — the standard professional layout
+             (Stripe/QuickBooks/Xero all do this) rather than stacking
+             the title above the company block as its own line, which
+             just adds height without adding information. The title
+             cell is `width:1%; white-space:nowrap`, a standard HTML-table
+             technique that sizes it to exactly its own content — the
+             brand cell then gets whatever space is left, so neither
+             side is ever squeezed into an artificially narrow column. */
         .header-bar {
             background: {{ $primaryColor }};
             border-bottom: 3px solid {{ $accentColor }};
             width: 100%;
-            padding: 11px 28px;
+            padding: 14px 28px;
         }
-        .header-tag { text-align: right; font-size: 8px; font-weight: bold; letter-spacing: 0.4px; text-transform: uppercase; color: #ffffff; margin-bottom: 5px; }
-        .header-company { text-align: {{ $logoPosition === 'left' ? 'left' : ($logoPosition === 'right' ? 'right' : 'center') }}; }
+        .header-row { width: 100%; }
+        .brand-cell { vertical-align: middle; text-align: {{ $logoPosition === 'left' ? 'left' : ($logoPosition === 'right' ? 'right' : 'center') }}; }
+        .title-cell { vertical-align: middle; text-align: right; white-space: nowrap; width: 1%; padding-left: 24px; }
 
-        .company-logo   { max-height: 32px; max-width: 130px; margin-bottom: 4px; }
-        .company-name   { font-size: 15px; font-weight: bold; color: #ffffff; letter-spacing: 0.2px; }
-        .company-tagline{ font-size: 8px; color: #b8c4d9; margin-top: 2px; }
-        .company-contact{ font-size: 8px; color: #cbd5e1; margin-top: 3px; line-height: 1.45; }
+        .company-logo { max-height: 34px; max-width: 130px; vertical-align: middle; margin-right: 10px; }
+        .company-name { font-size: 16px; font-weight: bold; color: #ffffff; letter-spacing: 0.2px; vertical-align: middle; }
+        .company-tagline { font-size: 8px; color: #b8c4d9; margin-top: 2px; }
+        .company-contact { font-size: 8px; color: #cbd5e1; margin-top: 8px; }
+
+        .invoice-heading { font-size: 14px; font-weight: bold; color: #ffffff; letter-spacing: 0.6px; text-transform: uppercase; }
+        .invoice-sub { font-size: 8px; color: #b8c4d9; margin-top: 2px; }
 
         /* ─── META BAND ─── */
         .meta-band { background: #f1f5f9; border-bottom: 1px solid #e2e8f0; padding: 9px 32px; }
@@ -338,22 +342,34 @@
          HEADER
     ════════════════════════════════════════════ --}}
     <div class="header-bar">
-        <div class="header-tag">TAX INVOICE &nbsp;·&nbsp; Original for Recipient</div>
-        <div class="header-company">
-            @if($tenant->logo)
-                <img src="{{ public_path('storage/' . $tenant->logo) }}" alt="{{ $tenant->name }}" class="company-logo"><br>
-            @endif
-            <div class="company-name">{{ $tenant->name }}</div>
-            @if(isset($tenant->settings['tagline']))
-                <div class="company-tagline">{{ $tenant->settings['tagline'] }}</div>
-            @endif
-            <div class="company-contact">
-                @if($tenant->email) {{ $tenant->email }}<br>@endif
-                @if($tenant->phone) {{ $tenant->phone }}<br>@endif
-                @if(isset($tenant->settings['address'])) {{ $tenant->settings['address'] }}<br>@endif
-                @if(isset($tenant->settings['gstin'])) GSTIN: {{ $tenant->settings['gstin'] }}@endif
-            </div>
-        </div>
+        <table class="header-row">
+            <tr>
+                <td class="brand-cell">
+                    @if($tenant->logo)
+                        <img src="{{ public_path('storage/' . $tenant->logo) }}" alt="{{ $tenant->name }}" class="company-logo">
+                    @endif
+                    <span class="company-name">{{ $tenant->name }}</span>
+                    @if(isset($tenant->settings['tagline']))
+                        <div class="company-tagline">{{ $tenant->settings['tagline'] }}</div>
+                    @endif
+                </td>
+                <td class="title-cell">
+                    <div class="invoice-heading">Tax Invoice</div>
+                    <div class="invoice-sub">Original for Recipient</div>
+                </td>
+            </tr>
+        </table>
+        @php
+            $headerContactLine = collect([
+                $tenant->email,
+                $tenant->phone,
+                $tenant->settings['address'] ?? null,
+                isset($tenant->settings['gstin']) ? 'GSTIN: ' . $tenant->settings['gstin'] : null,
+            ])->filter()->join('  ·  ');
+        @endphp
+        @if($headerContactLine)
+            <div class="company-contact">{{ $headerContactLine }}</div>
+        @endif
     </div>
 
     {{-- ════════════════════════════════════════════
