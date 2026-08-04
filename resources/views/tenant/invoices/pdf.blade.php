@@ -79,15 +79,15 @@
             background: {{ $primaryColor }};
             border-bottom: 3px solid {{ $accentColor }};
             width: 100%;
-            padding: 14px 32px 16px 32px;
+            padding: 11px 28px;
         }
-        .header-tag { text-align: right; font-size: 9px; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase; color: #ffffff; margin-bottom: 10px; }
+        .header-tag { text-align: right; font-size: 8px; font-weight: bold; letter-spacing: 0.4px; text-transform: uppercase; color: #ffffff; margin-bottom: 5px; }
         .header-company { text-align: {{ $logoPosition === 'left' ? 'left' : ($logoPosition === 'right' ? 'right' : 'center') }}; }
 
-        .company-logo   { max-height: 40px; max-width: 150px; margin-bottom: 6px; }
-        .company-name   { font-size: 18px; font-weight: bold; color: #ffffff; letter-spacing: 0.2px; }
-        .company-tagline{ font-size: 8.5px; color: #b8c4d9; margin-top: 3px; }
-        .company-contact{ font-size: 8.5px; color: #cbd5e1; margin-top: 6px; line-height: 1.65; }
+        .company-logo   { max-height: 32px; max-width: 130px; margin-bottom: 4px; }
+        .company-name   { font-size: 15px; font-weight: bold; color: #ffffff; letter-spacing: 0.2px; }
+        .company-tagline{ font-size: 8px; color: #b8c4d9; margin-top: 2px; }
+        .company-contact{ font-size: 8px; color: #cbd5e1; margin-top: 3px; line-height: 1.45; }
 
         /* ─── META BAND ─── */
         .meta-band { background: #f1f5f9; border-bottom: 1px solid #e2e8f0; padding: 9px 32px; }
