@@ -66,24 +66,28 @@
              header either). Continuation pages get a slim running strip
              instead — see the items-table thead's extra row below. The
              accent stripe is folded into this element's own border-bottom
-             rather than a separate div. */
+             rather than a separate div.
+
+             Deliberately a single full-width stack, NOT a two-column
+             table with the company block on one side and "Tax Invoice"
+             in a narrow side column — a percentage-width column can, in
+             some viewers, visually crowd its content against the edge.
+             Everything here is 100% of the header's own width, so there
+             is no narrower sub-column for text to ever run out of room
+             in, regardless of company name length or viewer quirks. */
         .header-bar {
             background: {{ $primaryColor }};
             border-bottom: 3px solid {{ $accentColor }};
             width: 100%;
-            padding: 16px 32px;
+            padding: 14px 32px 16px 32px;
         }
-        .header-inner { width: 100%; table-layout: fixed; }
-        .header-left  { vertical-align: top; width: 58%; text-align: {{ $logoPosition === 'left' ? 'left' : ($logoPosition === 'right' ? 'right' : 'center') }}; overflow: hidden; }
-        .header-right { vertical-align: top; width: 42%; text-align: right; }
+        .header-tag { text-align: right; font-size: 9px; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase; color: #ffffff; margin-bottom: 10px; }
+        .header-company { text-align: {{ $logoPosition === 'left' ? 'left' : ($logoPosition === 'right' ? 'right' : 'center') }}; }
 
         .company-logo   { max-height: 40px; max-width: 150px; margin-bottom: 6px; }
-        .company-name   { font-size: 17px; font-weight: bold; color: #ffffff; letter-spacing: 0.2px; word-wrap: break-word; }
+        .company-name   { font-size: 18px; font-weight: bold; color: #ffffff; letter-spacing: 0.2px; }
         .company-tagline{ font-size: 8.5px; color: #b8c4d9; margin-top: 3px; }
         .company-contact{ font-size: 8.5px; color: #cbd5e1; margin-top: 6px; line-height: 1.65; }
-
-        .invoice-heading { font-size: 14px; font-weight: bold; color: #ffffff; letter-spacing: 0.6px; text-transform: uppercase; white-space: nowrap; }
-        .invoice-sub      { font-size: 8.5px; color: #b8c4d9; margin-top: 4px; letter-spacing: 0.2px; }
 
         /* ─── META BAND ─── */
         .meta-band { background: #f1f5f9; border-bottom: 1px solid #e2e8f0; padding: 9px 32px; }
@@ -334,29 +338,22 @@
          HEADER
     ════════════════════════════════════════════ --}}
     <div class="header-bar">
-        <table class="header-inner">
-            <tr>
-                <td class="header-left">
-                    @if($tenant->logo)
-                        <img src="{{ public_path('storage/' . $tenant->logo) }}" alt="{{ $tenant->name }}" class="company-logo"><br>
-                    @endif
-                    <div class="company-name">{{ $tenant->name }}</div>
-                    @if(isset($tenant->settings['tagline']))
-                        <div class="company-tagline">{{ $tenant->settings['tagline'] }}</div>
-                    @endif
-                    <div class="company-contact">
-                        @if($tenant->email) {{ $tenant->email }}<br>@endif
-                        @if($tenant->phone) {{ $tenant->phone }}<br>@endif
-                        @if(isset($tenant->settings['address'])) {{ $tenant->settings['address'] }}<br>@endif
-                        @if(isset($tenant->settings['gstin'])) GSTIN: {{ $tenant->settings['gstin'] }}@endif
-                    </div>
-                </td>
-                <td class="header-right">
-                    <div class="invoice-heading">Tax Invoice</div>
-                    <div class="invoice-sub">Original for Recipient</div>
-                </td>
-            </tr>
-        </table>
+        <div class="header-tag">TAX INVOICE &nbsp;·&nbsp; Original for Recipient</div>
+        <div class="header-company">
+            @if($tenant->logo)
+                <img src="{{ public_path('storage/' . $tenant->logo) }}" alt="{{ $tenant->name }}" class="company-logo"><br>
+            @endif
+            <div class="company-name">{{ $tenant->name }}</div>
+            @if(isset($tenant->settings['tagline']))
+                <div class="company-tagline">{{ $tenant->settings['tagline'] }}</div>
+            @endif
+            <div class="company-contact">
+                @if($tenant->email) {{ $tenant->email }}<br>@endif
+                @if($tenant->phone) {{ $tenant->phone }}<br>@endif
+                @if(isset($tenant->settings['address'])) {{ $tenant->settings['address'] }}<br>@endif
+                @if(isset($tenant->settings['gstin'])) GSTIN: {{ $tenant->settings['gstin'] }}@endif
+            </div>
+        </div>
     </div>
 
     {{-- ════════════════════════════════════════════
