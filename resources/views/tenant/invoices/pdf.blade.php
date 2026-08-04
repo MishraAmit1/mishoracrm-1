@@ -29,7 +29,14 @@
            or explicit `bold`, never a numeric weight. */
 
         @page {
-            margin: 0 0 38px 0;
+            /* Top: reserves room for the fixed repeating header (tallest
+               realistic case — logo + full contact block — is ~188px).
+               Bottom: reserves room for the fixed signature+footer stack
+               (signature 80px + footer 34px), see BOTTOM-FIXED below. */
+            margin-top: 192px;
+            margin-right: 0;
+            margin-bottom: 118px;
+            margin-left: 0;
         }
 
         body {
@@ -42,21 +49,33 @@
 
         .page { width: 100%; }
 
-        /* ─── HEADER ─── */
-        .header-bar { background: {{ $primaryColor }}; width: 100%; padding: 16px 32px; }
+        /* ─── HEADER ───
+             Fixed so it repeats identically on every page (top-anchored,
+             mirrors the BOTTOM-FIXED signature+footer stack below). The
+             accent stripe is folded into this element's own border-bottom
+             instead of being a separate div, so there's only one fixed
+             top element to reason about. */
+        .header-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: {{ $primaryColor }};
+            border-bottom: 3px solid {{ $accentColor }};
+            width: 100%;
+            padding: 16px 32px;
+        }
         .header-inner { width: 100%; }
         .header-left  { vertical-align: top; width: 62%; text-align: {{ $logoPosition === 'left' ? 'left' : ($logoPosition === 'right' ? 'right' : 'center') }}; }
         .header-right { vertical-align: top; width: 38%; text-align: right; }
 
-        .company-logo   { max-height: 46px; max-width: 170px; margin-bottom: 8px; }
-        .company-name   { font-size: 19px; font-weight: bold; color: #ffffff; letter-spacing: 0.3px; }
-        .company-tagline{ font-size: 9.5px; color: #b8c4d9; margin-top: 3px; }
-        .company-contact{ font-size: 9.5px; color: #cbd5e1; margin-top: 7px; line-height: 1.75; }
+        .company-logo   { max-height: 42px; max-width: 160px; margin-bottom: 7px; }
+        .company-name   { font-size: 18px; font-weight: bold; color: #ffffff; letter-spacing: 0.3px; }
+        .company-tagline{ font-size: 9px; color: #b8c4d9; margin-top: 3px; }
+        .company-contact{ font-size: 9px; color: #cbd5e1; margin-top: 6px; line-height: 1.7; }
 
-        .invoice-heading { font-size: 20px; font-weight: bold; color: #ffffff; letter-spacing: 1.5px; text-transform: uppercase; white-space: nowrap; }
-        .invoice-sub      { font-size: 9.5px; color: #b8c4d9; margin-top: 5px; letter-spacing: 0.3px; }
-
-        .accent-stripe { width: 100%; height: 3px; background: {{ $accentColor }}; }
+        .invoice-heading { font-size: 17px; font-weight: bold; color: #ffffff; letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; }
+        .invoice-sub      { font-size: 9px; color: #b8c4d9; margin-top: 4px; letter-spacing: 0.3px; }
 
         /* ─── META BAND ─── */
         .meta-band { background: #f1f5f9; border-bottom: 1px solid #e2e8f0; padding: 9px 32px; }
@@ -254,25 +273,35 @@
             white-space: pre-line;
         }
 
-        /* ─── SIGNATURE ─── */
-        .signature-section { width: 100%; margin-top: 5px; border-top: 1px solid #e2e8f0; padding-top: 4px; }
+        /* ─── BOTTOM-FIXED: signature + footer stack ───
+             One fixed element (not two) so the offset math stays simple:
+             bottom:-118px exactly matches the @page bottom margin above,
+             the same proven "offset == reserved margin" pattern used for
+             the header. Signature and footer are ordinary flow children
+             *inside* this fixed box, so they always stack the same way
+             regardless of page content — this is what pins the signature
+             to a fixed spot at the bottom of every page instead of
+             floating wherever the preceding content happens to end. */
+        .bottom-fixed { position: fixed; bottom: -118px; left: 0; right: 0; height: 118px; }
+
+        .signature-section { width: 100%; height: 80px; padding: 10px 32px 0 32px; border-top: 1px solid #e2e8f0; }
         .sig-table { width: 100%; }
-        .sig-left  { width: 55%; vertical-align: bottom; }
-        .sig-right { width: 45%; vertical-align: bottom; text-align: right; }
+        .sig-left  { width: 55%; vertical-align: top; }
+        .sig-right { width: 45%; vertical-align: top; text-align: right; }
         .sig-box {
             border: 1px solid #e2e8f0;
-            padding: 3px 16px;
+            padding: 5px 16px;
             display: inline-block;
             text-align: center;
             min-width: 180px;
         }
-        .declaration { font-size: 9px; color: #94a3b8; line-height: 1.3; }
-        .sig-space { height: 12px; border-bottom: 1px solid #cbd5e1; margin: 2px 0; }
+        .declaration { font-size: 9px; color: #94a3b8; line-height: 1.4; }
+        .sig-space { height: 16px; border-bottom: 1px solid #cbd5e1; margin: 3px 0; }
         .sig-name { font-size: 11px; font-weight: bold; color: #1e293b; }
         .sig-designation { font-size: 9.5px; color: #94a3b8; }
 
-        /* ─── RUNNING FOOTER (fixed — repeats on every page) ─── */
-        .footer-bar { position: fixed; bottom: -38px; left: 0; right: 0; background: {{ $primaryColor }}; padding: 8px 32px; }
+        /* ─── RUNNING FOOTER ─── */
+        .footer-bar { height: 34px; background: {{ $primaryColor }}; padding: 8px 32px; }
         .footer-inner { width: 100%; }
         .footer-left  { width: 62%; vertical-align: middle; }
         .footer-right { width: 38%; vertical-align: middle; text-align: right; }
@@ -311,8 +340,6 @@
             </tr>
         </table>
     </div>
-
-    <div class="accent-stripe"></div>
 
     {{-- ════════════════════════════════════════════
          META BAND — Invoice # / Date / Due / Status
@@ -589,7 +616,15 @@
         <div class="block-body tenant-note">{{ $footerNote }}</div>
         @endif
 
-        {{-- ── SIGNATURE SECTION ── --}}
+    </div>{{-- /body-content --}}
+
+    {{-- ════════════════════════════════════════════
+         BOTTOM-FIXED: signature + running footer.
+         Fixed as one block so the signature always sits in the same
+         spot at the bottom of every page (not wherever content happens
+         to end), with the branded footer bar right below it.
+    ════════════════════════════════════════════ --}}
+    <div class="bottom-fixed">
         <div class="signature-section">
             <table class="sig-table">
                 <tr>
@@ -614,30 +649,26 @@
             </table>
         </div>
 
-    </div>{{-- /body-content --}}
-
-    {{-- ════════════════════════════════════════════
-         RUNNING FOOTER
-    ════════════════════════════════════════════ --}}
-    <div class="footer-bar">
-        <table class="footer-inner">
-            <tr>
-                <td class="footer-left">
-                    <div class="footer-text">
-                        {{ $tenant->name }}
-                        @if($tenant->email) &nbsp;|&nbsp; {{ $tenant->email }} @endif
-                        @if($tenant->phone) &nbsp;|&nbsp; {{ $tenant->phone }} @endif
-                        @if(isset($tenant->settings['gstin'])) &nbsp;|&nbsp; GSTIN: {{ $tenant->settings['gstin'] }} @endif
-                    </div>
-                </td>
-                <td class="footer-right">
-                    <div class="footer-text">
-                        Invoice #{{ $invoice->number }} &nbsp;|&nbsp; Generated {{ now()->format('d M Y') }}
-                        &nbsp;|&nbsp; <span class="footer-pagenum"></span>
-                    </div>
-                </td>
-            </tr>
-        </table>
+        <div class="footer-bar">
+            <table class="footer-inner">
+                <tr>
+                    <td class="footer-left">
+                        <div class="footer-text">
+                            {{ $tenant->name }}
+                            @if($tenant->email) &nbsp;|&nbsp; {{ $tenant->email }} @endif
+                            @if($tenant->phone) &nbsp;|&nbsp; {{ $tenant->phone }} @endif
+                            @if(isset($tenant->settings['gstin'])) &nbsp;|&nbsp; GSTIN: {{ $tenant->settings['gstin'] }} @endif
+                        </div>
+                    </td>
+                    <td class="footer-right">
+                        <div class="footer-text">
+                            Invoice #{{ $invoice->number }} &nbsp;|&nbsp; Generated {{ now()->format('d M Y') }}
+                            &nbsp;|&nbsp; <span class="footer-pagenum"></span>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
     </div>
 
 </div>
