@@ -20,7 +20,17 @@
            of spilling a lone signature block onto an otherwise-empty
            page 2. Longer invoices still paginate correctly (items-table
            thead repeats, rows/boxes never split) — see ITEMS TABLE below. */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        /* NOT a universal `*` reset: dompdf silently drops @page's
+           margin-top when a `* { margin: 0 }` rule is present anywhere
+           in the stylesheet (a dompdf cascade quirk, confirmed by testing
+           — margin-bottom is unaffected, only margin-top breaks). Reset
+           margin explicitly per-tag instead so the fixed repeating header
+           below actually gets its reserved top margin. */
+        body, div, table, thead, tbody, tr, td, th, span, em, strong, img {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
         /* dompdf only resolves font-weight:"normal" or "bold" when matching
            a font family — anything else (e.g. 600) silently fails to find
@@ -29,11 +39,16 @@
            or explicit `bold`, never a numeric weight. */
 
         @page {
-            /* Top: reserves room for the fixed repeating header (tallest
-               realistic case — logo + full contact block — is ~188px).
-               Bottom: reserves room for the fixed signature+footer stack
-               (signature 80px + footer 34px), see BOTTOM-FIXED below. */
-            margin-top: 192px;
+            /* dompdf reliably supports only ONE position:fixed element
+               repeating across pages — two (a fixed header + fixed
+               footer) causes one of them to silently stop repeating.
+               So the footer+signature stack (see BOTTOM-FIXED) is the
+               one fixed element; the full header only renders on page 1
+               (standard for invoicing tools — Zoho/QuickBooks/Xero all
+               do this), and continuation pages get a slim running strip
+               folded into the items-table's thead instead, which uses
+               dompdf's separate, reliable table-header-repeat mechanism. */
+            margin-top: 0;
             margin-right: 0;
             margin-bottom: 118px;
             margin-left: 0;
@@ -50,16 +65,13 @@
         .page { width: 100%; }
 
         /* ─── HEADER ───
-             Fixed so it repeats identically on every page (top-anchored,
-             mirrors the BOTTOM-FIXED signature+footer stack below). The
+             Renders once at the top of page 1 (standard across invoicing
+             tools — Zoho/QuickBooks/Xero don't repeat the full branded
+             header either). Continuation pages get a slim running strip
+             instead — see the items-table thead's extra row below. The
              accent stripe is folded into this element's own border-bottom
-             instead of being a separate div, so there's only one fixed
-             top element to reason about. */
+             rather than a separate div. */
         .header-bar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
             background: {{ $primaryColor }};
             border-bottom: 3px solid {{ $accentColor }};
             width: 100%;
@@ -180,6 +192,14 @@
         }
         .items-table thead th.r { text-align: right; }
         .items-table thead th.c { text-align: center; }
+
+        /* Repeats on every page via the same thead mechanism as the
+           column headers above — the only reliable way to show running
+           context (company + invoice #) on continuation pages, since
+           dompdf can't repeat a second fixed element alongside the
+           bottom-fixed signature/footer stack (see @page comment). */
+        .items-table thead tr.running-strip-row { background: {{ $accentColor }}; }
+        .running-strip { padding: 3px 8px; font-size: 8px; font-weight: normal; text-transform: none; letter-spacing: 0.2px; color: #ffffff; text-align: left; }
 
         .items-table tbody tr { border-bottom: 1px solid #f1f5f9; page-break-inside: avoid; }
         .items-table tbody tr:nth-child(even) { background: #f8fafc; }
@@ -432,6 +452,9 @@
         <div class="section-heading">Particulars of Supply</div>
         <table class="items-table">
             <thead>
+                <tr class="running-strip-row">
+                    <th colspan="8" class="running-strip">{{ $tenant->name }} &nbsp;—&nbsp; Invoice #{{ $invoice->number }}</th>
+                </tr>
                 <tr>
                     <th style="width:3%;">#</th>
                     <th style="width:34%;">Description</th>
