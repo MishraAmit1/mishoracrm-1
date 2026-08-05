@@ -79,19 +79,19 @@
             background: {{ $primaryColor }};
             border-bottom: 3px solid {{ $accentColor }};
             width: 100%;
-            padding: 14px 28px;
+            padding: 16px 28px;
         }
         .header-row { width: 100%; }
         .brand-cell { vertical-align: middle; text-align: {{ $logoPosition === 'left' ? 'left' : ($logoPosition === 'right' ? 'right' : 'center') }}; }
         .title-cell { vertical-align: middle; text-align: right; white-space: nowrap; width: 1%; padding-left: 24px; }
 
-        .company-logo { max-height: 34px; max-width: 130px; vertical-align: middle; margin-right: 10px; }
-        .company-name { font-size: 16px; font-weight: bold; color: #ffffff; letter-spacing: 0.2px; vertical-align: middle; }
-        .company-tagline { font-size: 8px; color: #b8c4d9; margin-top: 2px; }
-        .company-contact { font-size: 8px; color: #cbd5e1; margin-top: 8px; }
+        .company-logo { max-height: 36px; max-width: 140px; vertical-align: middle; margin-right: 12px; }
+        .company-name { font-size: 19px; font-weight: bold; color: #ffffff; letter-spacing: 0.2px; vertical-align: middle; }
+        .company-tagline { font-size: 9px; color: #b8c4d9; margin-top: 3px; }
+        .company-contact { font-size: 9.5px; color: #cbd5e1; margin-top: 9px; }
 
-        .invoice-heading { font-size: 14px; font-weight: bold; color: #ffffff; letter-spacing: 0.6px; text-transform: uppercase; }
-        .invoice-sub { font-size: 8px; color: #b8c4d9; margin-top: 2px; }
+        .invoice-heading { font-size: 17px; font-weight: bold; color: #ffffff; letter-spacing: 0.8px; text-transform: uppercase; }
+        .invoice-sub { font-size: 9px; color: #b8c4d9; margin-top: 3px; }
 
         /* ─── META BAND ─── */
         .meta-band { background: #f1f5f9; border-bottom: 1px solid #e2e8f0; padding: 9px 32px; }

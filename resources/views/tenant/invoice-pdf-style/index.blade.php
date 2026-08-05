@@ -56,7 +56,7 @@
 .ips-preview-card { border:1px solid var(--border-default); border-radius:var(--r-lg); overflow:hidden; background:#fff; }
 .ips-preview-note { font-size:11.5px; color:var(--text-400); padding:10px 14px; background:var(--bg-elevated); border-top:1px solid var(--border-subtle); }
 .ips-header-bar { padding:20px 24px; transition:background .15s; }
-.ips-company-name { font-size:17px; font-weight:bold; color:#fff; letter-spacing:.3px; }
+.ips-company-name { font-size:17px; font-weight:bold; color:#fff; letter-spacing:.3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .ips-company-sub { font-size:10px; color:#cbd5e1; margin-top:4px; }
 .ips-stripe { height:4px; }
 .ips-meta-band { background:#f1f5f9; padding:12px 24px; display:flex; gap:24px; }
@@ -256,16 +256,16 @@
                 <div class="ips-preview-card">
                     <div class="ips-header-bar" id="pv-header">
                         <div id="pv-header-inner" style="display:flex; justify-content:space-between; align-items:flex-start;">
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <img id="pv-logo" src="{{ $tenant->logo ? asset('storage/' . $tenant->logo) : '' }}" style="max-height:38px; max-width:90px; object-fit:contain; {{ $tenant->logo ? '' : 'display:none;' }}">
-                                <div>
+                            <div style="display:flex; align-items:center; gap:10px; min-width:0; flex-shrink:1; overflow:hidden;">
+                                <img id="pv-logo" src="{{ $tenant->logo ? asset('storage/' . $tenant->logo) : '' }}" style="max-height:38px; max-width:90px; object-fit:contain; flex-shrink:0; {{ $tenant->logo ? '' : 'display:none;' }}">
+                                <div style="min-width:0; overflow:hidden;">
                                     <div class="ips-company-name" id="pv-company">{{ $tenant->name ?? 'Your Business' }}</div>
                                     <div class="ips-company-sub">{{ $tenant->email ?? 'you@business.com' }}</div>
                                 </div>
                             </div>
-                            <div style="text-align:right;">
-                                <div style="font-size:16px;font-weight:bold;color:#fff;letter-spacing:1.5px;">TAX INVOICE</div>
-                                <div class="ips-company-sub">Original for Recipient</div>
+                            <div style="text-align:right; flex-shrink:0; padding-left:12px;">
+                                <div style="font-size:16px;font-weight:bold;color:#fff;letter-spacing:1.5px;white-space:nowrap;">TAX INVOICE</div>
+                                <div class="ips-company-sub" style="white-space:nowrap;">Original for Recipient</div>
                             </div>
                         </div>
                     </div>
