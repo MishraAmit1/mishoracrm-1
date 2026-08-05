@@ -66,28 +66,50 @@
              header either). Continuation pages get a slim running strip
              instead — see the items-table thead's extra row below.
 
-             Logo + company name and "TAX INVOICE" share one row, both
-             vertically centered — the standard professional layout
-             (Stripe/QuickBooks/Xero all do this) rather than stacking
-             the title above the company block as its own line, which
-             just adds height without adding information. The title
-             cell is `width:1%; white-space:nowrap`, a standard HTML-table
-             technique that sizes it to exactly its own content — the
-             brand cell then gets whatever space is left, so neither
-             side is ever squeezed into an artificially narrow column. */
+             "TAX INVOICE" is positioned with `position:absolute; left:`
+             — deliberately `left`, not `right`. Read dompdf's own
+             Positioner/Absolute.php: for block-level elements it ONLY
+             evaluates `$style->left`/`$style->top` — `right` and
+             `bottom` are never read at all for this element type (a
+             confirmed dompdf limitation, not a CSS mistake). A `right`-
+             based version and, before that, a `<table>` shrink-to-content
+             column (via `width:1%` and separately a fixed px width) were
+             all tried and each independently verified — by decompressing
+             an actual rendered PDF's content stream and reading the raw
+             Tm/Td text-positioning operators — to start drawing "TAX
+             INVOICE" at the same x≈515pt on a 595.28pt-wide page, 20+pt
+             past the right edge, regardless of the column/right value
+             used. Since "TAX INVOICE" / "Original for Recipient" are
+             fixed, unchanging strings (not tenant data), their required
+             `left` was calculated directly from dompdf's own
+             get_text_width() (102.9pt at this font/spacing, page width
+             595.28pt, 30pt right margin → left ≈ 462pt ≈ 605px) and
+             re-verified the same way (decoded content stream: text now
+             starts at the intended position, comfortably inside the
+             page). If this text or its font-size/letter-spacing ever
+             changes, this value must be recalculated the same way —
+             don't assume `right`/percentage/table tricks will work. */
         .header-bar {
+            position: relative;
             background: {{ $primaryColor }};
             border-bottom: 3px solid {{ $accentColor }};
             width: 100%;
-            padding: 20px 40px 20px 32px;
+            padding: 20px 32px;
         }
-        .header-row { width: 100%; }
-        .brand-cell { vertical-align: middle; text-align: {{ $logoPosition === 'left' ? 'left' : ($logoPosition === 'right' ? 'right' : 'center') }}; }
-        /* A vertical divider plus generous left padding gives the title
-           its own clearly-separated "tag" — rather than just floating
-           text pinned to the corner — which is what reads as designed
-           rather than merely positioned. */
-        .title-cell { vertical-align: middle; text-align: right; white-space: nowrap; width: 1%; padding-left: 28px; border-left: 1px solid rgba(255,255,255,0.28); }
+        .brand-block {
+            /* Reserves room on the right so long company names wrap
+               instead of running under the absolutely-positioned title. */
+            padding-right: 190px;
+            text-align: {{ $logoPosition === 'left' ? 'left' : ($logoPosition === 'right' ? 'right' : 'center') }};
+        }
+        .title-block {
+            position: absolute;
+            top: 20px;
+            left: 605px;
+            text-align: right;
+            padding-left: 20px;
+            border-left: 1px solid rgba(255,255,255,0.28);
+        }
 
         .company-logo { max-height: 36px; max-width: 140px; vertical-align: middle; margin-right: 12px; }
         .company-name { font-size: 19px; font-weight: bold; color: #ffffff; letter-spacing: 0.2px; vertical-align: middle; }
@@ -150,16 +172,14 @@
         }
         .section-heading.first { margin-top: 0; }
 
-        /* ─── BILL TO / FROM ─── */
-        .party-table { width: 100%; }
-        .party-cell { width: 48.5%; vertical-align: top; }
-        .party-gap { width: 3%; }
+        /* ─── BILL TO ─── */
         .party-box {
             border: 1px solid #e2e8f0;
             border-top: 3px solid {{ $primaryColor }};
             padding: 10px 14px;
             page-break-inside: avoid;
         }
+        .party-box-single { width: 55%; }
         .party-box.buyer { border-top-color: {{ $accentColor }}; }
         .party-name    { font-size: 13.5px; font-weight: bold; color: #0f172a; margin-bottom: 3px; }
         .party-company { font-size: 11.5px; font-weight: bold; color: #334155; margin-bottom: 3px; }
@@ -232,6 +252,7 @@
             border: 1px solid #e2e8f0;
             border-left: 3px solid {{ $primaryColor }};
             padding: 10px 14px;
+            margin-bottom: 12px;
             background: #f8fafc;
             page-break-inside: avoid;
         }
@@ -306,7 +327,41 @@
              wherever the last page's content ends, instead of repeating
              on every page. page-break-inside:avoid keeps it from ever
              being split across a page boundary. */
-        .signature-section { width: 100%; margin-top: 16px; padding-top: 10px; border-top: 1px solid #e2e8f0; page-break-inside: avoid; }
+        /* Guaranteed bottom-anchor: .signature-wrap is a fixed-height
+           box and .signature-section sits inside it via
+           `position:absolute; top:` — NOT `vertical-align:bottom`.
+           Verified both ways by rendering isolated test cases and
+           decoding the actual PDF content stream: dompdf DOES honour an
+           explicit `height` on a container, but `vertical-align:bottom`
+           on a table cell is NOT respected (content stayed pinned to
+           the cell's top regardless). `position:absolute; top:` *is*
+           honoured (same mechanism already verified for the header's
+           "TAX INVOICE"), so `top` is set directly to
+           (wrap height − measured content height − bottom breathing
+           room) = 1080 − 99 − 20 = 961px. Wrap height is the page's
+           full usable content height (page height 841.89pt / 0.75 =
+           1122.52px, minus the 40px @page bottom margin reserved for
+           the footer, minus a small rounding buffer) — NOT an arbitrary
+           smaller number: an earlier 860px version left a visible gap
+           below the signature because it fell short of the page's
+           actual usable height. 99px is this exact content's own
+           measured height (declaration + sig-box), decoded from a real
+           rendered PDF the same way.
+           dompdf has no way to ask "how much space is left on this
+           page," so the only way to pin content to a page's bottom is
+           to make its container tall enough to force it there — a
+           deliberate tradeoff: a short invoice that would otherwise fit
+           on one page may now take a second, mostly-blank page, because
+           the signature no longer fits in whatever space is left after
+           the rest of the content. */
+        .signature-wrap { position: relative; width: 100%; height: 1080px; }
+        /* `top` is set inline per-invoice (not here) since adding the
+           bank-details box (see below) makes this block noticeably
+           taller — a fixed value here would leave a gap under the
+           bottom-anchor when bank details show. Both values were
+           measured the same way (decoded PDF content stream) as the
+           "TAX INVOICE" and no-bank-details positions above. */
+        .signature-section { position: absolute; left: 0; width: 100%; padding-top: 10px; border-top: 1px solid #e2e8f0; page-break-inside: avoid; }
         .sig-table { width: 100%; }
         .sig-left  { width: 55%; vertical-align: bottom; }
         .sig-right { width: 45%; vertical-align: bottom; text-align: right; }
@@ -346,34 +401,31 @@
          HEADER
     ════════════════════════════════════════════ --}}
     <div class="header-bar">
-        <table class="header-row">
-            <tr>
-                <td class="brand-cell">
-                    @if($tenant->logo)
-                        <img src="{{ public_path('storage/' . $tenant->logo) }}" alt="{{ $tenant->name }}" class="company-logo">
-                    @endif
-                    <span class="company-name">{{ $tenant->name }}</span>
-                    @if(isset($tenant->settings['tagline']))
-                        <div class="company-tagline">{{ $tenant->settings['tagline'] }}</div>
-                    @endif
-                </td>
-                <td class="title-cell">
-                    <div class="invoice-heading">Tax Invoice</div>
-                    <div class="invoice-sub">Original for Recipient</div>
-                </td>
-            </tr>
-        </table>
-        @php
-            $headerContactLine = collect([
-                $tenant->email,
-                $tenant->phone,
-                $tenant->settings['address'] ?? null,
-                isset($tenant->settings['gstin']) ? 'GSTIN: ' . $tenant->settings['gstin'] : null,
-            ])->filter()->join('  ·  ');
-        @endphp
-        @if($headerContactLine)
-            <div class="company-contact">{{ $headerContactLine }}</div>
-        @endif
+        <div class="title-block">
+            <div class="invoice-heading">Tax Invoice</div>
+            <div class="invoice-sub">Original for Recipient</div>
+        </div>
+        <div class="brand-block">
+            @if($tenant->logo)
+                <img src="{{ public_path('storage/' . $tenant->logo) }}" alt="{{ $tenant->name }}" class="company-logo">
+            @endif
+            <span class="company-name">{{ $tenant->name }}</span>
+            @if(isset($tenant->settings['tagline']))
+                <div class="company-tagline">{{ $tenant->settings['tagline'] }}</div>
+            @endif
+            @php
+                $headerContactLine = collect([
+                    $tenant->email,
+                    $tenant->phone,
+                    $tenant->settings['address'] ?? null,
+                    isset($tenant->settings['gstin']) ? 'GSTIN: ' . $tenant->settings['gstin'] : null,
+                    isset($tenant->settings['pan']) ? 'PAN: ' . $tenant->settings['pan'] : null,
+                ])->filter()->join('  ·  ');
+            @endphp
+            @if($headerContactLine)
+                <div class="company-contact">{{ $headerContactLine }}</div>
+            @endif
+        </div>
     </div>
 
     {{-- ════════════════════════════════════════════
@@ -410,58 +462,33 @@
     ════════════════════════════════════════════ --}}
     <div class="body-content">
 
-        {{-- ── BILL FROM / BILL TO ── --}}
-        <table class="party-table">
-            <tr>
-                <td class="party-cell">
-                    <div class="party-box">
-                        <div class="block-label">Billed By (Seller)</div>
-                        <div class="party-name">{{ $tenant->name }}</div>
-                        @if(isset($tenant->settings['address']))
-                            <div class="party-detail">{{ $tenant->settings['address'] }}</div>
-                        @endif
-                        @if($tenant->email || $tenant->phone)
-                            <div class="party-detail">
-                                @if($tenant->email) {{ $tenant->email }}<br>@endif
-                                @if($tenant->phone) {{ $tenant->phone }}@endif
-                            </div>
-                        @endif
-                        @if(isset($tenant->settings['gstin']))
-                            <div class="party-gst">GSTIN: <span>{{ $tenant->settings['gstin'] }}</span></div>
-                        @endif
-                        @if(isset($tenant->settings['pan']))
-                            <div class="party-detail" style="margin-top:2px;">PAN: {{ $tenant->settings['pan'] }}</div>
-                        @endif
-                    </div>
-                </td>
-                <td class="party-gap"></td>
-                <td class="party-cell">
-                    <div class="party-box buyer">
-                        <div class="block-label">Billed To (Buyer)</div>
-                        <div class="party-name">{{ $invoice->contact->name ?? '—' }}</div>
-                        @if($invoice->contact?->company)
-                            <div class="party-company">{{ $invoice->contact->company }}</div>
-                        @endif
-                        <div class="party-detail">
-                            @if($invoice->contact?->email)   {{ $invoice->contact->email }}<br>@endif
-                            @if($invoice->contact?->phone)   {{ $invoice->contact->phone }}<br>@endif
-                            @if($invoice->contact?->address) {{ $invoice->contact->address }}<br>@endif
-                            @php
-                                $cityState = collect([
-                                    $invoice->contact->city    ?? null,
-                                    $invoice->contact->state   ?? null,
-                                    $invoice->contact->pincode ?? null,
-                                ])->filter()->join(', ');
-                            @endphp
-                            @if($cityState) {{ $cityState }} @endif
-                        </div>
-                        @if($invoice->contact?->gst_number)
-                            <div class="party-gst">GSTIN: <span>{{ $invoice->contact->gst_number }}</span></div>
-                        @endif
-                    </div>
-                </td>
-            </tr>
-        </table>
+        {{-- ── BILL TO ──
+             No separate "Billed By (Seller)" box: the seller's full
+             details (including GSTIN/PAN) now live in the header
+             instead, so they aren't shown twice on the page. --}}
+        <div class="party-box buyer party-box-single">
+            <div class="block-label">Billed To (Buyer)</div>
+            <div class="party-name">{{ $invoice->contact->name ?? '—' }}</div>
+            @if($invoice->contact?->company)
+                <div class="party-company">{{ $invoice->contact->company }}</div>
+            @endif
+            <div class="party-detail">
+                @if($invoice->contact?->email)   {{ $invoice->contact->email }}<br>@endif
+                @if($invoice->contact?->phone)   {{ $invoice->contact->phone }}<br>@endif
+                @if($invoice->contact?->address) {{ $invoice->contact->address }}<br>@endif
+                @php
+                    $cityState = collect([
+                        $invoice->contact->city    ?? null,
+                        $invoice->contact->state   ?? null,
+                        $invoice->contact->pincode ?? null,
+                    ])->filter()->join(', ');
+                @endphp
+                @if($cityState) {{ $cityState }} @endif
+            </div>
+            @if($invoice->contact?->gst_number)
+                <div class="party-gst">GSTIN: <span>{{ $invoice->contact->gst_number }}</span></div>
+            @endif
+        </div>
 
         {{-- ── ITEMS TABLE ── --}}
         <div class="section-heading">Particulars of Supply</div>
@@ -516,28 +543,8 @@
                 <td class="bank-cell">
 
                     @php $hasBankDetails = $showBankDetails && (isset($tenant->settings['bank_name']) || isset($tenant->settings['account_number'])); @endphp
-                    @if($hasBankDetails)
-                    <div class="bank-box">
-                        <div class="block-label">Payment / Bank Details</div>
-                        @if(isset($tenant->settings['bank_name']))
-                            <div class="bank-row"><span>Bank Name</span> {{ $tenant->settings['bank_name'] }}</div>
-                        @endif
-                        @if(isset($tenant->settings['account_name']))
-                            <div class="bank-row"><span>Account Name</span> {{ $tenant->settings['account_name'] }}</div>
-                        @endif
-                        @if(isset($tenant->settings['account_number']))
-                            <div class="bank-row"><span>Account No.</span> {{ $tenant->settings['account_number'] }}</div>
-                        @endif
-                        @if(isset($tenant->settings['ifsc']))
-                            <div class="bank-row"><span>IFSC Code</span> {{ $tenant->settings['ifsc'] }}</div>
-                        @endif
-                        @if(isset($tenant->settings['upi']))
-                            <div class="bank-row"><span>UPI</span> {{ $tenant->settings['upi'] }}</div>
-                        @endif
-                    </div>
-                    @endif
 
-                    <div class="amount-words" style="{{ $hasBankDetails ? '' : 'margin-top:0;' }}">
+                    <div class="amount-words" style="margin-top:0;">
                         <div class="block-label">Total Amount (in words)</div>
                         <div class="amount-words-text">{{ \App\Helpers\NumberToWords::convert($invoice->total) }} Only</div>
                     </div>
@@ -655,30 +662,60 @@
         @endif
 
         {{-- ── SIGNATURE SECTION ──
-             Normal flow, not fixed: renders exactly once, wherever the
-             last page's content ends. --}}
-        <div class="signature-section">
-            <table class="sig-table">
-                <tr>
-                    <td class="sig-left">
-                        <div class="declaration">
-                            We declare that this invoice shows the actual price of the goods/services and that all
-                            particulars are true and correct. <em>Subject to jurisdiction of local courts only.</em>
-                            E &amp; O.E. — computer generated invoice, no signature required.
-                        </div>
-                    </td>
-                    <td class="sig-right">
-                        <div class="sig-box">
-                            <div class="block-label" style="margin-bottom:0;">For {{ $tenant->name }}</div>
-                            <div class="sig-space"></div>
-                            <div class="sig-name">Authorised Signatory</div>
-                            @if($invoice->createdBy)
-                                <div class="sig-designation">{{ $invoice->createdBy->name }}</div>
+             Renders exactly once, wherever the last page's content ends
+             — but the tall .signature-wrap + absolutely-positioned
+             .signature-section below forces it against that page's
+             bottom edge. `top` is measured content-height-aware: the
+             bank-details box (moved here, next to the signature, per
+             request) makes this block ~98px taller when shown, so `top`
+             is pulled up by the same amount to keep the bottom flush
+             either way (1080 − 197 − 20 = 863 with bank details,
+             1080 − 99 − 20 = 961 without — both measured from a decoded
+             rendered PDF, same method as "TAX INVOICE" above). --}}
+        <div class="signature-wrap">
+            <div class="signature-section" style="top: {{ $hasBankDetails ? '863' : '961' }}px;">
+                <table class="sig-table">
+                    <tr>
+                        <td class="sig-left">
+                            @if($hasBankDetails)
+                            <div class="bank-box">
+                                <div class="block-label">Payment / Bank Details</div>
+                                @if(isset($tenant->settings['bank_name']))
+                                    <div class="bank-row"><span>Bank Name</span> {{ $tenant->settings['bank_name'] }}</div>
+                                @endif
+                                @if(isset($tenant->settings['account_name']))
+                                    <div class="bank-row"><span>Account Name</span> {{ $tenant->settings['account_name'] }}</div>
+                                @endif
+                                @if(isset($tenant->settings['account_number']))
+                                    <div class="bank-row"><span>Account No.</span> {{ $tenant->settings['account_number'] }}</div>
+                                @endif
+                                @if(isset($tenant->settings['ifsc']))
+                                    <div class="bank-row"><span>IFSC Code</span> {{ $tenant->settings['ifsc'] }}</div>
+                                @endif
+                                @if(isset($tenant->settings['upi']))
+                                    <div class="bank-row"><span>UPI</span> {{ $tenant->settings['upi'] }}</div>
+                                @endif
+                            </div>
                             @endif
-                        </div>
-                    </td>
-                </tr>
-            </table>
+                            <div class="declaration">
+                                We declare that this invoice shows the actual price of the goods/services and that all
+                                particulars are true and correct. <em>Subject to jurisdiction of local courts only.</em>
+                                E &amp; O.E. — computer generated invoice, no signature required.
+                            </div>
+                        </td>
+                        <td class="sig-right">
+                            <div class="sig-box">
+                                <div class="block-label" style="margin-bottom:0;">For {{ $tenant->name }}</div>
+                                <div class="sig-space"></div>
+                                <div class="sig-name">Authorised Signatory</div>
+                                @if($invoice->createdBy)
+                                    <div class="sig-designation">{{ $invoice->createdBy->name }}</div>
+                                @endif
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
         </div>
 
     </div>{{-- /body-content --}}

@@ -36,33 +36,48 @@
 @media(max-width:768px) {
     .page-head select#staffFilter { width:100%; min-width:0; }
 
-    .cal-legend { gap:10px; margin-bottom:10px; }
-    .cal-legend-item { font-size:11px; gap:5px; }
+    /* Instructional subtitle is onboarding copy, not something a
+       returning mobile user needs — dropping it buys back a full
+       line of vertical space above the fold. */
+    .page-head .page-sub { display:none; }
+
+    /* Single scrollable strip instead of wrapping onto a second line —
+       the dot + label pairs are still all reachable, just via a swipe
+       instead of eating extra vertical space. */
+    .cal-legend {
+        flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch;
+        gap:14px; margin-bottom:10px; padding-bottom:2px;
+        scrollbar-width:none;
+    }
+    .cal-legend::-webkit-scrollbar { display:none; }
+    .cal-legend-item { font-size:11px; gap:5px; flex:0 0 auto; white-space:nowrap; }
 
     .cal-card { padding:10px; border-radius:12px; }
 
-    /* Stack the toolbar into three centered rows — title, then nav,
-       then view switcher — instead of squeezing all three into one
-       row where the buttons wrap mid-word or spill off screen. */
+    /* One row — prev/next/today on the left, title centered — instead
+       of stacking nav and title on separate rows. Narrow screens fit
+       this fine since there's no right-side chunk competing for room. */
     .fc .fc-toolbar.fc-header-toolbar {
-        flex-direction:column;
-        align-items:stretch;
-        gap:10px;
-        margin-bottom:14px !important;
+        flex-wrap:wrap;
+        gap:8px;
+        margin-bottom:12px !important;
     }
-    .fc .fc-toolbar-chunk { display:flex; justify-content:center; }
-    .fc .fc-toolbar-title { font-size:15px; text-align:center; }
+    .fc .fc-toolbar-title { font-size:14.5px; }
     .fc .fc-button { padding:6px 10px; font-size:12px; }
     .fc .fc-button-group { flex-wrap:wrap; justify-content:center; }
     .fc .fc-today-button { text-transform:capitalize; }
 
-    /* Footer view-switcher reads like a native app's segmented tab bar.
-       footerToolbar only populates the center slot, but FullCalendar
-       still renders empty left/right chunks and flexes all three
-       equally — leaving the (empty) outer two eating 2/3 of the width.
-       Only the center chunk, which actually holds the buttons, should
-       grow; the empty ones must collapse to 0. */
-    .fc .fc-footer-toolbar { margin-top:14px !important; }
+    /* Sticky bottom bar (not a footer you have to scroll a long agenda
+       list to reach) — reads like a native app's tab bar and stays
+       reachable while browsing today's events. */
+    .fc .fc-footer-toolbar {
+        position:sticky; bottom:0;
+        background:var(--bg-surface);
+        border-top:1px solid var(--border-subtle);
+        margin:14px -10px -10px !important;
+        padding:10px !important;
+        z-index:40;
+    }
     .fc .fc-footer-toolbar .fc-toolbar-chunk:first-child,
     .fc .fc-footer-toolbar .fc-toolbar-chunk:last-child { flex:0 0 0 !important; }
     .fc .fc-footer-toolbar .fc-toolbar-chunk:nth-child(2) { flex:1 1 auto !important; }
@@ -70,6 +85,11 @@
         display:flex !important; flex-direction:row !important; width:100% !important;
     }
     .fc .fc-footer-toolbar .fc-button-group .fc-button { flex:1 !important; }
+
+    /* Blanked-out (not removed) all-day time cell — see eventDidMount.
+       Keeping the cell preserves column alignment with timed events
+       that still show a real time. */
+    .fc-list-event-time:empty { padding:0; width:0; }
 
     .fc .fc-daygrid-day-number { font-size:11px; padding:4px; }
     .fc .fc-col-header-cell-cushion { font-size:11px; padding:6px 2px; }
@@ -88,7 +108,7 @@
 
     .cal-fab {
         display:flex; align-items:center; justify-content:center;
-        position:fixed; right:20px; bottom:calc(24px + env(safe-area-inset-bottom));
+        position:fixed; right:20px; bottom:calc(80px + env(safe-area-inset-bottom));
         width:52px; height:52px; border-radius:50%;
         background:var(--accent); color:#fff; border:none;
         box-shadow:0 8px 24px rgba(0,0,0,.32);
@@ -236,7 +256,7 @@ document.addEventListener('DOMContentLoaded', function () {
         timeZone: el.dataset.tenantTz || 'local',
         editable: !isMobile,
         headerToolbar: isMobile
-            ? { left: 'prev,next', center: 'title', right: 'today' }
+            ? { left: 'prev,next today', center: 'title', right: '' }
             : { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listWeek' },
         footerToolbar: isMobile
             ? { left: '', center: 'dayGridMonth,timeGridWeek,listWeek', right: '' }
@@ -249,6 +269,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 .then(res => res.json())
                 .then(successCallback)
                 .catch(failureCallback);
+        },
+        // List view repeats "all-day" on every row when most events are
+        // all-day (tasks, deals) — blank it so only real times (e.g. a
+        // follow-up's actual hour) stand out. Cell stays in the DOM so
+        // the table's column alignment doesn't shift row to row.
+        eventDidMount: function (info) {
+            if (info.event.allDay) {
+                const timeEl = info.el.querySelector('.fc-list-event-time');
+                if (timeEl) timeEl.textContent = '';
+            }
         },
         eventClick: function (info) {
             info.jsEvent.preventDefault();
