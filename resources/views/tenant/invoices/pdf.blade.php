@@ -79,19 +79,23 @@
             background: {{ $primaryColor }};
             border-bottom: 3px solid {{ $accentColor }};
             width: 100%;
-            padding: 16px 28px;
+            padding: 20px 40px 20px 32px;
         }
         .header-row { width: 100%; }
         .brand-cell { vertical-align: middle; text-align: {{ $logoPosition === 'left' ? 'left' : ($logoPosition === 'right' ? 'right' : 'center') }}; }
-        .title-cell { vertical-align: middle; text-align: right; white-space: nowrap; width: 1%; padding-left: 24px; }
+        /* A vertical divider plus generous left padding gives the title
+           its own clearly-separated "tag" — rather than just floating
+           text pinned to the corner — which is what reads as designed
+           rather than merely positioned. */
+        .title-cell { vertical-align: middle; text-align: right; white-space: nowrap; width: 1%; padding-left: 28px; border-left: 1px solid rgba(255,255,255,0.28); }
 
         .company-logo { max-height: 36px; max-width: 140px; vertical-align: middle; margin-right: 12px; }
         .company-name { font-size: 19px; font-weight: bold; color: #ffffff; letter-spacing: 0.2px; vertical-align: middle; }
         .company-tagline { font-size: 9px; color: #b8c4d9; margin-top: 3px; }
         .company-contact { font-size: 9.5px; color: #cbd5e1; margin-top: 9px; }
 
-        .invoice-heading { font-size: 17px; font-weight: bold; color: #ffffff; letter-spacing: 0.8px; text-transform: uppercase; }
-        .invoice-sub { font-size: 9px; color: #b8c4d9; margin-top: 3px; }
+        .invoice-heading { font-size: 16px; font-weight: bold; color: #ffffff; letter-spacing: 2px; text-transform: uppercase; }
+        .invoice-sub { font-size: 8.5px; color: #b8c4d9; margin-top: 5px; letter-spacing: 0.3px; }
 
         /* ─── META BAND ─── */
         .meta-band { background: #f1f5f9; border-bottom: 1px solid #e2e8f0; padding: 9px 32px; }

@@ -263,9 +263,9 @@
                                     <div class="ips-company-sub">{{ $tenant->email ?? 'you@business.com' }}</div>
                                 </div>
                             </div>
-                            <div style="text-align:right; flex-shrink:0; padding-left:12px;">
-                                <div style="font-size:16px;font-weight:bold;color:#fff;letter-spacing:1.5px;white-space:nowrap;">TAX INVOICE</div>
-                                <div class="ips-company-sub" style="white-space:nowrap;">Original for Recipient</div>
+                            <div style="text-align:right; flex-shrink:0; padding-left:16px; border-left:1px solid rgba(255,255,255,0.28);">
+                                <div style="font-size:14px;font-weight:bold;color:#fff;letter-spacing:1.8px;white-space:nowrap;">TAX INVOICE</div>
+                                <div class="ips-company-sub" style="white-space:nowrap;margin-top:3px;">Original for Recipient</div>
                             </div>
                         </div>
                     </div>
