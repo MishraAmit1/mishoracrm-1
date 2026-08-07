@@ -381,6 +381,8 @@
                         <div style="font-size:13.5px;font-weight:600;color:var(--text-100)">{{ $quotation->deal->title }}</div>
                         <div style="font-size:12px;color:var(--text-300);margin-top:2px">
                             Stage: {{ \App\Models\Deal::stages()[$quotation->deal->stage] ?? ucfirst($quotation->deal->stage) }}
+                            <span style="margin:0 4px;opacity:.5">·</span>
+                            Deal Value: {{ $quotation->deal->formatted_value }}
                         </div>
                     </div>
                     <a href="{{ route('tenant.deals.show', $quotation->deal->id) }}"

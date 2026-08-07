@@ -115,8 +115,9 @@
                     <th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--text-400);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border-subtle)">Deal</th>
                     <th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--text-400);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border-subtle)">Contact</th>
                     <th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--text-400);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border-subtle)">Stage</th>
+                    <th style="padding:10px 16px;text-align:right;font-size:11px;font-weight:600;color:var(--text-400);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border-subtle)">Deal Value</th>
                     <th style="padding:10px 16px;text-align:center;font-size:11px;font-weight:600;color:var(--text-400);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border-subtle)">Quotations</th>
-                    <th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--text-400);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border-subtle)">Latest Quotation</th>
+                    <th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--text-400);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border-subtle)">Latest Quotation Total</th>
                 </tr>
             </thead>
             <tbody>
@@ -141,22 +142,28 @@
                             {{ $sc['label'] ?? ucfirst($deal->stage) }}
                         </span>
                     </td>
+                    <td style="padding:12px 16px;border-bottom:1px solid var(--border-subtle);text-align:right;font-family:var(--mono);font-size:13px;color:var(--text-200)" data-label="Deal Value">
+                        {{ $deal->formatted_value }}
+                    </td>
                     <td style="padding:12px 16px;border-bottom:1px solid var(--border-subtle);text-align:center;font-family:var(--mono);font-size:14px;font-weight:700;color:var(--accent)" data-label="Quotations">
                         {{ $deal->quotations_count }}
                     </td>
-                    <td style="padding:12px 16px;border-bottom:1px solid var(--border-subtle);font-size:13px" data-label="Latest Quotation">
+                    <td style="padding:12px 16px;border-bottom:1px solid var(--border-subtle);font-size:13px" data-label="Latest Quotation Total">
                         @if($latest)
-                        <a href="{{ route('tenant.quotations.show', $latest->id) }}" style="color:var(--text-200);text-decoration:none;margin-right:8px">{{ $latest->number }}</a>
-                        <span class="badge" style="background:var(--{{ $lc['bg'] }});color:var(--{{ $lc['label'] }})">
-                            {{ $statuses[$latest->status] ?? ucfirst($latest->status) }}
-                        </span>
+                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                            <a href="{{ route('tenant.quotations.show', $latest->id) }}" style="color:var(--text-200);text-decoration:none">{{ $latest->number }}</a>
+                            <span class="badge" style="background:var(--{{ $lc['bg'] }});color:var(--{{ $lc['label'] }})">
+                                {{ $statuses[$latest->status] ?? ucfirst($latest->status) }}
+                            </span>
+                            <span style="font-family:var(--mono);font-weight:700;color:var(--text-100)">{{ $latest->formatted_total }}</span>
+                        </div>
                         @else
                         <span style="color:var(--text-400)">No quotation yet</span>
                         @endif
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="5" style="padding:30px;text-align:center;color:var(--text-400)">No deals in this range</td></tr>
+                <tr><td colspan="6" style="padding:30px;text-align:center;color:var(--text-400)">No deals in this range</td></tr>
                 @endforelse
             </tbody>
         </table>

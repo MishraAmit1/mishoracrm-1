@@ -479,6 +479,13 @@ $assignInit = $deal->assignedTo
                 </a>
             </div>
 
+            @if($deal->quotations->isNotEmpty())
+            <div style="padding:9px 22px;background:var(--bg-elevated);border-bottom:1px solid var(--border-subtle);font-size:11.5px;color:var(--text-300)">
+                <i class="ti ti-info-circle" style="font-size:12px"></i>
+                Deal Value ({{ $deal->formatted_value }}) is your estimate — each quotation below has its own priced total, which can differ.
+            </div>
+            @endif
+
             @if($deal->quotations->isEmpty())
             <div class="ds-empty">
                 <div class="ds-empty-icon"><i class="ti ti-file-invoice" style="font-size:20px;color:var(--text-400)"></i></div>
@@ -503,8 +510,11 @@ $assignInit = $deal->assignedTo
                         {{ $q->date?->format('M d, Y') }}
                     </div>
                 </div>
-                <div style="font-size:13px;font-weight:600;color:var(--text-100);font-family:'DM Mono',monospace">
-                    {{ $q->formatted_total }}
+                <div style="text-align:right">
+                    <div style="font-size:13px;font-weight:600;color:var(--text-100);font-family:'DM Mono',monospace">
+                        {{ $q->formatted_total }}
+                    </div>
+                    <div style="font-size:10px;color:var(--text-400)">Quotation Total</div>
                 </div>
             </a>
             @endforeach
