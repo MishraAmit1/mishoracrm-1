@@ -212,6 +212,12 @@
     </div>
 
     {{-- Prefill Notice --}}
+    @if($deal ?? null)
+    <div class="qf-prefill-bar show">
+        <i class="ti ti-briefcase" style="font-size:15px"></i>
+        Linked to Deal <strong>{{ $deal->title }}</strong> — quotation accept hote hi ye deal automatically Won ho jayegi
+    </div>
+    @endif
     @if($contact)
     <div class="qf-prefill-bar show">
         <i class="ti ti-bolt" style="font-size:15px"></i>
@@ -228,6 +234,7 @@
           novalidate id="quotationForm">
         @csrf
         <input type="hidden" name="status" id="statusHidden" value="{{ $currentStatus }}">
+        <input type="hidden" name="deal_id" value="{{ old('deal_id', $deal->id ?? '') }}">
 
         <div class="qf-layout">
 

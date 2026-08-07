@@ -76,6 +76,11 @@ class Deal extends Model
         return $this->hasMany(Followup::class)->latest();
     }
 
+    public function quotations(): HasMany
+    {
+        return $this->hasMany(Quotation::class)->latest();
+    }
+
     // ── Scopes ────────────────────────────────────────────────────
 
     public function scopeStage($query, string $stage)

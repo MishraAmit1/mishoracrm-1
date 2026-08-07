@@ -91,6 +91,7 @@
     <div class="page-actions">
         {{-- <a href="{{ route('tenant.reports.leads') }}"    class="btn btn-secondary">Lead Report</a> --}}
         <a href="{{ route('tenant.reports.deals') }}"    class="btn btn-secondary">Deal Report</a>
+        <a href="{{ route('tenant.reports.deal_quotations') }}" class="btn btn-secondary">Deal Quotations</a>
         <a href="{{ route('tenant.reports.revenue') }}"  class="btn btn-secondary">Revenue</a>
         <a href="{{ route('tenant.reports.staff') }}"    class="btn btn-secondary">Staff</a>
     </div>

@@ -548,6 +548,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
         Route::prefix('reports')->name('reports.')->group(function () {
             Route::get('/overview', [Tenant\ReportController::class, 'overview'])->name('overview');
             Route::get('/deals',    [Tenant\ReportController::class, 'deals'])->name('deals');
+            Route::get('/deal-quotations', [Tenant\ReportController::class, 'dealQuotations'])->name('deal_quotations');
             Route::get('/revenue',  [Tenant\ReportController::class, 'revenue'])->name('revenue');
             Route::get('/staff',    [Tenant\ReportController::class, 'staff'])->name('staff');
         });

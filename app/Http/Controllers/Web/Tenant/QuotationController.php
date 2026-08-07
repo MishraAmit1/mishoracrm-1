@@ -5,10 +5,11 @@ namespace App\Http\Controllers\Web\Tenant;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\QuotationRequest;
 use App\Models\Contact;
-use App\Models\Invoice;
+use App\Models\Deal;
 use App\Models\Lead;
 use App\Models\Product;
 use App\Models\Quotation;
+use App\Services\QuotationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -88,6 +89,17 @@ class QuotationController extends Controller
             ->first()
             : null;
 
+        $deal = $request->filled('deal_id')
+            ? Deal::where('id', $request->deal_id)
+            ->where('tenant_id', auth()->user()->tenant_id)
+            ->first()
+            : null;
+
+        if ($deal) {
+            $contact = $contact ?? $deal->contact;
+            $lead    = $lead ?? $deal->lead;
+        }
+
         $number   = Quotation::generateNumber();
         $statuses = Quotation::statuses();
         $tenant   = auth()->user()->tenant;
@@ -98,6 +110,7 @@ class QuotationController extends Controller
             'leads',
             'contact',
             'lead',
+            'deal',
             'number',
             'statuses',
             'tenant',
@@ -133,7 +146,7 @@ class QuotationController extends Controller
     public function show(int|string $id): View
     {
         $quotation = $this->findQuotation($id);
-        $quotation->load(['contact', 'lead', 'createdBy', 'invoice']);
+        $quotation->load(['contact', 'lead', 'deal', 'createdBy', 'invoice']);
 
         $tenant   = auth()->user()->tenant;
         $statuses = Quotation::statuses();
@@ -182,7 +195,7 @@ class QuotationController extends Controller
 
         $quotation->update(array_merge($data, $totals));
 
-        $invoice = $this->autoCreateInvoice($quotation);
+        $invoice = $quotation->status === 'accepted' ? QuotationService::accept($quotation) : null;
 
         $message = $invoice
             ? "Quotation updated successfully. Invoice {$invoice->number} created automatically."
@@ -215,51 +228,13 @@ class QuotationController extends Controller
         $quotation = $this->findQuotation($id);
         $quotation->update(['status' => $request->status]);
 
-        $invoice = $this->autoCreateInvoice($quotation);
+        $invoice = $quotation->status === 'accepted' ? QuotationService::accept($quotation) : null;
 
         $message = $invoice
             ? "Quotation status updated. Invoice {$invoice->number} created automatically."
             : 'Quotation status updated.';
 
         return back()->with('success', $message);
-    }
-
-    // ── Auto-create invoice when a quotation becomes accepted ─────
-    private function autoCreateInvoice(Quotation $quotation): ?Invoice
-    {
-        if ($quotation->status !== 'accepted' || $quotation->invoice) {
-            return null;
-        }
-
-        // Quotation lead ke against bani thi bina contact ke — lead ko
-        // ab contact/customer mein convert karo taaki invoice usse link ho sake.
-        if (!$quotation->contact_id && $quotation->lead_id) {
-            $lead = Lead::find($quotation->lead_id);
-
-            if ($lead) {
-                $contact = $lead->convertToContact();
-                $quotation->update(['contact_id' => $contact->id]);
-            }
-        }
-
-        return Invoice::create([
-            'tenant_id'    => $quotation->tenant_id,
-            'contact_id'   => $quotation->contact_id,
-            'quotation_id' => $quotation->id,
-            'number'       => Invoice::generateNumber(),
-            'date'         => now()->toDateString(),
-            'due_date'     => now()->addDays(30)->toDateString(),
-            'items'        => $quotation->items,
-            'subtotal'     => $quotation->subtotal,
-            'discount'     => $quotation->discount,
-            'tax_percent'  => $quotation->tax_percent,
-            'tax_amount'   => $quotation->tax_amount,
-            'total'        => $quotation->total,
-            'notes'        => $quotation->notes,
-            'terms'        => $quotation->terms,
-            'status'       => 'draft',
-            'created_by'   => auth()->id(),
-        ]);
     }
 
     // ── Download PDF ──────────────────────────────────────────────
@@ -308,7 +283,7 @@ class QuotationController extends Controller
             return back()->with('error', 'Only accepted quotations can be converted to invoice.');
         }
 
-        $invoice = $this->autoCreateInvoice($quotation);
+        $invoice = QuotationService::accept($quotation);
 
         return redirect()
             ->route('tenant.invoices.show', $invoice->id)

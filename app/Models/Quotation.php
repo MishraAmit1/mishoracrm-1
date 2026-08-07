@@ -17,6 +17,7 @@ class Quotation extends Model
         'tenant_id',
         'contact_id',
         'lead_id',
+        'deal_id',
         'number',
         'date',
         'valid_until',
@@ -58,6 +59,11 @@ class Quotation extends Model
     public function lead(): BelongsTo
     {
         return $this->belongsTo(Lead::class);
+    }
+
+    public function deal(): BelongsTo
+    {
+        return $this->belongsTo(Deal::class);
     }
 
     public function createdBy(): BelongsTo

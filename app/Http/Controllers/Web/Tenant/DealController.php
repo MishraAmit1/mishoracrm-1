@@ -8,6 +8,7 @@ use App\Models\Contact;
 use App\Models\Deal;
 use App\Models\Lead;
 use App\Models\User;
+use App\Services\QuotationService;
 use App\Services\WebhookService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -178,6 +179,7 @@ class DealController extends Controller
             'createdBy',
             // 'tasks.assignedTo',
             'followups.assignedTo',
+            'quotations',
         ]);
 
         $staffList = $this->getStaffList();
@@ -212,7 +214,8 @@ class DealController extends Controller
         $data = $request->validated();
 
         // Auto set actual_close_date when won
-        if ($data['stage'] === 'won' && $deal->stage !== 'won') {
+        $justWon = $data['stage'] === 'won' && $deal->stage !== 'won';
+        if ($justWon) {
             $data['actual_close_date'] = now()->toDateString();
         }
 
@@ -227,6 +230,10 @@ class DealController extends Controller
         }
 
         $deal->update($data);
+
+        if ($justWon) {
+            $this->syncQuotationAccepted($deal);
+        }
 
         return redirect()
             ->route('tenant.deals.show', $deal->id)
@@ -272,6 +279,10 @@ class DealController extends Controller
 
         $deal->update($data);
 
+        if ($request->stage === 'won') {
+            $this->syncQuotationAccepted($deal);
+        }
+
         return back()->with('success', 'Deal stage updated.');
     }
 
@@ -294,6 +305,8 @@ class DealController extends Controller
             'contact_phone'=> $deal->contact?->phone,
             'close_date'   => $deal->actual_close_date,
         ]);
+
+        $this->syncQuotationAccepted($deal);
 
         return back()->with('success', "Deal marked as Won! 🎉");
     }
@@ -410,6 +423,19 @@ class DealController extends Controller
             'closingThisMonth', 'topDeals', 'funnelData',
             'stages', 'wonCount', 'lostCount'
         ));
+    }
+
+    // ── Deal won → auto-accept its latest pending quotation ────────
+    private function syncQuotationAccepted(Deal $deal): void
+    {
+        $quotation = $deal->quotations()
+            ->whereNotIn('status', ['accepted', 'rejected'])
+            ->latest()
+            ->first();
+
+        if ($quotation) {
+            QuotationService::accept($quotation);
+        }
     }
 
     // ── Default probability by stage ──────────────────────────────

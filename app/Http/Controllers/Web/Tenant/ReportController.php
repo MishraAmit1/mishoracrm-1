@@ -223,6 +223,45 @@ class ReportController extends Controller
         ));
     }
 
+    // ── Deal ↔ Quotation report ────────────────────────────────────
+    public function dealQuotations(Request $request): View
+    {
+        [$from, $to] = $this->dateRange($request);
+
+        $baseQuery = Deal::whereBetween('created_at', [$from, $to]);
+
+        $totalDeals            = (clone $baseQuery)->count();
+        $dealsWithQuotations   = (clone $baseQuery)->has('quotations')->count();
+        $dealsWithoutQuotations = $totalDeals - $dealsWithQuotations;
+
+        $dealIds         = (clone $baseQuery)->pluck('id');
+        $totalQuotations = Quotation::whereIn('deal_id', $dealIds)->count();
+        $avgPerDeal      = $totalDeals > 0 ? round($totalQuotations / $totalDeals, 2) : 0;
+
+        // Status breakdown across those quotations
+        $statusBreakdown = Quotation::whereIn('deal_id', $dealIds)
+            ->selectRaw('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->get()->keyBy('status');
+
+        // Table — deals with quotation counts + latest quotation
+        $deals = (clone $baseQuery)
+            ->withCount('quotations')
+            ->with(['contact:id,name', 'quotations' => fn($q) => $q->latest()->limit(1)])
+            ->orderByDesc('quotations_count')
+            ->paginate(20)
+            ->withQueryString();
+
+        $statuses = Quotation::statuses();
+        $stages   = Deal::stages();
+
+        return view('tenant.reports.deal-quotations', compact(
+            'totalDeals', 'dealsWithQuotations', 'dealsWithoutQuotations',
+            'totalQuotations', 'avgPerDeal', 'statusBreakdown',
+            'deals', 'statuses', 'stages', 'from', 'to', 'request'
+        ));
+    }
+
     // ── Revenue report ────────────────────────────────────────────
     public function revenue(Request $request): View
     {

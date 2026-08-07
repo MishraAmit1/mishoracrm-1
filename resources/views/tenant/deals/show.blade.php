@@ -462,6 +462,55 @@ $assignInit = $deal->assignedTo
             </div>
         </div>
 
+        {{-- Quotations --}}
+        @php
+            $qStatusColors = [
+                'draft'    => ['#F1EFE8', '#5F5E5A'],
+                'sent'     => ['#E6F1FB', '#185FA5'],
+                'accepted' => ['#E1F5EE', '#0F6E56'],
+                'rejected' => ['#FCEBEB', '#A32D2D'],
+            ];
+        @endphp
+        <div class="ds-card">
+            <div class="ds-card-hd">
+                <span class="ds-card-title">Quotations ({{ $deal->quotations->count() }})</span>
+                <a href="{{ route('tenant.quotations.create', ['deal_id' => $deal->id]) }}" style="font-size:12px;color:var(--accent);text-decoration:none;font-weight:500">
+                    <i class="ti ti-plus" style="font-size:12px"></i> New
+                </a>
+            </div>
+
+            @if($deal->quotations->isEmpty())
+            <div class="ds-empty">
+                <div class="ds-empty-icon"><i class="ti ti-file-invoice" style="font-size:20px;color:var(--text-400)"></i></div>
+                <div class="ds-empty-txt">No quotations created for this deal yet.</div>
+            </div>
+            @else
+            @foreach($deal->quotations as $q)
+            @php [$qBg, $qTx] = $qStatusColors[$q->status] ?? ['#F1EFE8','#5F5E5A']; @endphp
+            <a href="{{ route('tenant.quotations.show', $q->id) }}" class="ds-fu-item" style="text-decoration:none;align-items:center">
+                <div class="ds-fu-icon" style="background:{{ $qBg }}">
+                    <i class="ti ti-file-invoice" style="font-size:14px;color:{{ $qTx }}"></i>
+                </div>
+                <div style="flex:1">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px">
+                        <span class="ds-fu-type">{{ $q->number }}</span>
+                        <span class="ds-fu-status" style="background:{{ $qBg }};color:{{ $qTx }}">
+                            {{ \App\Models\Quotation::statuses()[$q->status] ?? ucfirst($q->status) }}
+                        </span>
+                    </div>
+                    <div class="ds-fu-time">
+                        <i class="ti ti-calendar" style="font-size:11px"></i>
+                        {{ $q->date?->format('M d, Y') }}
+                    </div>
+                </div>
+                <div style="font-size:13px;font-weight:600;color:var(--text-100);font-family:'DM Mono',monospace">
+                    {{ $q->formatted_total }}
+                </div>
+            </a>
+            @endforeach
+            @endif
+        </div>
+
         {{-- Notes --}}
         <div class="ds-card">
             <div class="ds-card-hd">
@@ -539,6 +588,11 @@ $assignInit = $deal->assignedTo
             <a href="{{ route('tenant.deals.edit', $deal->id) }}" class="ds-qa-btn">
                 <div class="ds-qa-icon" style="background:#E6F1FB"><i class="ti ti-edit" style="font-size:14px;color:#185FA5"></i></div>
                 Edit Deal
+            </a>
+
+            <a href="{{ route('tenant.quotations.create', ['deal_id' => $deal->id]) }}" class="ds-qa-btn">
+                <div class="ds-qa-icon" style="background:#EEEDFE"><i class="ti ti-file-invoice" style="font-size:14px;color:#534AB7"></i></div>
+                Create Quotation
             </a>
 
             @if($isOpen || $isLost)

@@ -16,6 +16,7 @@ class QuotationRequest extends FormRequest
         return [
             'contact_id'          => ['nullable', 'exists:contacts,id'],
             'lead_id'             => ['nullable', 'exists:leads,id'],
+            'deal_id'             => ['nullable', 'exists:deals,id'],
             'date'                => ['required', 'date'],
             'valid_until'         => ['nullable', 'date', 'after:date'],
             'items'               => ['required', 'array', 'min:1'],

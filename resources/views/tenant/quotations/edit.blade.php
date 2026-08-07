@@ -150,6 +150,14 @@
     </div>
     @endif
 
+    {{-- Linked Deal (read-only, cannot be changed from here) --}}
+    @if($quotation->deal)
+    <div style="display:flex;align-items:center;gap:9px;padding:10px 14px;background:#E1F5EE;border:1px solid #9FE1CB;border-radius:8px;margin-bottom:14px;font-size:12.5px;color:#0F6E56;font-weight:500">
+        <i class="ti ti-briefcase" style="font-size:15px"></i>
+        Linked to Deal <a href="{{ route('tenant.deals.show', $quotation->deal_id) }}" style="color:#0F6E56;text-decoration:underline"><strong>{{ $quotation->deal->title }}</strong></a>
+    </div>
+    @endif
+
     <div class="qf-layout">
 
         <form method="POST"

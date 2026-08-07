@@ -66,6 +66,9 @@
         <div class="page-title">Deal Analytics</div>
         <div class="page-sub">{{ $from->format('d M Y') }} — {{ $to->format('d M Y') }}</div>
     </div>
+    <div class="page-actions">
+        <a href="{{ route('tenant.reports.deal_quotations') }}" class="btn btn-secondary">Deal Quotations</a>
+    </div>
 </div>
 
 <div class="range-bar">

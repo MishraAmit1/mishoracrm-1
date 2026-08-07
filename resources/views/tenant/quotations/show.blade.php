@@ -368,6 +368,29 @@
                 @endif
             </div>
 
+            {{-- Linked Deal --}}
+            @if($quotation->deal)
+            <div class="qs-card">
+                <div class="qs-card-head">
+                    <div class="qs-card-title">
+                        <i class="ti ti-briefcase" style="font-size:13px;margin-right:5px"></i> Linked Deal
+                    </div>
+                </div>
+                <div style="padding:14px 20px;display:flex;align-items:center;justify-content:space-between">
+                    <div>
+                        <div style="font-size:13.5px;font-weight:600;color:var(--text-100)">{{ $quotation->deal->title }}</div>
+                        <div style="font-size:12px;color:var(--text-300);margin-top:2px">
+                            Stage: {{ \App\Models\Deal::stages()[$quotation->deal->stage] ?? ucfirst($quotation->deal->stage) }}
+                        </div>
+                    </div>
+                    <a href="{{ route('tenant.deals.show', $quotation->deal->id) }}"
+                       class="btn btn-secondary" style="font-size:12px;padding:6px 12px">
+                        <i class="ti ti-arrow-right" style="font-size:13px"></i> View Deal
+                    </a>
+                </div>
+            </div>
+            @endif
+
             {{-- Linked Lead --}}
             @if($quotation->lead)
             <div class="qs-card">
