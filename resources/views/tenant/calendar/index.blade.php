@@ -121,6 +121,9 @@
 /* ── FAB ──────────────────────────────────────────────────────────── */
 .cal-fab { display:none; }
 
+/* ── Mobile agenda (hidden on desktop — FullCalendar's .cal-card is used there) ── */
+#mobileAgenda { display:none; }
+
 /* ── Mobile ───────────────────────────────────────────────────────── */
 @media(max-width:768px) {
     .cal-head-actions { width:100%; }
@@ -159,80 +162,99 @@
     .cal-legend.open { display:grid; }
     .cal-chip { justify-content:flex-start; padding:6px 10px; font-size:12px; white-space:normal; }
 
-    .cal-card { padding:0; border-radius:var(--r-lg,16px); overflow:hidden; }
-    #calendar { padding:10px 10px 0; }
+    /* Desktop's FullCalendar grid is swapped out entirely for a hand-built
+       native-style agenda screen on mobile (see #mobileAgenda below) —
+       reskinning FullCalendar's own DOM only goes so far, so mobile gets
+       its own purpose-built markup instead of a shrunk desktop widget. */
+    .cal-card { display:none; }
+    #mobileAgenda { display:block; }
 
-    /* Roomy, native-app toolbar: circular icon buttons for prev/next,
-       a big centered title, and a small pill for "today" on the right
-       — instead of a cramped row of small text buttons fighting for
-       space. Configured via headerToolbar: {left:'prev,next', ...}. */
-    .fc .fc-toolbar.fc-header-toolbar {
-        padding:12px 10px 4px; margin-bottom:6px !important;
-        align-items:center;
+    /* ── Mobile agenda ── */
+    .magenda-monthnav { display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+    .magenda-navbtn {
+        width:36px; height:36px; border-radius:50%; flex-shrink:0;
+        border:1px solid var(--border-default); background:var(--bg-elevated); color:var(--text-200);
+        display:flex; align-items:center; justify-content:center; font-size:16px;
     }
-    .fc .fc-toolbar-title { font-size:17px; font-weight:700; }
-    .fc .fc-prev-button, .fc .fc-next-button {
-        width:36px; height:36px; padding:0; border-radius:50%;
-        display:inline-flex; align-items:center; justify-content:center;
+    .magenda-navbtn:active { background:var(--bg-hover); }
+    .magenda-monthlabel { flex:1; text-align:center; font-size:16.5px; font-weight:700; color:var(--text-100); letter-spacing:-.2px; }
+    .magenda-todaybtn {
+        padding:7px 13px; border-radius:18px; flex-shrink:0;
+        border:1px solid var(--border-default); background:var(--bg-elevated); color:var(--text-200);
+        font-size:11.5px; font-weight:600; font-family:var(--font);
     }
-    .fc .fc-today-button {
-        padding:7px 14px; font-size:12.5px; border-radius:20px;
-        text-transform:capitalize;
-    }
-    .fc .fc-button-group { gap:6px; }
+    .magenda-todaybtn.is-hidden { visibility:hidden; }
 
-    /* Sticky bottom tab bar — reads like a native app's view switcher
-       and stays reachable while scrolling a long agenda list, instead
-       of a footer you'd have to scroll all the way down to reach. */
-    .fc .fc-footer-toolbar {
-        position:sticky; bottom:0;
-        background:var(--bg-surface);
-        border-top:1px solid var(--border-subtle);
-        margin:16px 0 0 !important;
-        padding:10px 10px calc(10px + env(safe-area-inset-bottom)) !important;
-        z-index:40;
+    .magenda-strip {
+        display:flex; gap:8px; overflow-x:auto; -webkit-overflow-scrolling:touch;
+        padding:2px 2px 8px; margin-bottom:18px; scrollbar-width:none;
+        scroll-snap-type:x proximity;
     }
-    .fc .fc-footer-toolbar .fc-toolbar-chunk:first-child,
-    .fc .fc-footer-toolbar .fc-toolbar-chunk:last-child { flex:0 0 0 !important; }
-    .fc .fc-footer-toolbar .fc-toolbar-chunk:nth-child(2) { flex:1 1 auto !important; }
-    .fc .fc-footer-toolbar .fc-button-group {
-        display:flex !important; flex-direction:row !important; width:100% !important;
-        background:var(--bg-elevated); border-radius:10px; padding:3px; gap:2px;
-        border:1px solid var(--border-subtle);
+    .magenda-strip::-webkit-scrollbar { display:none; }
+    .magenda-day {
+        flex:0 0 auto; width:48px; padding:9px 0 10px; border-radius:16px;
+        background:var(--bg-surface); border:1.5px solid var(--border-subtle);
+        display:flex; flex-direction:column; align-items:center; gap:4px;
+        position:relative; scroll-snap-align:center;
     }
-    .fc .fc-footer-toolbar .fc-button-group .fc-button {
-        flex:1 !important; border:none !important; background:transparent !important;
-        padding:9px 6px !important; font-size:12.5px !important; border-radius:8px !important;
+    .magenda-day:active { background:var(--bg-hover); }
+    .magenda-day-dow { font-size:10px; font-weight:700; color:var(--text-400); text-transform:uppercase; letter-spacing:.3px; }
+    .magenda-day-num { font-size:16px; font-weight:700; color:var(--text-100); font-family:var(--mono); }
+    .magenda-day.is-today { border-color:var(--accent); }
+    .magenda-day.is-today .magenda-day-num { color:var(--accent); }
+    .magenda-day.is-selected { background:var(--accent); border-color:var(--accent); }
+    .magenda-day.is-selected .magenda-day-dow,
+    .magenda-day.is-selected .magenda-day-num { color:#fff; }
+    .magenda-day-dot { width:4px; height:4px; border-radius:50%; background:var(--accent); position:absolute; bottom:5px; }
+    .magenda-day.is-selected .magenda-day-dot { background:#fff; }
+
+    .magenda-list-head {
+        display:flex; align-items:center; gap:8px; margin-bottom:12px;
+        font-size:14px; font-weight:700; color:var(--text-100);
     }
-    .fc .fc-footer-toolbar .fc-button-group .fc-button.fc-button-active {
-        background:var(--bg-surface) !important; color:var(--text-100) !important; box-shadow:var(--shadow-sm);
+    .magenda-list-count {
+        font-size:11px; font-weight:700; color:var(--text-300);
+        background:var(--bg-elevated); padding:2px 9px; border-radius:10px;
     }
 
-    /* Blanked-out (not removed) all-day time cell — see eventDidMount.
-       Keeping the cell preserves column alignment with timed events
-       that still show a real time. */
-    .fc-list-event-time:empty { padding:0; width:0; }
+    .magenda-event {
+        display:flex; align-items:center; gap:12px; padding:13px 14px 13px 16px;
+        background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:14px;
+        margin-bottom:10px; position:relative; overflow:hidden;
+    }
+    .magenda-event:active { background:var(--bg-hover); }
+    .magenda-event::before {
+        content:''; position:absolute; left:0; top:0; bottom:0; width:4px;
+        background:var(--ev-color, var(--accent));
+    }
+    .magenda-event-icon {
+        width:38px; height:38px; border-radius:12px; flex-shrink:0;
+        display:flex; align-items:center; justify-content:center; font-size:17px;
+        background:var(--ev-bg, var(--accent-dim)); color:var(--ev-color, var(--accent));
+    }
+    .magenda-event-body { flex:1; min-width:0; }
+    .magenda-event-title {
+        font-size:14px; font-weight:600; color:var(--text-100);
+        overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    }
+    .magenda-event-meta { font-size:12px; color:var(--text-300); margin-top:2px; }
+    .magenda-event-chevron { color:var(--text-400); font-size:16px; flex-shrink:0; }
 
-    /* Roomier month-grid cells and clearer, larger day numbers — small,
-       tightly-packed digits were a big part of the "compressed" feel. */
-    .fc .fc-daygrid-day-number { font-size:12.5px; padding:6px; }
-    .fc .fc-col-header-cell-cushion { font-size:11px; padding:8px 2px; }
-    .fc-event { font-size:11px; padding:2px 4px; border-radius:5px; }
-    .fc-daygrid-event-dot { margin:0 4px; border-width:4px; }
-    /* Long-press-to-drag is unreliable on touch inside a cramped month
-       grid — the list view below is what mobile users actually get,
-       so month-grid dragging is a desktop-only affordance anyway. */
-    .fc-daygrid-day-frame { min-height:74px; }
+    .magenda-empty { text-align:center; padding:48px 20px; }
+    .magenda-empty i { font-size:32px; color:var(--text-400); margin-bottom:12px; display:block; }
+    .magenda-empty-title { font-size:14px; font-weight:600; color:var(--text-200); margin-bottom:4px; }
+    .magenda-empty-sub { font-size:12.5px; color:var(--text-300); }
+    .magenda-empty-btn {
+        margin-top:18px; display:inline-flex; align-items:center; gap:6px;
+        padding:9px 18px; border-radius:20px; background:var(--accent); color:#fff;
+        font-size:12.5px; font-weight:600; border:none; font-family:var(--font);
+    }
 
-    /* Agenda (list) rows get real breathing room — bigger text, taller
-       rows, a clear divider between days — so it reads like a native
-       agenda screen rather than a shrunk-down desktop table. */
-    .fc-list-table td { padding:13px 12px !important; }
-    .fc-list-event-title { font-size:14px; font-weight:500; }
-    .fc-list-event-time { font-size:12.5px; color:var(--text-300); font-weight:500; }
-    .fc-list-day-cushion { font-size:13px; font-weight:700; padding:10px 12px !important; }
-    .fc-list-event-dot { border-width:5px; }
-    .fc-list-empty { font-size:13px; padding:36px 16px !important; }
+    .magenda-skel {
+        height:64px; border-radius:14px; margin-bottom:10px;
+        background:var(--bg-elevated); opacity:.5; animation:magenda-pulse 1.1s ease-in-out infinite;
+    }
+    @keyframes magenda-pulse { 0%,100%{opacity:.35} 50%{opacity:.7} }
 
     .qc-backdrop { padding:16px; align-items:flex-end; }
     .qc-modal { max-width:100%; border-radius:16px 16px 0 0; padding-bottom:max(20px, env(safe-area-inset-bottom)); animation:qc-slide-up .2s var(--ease,ease-out); }
@@ -306,9 +328,28 @@
     <div id="calendar" data-tenant-tz="{{ auth()->user()->tenant->timezone ?? 'Asia/Kolkata' }}"></div>
 </div>
 
+{{-- Mobile-only: hand-built agenda screen (date strip + day event cards)
+     that replaces FullCalendar entirely on small screens. --}}
+<div id="mobileAgenda" data-tenant-tz="{{ auth()->user()->tenant->timezone ?? 'Asia/Kolkata' }}">
+    <div class="magenda-monthnav">
+        <button type="button" class="magenda-navbtn" id="magendaPrev" title="Previous month">
+            <i class="ti ti-chevron-left" aria-hidden="true"></i>
+        </button>
+        <div class="magenda-monthlabel" id="magendaMonthLabel"></div>
+        <button type="button" class="magenda-navbtn" id="magendaNext" title="Next month">
+            <i class="ti ti-chevron-right" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="magenda-todaybtn" id="magendaToday">Today</button>
+    </div>
+
+    <div class="magenda-strip" id="magendaStrip"></div>
+
+    <div class="magenda-list" id="magendaList"></div>
+</div>
+
 {{-- Mobile-only quick-add FAB: mobile defaults to the agenda/list view,
      which has no date cells to click, so this is the only way to add. --}}
-<button type="button" class="cal-fab" id="calFab" onclick="qcOpen(new Date().toISOString().slice(0,10))" title="Quick add">
+<button type="button" class="cal-fab" id="calFab" title="Quick add">
     <i class="ti ti-plus" aria-hidden="true"></i>
 </button>
 
@@ -385,6 +426,8 @@ function qcClose() {
     document.getElementById('qcBackdrop').classList.remove('open');
 }
 
+let isMobileView = false;
+
 async function qcSave() {
     if (qcKind === 'task' && !document.getElementById('qcTitle').value.trim()) {
         showToast('Task title is required.', 'error');
@@ -401,34 +444,190 @@ async function qcSave() {
     if (res.ok) {
         showToast('Added to calendar.', 'success');
         qcClose();
-        calendarInstance.refetchEvents();
+        isMobileView ? fetchMobileMonth() : calendarInstance.refetchEvents();
     } else {
         showToast('Could not add — please try again.', 'error');
     }
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-    document.getElementById('legendToggle')?.addEventListener('click', function () {
-        document.getElementById('calLegend')?.classList.toggle('open');
-        this.classList.toggle('open');
-    });
+/* ══════════════════════════════════════════════════════════════════
+   Mobile agenda — date strip + day-grouped event cards.
+   Fully custom (no FullCalendar) — hits the same events endpoint as
+   the desktop calendar, but renders as a native-feeling list instead
+   of a shrunk-down grid.
+   ══════════════════════════════════════════════════════════════════ */
+let mobileFocusDate = new Date();
+let mobileSelectedDate = null;
+let mobileEvents = [];
 
+function pad2(n) { return String(n).padStart(2, '0'); }
+function toDateStr(d) { return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; }
+function eventDateStr(ev) { return (ev.start || '').slice(0, 10); }
+
+function hexToRgba(hex, alpha) {
+    hex = (hex || '#6378ff').replace('#', '');
+    if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+    const r = parseInt(hex.substring(0, 2), 16) || 0;
+    const g = parseInt(hex.substring(2, 4), 16) || 0;
+    const b = parseInt(hex.substring(4, 6), 16) || 0;
+    return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function eventIcon(ev) {
+    const title = ev.title || '';
+    if (/^call/i.test(title)) return 'ti-phone';
+    if (/^email/i.test(title)) return 'ti-mail';
+    if (/^whatsapp/i.test(title)) return 'ti-brand-whatsapp';
+    if (/^meeting/i.test(title)) return 'ti-users';
+    const map = { task: 'ti-clipboard-list', reminder: 'ti-bell', deal: 'ti-target-arrow', followup: 'ti-calendar-event' };
+    return map[ev.extendedProps?.type] || 'ti-calendar-event';
+}
+
+function eventMeta(ev) {
+    if (ev.allDay) {
+        const map = { task: 'Task', reminder: 'Reminder', deal: 'Expected close' };
+        return map[ev.extendedProps?.type] || 'All day';
+    }
+    const d = ev.start ? new Date(ev.start) : null;
+    if (!d || isNaN(d)) return '';
+    return d.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true });
+}
+
+async function fetchMobileMonth() {
+    const first = new Date(mobileFocusDate.getFullYear(), mobileFocusDate.getMonth(), 1);
+    const last  = new Date(mobileFocusDate.getFullYear(), mobileFocusDate.getMonth() + 1, 0);
+    const staffId = document.getElementById('staffFilter')?.value || '';
+
+    document.getElementById('magendaList').innerHTML =
+        '<div class="magenda-skel"></div><div class="magenda-skel"></div><div class="magenda-skel"></div>';
+
+    try {
+        const res = await fetch(`{{ route('tenant.calendar.events') }}?start=${toDateStr(first)}&end=${toDateStr(last)}&staff_id=${staffId}`);
+        mobileEvents = await res.json();
+    } catch (e) {
+        mobileEvents = [];
+    }
+
+    renderMobileStrip();
+    renderMobileList();
+}
+
+function renderMobileStrip() {
+    const strip = document.getElementById('magendaStrip');
+    const daysInMonth = new Date(mobileFocusDate.getFullYear(), mobileFocusDate.getMonth() + 1, 0).getDate();
+    const todayStr = toDateStr(new Date());
+
+    document.getElementById('magendaMonthLabel').textContent =
+        mobileFocusDate.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+    document.getElementById('magendaToday')?.classList.toggle('is-hidden', mobileSelectedDate === todayStr);
+
+    let html = '';
+    for (let d = 1; d <= daysInMonth; d++) {
+        const date    = new Date(mobileFocusDate.getFullYear(), mobileFocusDate.getMonth(), d);
+        const dateStr = toDateStr(date);
+        const hasEvents = mobileEvents.some(ev => eventDateStr(ev) === dateStr);
+        html += `
+            <div class="magenda-day ${dateStr === todayStr ? 'is-today' : ''} ${dateStr === mobileSelectedDate ? 'is-selected' : ''}" data-date="${dateStr}">
+                <div class="magenda-day-dow">${date.toLocaleDateString('en-IN', { weekday: 'short' })}</div>
+                <div class="magenda-day-num">${d}</div>
+                ${hasEvents ? '<span class="magenda-day-dot"></span>' : ''}
+            </div>`;
+    }
+    strip.innerHTML = html;
+    strip.querySelector('.is-selected')?.scrollIntoView({ block: 'nearest', inline: 'center' });
+}
+
+function renderMobileList() {
+    const list = document.getElementById('magendaList');
+    const dayEvents = mobileEvents
+        .filter(ev => eventDateStr(ev) === mobileSelectedDate)
+        .sort((a, b) => (a.start || '').localeCompare(b.start || ''));
+
+    const label = new Date(mobileSelectedDate + 'T00:00:00')
+        .toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
+
+    if (!dayEvents.length) {
+        list.innerHTML = `
+            <div class="magenda-list-head">${label}</div>
+            <div class="magenda-empty">
+                <i class="ti ti-calendar-off" aria-hidden="true"></i>
+                <div class="magenda-empty-title">Nothing scheduled</div>
+                <div class="magenda-empty-sub">No follow-ups, tasks or reminders on this day.</div>
+                <button type="button" class="magenda-empty-btn" onclick="qcOpen('${mobileSelectedDate}')">
+                    <i class="ti ti-plus" aria-hidden="true"></i> Quick Add
+                </button>
+            </div>`;
+        return;
+    }
+
+    let html = `<div class="magenda-list-head">${label} <span class="magenda-list-count">${dayEvents.length}</span></div>`;
+    dayEvents.forEach(ev => {
+        const color = ev.color || '#6378ff';
+        const title = (ev.title || '').replace(/"/g, '&quot;');
+        html += `
+            <div class="magenda-event" style="--ev-color:${color};--ev-bg:${hexToRgba(color, .14)}" data-url="${ev.url || ''}" data-title="${title}">
+                <div class="magenda-event-icon"><i class="ti ${eventIcon(ev)}" aria-hidden="true"></i></div>
+                <div class="magenda-event-body">
+                    <div class="magenda-event-title">${ev.title || ''}</div>
+                    <div class="magenda-event-meta">${eventMeta(ev)}</div>
+                </div>
+                <i class="ti ti-chevron-right magenda-event-chevron" aria-hidden="true"></i>
+            </div>`;
+    });
+    list.innerHTML = html;
+}
+
+function initMobileAgenda() {
+    isMobileView = true;
+    mobileSelectedDate = toDateStr(new Date());
+
+    document.getElementById('magendaPrev')?.addEventListener('click', () => {
+        mobileFocusDate = new Date(mobileFocusDate.getFullYear(), mobileFocusDate.getMonth() - 1, 1);
+        fetchMobileMonth();
+    });
+    document.getElementById('magendaNext')?.addEventListener('click', () => {
+        mobileFocusDate = new Date(mobileFocusDate.getFullYear(), mobileFocusDate.getMonth() + 1, 1);
+        fetchMobileMonth();
+    });
+    document.getElementById('magendaToday')?.addEventListener('click', () => {
+        mobileFocusDate = new Date();
+        mobileSelectedDate = toDateStr(new Date());
+        fetchMobileMonth();
+    });
+    document.getElementById('magendaStrip')?.addEventListener('click', (e) => {
+        const day = e.target.closest('.magenda-day');
+        if (!day) return;
+        mobileSelectedDate = day.dataset.date;
+        renderMobileStrip();
+        renderMobileList();
+    });
+    document.getElementById('magendaList')?.addEventListener('click', (e) => {
+        const card = e.target.closest('.magenda-event');
+        if (!card) return;
+        if (card.dataset.url) {
+            window.location.href = card.dataset.url;
+        } else {
+            showToast(card.dataset.title, 'info');
+        }
+    });
+    document.getElementById('calFab')?.addEventListener('click', () => qcOpen(mobileSelectedDate));
+    document.getElementById('staffFilter')?.addEventListener('change', fetchMobileMonth);
+
+    fetchMobileMonth();
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Desktop — FullCalendar month/week/agenda grid.
+   ══════════════════════════════════════════════════════════════════ */
+function initDesktopCalendar() {
     const el = document.getElementById('calendar');
-    // Month grid needs real screen width to be usable — on a phone a
-    // native calendar app shows an agenda list by default, so mirror
-    // that instead of cramming a 7-column grid into ~340px.
-    const isMobile = window.matchMedia('(max-width:768px)').matches;
 
     calendarInstance = new FullCalendar.Calendar(el, {
-        initialView: isMobile ? 'listWeek' : 'dayGridMonth',
+        initialView: 'dayGridMonth',
         timeZone: el.dataset.tenantTz || 'local',
-        editable: !isMobile,
-        headerToolbar: isMobile
-            ? { left: 'prev,next', center: 'title', right: 'today' }
-            : { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listWeek' },
-        footerToolbar: isMobile
-            ? { left: '', center: 'dayGridMonth,timeGridWeek,listWeek', right: '' }
-            : false,
+        editable: true,
+        headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listWeek' },
+        footerToolbar: false,
         buttonText: { today: 'Today', month: 'Month', week: 'Week', list: 'Agenda' },
         height: 'auto',
         dayMaxEvents: 3,
@@ -481,6 +680,23 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('staffFilter')?.addEventListener('change', function () {
         calendarInstance.refetchEvents();
     });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('legendToggle')?.addEventListener('click', function () {
+        document.getElementById('calLegend')?.classList.toggle('open');
+        this.classList.toggle('open');
+    });
+
+    // Month grid needs real screen width to be usable — mobile gets a
+    // purpose-built agenda screen instead of a shrunk desktop widget.
+    const isMobile = window.matchMedia('(max-width:768px)').matches;
+
+    if (isMobile) {
+        initMobileAgenda();
+    } else {
+        initDesktopCalendar();
+    }
 });
 </script>
 @endpush
