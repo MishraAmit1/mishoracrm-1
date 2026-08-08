@@ -19,6 +19,7 @@
     border:1px solid transparent;
 }
 .cal-chip i { font-size:13px; }
+.cal-legend-toggle { display:none; }
 
 /* ── Calendar card ────────────────────────────────────────────────── */
 .cal-card {
@@ -124,49 +125,71 @@
 @media(max-width:768px) {
     .cal-head-actions { width:100%; }
     .cal-head-actions .input-group { width:100%; }
-    .cal-head-actions .input-group .form-control { width:100%; min-width:0; }
+    .cal-head-actions .input-group .form-control { width:100%; min-width:0; height:42px; }
     .cal-head-actions .cal-add-btn { display:none; }
 
     /* Instructional subtitle is onboarding copy, not something a
        returning mobile user needs — dropping it buys back a full
        line of vertical space above the fold. */
     .page-head .page-sub { display:none; }
+    .page-head { margin-bottom:14px; }
 
-    /* Single scrollable strip instead of wrapping onto a second line —
-       the dot + label pairs are still all reachable, just via a swipe
-       instead of eating extra vertical space. */
+    /* Legend collapses behind a small toggle pill instead of a
+       permanent strip — that one row of chrome was the single biggest
+       contributor to the "everything is squeezed" feeling, so it only
+       costs vertical space when someone actually wants it. */
+    .cal-legend-toggle {
+        display:flex; align-items:center; gap:7px;
+        width:100%; padding:10px 14px; margin-bottom:12px;
+        background:var(--bg-surface); border:1px solid var(--border-default);
+        border-radius:var(--r-md,10px); color:var(--text-200);
+        font-family:var(--font); font-size:13px; font-weight:600;
+        cursor:pointer;
+    }
+    .cal-legend-toggle span { flex:1; text-align:left; }
+    .cal-legend-toggle i:first-child { font-size:15px; color:var(--accent); }
+    .cal-legend-chevron { font-size:15px; transition:transform .15s; }
+    .cal-legend-toggle.open .cal-legend-chevron { transform:rotate(180deg); }
+
     .cal-legend {
-        flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch;
-        gap:8px; margin-bottom:12px; padding-bottom:2px;
-        scrollbar-width:none;
+        display:none; grid-template-columns:1fr 1fr; gap:8px;
+        margin:-4px 0 14px; padding:12px; flex-wrap:unset;
+        background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--r-md,10px);
     }
-    .cal-legend::-webkit-scrollbar { display:none; }
-    .cal-chip { flex:0 0 auto; }
+    .cal-legend.open { display:grid; }
+    .cal-chip { justify-content:flex-start; padding:6px 10px; font-size:12px; white-space:normal; }
 
-    .cal-card { padding:12px; border-radius:var(--r-md,10px); }
+    .cal-card { padding:0; border-radius:var(--r-lg,16px); overflow:hidden; }
+    #calendar { padding:10px 10px 0; }
 
-    /* One row — prev/next/today on the left, title centered — instead
-       of stacking nav and title on separate rows. Narrow screens fit
-       this fine since there's no right-side chunk competing for room. */
+    /* Roomy, native-app toolbar: circular icon buttons for prev/next,
+       a big centered title, and a small pill for "today" on the right
+       — instead of a cramped row of small text buttons fighting for
+       space. Configured via headerToolbar: {left:'prev,next', ...}. */
     .fc .fc-toolbar.fc-header-toolbar {
-        flex-wrap:wrap;
-        gap:8px;
-        margin-bottom:14px !important;
+        padding:12px 10px 4px; margin-bottom:6px !important;
+        align-items:center;
     }
-    .fc .fc-toolbar-title { font-size:15px; }
-    .fc .fc-button { padding:6px 10px; font-size:12px; }
-    .fc .fc-button-group { flex-wrap:wrap; justify-content:center; }
-    .fc .fc-today-button { text-transform:capitalize; }
+    .fc .fc-toolbar-title { font-size:17px; font-weight:700; }
+    .fc .fc-prev-button, .fc .fc-next-button {
+        width:36px; height:36px; padding:0; border-radius:50%;
+        display:inline-flex; align-items:center; justify-content:center;
+    }
+    .fc .fc-today-button {
+        padding:7px 14px; font-size:12.5px; border-radius:20px;
+        text-transform:capitalize;
+    }
+    .fc .fc-button-group { gap:6px; }
 
-    /* Sticky bottom bar (not a footer you have to scroll a long agenda
-       list to reach) — reads like a native app's tab bar and stays
-       reachable while browsing today's events. */
+    /* Sticky bottom tab bar — reads like a native app's view switcher
+       and stays reachable while scrolling a long agenda list, instead
+       of a footer you'd have to scroll all the way down to reach. */
     .fc .fc-footer-toolbar {
         position:sticky; bottom:0;
         background:var(--bg-surface);
         border-top:1px solid var(--border-subtle);
-        margin:14px -12px -12px !important;
-        padding:10px 12px !important;
+        margin:16px 0 0 !important;
+        padding:10px 10px calc(10px + env(safe-area-inset-bottom)) !important;
         z-index:40;
     }
     .fc .fc-footer-toolbar .fc-toolbar-chunk:first-child,
@@ -174,25 +197,42 @@
     .fc .fc-footer-toolbar .fc-toolbar-chunk:nth-child(2) { flex:1 1 auto !important; }
     .fc .fc-footer-toolbar .fc-button-group {
         display:flex !important; flex-direction:row !important; width:100% !important;
+        background:var(--bg-elevated); border-radius:10px; padding:3px; gap:2px;
+        border:1px solid var(--border-subtle);
     }
-    .fc .fc-footer-toolbar .fc-button-group .fc-button { flex:1 !important; }
+    .fc .fc-footer-toolbar .fc-button-group .fc-button {
+        flex:1 !important; border:none !important; background:transparent !important;
+        padding:9px 6px !important; font-size:12.5px !important; border-radius:8px !important;
+    }
+    .fc .fc-footer-toolbar .fc-button-group .fc-button.fc-button-active {
+        background:var(--bg-surface) !important; color:var(--text-100) !important; box-shadow:var(--shadow-sm);
+    }
 
     /* Blanked-out (not removed) all-day time cell — see eventDidMount.
        Keeping the cell preserves column alignment with timed events
        that still show a real time. */
     .fc-list-event-time:empty { padding:0; width:0; }
 
-    .fc .fc-daygrid-day-number { font-size:11px; padding:4px; }
-    .fc .fc-col-header-cell-cushion { font-size:11px; padding:6px 2px; }
-    .fc-event { font-size:10.5px; padding:1px 2px; }
-    .fc-daygrid-event-dot { margin:0 3px; }
+    /* Roomier month-grid cells and clearer, larger day numbers — small,
+       tightly-packed digits were a big part of the "compressed" feel. */
+    .fc .fc-daygrid-day-number { font-size:12.5px; padding:6px; }
+    .fc .fc-col-header-cell-cushion { font-size:11px; padding:8px 2px; }
+    .fc-event { font-size:11px; padding:2px 4px; border-radius:5px; }
+    .fc-daygrid-event-dot { margin:0 4px; border-width:4px; }
     /* Long-press-to-drag is unreliable on touch inside a cramped month
        grid — the list view below is what mobile users actually get,
        so month-grid dragging is a desktop-only affordance anyway. */
-    .fc-daygrid-day-frame { min-height:64px; }
+    .fc-daygrid-day-frame { min-height:74px; }
 
-    .fc-list-event-title, .fc-list-event-time { font-size:12.5px; }
-    .fc-list-day-cushion { font-size:12px; padding:8px 10px !important; }
+    /* Agenda (list) rows get real breathing room — bigger text, taller
+       rows, a clear divider between days — so it reads like a native
+       agenda screen rather than a shrunk-down desktop table. */
+    .fc-list-table td { padding:13px 12px !important; }
+    .fc-list-event-title { font-size:14px; font-weight:500; }
+    .fc-list-event-time { font-size:12.5px; color:var(--text-300); font-weight:500; }
+    .fc-list-day-cushion { font-size:13px; font-weight:700; padding:10px 12px !important; }
+    .fc-list-event-dot { border-width:5px; }
+    .fc-list-empty { font-size:13px; padding:36px 16px !important; }
 
     .qc-backdrop { padding:16px; align-items:flex-end; }
     .qc-modal { max-width:100%; border-radius:16px 16px 0 0; padding-bottom:max(20px, env(safe-area-inset-bottom)); animation:qc-slide-up .2s var(--ease,ease-out); }
@@ -200,11 +240,11 @@
 
     .cal-fab {
         display:flex; align-items:center; justify-content:center;
-        position:fixed; right:20px; bottom:calc(80px + env(safe-area-inset-bottom));
-        width:54px; height:54px; border-radius:50%;
+        position:fixed; right:18px; bottom:calc(96px + env(safe-area-inset-bottom));
+        width:56px; height:56px; border-radius:50%;
         background:var(--accent); color:#fff; border:none;
         box-shadow:0 8px 24px rgba(0,0,0,.32), 0 0 0 1px var(--accent-hover) inset;
-        cursor:pointer; z-index:60; font-size:22px;
+        cursor:pointer; z-index:60; font-size:24px;
         transition:transform .15s;
     }
     .cal-fab:active { transform:scale(.92); }
@@ -237,7 +277,14 @@
     </div>
 </div>
 
-<div class="cal-legend">
+{{-- Mobile: collapsed behind a toggle to free up vertical space. Desktop:
+     always-visible inline row (toggle button is hidden via CSS there). --}}
+<button type="button" class="cal-legend-toggle" id="legendToggle">
+    <i class="ti ti-palette" aria-hidden="true"></i>
+    <span>Legend</span>
+    <i class="ti ti-chevron-down cal-legend-chevron" aria-hidden="true"></i>
+</button>
+<div class="cal-legend" id="calLegend">
     <span class="cal-chip" style="background:rgba(55,138,221,.12);color:#378ADD">
         <i class="ti ti-phone-outgoing" aria-hidden="true"></i> Follow-up · Scheduled
     </span>
@@ -361,6 +408,11 @@ async function qcSave() {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('legendToggle')?.addEventListener('click', function () {
+        document.getElementById('calLegend')?.classList.toggle('open');
+        this.classList.toggle('open');
+    });
+
     const el = document.getElementById('calendar');
     // Month grid needs real screen width to be usable — on a phone a
     // native calendar app shows an agenda list by default, so mirror
@@ -372,7 +424,7 @@ document.addEventListener('DOMContentLoaded', function () {
         timeZone: el.dataset.tenantTz || 'local',
         editable: !isMobile,
         headerToolbar: isMobile
-            ? { left: 'prev,next today', center: 'title', right: '' }
+            ? { left: 'prev,next', center: 'title', right: 'today' }
             : { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listWeek' },
         footerToolbar: isMobile
             ? { left: '', center: 'dayGridMonth,timeGridWeek,listWeek', right: '' }
