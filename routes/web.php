@@ -303,12 +303,16 @@ Route::middleware(['tenant', 'auth', 'subscription'])
 
             Route::post('/check-duplicate', [Tenant\ContactController::class, 'checkDuplicate'])->name('check-duplicate');
 
+            // Employee attachment delete — static "employees" segment, must precede /{id} below.
+            Route::delete('/employees/{employee}/attachments/{attachment}', [Tenant\ContactController::class, 'destroyEmployeeAttachment'])->name('employees.attachments.destroy');
+
             Route::controller(Tenant\ContactController::class)->group(function () {
                 Route::get('/{id}', 'show')->name('show');
                 Route::get('/{id}/edit', 'edit')->name('edit');
                 Route::put('/{id}', 'update')->name('update');
                 Route::delete('/{id}', 'destroy')->name('destroy');
                 Route::get('/{id}/report', 'customerReport')->name('report');
+                Route::delete('/{id}/attachments/{attachment}', 'destroyAttachment')->name('attachments.destroy');
                 //    search customer
                 Route::get('/search', 'searchCustomers')->name('search');
             });
@@ -345,6 +349,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
                 Route::delete('/{id}', 'destroy')->name('destroy');
                 Route::post('/{id}/status', 'updateStatus')->name('update_status');
                 Route::get('/{id}/pdf', 'pdf')->name('pdf');
+                Route::post('/{id}/send', 'send')->name('send');
                 Route::post('/{id}/convert', 'convertToInvoice')->name('convert');
                 Route::get('/{id}/data', 'quotationData')->name('data');
             });

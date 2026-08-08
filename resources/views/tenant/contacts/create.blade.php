@@ -150,7 +150,7 @@
         </button>
     </div>
 
-    <form method="POST" action="{{ route('tenant.contacts.store') }}" novalidate id="contactForm">
+    <form method="POST" action="{{ route('tenant.contacts.store') }}" enctype="multipart/form-data" novalidate id="contactForm">
         @csrf
 
         <div class="cf-layout">
@@ -276,6 +276,9 @@
                 @endif
                 @endforeach
 
+                @include('tenant.contacts._employees_section')
+                @include('tenant.contacts._attachments_section')
+
                 {{-- Footer --}}
                 <div class="cf-footer">
                     <div class="cf-footer-note">Fields marked <strong>*</strong> are required</div>
@@ -359,6 +362,7 @@
         </div>
     </form>
 </div>
+@include('tenant.contacts._employees_assets')
 @endsection
 
 @push('scripts')

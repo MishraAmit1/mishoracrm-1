@@ -33,12 +33,16 @@
                 Download PDF
             </a>
 
-            @if($invoice->contact?->email)
+            @php
+                $sendToEmail = $invoice->contact?->primaryEmail();
+                $sendCcCount = $invoice->contact ? count($invoice->contact->ccEmails()) : 0;
+            @endphp
+            @if($sendToEmail)
             <form method="POST" action="{{ route('tenant.invoices.send', $invoice->id) }}"
-                  onsubmit="return confirm('Send this invoice to {{ $invoice->contact->email }}?')">
+                  onsubmit="return confirm('Send this invoice to {{ addslashes($sendToEmail) }}{{ $sendCcCount ? ' (cc: '.$sendCcCount.')' : '' }}?')">
                 @csrf
                 <button type="submit" class="btn btn-success">
-                    Send Invoice
+                    Send Invoice{{ $sendCcCount ? ' (cc: '.$sendCcCount.')' : '' }}
                 </button>
             </form>
             @else

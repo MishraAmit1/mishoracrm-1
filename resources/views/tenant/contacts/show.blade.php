@@ -279,6 +279,85 @@
                 </div>
             </div>
 
+            {{-- Company Employees ── --}}
+            @if($contact->employees->isNotEmpty())
+            <div class="cs-card">
+                <div class="cs-card-head">
+                    <div class="cs-card-title">
+                        <i class="ti ti-users" style="font-size:13px;margin-right:5px" aria-hidden="true"></i>
+                        Company Employees
+                        <span style="color:var(--text-400);font-weight:500;text-transform:none;letter-spacing:0">({{ $contact->employees->count() }})</span>
+                    </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:0">
+                    @foreach($contact->employees as $employee)
+                    <div style="padding:13px 16px;border-bottom:1px solid var(--border-subtle)">
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+                            <div style="font-size:13.5px;font-weight:600;color:var(--text-100);display:flex;align-items:center;gap:7px">
+                                {{ $employee->name ?: '—' }}
+                                @if($employee->is_primary)
+                                <span class="cs-badge" style="background:#EAF3DE;color:#3B6D11">
+                                    <i class="ti ti-star-filled" style="font-size:11px" aria-hidden="true"></i>
+                                    Primary
+                                </span>
+                                @endif
+                            </div>
+                            @if($employee->designation)
+                            <span class="cs-badge" style="background:#EEEDFE;color:#534AB7">{{ $employee->designation }}</span>
+                            @endif
+                        </div>
+                        @if(!empty($employee->emails) || !empty($employee->phones))
+                        <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:6px;font-size:12.5px;color:var(--text-300)">
+                            @foreach($employee->emails ?? [] as $email)
+                            <a href="mailto:{{ $email }}" style="color:var(--accent,#185FA5);text-decoration:none;display:inline-flex;align-items:center;gap:4px">
+                                <i class="ti ti-mail" style="font-size:12px" aria-hidden="true"></i>{{ $email }}
+                            </a>
+                            @endforeach
+                            @foreach($employee->phones ?? [] as $phone)
+                            <a href="tel:{{ $phone }}" style="color:var(--accent,#185FA5);text-decoration:none;display:inline-flex;align-items:center;gap:4px">
+                                <i class="ti ti-phone" style="font-size:12px" aria-hidden="true"></i>{{ $phone }}
+                            </a>
+                            @endforeach
+                        </div>
+                        @endif
+                        @if($employee->attachments->isNotEmpty())
+                        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">
+                            @foreach($employee->attachments as $att)
+                            <a href="{{ $att->url }}" target="_blank" rel="noopener"
+                               style="display:inline-flex;align-items:center;gap:4px;padding:4px 9px;background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:6px;font-size:11.5px;color:var(--text-200);text-decoration:none">
+                                <i class="ti ti-paperclip" style="font-size:11px" aria-hidden="true"></i>{{ $att->original_name }}
+                            </a>
+                            @endforeach
+                        </div>
+                        @endif
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
+            {{-- Visiting Card / Documents ── --}}
+            @if($contact->attachments->isNotEmpty())
+            <div class="cs-card">
+                <div class="cs-card-head">
+                    <div class="cs-card-title">
+                        <i class="ti ti-paperclip" style="font-size:13px;margin-right:5px" aria-hidden="true"></i>
+                        Visiting Card / Documents
+                        <span style="color:var(--text-400);font-weight:500;text-transform:none;letter-spacing:0">({{ $contact->attachments->count() }})</span>
+                    </div>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;padding:14px 16px">
+                    @foreach($contact->attachments as $att)
+                    <a href="{{ $att->url }}" target="_blank" rel="noopener"
+                       style="display:inline-flex;align-items:center;gap:6px;padding:6px 11px;background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:7px;font-size:12.5px;color:var(--text-100);text-decoration:none">
+                        <i class="ti ti-paperclip" style="font-size:12px" aria-hidden="true"></i>
+                        {{ $att->original_name }}
+                    </a>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
             {{-- Address Section (if any address fields filled) ── --}}
             @if($contact->address || $contact->city || $contact->state || $contact->pincode)
             <div class="cs-card">

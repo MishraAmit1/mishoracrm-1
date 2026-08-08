@@ -469,15 +469,19 @@
                     Download PDF
                 </a>
 
-                @if($quotation->contact?->email)
-                {{-- <form method="POST" action="{{ route('tenant.quotations.send',$quotation->id) }}"> --}}
-                    <form method="POST" action="#"></form>
+                @php
+                    $sendToEmail = $quotation->contact?->primaryEmail();
+                    $sendCcCount = $quotation->contact ? count($quotation->contact->ccEmails()) : 0;
+                @endphp
+                @if($sendToEmail)
+                <form method="POST" action="{{ route('tenant.quotations.send',$quotation->id) }}"
+                      onsubmit="return confirm('Send this quotation to {{ addslashes($sendToEmail) }}{{ $sendCcCount ? ' (cc: '.$sendCcCount.')' : '' }}?')">
                     @csrf
                     <button type="submit" class="qs-action-btn" style="margin-top:7px">
                         <div class="qs-act-icon" style="background:#E6F1FB">
                             <i class="ti ti-send" style="font-size:15px;color:#185FA5"></i>
                         </div>
-                        Send to {{ $quotation->contact->email }}
+                        Send to {{ $sendToEmail }}@if($sendCcCount) (cc: {{ $sendCcCount }})@endif
                     </button>
                 </form>
                 @endif

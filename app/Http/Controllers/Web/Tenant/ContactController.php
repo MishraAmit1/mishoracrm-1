@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Web\Tenant;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ContactRequest;
 use App\Models\Contact;
+use App\Models\ContactAttachment;
+use App\Models\ContactEmployee;
+use App\Models\ContactEmployeeAttachment;
 use App\Models\Deal;
 use App\Models\Invoice;
 use App\Models\Lead;
@@ -13,6 +16,8 @@ use App\Services\DuplicateMatcher;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class ContactController extends Controller
@@ -91,6 +96,9 @@ class ContactController extends Controller
 
         $contact = Contact::create($data);
 
+        $this->saveContactAttachments($request, $contact);
+        $this->syncEmployees($request, $contact);
+
         return redirect()
             ->route('tenant.contacts.show', [
                 'tenant' => $this->tenantSlug(),
@@ -112,6 +120,8 @@ class ContactController extends Controller
             'invoices',
             'emailLogs.sentBy',
             'whatsappLogs.sentBy',
+            'employees.attachments',
+            'attachments.uploadedBy',
         ]);
 
         $timeline = \App\Services\ActivityTimelineService::forContact($contact);
@@ -123,6 +133,7 @@ class ContactController extends Controller
     public function edit(int|string $id): View
     {
         $contact = $this->findContact($id);
+        $contact->load(['employees.attachments', 'attachments.uploadedBy']);
         $leads   = Lead::orderBy('name')->get(['id', 'name', 'phone']);
 
         return view('tenant.contacts.edit', compact('contact', 'leads'));
@@ -134,12 +145,144 @@ class ContactController extends Controller
         $contact = $this->findContact($id);
         $contact->update($request->validated());
 
+        $this->saveContactAttachments($request, $contact);
+        $this->syncEmployees($request, $contact);
+
         return redirect()
             ->route('tenant.contacts.show', [
                 'tenant' => $this->tenantSlug(),
                 'id'     => $contact->id,
             ])
             ->with('success', 'Contact updated successfully.');
+    }
+
+    // ── Contact-level attachments: save uploaded files ─────────────
+    private function saveContactAttachments(Request $request, Contact $contact): void
+    {
+        if (! $request->hasFile('attachments')) {
+            return;
+        }
+
+        $tenantId = $this->tenantId();
+
+        foreach ($request->file('attachments') as $file) {
+            $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
+            $path     = $file->storeAs("contacts/{$tenantId}/{$contact->id}", $filename, 'public');
+
+            ContactAttachment::create([
+                'tenant_id'     => $tenantId,
+                'contact_id'    => $contact->id,
+                'uploaded_by'   => auth()->id(),
+                'path'          => $path,
+                'original_name' => $file->getClientOriginalName(),
+                'mime_type'     => $file->getClientMimeType(),
+                'file_size'     => $file->getSize(),
+            ]);
+        }
+    }
+
+    // ── Contact-level attachment: delete ────────────────────────────
+    public function destroyAttachment(int|string $id, int|string $attachment): RedirectResponse
+    {
+        $contact = $this->findContact($id);
+
+        $file = ContactAttachment::where('id', $attachment)
+            ->where('contact_id', $contact->id)
+            ->firstOrFail();
+
+        Storage::disk('public')->delete($file->path);
+        $file->delete();
+
+        return back()->with('success', 'Attachment deleted.');
+    }
+
+    // ── Company Employees: create/update/remove from submitted rows ─
+    private function syncEmployees(Request $request, Contact $contact): void
+    {
+        $tenantId       = $this->tenantId();
+        $rows           = $request->input('employees', []);
+        $indexToEmployee = [];
+
+        foreach ($rows as $index => $row) {
+            $name        = trim($row['name'] ?? '');
+            $designation = trim($row['designation'] ?? '');
+            $emails      = array_values(array_filter(array_map('trim', $row['emails'] ?? [])));
+            $phones      = array_values(array_filter(array_map('trim', $row['phones'] ?? [])));
+            $files       = $request->file("employees.{$index}.attachments", []);
+
+            // Skip a blank template row (added client-side, left untouched)
+            if ($name === '' && $designation === '' && empty($emails) && empty($phones) && empty($files)) {
+                continue;
+            }
+
+            $employeeId = $row['id'] ?? null;
+            $employee   = $employeeId
+                ? ContactEmployee::where('id', $employeeId)->where('contact_id', $contact->id)->first()
+                : null;
+
+            $data = [
+                'tenant_id'   => $tenantId,
+                'contact_id'  => $contact->id,
+                'name'        => $name,
+                'designation' => $designation ?: null,
+                'emails'      => $emails,
+                'phones'      => $phones,
+            ];
+
+            if ($employee) {
+                $employee->update($data);
+            } else {
+                $employee = ContactEmployee::create($data);
+            }
+
+            $indexToEmployee[$index] = $employee;
+
+            foreach ($files as $file) {
+                $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
+                $path     = $file->storeAs("contacts/{$tenantId}/{$contact->id}/employees/{$employee->id}", $filename, 'public');
+
+                ContactEmployeeAttachment::create([
+                    'tenant_id'           => $tenantId,
+                    'contact_employee_id' => $employee->id,
+                    'uploaded_by'         => auth()->id(),
+                    'path'                => $path,
+                    'original_name'       => $file->getClientOriginalName(),
+                    'mime_type'           => $file->getClientMimeType(),
+                    'file_size'           => $file->getSize(),
+                ]);
+            }
+        }
+
+        foreach ($request->input('removed_employee_ids', []) as $removeId) {
+            ContactEmployee::where('id', $removeId)
+                ->where('contact_id', $contact->id)
+                ->first()
+                ?->delete();
+        }
+
+        // ── Primary contact: only one employee per company can be primary ──
+        $primaryIndex = $request->input('primary_employee_index');
+        if ($primaryIndex !== null && isset($indexToEmployee[$primaryIndex])) {
+            ContactEmployee::where('contact_id', $contact->id)->update(['is_primary' => false]);
+            $indexToEmployee[$primaryIndex]->update(['is_primary' => true]);
+        }
+    }
+
+    // ── Employee attachment: delete ─────────────────────────────────
+    public function destroyEmployeeAttachment(int|string $employee, int|string $attachment): RedirectResponse
+    {
+        $employee = ContactEmployee::where('id', $employee)
+            ->where('tenant_id', $this->tenantId())
+            ->firstOrFail();
+
+        $file = ContactEmployeeAttachment::where('id', $attachment)
+            ->where('contact_employee_id', $employee->id)
+            ->firstOrFail();
+
+        Storage::disk('public')->delete($file->path);
+        $file->delete();
+
+        return back()->with('success', 'Attachment deleted.');
     }
 
     // ── Destroy ───────────────────────────────────────────────────

@@ -15,7 +15,8 @@ class EmailService
     // Returns false if the tenant hasn't connected (or has an incomplete)
     // SMTP setup — caller can then fall back to the system mailer.
     // $attachments: array of ['content' => string, 'name' => string, 'mime' => string]
-    public static function send(int $tenantId, string $toEmail, string $toName, string $subject, string $html, array $attachments = []): bool
+    // $cc: array of ['email' => string, 'name' => string|null]
+    public static function send(int $tenantId, string $toEmail, string $toName, string $subject, string $html, array $attachments = [], array $cc = []): bool
     {
         $settings = EmailSetting::where('tenant_id', $tenantId)
             ->where('is_connected', true)
@@ -26,7 +27,7 @@ class EmailService
         }
 
         try {
-            static::dispatch($settings, $toEmail, $toName, $subject, $html, $attachments);
+            static::dispatch($settings, $toEmail, $toName, $subject, $html, $attachments, $cc);
             return true;
         } catch (\Exception $e) {
             Log::warning("Tenant email send failed: {$e->getMessage()}");
@@ -52,7 +53,8 @@ class EmailService
 
     // Public + throwing variant — used where the caller wants to handle/log the failure itself.
     // $attachments: array of ['content' => string, 'name' => string, 'mime' => string]
-    public static function dispatch(EmailSetting $settings, string $toEmail, string $toName, string $subject, string $html, array $attachments = []): void
+    // $cc: array of ['email' => string, 'name' => string|null]
+    public static function dispatch(EmailSetting $settings, string $toEmail, string $toName, string $subject, string $html, array $attachments = [], array $cc = []): void
     {
         $transport = Transport::fromDsn(static::dsn($settings));
         $mailer    = new Mailer($transport);
@@ -62,6 +64,10 @@ class EmailService
             ->to(new Address($toEmail, $toName))
             ->subject($subject)
             ->html($html);
+
+        foreach ($cc as $ccRecipient) {
+            $email->addCc(new Address($ccRecipient['email'], $ccRecipient['name'] ?? ''));
+        }
 
         foreach ($attachments as $attachment) {
             $email->attach($attachment['content'], $attachment['name'] ?? null, $attachment['mime'] ?? null);

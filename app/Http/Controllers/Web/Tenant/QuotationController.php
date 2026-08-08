@@ -9,11 +9,13 @@ use App\Models\Deal;
 use App\Models\Lead;
 use App\Models\Product;
 use App\Models\Quotation;
+use App\Services\EmailService;
 use App\Services\QuotationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\View\View;
 
 class QuotationController extends Controller
@@ -146,7 +148,7 @@ class QuotationController extends Controller
     public function show(int|string $id): View
     {
         $quotation = $this->findQuotation($id);
-        $quotation->load(['contact', 'lead', 'deal', 'createdBy', 'invoice']);
+        $quotation->load(['contact.employees', 'lead', 'deal', 'createdBy', 'invoice']);
 
         $tenant   = auth()->user()->tenant;
         $statuses = Quotation::statuses();
@@ -251,21 +253,67 @@ class QuotationController extends Controller
     }
 
     // ── Send via email ────────────────────────────────────────────
+    // To = contact's primary contact (primary employee's email, or the
+    // contact's own email if no primary employee is set). Cc = every
+    // other known email (other employees, contact's own email if unused).
     public function send(int|string $id): RedirectResponse
     {
         $quotation = $this->findQuotation($id);
-        $quotation->load('contact');
+        $quotation->load(['contact.employees', 'createdBy']);
 
-        if (!$quotation->contact?->email) {
+        $contact = $quotation->contact;
+        $toEmail = $contact?->primaryEmail();
+
+        if (!$toEmail) {
             return back()->with('error', 'Contact has no email address.');
         }
 
-        // TODO: Dispatch SendQuotationEmail job
-        // SendQuotationEmail::dispatch($quotation);
+        $toName = $contact->employees->firstWhere('is_primary', true)?->name ?: $contact->name;
+        $cc     = $contact->ccEmails();
 
-        $quotation->update(['status' => 'sent']);
+        $tenant  = auth()->user()->tenant;
+        $subject = "Quotation {$quotation->number} from {$tenant->name}";
+        $html    = "<p>Dear {$toName},</p>"
+            . "<p>Please find attached quotation <strong>{$quotation->number}</strong> for "
+            . "<strong>₹" . number_format($quotation->total, 2) . "</strong>.</p>"
+            . "<p>Thank you for your interest.</p><p>{$tenant->name}</p>";
 
-        return back()->with('success', "Quotation sent to {$quotation->contact->email}.");
+        $pdfContent = Pdf::loadView('tenant.quotations.pdf', compact('quotation', 'tenant'))
+            ->setPaper('a4', 'portrait')
+            ->output();
+
+        $attachments = [[
+            'content' => $pdfContent,
+            'name'    => "Quotation-{$quotation->number}.pdf",
+            'mime'    => 'application/pdf',
+        ]];
+
+        $sent = EmailService::send($quotation->tenant_id, $toEmail, $toName, $subject, $html, $attachments, $cc);
+
+        if (!$sent) {
+            try {
+                Mail::send([], [], function ($mail) use ($toEmail, $toName, $cc, $subject, $html, $pdfContent, $quotation) {
+                    $mail->to($toEmail, $toName)
+                         ->subject($subject)
+                         ->html($html)
+                         ->attachData($pdfContent, "Quotation-{$quotation->number}.pdf", ['mime' => 'application/pdf']);
+
+                    foreach ($cc as $ccRecipient) {
+                        $mail->cc($ccRecipient['email'], $ccRecipient['name'] ?? null);
+                    }
+                });
+            } catch (\Exception $e) {
+                return back()->with('error', "Could not send email: {$e->getMessage()}");
+            }
+        }
+
+        if ($quotation->status === 'draft') {
+            $quotation->update(['status' => 'sent']);
+        }
+
+        $ccNote = count($cc) ? ' (cc: ' . count($cc) . ')' : '';
+
+        return back()->with('success', "Quotation sent to {$toEmail}{$ccNote}.");
     }
 
     // ── Convert to Invoice ────────────────────────────────────────

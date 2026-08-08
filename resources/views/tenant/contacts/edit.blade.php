@@ -109,6 +109,7 @@
             {{-- Main Form --}}
             <form method="POST"
                   action="{{ route('tenant.contacts.update', ['tenant'=>$tenantSlug,'id'=>$contact->id]) }}"
+                  enctype="multipart/form-data"
                   novalidate id="contactForm">
             @csrf
             @method('PUT')
@@ -126,6 +127,9 @@
                 {{-- Dynamic Sections --}}
                 @include('tenant.contacts._form_fields', ['model' => $contact])
 
+                @include('tenant.contacts._employees_section')
+                @include('tenant.contacts._attachments_section')
+
                 {{-- Footer --}}
                 <div class="cf-footer">
                     <div class="cf-footer-note">Fields marked <strong>*</strong> are required</div>
@@ -140,6 +144,24 @@
                 </div>
             </div>
             </form>
+
+            {{-- Standalone delete forms for existing attachments (kept outside the main form to avoid nesting) --}}
+            @foreach($contact->attachments as $att)
+            <form id="del-contact-attach-{{ $att->id }}" method="POST"
+                  action="{{ route('tenant.contacts.attachments.destroy', ['tenant'=>$tenantSlug,'id'=>$contact->id,'attachment'=>$att->id]) }}"
+                  onsubmit="return confirm('Delete this attachment?')" style="display:none">
+                @csrf @method('DELETE')
+            </form>
+            @endforeach
+            @foreach($contact->employees as $employee)
+                @foreach($employee->attachments as $att)
+                <form id="del-emp-attach-{{ $att->id }}" method="POST"
+                      action="{{ route('tenant.contacts.employees.attachments.destroy', ['tenant'=>$tenantSlug,'employee'=>$employee->id,'attachment'=>$att->id]) }}"
+                      onsubmit="return confirm('Delete this file?')" style="display:none">
+                    @csrf @method('DELETE')
+                </form>
+                @endforeach
+            @endforeach
 
             {{-- Sidebar --}}
             <div class="cf-sidebar">
@@ -201,6 +223,7 @@
             </div>
         </div>
 </div>
+@include('tenant.contacts._employees_assets')
 @endsection
 
 @push('scripts')

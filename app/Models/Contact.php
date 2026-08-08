@@ -77,6 +77,16 @@ class Contact extends Model
         return $this->hasMany(WhatsappLog::class)->latest();
     }
 
+    public function employees(): HasMany
+    {
+        return $this->hasMany(ContactEmployee::class)->orderByDesc('is_primary')->orderBy('id');
+    }
+
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(ContactAttachment::class);
+    }
+
     // ── Scopes ────────────────────────────────────────────────────
 
     public function scopeSearch($query, string $search)
@@ -90,6 +100,46 @@ class Contact extends Model
     }
 
     // ── Helpers ───────────────────────────────────────────────────
+
+    // Primary recipient for outgoing emails: the primary employee's first
+    // email if one is set, otherwise falls back to the contact's own email.
+    public function primaryEmail(): ?string
+    {
+        $primaryEmployee = $this->employees->firstWhere('is_primary', true);
+        $primaryEmails   = $primaryEmployee ? array_values(array_filter($primaryEmployee->emails ?? [])) : [];
+
+        return $primaryEmails[0] ?? $this->email;
+    }
+
+    // Every other known email (contact's own + all employees' emails) minus
+    // whichever one is being used as the primary — for CC'ing on outgoing emails.
+    public function ccEmails(): array
+    {
+        $primary = $this->primaryEmail();
+        $pool    = [];
+
+        if ($this->email && $this->email !== $primary) {
+            $pool[] = ['email' => $this->email, 'name' => $this->name];
+        }
+
+        foreach ($this->employees as $employee) {
+            foreach ($employee->emails ?? [] as $email) {
+                if (!$email || $email === $primary) continue;
+                $pool[] = ['email' => $email, 'name' => $employee->name];
+            }
+        }
+
+        $seen   = [];
+        $result = [];
+        foreach ($pool as $entry) {
+            $key = strtolower($entry['email']);
+            if (isset($seen[$key])) continue;
+            $seen[$key] = true;
+            $result[]   = $entry;
+        }
+
+        return $result;
+    }
 
     public function getFullAddressAttribute(): string
     {

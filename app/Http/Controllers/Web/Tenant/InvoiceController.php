@@ -157,7 +157,7 @@ class InvoiceController extends Controller
     public function show(int|string $id): View
     {
         $invoice = $this->findInvoice($id);
-        $invoice->load(['contact', 'quotation', 'createdBy', 'payments.recordedBy']);
+        $invoice->load(['contact.employees', 'quotation', 'createdBy', 'payments.recordedBy']);
 
         $tenant   = auth()->user()->tenant;
         $statuses = Invoice::statuses();
@@ -319,18 +319,25 @@ class InvoiceController extends Controller
     }
 
     // ── Send via email ────────────────────────────────────────────
+    // To = contact's primary contact (primary employee's email, or the
+    // contact's own email if no primary employee is set). Cc = every
+    // other known email (other employees, contact's own email if unused).
     public function send(int|string $id): RedirectResponse
     {
         $invoice = $this->findInvoice($id);
-        $invoice->load('contact');
+        $invoice->load(['contact.employees']);
 
-        if (!$invoice->contact?->email) {
+        $contact = $invoice->contact;
+        $email   = $contact?->primaryEmail();
+
+        if (!$email) {
             return back()->with('error', 'Contact has no email address.');
         }
 
+        $name = $contact->employees->firstWhere('is_primary', true)?->name ?: $contact->name;
+        $cc   = $contact->ccEmails();
+
         $tenant  = auth()->user()->tenant;
-        $email   = $invoice->contact->email;
-        $name    = $invoice->contact->name;
         $subject = "Invoice {$invoice->number} from {$tenant->name}";
         $html    = "<p>Dear {$name},</p>"
             . "<p>Please find attached invoice <strong>{$invoice->number}</strong> for "
@@ -345,15 +352,19 @@ class InvoiceController extends Controller
             'mime'    => 'application/pdf',
         ]];
 
-        $sent = EmailService::send($invoice->tenant_id, $email, $name, $subject, $html, $attachments);
+        $sent = EmailService::send($invoice->tenant_id, $email, $name, $subject, $html, $attachments, $cc);
 
         if (!$sent) {
             try {
-                Mail::send([], [], function ($mail) use ($email, $name, $subject, $html, $pdfContent, $invoice) {
+                Mail::send([], [], function ($mail) use ($email, $name, $cc, $subject, $html, $pdfContent, $invoice) {
                     $mail->to($email, $name)
                          ->subject($subject)
                          ->html($html)
                          ->attachData($pdfContent, "Invoice-{$invoice->number}.pdf", ['mime' => 'application/pdf']);
+
+                    foreach ($cc as $ccRecipient) {
+                        $mail->cc($ccRecipient['email'], $ccRecipient['name'] ?? null);
+                    }
                 });
             } catch (\Exception $e) {
                 return back()->with('error', "Could not send email: {$e->getMessage()}");
@@ -364,7 +375,9 @@ class InvoiceController extends Controller
             $invoice->update(['status' => 'sent']);
         }
 
-        return back()->with('success', "Invoice sent to {$email}.");
+        $ccNote = count($cc) ? ' (cc: ' . count($cc) . ')' : '';
+
+        return back()->with('success', "Invoice sent to {$email}{$ccNote}.");
     }
 
     // ── Record payment(s) — one or more line items in a single submit ─

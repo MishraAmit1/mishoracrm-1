@@ -26,6 +26,25 @@ class ContactRequest extends FormRequest
             'gst_number'  => ['nullable', 'string', 'max:20'],
             'notes'       => ['nullable', 'string', 'max:5000'],
             'lead_id'     => ['nullable', 'exists:leads,id'],
+
+            // ── Contact-level attachments (visiting card / documents) ──
+            'attachments'   => ['nullable', 'array', 'max:5'],
+            'attachments.*' => ['file', 'max:10240', 'mimes:jpg,jpeg,png,webp,pdf,doc,docx,xls,xlsx'],
+
+            // ── Company employees ────────────────────────────────────
+            'employees'                  => ['nullable', 'array'],
+            'employees.*.id'             => ['nullable', 'integer'],
+            'employees.*.name'           => ['nullable', 'string', 'max:255'],
+            'employees.*.designation'    => ['nullable', 'string', 'max:255'],
+            'employees.*.emails'         => ['nullable', 'array'],
+            'employees.*.emails.*'       => ['nullable', 'email', 'max:255'],
+            'employees.*.phones'         => ['nullable', 'array'],
+            'employees.*.phones.*'       => ['nullable', 'string', 'max:20'],
+            'employees.*.attachments'    => ['nullable', 'array', 'max:5'],
+            'employees.*.attachments.*'  => ['file', 'max:10240', 'mimes:jpg,jpeg,png,webp,pdf,doc,docx,xls,xlsx'],
+            'removed_employee_ids'       => ['nullable', 'array'],
+            'removed_employee_ids.*'     => ['integer'],
+            'primary_employee_index'     => ['nullable', 'string'],
         ];
     }
 
