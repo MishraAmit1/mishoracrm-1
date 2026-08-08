@@ -13,24 +13,12 @@
     </div>
 
     <div class="cf-field span-full">
-        <input type="file" name="attachments[]" class="cf-input" multiple
-            accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx,.xls,.xlsx">
-        <span class="cf-field-hint">Images, PDFs, Word or Excel — up to 10 MB each, max 5 files</span>
+        @include('tenant.contacts._file_dropzone', [
+            'name'             => 'attachments[]',
+            'existing'         => $existingAttachments,
+            'deleteFormPrefix' => 'del-contact-attach',
+        ])
         @error('attachments') <span class="cf-field-error">{{ $message }}</span> @enderror
         @error('attachments.*') <span class="cf-field-error">{{ $message }}</span> @enderror
-
-        @if($existingAttachments->isNotEmpty())
-        <div class="emp-attach-list" style="margin-top:10px">
-            @foreach($existingAttachments as $att)
-            <div class="emp-attach-item">
-                <a href="{{ $att->url }}" target="_blank" rel="noopener">
-                    <i class="ti ti-paperclip" style="font-size:12px" aria-hidden="true"></i>
-                    {{ $att->original_name }}
-                </a>
-                <button type="submit" form="del-contact-attach-{{ $att->id }}" class="attach-del" title="Delete">&times;</button>
-            </div>
-            @endforeach
-        </div>
-        @endif
     </div>
 </div>

@@ -46,22 +46,57 @@
 }
 .multi-add-btn:hover { text-decoration: underline; }
 
-.emp-attach-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
-.emp-attach-item {
-    display: flex; align-items: center; justify-content: space-between; gap: 8px;
-    padding: 7px 10px; background: var(--bg-surface); border: 1px solid var(--border-subtle);
-    border-radius: 7px; font-size: 12.5px;
+/* ── File dropzone ── */
+.dz { display: flex; flex-direction: column; gap: 10px; }
+.dz-input {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
 }
-.emp-attach-item a {
-    color: var(--text-100); text-decoration: none; display: flex; align-items: center; gap: 6px;
+.dz-drop {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 5px; text-align: center; padding: 24px 18px; border-radius: 12px;
+    border: 1.5px dashed var(--border-default); background: var(--bg-elevated);
+    cursor: pointer; transition: border-color .15s, background .15s;
+}
+.dz-drop:hover { border-color: var(--accent, #185FA5); background: var(--bg-surface); }
+.dz.dragover .dz-drop { border-color: var(--accent, #185FA5); background: var(--accent-dim, #E6F1FB); }
+.dz-icon {
+    width: 36px; height: 36px; border-radius: 10px; background: #E6F1FB; color: #185FA5;
+    display: flex; align-items: center; justify-content: center; font-size: 17px; margin-bottom: 2px;
+}
+.dz-text { font-size: 12.5px; color: var(--text-200); font-weight: 500; }
+.dz-text strong { color: var(--accent, #185FA5); font-weight: 600; }
+.dz-hint { font-size: 11px; color: var(--text-400); }
+
+.dz-preview, .dz-existing { display: flex; flex-direction: column; gap: 7px; }
+.dz-existing { padding-top: 9px; border-top: 1px dashed var(--border-subtle); }
+.dz-preview-label, .dz-existing-label {
+    font-size: 10.5px; font-weight: 600; color: var(--text-400);
+    text-transform: uppercase; letter-spacing: .5px;
+}
+.dz-item {
+    display: flex; align-items: center; gap: 10px; padding: 7px 9px;
+    background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 9px;
+    animation: dz-item-in .15s ease;
+}
+@keyframes dz-item-in { from { opacity:0; transform:translateY(-3px); } to { opacity:1; transform:translateY(0); } }
+.dz-item-icon {
+    width: 32px; height: 32px; border-radius: 7px; background: var(--bg-elevated); color: var(--text-300);
+    display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; overflow: hidden;
+}
+.dz-item-icon.dz-item-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dz-item-meta { flex: 1; min-width: 0; }
+.dz-item-name {
+    font-size: 12.5px; font-weight: 500; color: var(--text-100); text-decoration: none; display: block;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.emp-attach-item a:hover { color: var(--accent, #185FA5); }
-.attach-del {
-    background: transparent; border: none; color: var(--text-300); cursor: pointer;
-    font-size: 15px; line-height: 1; flex-shrink: 0; padding: 2px 4px;
+a.dz-item-name:hover { color: var(--accent, #185FA5); }
+.dz-item-size { font-size: 11px; color: var(--text-400); margin-top: 1px; }
+.dz-item-remove {
+    background: transparent; border: none; color: var(--text-300); cursor: pointer; font-size: 16px;
+    line-height: 1; flex-shrink: 0; padding: 4px 6px; border-radius: 6px;
 }
-.attach-del:hover { color: #A32D2D; }
+.dz-item-remove:hover { background: #FCEBEB; color: #A32D2D; }
 </style>
 @endpush
 
@@ -93,7 +128,112 @@
     }
     companyInput?.addEventListener('input', syncEmployeesVisibility);
 
+    // ── File dropzone helpers ───────────────────────────────────────
+    const EXT_ICON = {
+        pdf: 'ti-file-type-pdf',
+        doc: 'ti-file-type-doc', docx: 'ti-file-type-doc',
+        xls: 'ti-file-type-xls', xlsx: 'ti-file-type-xls',
+    };
+    const IMG_EXT = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+
+    function humanFileSize(bytes){
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / 1048576).toFixed(2) + ' MB';
+    }
+
+    function renderDropzonePreview(dz){
+        const input   = dz.querySelector('.dz-input');
+        const preview = dz.querySelector('[data-dropzone-preview]');
+        if (!input || !preview) return;
+
+        const files = Array.from(input.files || []);
+        if (!files.length) { preview.innerHTML = ''; return; }
+
+        let html = `<div class="dz-preview-label">Selected (${files.length})</div>`;
+        files.forEach((file, i) => {
+            const ext   = (file.name.split('.').pop() || '').toLowerCase();
+            const isImg = IMG_EXT.includes(ext);
+            const icon  = EXT_ICON[ext] || 'ti-file';
+            html += `
+                <div class="dz-item">
+                    <div class="dz-item-icon ${isImg ? 'dz-item-thumb' : ''}">
+                        ${isImg ? `<img src="${URL.createObjectURL(file)}" alt="">` : `<i class="ti ${icon}" aria-hidden="true"></i>`}
+                    </div>
+                    <div class="dz-item-meta">
+                        <span class="dz-item-name">${file.name}</span>
+                        <div class="dz-item-size">${humanFileSize(file.size)}</div>
+                    </div>
+                    <button type="button" class="dz-item-remove" data-dz-remove="${i}" title="Remove">&times;</button>
+                </div>`;
+        });
+        preview.innerHTML = html;
+    }
+
+    function removeFileAt(input, index){
+        const dt = new DataTransfer();
+        Array.from(input.files).forEach((file, i) => { if (i !== index) dt.items.add(file); });
+        input.files = dt.files;
+    }
+
+    function addFilesToInput(input, fileList){
+        const dt = new DataTransfer();
+        Array.from(input.files || []).forEach(f => dt.items.add(f));
+        Array.from(fileList).forEach(f => dt.items.add(f));
+        input.files = dt.files;
+    }
+
+    document.addEventListener('change', function(e){
+        if (e.target.matches('.dz-input')) {
+            renderDropzonePreview(e.target.closest('[data-dropzone]'));
+        }
+    });
+
+    document.addEventListener('dragover', function(e){
+        const dz = e.target.closest?.('[data-dropzone]');
+        if (!dz) return;
+        e.preventDefault();
+        dz.classList.add('dragover');
+    });
+
+    document.addEventListener('dragleave', function(e){
+        const dz = e.target.closest?.('[data-dropzone]');
+        if (!dz) return;
+        dz.classList.remove('dragover');
+    });
+
+    document.addEventListener('drop', function(e){
+        const dz = e.target.closest?.('[data-dropzone]');
+        if (!dz) return;
+        e.preventDefault();
+        dz.classList.remove('dragover');
+        const input = dz.querySelector('.dz-input');
+        if (input && e.dataTransfer?.files?.length) {
+            addFilesToInput(input, e.dataTransfer.files);
+            renderDropzonePreview(dz);
+        }
+    });
+
     document.addEventListener('click', function(e){
+
+        // Open file picker
+        const trigger = e.target.closest('[data-dropzone-trigger]');
+        if (trigger) {
+            trigger.closest('[data-dropzone]')?.querySelector('.dz-input')?.click();
+            return;
+        }
+
+        // Remove a pending (not-yet-uploaded) file
+        const dzRemove = e.target.closest('[data-dz-remove]');
+        if (dzRemove) {
+            const dz    = dzRemove.closest('[data-dropzone]');
+            const input = dz?.querySelector('.dz-input');
+            if (input) {
+                removeFileAt(input, parseInt(dzRemove.getAttribute('data-dz-remove'), 10));
+                renderDropzonePreview(dz);
+            }
+            return;
+        }
 
         // Remove an employee row
         const removeBtn = e.target.closest('[data-remove-employee]');
