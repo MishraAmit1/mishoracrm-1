@@ -550,7 +550,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
         });
 
         // Reports
-        Route::prefix('reports')->name('reports.')->group(function () {
+        Route::prefix('reports')->name('reports.')->middleware('permission:reports.view_basic|reports.view_all')->group(function () {
             Route::get('/overview', [Tenant\ReportController::class, 'overview'])->name('overview');
             Route::get('/deals',    [Tenant\ReportController::class, 'deals'])->name('deals');
             Route::get('/deal-quotations', [Tenant\ReportController::class, 'dealQuotations'])->name('deal_quotations');

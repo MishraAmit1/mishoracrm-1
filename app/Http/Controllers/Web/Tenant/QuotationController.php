@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web\Tenant;
 
+use App\Helpers\ViewScope;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\QuotationRequest;
 use App\Models\Contact;
@@ -34,6 +35,8 @@ class QuotationController extends Controller
         $query = Quotation::with(['contact', 'lead', 'createdBy'])
             ->latest();
 
+        $query = ViewScope::apply($query, 'quotations', auth()->user(), 'created_by');
+
         if ($request->filled('status')) {
             $query->status($request->status);
         }
@@ -56,12 +59,13 @@ class QuotationController extends Controller
         $quotations = $query->paginate(15)->withQueryString();
 
         // Summary counts
+        $countBase = fn() => ViewScope::apply(Quotation::query(), 'quotations', auth()->user(), 'created_by');
         $counts = [
-            'all'      => Quotation::count(),
-            'draft'    => Quotation::where('status', 'draft')->count(),
-            'sent'     => Quotation::where('status', 'sent')->count(),
-            'accepted' => Quotation::where('status', 'accepted')->count(),
-            'rejected' => Quotation::where('status', 'rejected')->count(),
+            'all'      => $countBase()->count(),
+            'draft'    => $countBase()->where('status', 'draft')->count(),
+            'sent'     => $countBase()->where('status', 'sent')->count(),
+            'accepted' => $countBase()->where('status', 'accepted')->count(),
+            'rejected' => $countBase()->where('status', 'rejected')->count(),
         ];
 
         $statuses = Quotation::statuses();
@@ -148,6 +152,7 @@ class QuotationController extends Controller
     public function show(int|string $id): View
     {
         $quotation = $this->findQuotation($id);
+        $this->authorize('view', $quotation);
         $quotation->load(['contact.employees', 'lead', 'deal', 'createdBy', 'invoice']);
 
         $tenant   = auth()->user()->tenant;
@@ -160,6 +165,7 @@ class QuotationController extends Controller
     public function edit(int|string $id)
     {
         $quotation = $this->findQuotation($id);
+        $this->authorize('modify', $quotation);
 
         if ($quotation->status === 'accepted') {
             return redirect()
@@ -187,6 +193,7 @@ class QuotationController extends Controller
     public function update(QuotationRequest $request, int|string $id): RedirectResponse
     {
         $quotation = $this->findQuotation($id);
+        $this->authorize('modify', $quotation);
         $data      = $request->validated();
 
         $totals = Quotation::calculateTotals(
@@ -212,6 +219,7 @@ class QuotationController extends Controller
     public function destroy(int|string $id): RedirectResponse
     {
         $quotation = $this->findQuotation($id);
+        $this->authorize('delete', $quotation);
         $number    = $quotation->number;
         $quotation->delete();
 
@@ -228,6 +236,7 @@ class QuotationController extends Controller
         ]);
 
         $quotation = $this->findQuotation($id);
+        $this->authorize('modify', $quotation);
         $quotation->update(['status' => $request->status]);
 
         $invoice = $quotation->status === 'accepted' ? QuotationService::accept($quotation) : null;
@@ -243,6 +252,7 @@ class QuotationController extends Controller
     public function pdf(int|string $id)
     {
         $quotation = $this->findQuotation($id);
+        $this->authorize('view', $quotation);
         $quotation->load(['contact', 'createdBy']);
         $tenant = auth()->user()->tenant;
 
@@ -259,6 +269,7 @@ class QuotationController extends Controller
     public function send(int|string $id): RedirectResponse
     {
         $quotation = $this->findQuotation($id);
+        $this->authorize('view', $quotation);
         $quotation->load(['contact.employees', 'createdBy']);
 
         $contact = $quotation->contact;
@@ -320,6 +331,7 @@ class QuotationController extends Controller
     public function convertToInvoice(int|string $id): RedirectResponse
     {
         $quotation = $this->findQuotation($id);
+        $this->authorize('view', $quotation);
 
         if ($quotation->invoice) {
             return redirect()
@@ -341,6 +353,7 @@ class QuotationController extends Controller
     public function quotationData(string $tenant, int|string $quotation): JsonResponse
     {
         $quotation = $this->findQuotation($quotation);
+        $this->authorize('view', $quotation);
 
         $quotation->load('contact');
 

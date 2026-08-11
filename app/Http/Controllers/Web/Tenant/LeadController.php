@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web\Tenant;
 
+use App\Helpers\ViewScope;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LeadRequest;
 use App\Models\Contact;
@@ -55,13 +56,9 @@ class LeadController extends Controller
     }
 
     // ── Shared filtered query (index page + export reuse this) ────
-    public static function filteredQuery(int $tenantId, array $filters, bool $isAdmin, ?int $currentUserId): \Illuminate\Database\Eloquent\Builder
+    public static function filteredQuery(int $tenantId, array $filters, User $user): \Illuminate\Database\Eloquent\Builder
     {
-        $query = Lead::where('tenant_id', $tenantId);
-
-        if (!$isAdmin && $currentUserId) {
-            $query->where('assigned_to', $currentUserId);
-        }
+        $query = ViewScope::apply(Lead::where('tenant_id', $tenantId), 'leads', $user);
 
         if (!empty($filters['search']))      $query->search($filters['search']);
         if (!empty($filters['status']))      $query->where('status',      $filters['status']);
@@ -78,9 +75,9 @@ class LeadController extends Controller
     public function index(Request $request): View
     {
         $user    = auth()->user();
-        $isAdmin = $user->user_type === 'tenant_admin';
+        $isAdmin = ViewScope::canViewAll('leads', $user);
 
-        $query = self::filteredQuery($this->tenantId(), $request->all(), $isAdmin, $user->id)
+        $query = self::filteredQuery($this->tenantId(), $request->all(), $user)
             ->with(['assignedTo'])
             ->withCount(['followups']);
 
@@ -91,8 +88,7 @@ class LeadController extends Controller
 
         $leads = $query->paginate(20)->withQueryString();
 
-        $base = fn() => Lead::where('tenant_id', $this->tenantId())
-            ->when(!$isAdmin, fn($q) => $q->where('assigned_to', $user->id));
+        $base = fn() => ViewScope::apply(Lead::where('tenant_id', $this->tenantId()), 'leads', $user);
 
         $counts = [
             'all'       => $base()->count(),
@@ -157,6 +153,8 @@ class LeadController extends Controller
     public function show(int|string $id): View
     {
         $lead = $this->findLead($id);
+        $this->authorize('view', $lead);
+
         $lead->load([
             'assignedTo',
             'createdBy',
@@ -176,7 +174,7 @@ class LeadController extends Controller
             'priorities'   => Lead::priorities(),
             'customFields' => $this->getCustomFields(),
             'customValues' => CustomFieldValue::getByKeyForModel($lead),
-            'isAdmin'      => auth()->user()->user_type === 'tenant_admin',
+            'isAdmin'      => ViewScope::canViewAll('leads', auth()->user()),
             'timeline'     => \App\Services\ActivityTimelineService::forLead($lead),
         ]);
     }
@@ -185,6 +183,7 @@ class LeadController extends Controller
     public function edit(int|string $id): View
     {
         $lead = $this->findLead($id);
+        $this->authorize('modify', $lead);
 
         return view('tenant.leads.edit', [
             'lead'         => $lead,
@@ -200,7 +199,9 @@ class LeadController extends Controller
     // ── Update ────────────────────────────────────────────────────
     public function update(LeadRequest $request, int|string $id): RedirectResponse
     {
-        $lead     = $this->findLead($id);
+        $lead = $this->findLead($id);
+        $this->authorize('modify', $lead);
+
         $leadData = $request->leadData();
 
         $leadData['assigned_to'] = $this->validateAssignee($leadData['assigned_to'] ?? null);
@@ -232,6 +233,7 @@ class LeadController extends Controller
     public function destroy(int|string $id): RedirectResponse
     {
         $lead = $this->findLead($id);
+        $this->authorize('modify', $lead);
 
         if ($lead->isConverted()) {
             return back()->with('error', 'Converted lead cannot be deleted.');

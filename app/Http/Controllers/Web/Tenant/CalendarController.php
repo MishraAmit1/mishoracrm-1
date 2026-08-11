@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web\Tenant;
 
+use App\Helpers\ViewScope;
 use App\Http\Controllers\Controller;
 use App\Models\Deal;
 use App\Models\Followup;
@@ -19,7 +20,11 @@ class CalendarController extends Controller
     {
         $user = auth()->user();
 
-        $staffList = $user->user_type === 'tenant_admin'
+        $showTeamFilter = ViewScope::canViewAll('followups', $user)
+            || ViewScope::canViewAll('tasks', $user)
+            || ViewScope::canViewAll('deals', $user);
+
+        $staffList = $showTeamFilter
             ? User::where('tenant_id', $user->tenant_id)->where('is_active', true)->orderBy('name')->get(['id', 'name'])
             : collect();
 
@@ -33,35 +38,45 @@ class CalendarController extends Controller
     {
         $user     = auth()->user();
         $tenantId = $user->tenant_id;
-        $isAdmin  = $user->user_type === 'tenant_admin';
 
-        // Non-admins always see only their own items. Admins see everyone by
-        // default, but can narrow to one staff member via ?staff_id= (team view).
-        $filterUserId = $isAdmin
-            ? ($request->filled('staff_id') ? (int) $request->staff_id : null)
-            : $user->id;
+        // Each module's own "view_all" permission decides whether this user
+        // sees everyone's items or only their own — replaces the old
+        // hardcoded tenant_admin check. A view_all holder can further narrow
+        // to one staff member via ?staff_id= (team view).
+        $canViewAllFollowups = ViewScope::canViewAll('followups', $user);
+        $canViewAllTasks     = ViewScope::canViewAll('tasks', $user);
+        $canViewAllDeals     = ViewScope::canViewAll('deals', $user);
+        // Reminders are personal notes with no dedicated permission — keep
+        // them tied to tenant_admin the way they always were.
+        $remindersViewAll    = $user->user_type === 'tenant_admin' || $user->user_type === 'superadmin';
+
+        $staffId = $request->filled('staff_id') ? (int) $request->staff_id : null;
 
         $start = Carbon::parse($request->query('start'))->startOfDay();
         $end   = Carbon::parse($request->query('end'))->endOfDay();
 
         $followups = Followup::where('tenant_id', $tenantId)
-            ->when($filterUserId, fn($q) => $q->where('assigned_to', $filterUserId))
+            ->when(!$canViewAllFollowups, fn($q) => $q->where('assigned_to', $user->id))
+            ->when($canViewAllFollowups && $staffId, fn($q) => $q->where('assigned_to', $staffId))
             ->whereBetween('scheduled_at', [$start, $end])
             ->get();
 
         // Task has no BelongsToTenant scope — tenant_id must be filtered explicitly.
         $tasks = Task::where('tenant_id', $tenantId)
-            ->when($filterUserId, fn($q) => $q->where('assigned_to', $filterUserId))
+            ->when(!$canViewAllTasks, fn($q) => $q->where('assigned_to', $user->id))
+            ->when($canViewAllTasks && $staffId, fn($q) => $q->where('assigned_to', $staffId))
             ->whereBetween('due_at', [$start, $end])
             ->get();
 
         $reminders = Reminder::where('tenant_id', $tenantId)
-            ->when($filterUserId, fn($q) => $q->where('user_id', $filterUserId))
+            ->when(!$remindersViewAll, fn($q) => $q->where('user_id', $user->id))
+            ->when($remindersViewAll && $staffId, fn($q) => $q->where('user_id', $staffId))
             ->whereBetween('remind_at', [$start, $end])
             ->get();
 
         $deals = Deal::where('tenant_id', $tenantId)
-            ->when($filterUserId, fn($q) => $q->where('assigned_to', $filterUserId))
+            ->when(!$canViewAllDeals, fn($q) => $q->where('assigned_to', $user->id))
+            ->when($canViewAllDeals && $staffId, fn($q) => $q->where('assigned_to', $staffId))
             ->whereNotNull('expected_close_date')
             ->whereBetween('expected_close_date', [$start, $end])
             ->get();
@@ -130,20 +145,25 @@ class CalendarController extends Controller
 
         $user     = auth()->user();
         $tenantId = $user->tenant_id;
-        $isAdmin  = $user->user_type === 'tenant_admin';
         $newStart = Carbon::parse($request->start);
+
+        // Rescheduling is a write action — gate it on edit_all/edit_own,
+        // not the view_all/view_own permissions used for the calendar feed.
+        $canEditAllFollowups = $user->user_type === 'superadmin' || $user->can('followups.edit_all');
+        $canEditAllTasks     = $user->user_type === 'superadmin' || $user->can('tasks.edit_all');
+        $remindersIsAdmin    = $user->user_type === 'tenant_admin' || $user->user_type === 'superadmin';
 
         $updated = match ($request->type) {
             'followup' => Followup::where('tenant_id', $tenantId)
-                ->when(!$isAdmin, fn($q) => $q->where('assigned_to', $user->id))
+                ->when(!$canEditAllFollowups, fn($q) => $q->where('assigned_to', $user->id))
                 ->where('id', $request->id)
                 ->update(['scheduled_at' => $newStart]),
             'task' => Task::where('tenant_id', $tenantId)
-                ->when(!$isAdmin, fn($q) => $q->where('assigned_to', $user->id))
+                ->when(!$canEditAllTasks, fn($q) => $q->where('assigned_to', $user->id))
                 ->where('id', $request->id)
                 ->update(['due_at' => $newStart]),
             'reminder' => Reminder::where('tenant_id', $tenantId)
-                ->when(!$isAdmin, fn($q) => $q->where('user_id', $user->id))
+                ->when(!$remindersIsAdmin, fn($q) => $q->where('user_id', $user->id))
                 ->where('id', $request->id)
                 ->update(['remind_at' => $newStart]),
         };

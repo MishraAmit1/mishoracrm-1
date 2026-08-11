@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Http\Controllers\Web\Tenant\LeadController;
+use App\Models\User;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -15,13 +16,12 @@ class LeadsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSiz
     public function __construct(
         private int $tenantId,
         private array $filters,
-        private bool $isAdmin,
-        private ?int $currentUserId,
+        private User $user,
     ) {}
 
     public function query()
     {
-        return LeadController::filteredQuery($this->tenantId, $this->filters, $this->isAdmin, $this->currentUserId)
+        return LeadController::filteredQuery($this->tenantId, $this->filters, $this->user)
             ->with('assignedTo')
             ->orderByDesc('created_at');
     }

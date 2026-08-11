@@ -9,7 +9,15 @@ class LeadPolicy
 {
     public function view(User $user, Lead $lead): bool
     {
-        return $user->tenant_id === $lead->tenant_id;
+        if ($user->tenant_id !== $lead->tenant_id) {
+            return false;
+        }
+
+        if ($user->user_type === 'superadmin' || $user->can('leads.view_all')) {
+            return true;
+        }
+
+        return $user->can('leads.view_own') && $lead->assigned_to === $user->id;
     }
 
     public function modify(User $user, Lead $lead): bool
@@ -18,7 +26,11 @@ class LeadPolicy
             return false;
         }
 
-        return $user->user_type === 'tenant_admin' || $lead->assigned_to === $user->id;
+        if ($user->user_type === 'superadmin' || $user->can('leads.edit_all')) {
+            return true;
+        }
+
+        return $user->can('leads.edit_own') && $lead->assigned_to === $user->id;
     }
 
     public function create(User $user): bool

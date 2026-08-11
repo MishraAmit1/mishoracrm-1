@@ -20,7 +20,7 @@ class DashboardController extends Controller
         $user   = auth()->user();
         $userId = $user->id;
 
-        if ($user->user_type === 'staff') {
+        if ($user->user_type !== 'superadmin' && !$user->can('reports.view_all')) {
             return $this->staffDashboard($request, $user);
         }
 

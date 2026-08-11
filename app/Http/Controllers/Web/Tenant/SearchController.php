@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web\Tenant;
 
+use App\Helpers\ViewScope;
 use App\Http\Controllers\Controller;
 use App\Models\Contact;
 use App\Models\Deal;
@@ -19,28 +20,24 @@ class SearchController extends Controller
 
         $user     = auth()->user();
         $tenantId = $user->tenant_id;
-        $isAdmin  = $user->user_type === 'tenant_admin';
 
         $leads = $contacts = $deals = collect();
 
         if ($q !== '') {
-            // Same row-visibility rule as LeadController::index() — non-admins
-            // only see their own assigned leads, here too.
-            $leads = Lead::where('tenant_id', $tenantId)
-                ->when(!$isAdmin, fn($query) => $query->where('assigned_to', $user->id))
+            $leads = ViewScope::apply(Lead::where('tenant_id', $tenantId), 'leads', $user)
                 ->search($q)
                 ->limit(10)
                 ->get();
 
             // Contacts have no assigned_to restriction anywhere in this app —
-            // matches ContactController::index().
+            // matches ContactController::index() (Contacts deliberately excluded
+            // from this permission scoping pass — see ViewScope helper).
             $contacts = Contact::where('tenant_id', $tenantId)
                 ->search($q)
                 ->limit(10)
                 ->get();
 
-            // Deals have no forced restriction either — matches DealController::index().
-            $deals = Deal::where('tenant_id', $tenantId)
+            $deals = ViewScope::apply(Deal::where('tenant_id', $tenantId), 'deals', $user)
                 ->search($q)
                 ->limit(10)
                 ->get();

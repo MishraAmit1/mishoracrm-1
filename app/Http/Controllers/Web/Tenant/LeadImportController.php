@@ -114,11 +114,8 @@ class LeadImportController extends Controller
     // ── Export (respects current index filters) ─────────────────────
     public function export(Request $request)
     {
-        $user    = auth()->user();
-        $isAdmin = $user->user_type === 'tenant_admin';
-
         return Excel::download(
-            new LeadsExport($this->tenantId(), $request->query(), $isAdmin, $user->id),
+            new LeadsExport($this->tenantId(), $request->query(), auth()->user()),
             'leads_export_' . now()->format('Y-m-d_His') . '.xlsx'
         );
     }

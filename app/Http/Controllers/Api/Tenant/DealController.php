@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Tenant;
 
+use App\Helpers\ViewScope;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DealRequest;
 use App\Http\Resources\DealResource;
@@ -38,6 +39,8 @@ class DealController extends Controller
         $query = Deal::with(['contact', 'assignedTo'])
             ->withCount(['tasks', 'followups']);
 
+        $query = ViewScope::apply($query, 'deals', $request->user());
+
         if ($request->filled('search'))      $query->search($request->search);
         if ($request->filled('stage'))       $query->stage($request->stage);
         if ($request->filled('assigned_to')) $query->assignedTo($request->assigned_to);
@@ -69,12 +72,13 @@ class DealController extends Controller
     // ── Kanban — grouped by stage ─────────────────────────────────
     public function kanban(): JsonResponse
     {
-        $deals = Deal::with(['contact', 'assignedTo'])
+        $deals = ViewScope::apply(Deal::with(['contact', 'assignedTo']), 'deals', auth()->user())
             ->get()
             ->groupBy('stage')
             ->map(fn($group) => DealResource::collection($group));
 
-        $summary = Deal::selectRaw('stage, COUNT(*) as count, SUM(value) as total')
+        $summary = ViewScope::apply(Deal::query(), 'deals', auth()->user())
+            ->selectRaw('stage, COUNT(*) as count, SUM(value) as total')
             ->groupBy('stage')
             ->get()
             ->keyBy('stage');
@@ -118,6 +122,7 @@ class DealController extends Controller
     public function show(int $id): JsonResponse
     {
         $deal = $this->findDeal($id);
+        $this->authorize('view', $deal);
         $deal->load(['contact', 'lead', 'assignedTo', 'createdBy', 'tasks', 'followups'])
              ->loadCount(['tasks', 'followups']);
 
@@ -131,6 +136,7 @@ class DealController extends Controller
     public function update(DealRequest $request, int $id): JsonResponse
     {
         $deal = $this->findDeal($id);
+        $this->authorize('modify', $deal);
         $data = $request->validated();
 
         if ($data['stage'] === 'won' && $deal->stage !== 'won') {
@@ -153,7 +159,9 @@ class DealController extends Controller
     // ── Destroy ───────────────────────────────────────────────────
     public function destroy(int $id): JsonResponse
     {
-        $this->findDeal($id)->delete();
+        $deal = $this->findDeal($id);
+        $this->authorize('modify', $deal);
+        $deal->delete();
 
         return response()->json([
             'success' => true,
@@ -170,6 +178,7 @@ class DealController extends Controller
         ]);
 
         $deal = $this->findDeal($id);
+        $this->authorize('modify', $deal);
 
         $data = [
             'stage'       => $request->stage,
@@ -197,6 +206,7 @@ class DealController extends Controller
     public function markWon(int $id): JsonResponse
     {
         $deal = $this->findDeal($id);
+        $this->authorize('modify', $deal);
         $deal->update([
             'stage'             => 'won',
             'probability'       => 100,
@@ -218,6 +228,7 @@ class DealController extends Controller
         ]);
 
         $deal = $this->findDeal($id);
+        $this->authorize('modify', $deal);
         $deal->update([
             'stage'             => 'lost',
             'probability'       => 0,
@@ -235,15 +246,17 @@ class DealController extends Controller
     // ── Stats ─────────────────────────────────────────────────────
     public function stats(): JsonResponse
     {
+        $base = fn() => ViewScope::apply(Deal::query(), 'deals', auth()->user());
+
         return response()->json([
             'success' => true,
             'data'    => [
-                'total_deals'     => Deal::count(),
-                'open_deals'      => Deal::open()->count(),
-                'pipeline_value'  => Deal::open()->sum('value'),
-                'won_this_month'  => Deal::won()->thisMonth()->count(),
-                'won_value_month' => Deal::won()->thisMonth()->sum('value'),
-                'by_stage'        => Deal::selectRaw('stage, COUNT(*) as count, SUM(value) as total')
+                'total_deals'     => $base()->count(),
+                'open_deals'      => $base()->open()->count(),
+                'pipeline_value'  => $base()->open()->sum('value'),
+                'won_this_month'  => $base()->won()->thisMonth()->count(),
+                'won_value_month' => $base()->won()->thisMonth()->sum('value'),
+                'by_stage'        => $base()->selectRaw('stage, COUNT(*) as count, SUM(value) as total')
                                          ->groupBy('stage')
                                          ->get(),
             ],

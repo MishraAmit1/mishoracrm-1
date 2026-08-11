@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web\Tenant;
 
 
+use App\Helpers\ViewScope;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TaskRequest;
 use App\Models\Contact;
@@ -41,6 +42,8 @@ class TaskController extends Controller
             ->where('tenant_id', $tenantId)
             ->with(['assignedTo', 'creator']);
 
+        $query = ViewScope::apply($query, 'tasks', auth()->user());
+
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
                 $q->where('title', 'like', '%' . $request->search . '%')
@@ -63,8 +66,7 @@ class TaskController extends Controller
 
         $statuses = config('task_fields.stages');
 
-        $summary = Task::query()
-            ->where('tenant_id', $tenantId)
+        $summary = ViewScope::apply(Task::query()->where('tenant_id', $tenantId), 'tasks', auth()->user())
             ->selectRaw('status, COUNT(*) as count')
             ->groupBy('status')
             ->pluck('count', 'status');
@@ -182,12 +184,14 @@ class TaskController extends Controller
     public function show(int|string $id)
     {
         $task = $this->findTask($id);
+        $this->authorize('view', $task);
         return view('tenant.tasks.show', compact('task'));
     }
 
     public function edit(int|string $id)
     {
-        $task      = $this->findTask($id);
+        $task = $this->findTask($id);
+        $this->authorize('modify', $task);
         $staffList = $this->getStaffList();
         ['contacts' => $contacts, 'leads' => $leads, 'deals' => $deals] = $this->getRelatableRecords();
         return view('tenant.tasks.edit', compact('task', 'staffList', 'contacts', 'leads', 'deals'));
@@ -196,6 +200,7 @@ class TaskController extends Controller
     public function update(TaskRequest $request, int|string $id)
     {
         $task = $this->findTask($id);
+        $this->authorize('modify', $task);
 
         $data = $request->validated();
 
@@ -213,6 +218,7 @@ class TaskController extends Controller
     public function destroy(int|string $id)
     {
         $task = $this->findTask($id);
+        $this->authorize('modify', $task);
         $task->delete();
 
         return redirect()->route('tenant.tasks.index')->with('success', 'Task deleted successfully.');
@@ -222,6 +228,7 @@ class TaskController extends Controller
     public function updateStatus(Request $request, int|string $id)
     {
         $task = $this->findTask($id);
+        $this->authorize('modify', $task);
         $task->status = $request->status;
         if ($task->status === 'completed' && empty($task->completed_at)) {
             $task->completed_at = now()->toDateString();

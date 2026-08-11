@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web\Tenant;
 
+use App\Helpers\ViewScope;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DealRequest;
 use App\Models\Contact;
@@ -41,6 +42,8 @@ class DealController extends Controller
             ->where('tenant_id', auth()->user()->tenant_id)
             ->with(['contact', 'assignedTo'])
             ->withCount(['tasks', 'followups']);
+
+        $query = ViewScope::apply($query, 'deals', auth()->user());
 
         if ($request->filled('search')) {
             $query->search($request->search);
@@ -90,7 +93,7 @@ class DealController extends Controller
        
 
         // ── Summary ────────────────────────────────
-        $stageSummary = Deal::where('tenant_id', auth()->user()->tenant_id)
+        $stageSummary = ViewScope::apply(Deal::where('tenant_id', auth()->user()->tenant_id), 'deals', auth()->user())
             ->selectRaw('stage, COUNT(*) as count, SUM(value) as total')
             ->groupBy('stage')
             ->get()
@@ -172,6 +175,8 @@ class DealController extends Controller
     public function show(int|string $id): View
     {
         $deal = $this->findDeal($id);
+        $this->authorize('view', $deal);
+
         $deal->load([
             'contact',
             'lead',
@@ -193,6 +198,7 @@ class DealController extends Controller
     {
         $tenantId  = auth()->user()->tenant_id;
         $deal      = $this->findDeal($id);
+        $this->authorize('modify', $deal);
         $staffList = $this->getStaffList();
         $contacts  = Contact::where('tenant_id', $tenantId)->orderBy('name')->get(['id', 'name', 'company']);
         $leads     = Lead::where('tenant_id', $tenantId)->orderBy('name')->get(['id', 'name']);
@@ -211,6 +217,7 @@ class DealController extends Controller
     public function update(DealRequest $request, int|string $id): RedirectResponse
     {
         $deal = $this->findDeal($id);
+        $this->authorize('modify', $deal);
         $data = $request->validated();
 
         // Auto set actual_close_date when won
@@ -243,7 +250,8 @@ class DealController extends Controller
     // ── Destroy ───────────────────────────────────────────────────
     public function destroy(int|string $id): RedirectResponse
     {
-        $deal  = $this->findDeal($id);
+        $deal = $this->findDeal($id);
+        $this->authorize('modify', $deal);
         $title = $deal->title;
         $deal->delete();
 
@@ -261,6 +269,7 @@ class DealController extends Controller
         ]);
 
         $deal = $this->findDeal($id);
+        $this->authorize('modify', $deal);
 
         $data = [
             'stage'       => $request->stage,
@@ -290,6 +299,7 @@ class DealController extends Controller
     public function markWon(int|string $id): RedirectResponse
     {
         $deal = $this->findDeal($id);
+        $this->authorize('modify', $deal);
         $deal->update([
             'stage'             => 'won',
             'probability'       => 100,
@@ -319,6 +329,7 @@ class DealController extends Controller
         ]);
 
         $deal = $this->findDeal($id);
+        $this->authorize('modify', $deal);
         $deal->update([
             'stage'             => 'lost',
             'probability'       => 0,
@@ -340,6 +351,8 @@ class DealController extends Controller
     // ── Pipeline Analytics ────────────────────────────────────────
     public function pipelineAnalytics(): View
     {
+        abort_unless(auth()->user()->can('deals.view_all') || auth()->user()->user_type === 'superadmin', 403);
+
         $tid = auth()->user()->tenant_id;
 
         // Open pipeline

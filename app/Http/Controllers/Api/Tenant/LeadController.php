@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Tenant;
 
+use App\Helpers\ViewScope;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LeadRequest;
 use App\Http\Resources\LeadResource;
@@ -18,6 +19,8 @@ class LeadController extends Controller
     {
         $query = Lead::with(['assignedTo', 'followups'])
             ->withCount(['tasks', 'followups']);
+
+        $query = ViewScope::apply($query, 'leads', $request->user());
 
         // Filters
         if ($request->filled('search'))      $query->search($request->search);
@@ -67,6 +70,8 @@ class LeadController extends Controller
     // ── Show ──────────────────────────────────────────────────────
     public function show(Lead $lead): JsonResponse
     {
+        $this->authorize('view', $lead);
+
         $lead->load([
             'assignedTo',
             'createdBy',
@@ -83,6 +88,8 @@ class LeadController extends Controller
     // ── Update ────────────────────────────────────────────────────
     public function update(LeadRequest $request, Lead $lead): JsonResponse
     {
+        $this->authorize('modify', $lead);
+
         if ($request->status === 'contacted' && $lead->status !== 'contacted') {
             $lead->contacted_at = now();
         }
@@ -103,6 +110,7 @@ class LeadController extends Controller
     // ── Destroy ───────────────────────────────────────────────────
     public function destroy(Lead $lead): JsonResponse
     {
+        $this->authorize('modify', $lead);
         $lead->delete();
 
         return response()->json([
@@ -114,6 +122,8 @@ class LeadController extends Controller
     // ── Assign ────────────────────────────────────────────────────
     public function assign(Request $request, Lead $lead): JsonResponse
     {
+        $this->authorize('modify', $lead);
+
         $request->validate([
             'assigned_to' => ['required', 'exists:users,id'],
         ]);
@@ -167,6 +177,8 @@ class LeadController extends Controller
     // ── Update status ─────────────────────────────────────────────
     public function updateStatus(Request $request, Lead $lead): JsonResponse
     {
+        $this->authorize('modify', $lead);
+
         $request->validate([
             'status'      => ['required', 'in:new,contacted,qualified,proposal,negotiation,converted,lost'],
             'lost_reason' => ['nullable', 'string', 'max:500'],
@@ -191,15 +203,17 @@ class LeadController extends Controller
     // ── Stats summary ─────────────────────────────────────────────
     public function stats(): JsonResponse
     {
+        $base = fn() => ViewScope::apply(Lead::query(), 'leads', auth()->user());
+
         return response()->json([
             'success' => true,
             'data'    => [
-                'total'       => Lead::count(),
-                'by_status'   => Lead::selectRaw('status, COUNT(*) as count')->groupBy('status')->pluck('count', 'status'),
-                'by_source'   => Lead::selectRaw('source, COUNT(*) as count')->groupBy('source')->pluck('count', 'source'),
-                'by_priority' => Lead::selectRaw('priority, COUNT(*) as count')->groupBy('priority')->pluck('count', 'priority'),
-                'this_month'  => Lead::thisMonth()->count(),
-                'today'       => Lead::today()->count(),
+                'total'       => $base()->count(),
+                'by_status'   => $base()->selectRaw('status, COUNT(*) as count')->groupBy('status')->pluck('count', 'status'),
+                'by_source'   => $base()->selectRaw('source, COUNT(*) as count')->groupBy('source')->pluck('count', 'source'),
+                'by_priority' => $base()->selectRaw('priority, COUNT(*) as count')->groupBy('priority')->pluck('count', 'priority'),
+                'this_month'  => $base()->thisMonth()->count(),
+                'today'       => $base()->today()->count(),
             ],
         ]);
     }

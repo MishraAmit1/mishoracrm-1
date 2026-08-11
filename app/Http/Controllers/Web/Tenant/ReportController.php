@@ -22,6 +22,13 @@ class ReportController extends Controller
         return auth()->user()->tenant_id;
     }
 
+    // These reports are tenant-wide aggregates with no per-user "own" view —
+    // only reports.view_all holders (or superadmin) may access them.
+    private function requireViewAll(): void
+    {
+        abort_unless(auth()->user()->user_type === 'superadmin' || auth()->user()->can('reports.view_all'), 403);
+    }
+
     // ── Date range helper ─────────────────────────────────────────
     private function dateRange(Request $request): array
     {
@@ -47,6 +54,7 @@ class ReportController extends Controller
     // ── Overview — main report dashboard ─────────────────────────
     public function overview(Request $request): View
     {
+        $this->requireViewAll();
         [$from, $to] = $this->dateRange($request);
         $tid = $this->tenantId();
 
@@ -104,6 +112,7 @@ class ReportController extends Controller
     // ── Leads report ──────────────────────────────────────────────
     public function leads(Request $request): View
     {
+        $this->requireViewAll();
         [$from, $to] = $this->dateRange($request);
 
         $statuses    = config('crm.lead.statuses');
@@ -165,6 +174,7 @@ class ReportController extends Controller
     // ── Deals report ──────────────────────────────────────────────
     public function deals(Request $request): View
     {
+        $this->requireViewAll();
         [$from, $to] = $this->dateRange($request);
 
         $stages = config('crm.deal.stages');
@@ -226,6 +236,7 @@ class ReportController extends Controller
     // ── Deal ↔ Quotation report ────────────────────────────────────
     public function dealQuotations(Request $request): View
     {
+        $this->requireViewAll();
         [$from, $to] = $this->dateRange($request);
 
         $baseQuery = Deal::whereBetween('created_at', [$from, $to]);
@@ -265,6 +276,7 @@ class ReportController extends Controller
     // ── Revenue report ────────────────────────────────────────────
     public function revenue(Request $request): View
     {
+        $this->requireViewAll();
         [$from, $to] = $this->dateRange($request);
 
         // Summary
@@ -323,6 +335,7 @@ class ReportController extends Controller
     // ── Staff performance ─────────────────────────────────────────
     public function staff(Request $request): View
     {
+        $this->requireViewAll();
         [$from, $to] = $this->dateRange($request);
         $tid = $this->tenantId();
 
