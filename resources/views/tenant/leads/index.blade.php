@@ -629,7 +629,7 @@ $sc=$statusCfg[$colStatus];
 (function(){
 /* ── Constants ──────────────────────────────────────────────── */
 const CSRF      = '{{ csrf_token() }}';
-const UPDATE_URL= '{{ route("tenant.leads.status.update", ["id"=>"__ID__"]) }}';
+const UPDATE_URL= '{{ route("tenant.leads.status", ["lead"=>"__ID__"]) }}';
 const statusLabels = @json(array_combine($kanbanCols, array_map(fn($s)=>$statusCfg[$s]['label'], $kanbanCols)));
 
 /* ── View toggle ────────────────────────────────────────────── */
@@ -747,7 +747,7 @@ document.querySelectorAll('.k-body').forEach(body => {
 
             const url = UPDATE_URL.replace('__ID__', card.dataset.id);
             fetch(url, {
-                method : 'PATCH',
+                method : 'POST',
                 headers: {
                     'Content-Type' : 'application/json',
                     'X-CSRF-TOKEN' : CSRF,
