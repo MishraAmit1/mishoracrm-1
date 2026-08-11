@@ -24,7 +24,12 @@
 
 /* Hero */
 .qs-hero { padding:22px; }
-.qs-hero-top { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:18px; }
+.qs-hero-top { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:18px; flex-wrap:wrap; }
+@media(max-width:480px){
+    .qs-hero { padding:16px; }
+    .qs-hero-top > div:last-child { text-align:left; }
+    .qs-dates { gap:14px; }
+}
 .qs-number { font-size:22px; font-weight:600; color:var(--text-100); font-family:'DM Mono',monospace; letter-spacing:-.5px; margin-bottom:3px; }
 .qs-from   { font-size:13px; color:var(--text-300); }
 
@@ -76,6 +81,11 @@
 .qs-totals-table tr td:last-child { text-align:right; font-family:'DM Mono',monospace; font-weight:500; color:var(--text-100); }
 .qs-totals-table .grand { padding-top:10px; font-size:15px; font-weight:600; color:var(--text-100); border-top:1px solid var(--border-default); }
 .qs-totals-table .grand td:last-child { color:#185FA5; font-size:17px; }
+@media(max-width:480px){ .qs-totals-table { width:100%; } }
+
+/* Linked Deal / Lead rows */
+.qs-link-row { padding:14px 20px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+@media(max-width:480px){ .qs-link-row { flex-direction:column; align-items:stretch; } .qs-link-row .btn { justify-content:center; } }
 
 /* Notes / Terms */
 .qs-text-section { padding:18px 20px; border-top:1px solid var(--border-subtle); }
@@ -376,7 +386,7 @@
                         <i class="ti ti-briefcase" style="font-size:13px;margin-right:5px"></i> Linked Deal
                     </div>
                 </div>
-                <div style="padding:14px 20px;display:flex;align-items:center;justify-content:space-between">
+                <div class="qs-link-row">
                     <div>
                         <div style="font-size:13.5px;font-weight:600;color:var(--text-100)">{{ $quotation->deal->title }}</div>
                         <div style="font-size:12px;color:var(--text-300);margin-top:2px">
@@ -401,7 +411,7 @@
                         <i class="ti ti-target" style="font-size:13px;margin-right:5px"></i> Linked Lead
                     </div>
                 </div>
-                <div style="padding:14px 20px;display:flex;align-items:center;justify-content:space-between">
+                <div class="qs-link-row">
                     <div>
                         <div style="font-size:13.5px;font-weight:600;color:var(--text-100)">{{ $quotation->lead->name }}</div>
                         @if($quotation->lead->phone)

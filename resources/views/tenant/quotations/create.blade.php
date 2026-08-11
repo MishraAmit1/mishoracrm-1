@@ -87,6 +87,26 @@
 .items-table tr:last-child td { border-bottom: none; }
 .items-table tr:hover td { background: var(--bg-elevated); }
 
+/* ── Items Table: mobile card layout ── */
+@media(max-width:768px){
+    .items-table-wrap { overflow-x: visible; }
+    .items-table { min-width: 0; width: 100%; border-collapse: separate; border-spacing: 0 10px; }
+    .items-table thead { display: none; }
+    .items-table tbody tr {
+        display: block; position: relative;
+        background: var(--bg-elevated); border: 1px solid var(--border-subtle);
+        border-radius: 10px; padding: 12px 44px 12px 12px;
+    }
+    .items-table tbody tr td { display: block; padding: 6px 0; border-bottom: none; }
+    .items-table tbody tr td::before {
+        content: attr(data-label); display: block;
+        font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+        letter-spacing: .4px; color: var(--text-400); margin-bottom: 4px;
+    }
+    .items-table tbody tr td:last-child { position: absolute; top: 10px; right: 10px; padding: 0; width: auto; }
+    .items-table tbody tr td:last-child::before { content: none; }
+}
+
 .item-input {
     width: 100%; padding: 7px 9px;
     background: var(--bg-input); border: 1.5px solid var(--border-default);
@@ -132,6 +152,7 @@
 .totals-table tr td:last-child { text-align: right; font-family: 'DM Mono', monospace; font-weight: 500; color: var(--text-100); }
 .totals-table .grand-total td { padding-top: 10px; font-size: 15px; font-weight: 600; color: var(--text-100); border-top: 1px solid var(--border-default); }
 .totals-table .grand-total td:last-child { color: #185FA5; font-size: 16px; }
+@media(max-width:480px){ .totals-table { width: 100%; } }
 
 /* ── Footer ── */
 .qf-footer {
@@ -141,6 +162,11 @@
 }
 .qf-footer-note { font-size: 12px; color: var(--text-300); }
 .qf-footer-note strong { color: var(--text-200); }
+@media(max-width:640px){
+    .qf-footer { flex-direction: column; align-items: stretch; gap: 10px; }
+    .qf-footer-actions { flex-direction: column; width: 100%; }
+    .qf-footer-actions .btn { width: 100%; justify-content: center; }
+}
 
 /* ── Sidebar ── */
 .qf-sidebar { display: flex; flex-direction: column; gap: 13px; }
@@ -450,7 +476,7 @@
                     {{-- Footer --}}
                     <div class="qf-footer">
                         <div class="qf-footer-note">Fields marked <strong>*</strong> are required</div>
-                        <div style="display:flex;gap:8px">
+                        <div class="qf-footer-actions" style="display:flex;gap:8px">
                             <a href="{{ route('tenant.quotations.index') }}" class="btn btn-secondary">Cancel</a>
                             <button type="submit" name="_action" value="draft" class="btn btn-secondary"
                                     onclick="document.getElementById('statusHidden').value='draft'">
@@ -560,36 +586,36 @@ function addItemRow(name='', desc='', qty=1, rate=0, taxPct=''){
     const tr   = document.createElement('tr');
     tr.id      = 'row_' + i;
     tr.innerHTML = `
-        <td>
+        <td data-label="Item / Service">
             <div id="ps_container_${i}"></div>
             <input type="text" name="items[${i}][name]"
                    class="item-input {{ $errors->has("items.*.name")?"is-err":"" }}"
                    placeholder="Item / Service name" value="${escHtml(name)}" required/>
         </td>
-        <td>
+        <td data-label="Description">
             <input type="text" name="items[${i}][description]"
                    class="item-input"
                    placeholder="Optional description" value="${escHtml(desc)}"/>
         </td>
-        <td>
+        <td data-label="Qty">
             <input type="number" name="items[${i}][quantity]"
                    class="item-input" placeholder="1"
                    value="${qty}" min="0.01" step="0.01" required
                    oninput="calcRowAmount(${i})"/>
         </td>
-        <td>
+        <td data-label="Rate">
             <input type="number" name="items[${i}][rate]"
                    class="item-input" placeholder="0.00"
                    value="${rate}" min="0" step="0.01" required
                    oninput="calcRowAmount(${i})"/>
         </td>
-        <td>
+        <td data-label="GST %">
             <input type="number" name="items[${i}][tax_percent]"
                    class="item-input" placeholder="18"
                    value="${gst}" min="0" max="100" step="0.1"
                    oninput="recalcTotals()"/>
         </td>
-        <td>
+        <td data-label="Amount">
             <input type="number" name="items[${i}][amount]"
                    class="item-input item-amount-input"
                    id="amt_${i}"
