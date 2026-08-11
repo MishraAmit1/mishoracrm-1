@@ -82,7 +82,9 @@
     $roles        = $cfg['roles'];
     $types        = $cfg['employment_types'];
     $avatarColors = $cfg['avatar_colors'];
-    [$avBg, $avTx] = $avatarColors[0];
+    $avColor      = $avatarColors[abs(crc32($staff->user->name ?? '')) % count($avatarColors)];
+    $avBg         = $avColor['bg'];
+    $avTx         = $avColor['text'];
 
     $userRole     = $staff->user->roles->first()?->name ?? 'staff';
     $roleConfig   = $roles[$userRole] ?? ['label'=>ucfirst($userRole),'color'=>'accent','bg'=>'accent-dim'];
