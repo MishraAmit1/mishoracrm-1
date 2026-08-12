@@ -227,6 +227,19 @@ $secColors = [
 
 
             {{-- ═══════════════════════════════════════
+                 TAGS
+            ═══════════════════════════════════════ --}}
+            @elseif($field['key'] === 'tags')
+
+            <input id="df_tags"
+                   type="text"
+                   name="tags"
+                   value="{{ old('tags', is_array($model->tags ?? null) ? implode(', ', $model->tags) : '') }}"
+                   placeholder="{{ $field['placeholder'] ?? '' }}"
+                   class="df-input {{ $hasErr ? 'is-err' : '' }}">
+
+
+            {{-- ═══════════════════════════════════════
                  DESCRIPTION
             ═══════════════════════════════════════ --}}
             @elseif($field['type'] === 'textarea')
@@ -301,6 +314,29 @@ $secColors = [
 
 
             {{-- ═══════════════════════════════════════
+                 RECURRENCE TYPE
+            ═══════════════════════════════════════ --}}
+            @elseif($field['key'] === 'recurrence_type')
+
+            <select id="df_recurrence_type"
+                    name="recurrence_type"
+                    class="df-input df-sel {{ $hasErr ? 'is-err' : '' }}">
+
+                @foreach(config('task_fields.recurrence_types') as $key => $label)
+
+                <option value="{{ $key }}"
+                        {{ old('recurrence_type', $model->recurrence_type ?? 'none') === $key ? 'selected' : '' }}>
+
+                    {{ $label }}
+
+                </option>
+
+                @endforeach
+
+            </select>
+
+
+            {{-- ═══════════════════════════════════════
                  TASKABLE ID
             ═══════════════════════════════════════ --}}
             @elseif($field['key'] === 'taskable_id')
@@ -328,6 +364,7 @@ $secColors = [
                    value="{{ $fVal }}"
                    placeholder="{{ $field['placeholder'] ?? '' }}"
                    class="df-input {{ $hasErr ? 'is-err' : '' }}"
+                   {{ $field['type'] === 'number' ? 'step=' . ($field['step'] ?? '1') . ' min=0' : '' }}
                    {{ ($field['required'] ?? false) ? 'required' : '' }}>
 
             @endif
@@ -466,6 +503,34 @@ $secColors = [
 
     // Initial load — keep the currently linked record selected (edit form)
     populateRecords(true);
+
+})();
+</script>
+
+
+{{-- ═══════════════════════════════════════
+     RECURRENCE FIELDS SHOW/HIDE JS
+═══════════════════════════════════════ --}}
+<script>
+(function(){
+
+    const typeSelect = document.getElementById('df_recurrence_type');
+    const intervalField = document.getElementById('df_recurrence_interval')?.closest('.df-field');
+    const endDateField  = document.getElementById('df_recurrence_end_date')?.closest('.df-field');
+
+    if (!typeSelect) return;
+
+    function toggle(){
+        const show = typeSelect.value !== 'none';
+        if (intervalField) intervalField.style.display = show ? '' : 'none';
+        if (endDateField)  endDateField.style.display  = show ? '' : 'none';
+
+        const intervalInput = document.getElementById('df_recurrence_interval');
+        if (intervalInput && !intervalInput.value) intervalInput.value = 1;
+    }
+
+    typeSelect.addEventListener('change', toggle);
+    toggle();
 
 })();
 </script>

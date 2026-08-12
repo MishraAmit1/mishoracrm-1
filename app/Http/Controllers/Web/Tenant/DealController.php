@@ -182,7 +182,7 @@ class DealController extends Controller
             'lead',
             'assignedTo',
             'createdBy',
-            // 'tasks.assignedTo',
+            'tasks.assignedTo',
             'followups.assignedTo',
             'quotations',
         ]);

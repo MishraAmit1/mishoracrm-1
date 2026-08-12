@@ -31,10 +31,12 @@ class TaskRequest extends FormRequest
             'assigned_to'            => ['nullable', 'exists:users,id'],
             'due_at'                 => ['nullable', 'date'],
             'completed_at'           => ['nullable', 'date'],
-            'contact_id'             => ['nullable', 'exists:contacts,id'],
-            'lead_id'                => ['nullable', 'exists:leads,id'],
-            'deal_id'                => ['nullable', 'exists:deals,id'],
-            'due_date'               => ['nullable', 'date'],
+            'tags'                   => ['nullable', 'string', 'max:500'],
+            'recurrence_type'        => ['nullable', 'in:none,daily,weekly,monthly'],
+            'recurrence_interval'    => ['nullable', 'integer', 'min:1', 'max:365'],
+            'recurrence_end_date'    => ['nullable', 'date'],
+            'estimated_hours'        => ['nullable', 'numeric', 'min:0', 'max:9999'],
+            'actual_hours'           => ['nullable', 'numeric', 'min:0', 'max:9999'],
         ];
     }
 

@@ -147,6 +147,10 @@
 .di-table { width:100%; border-collapse:collapse; min-width:700px; }
 .di-table thead tr { background:var(--bg-elevated); }
 .di-table th { padding:9px 14px; text-align:left; font-size:11px; font-weight:600; color:var(--text-300); text-transform:uppercase; letter-spacing:.5px; border-bottom:1px solid var(--border-subtle); white-space:nowrap; }
+.di-table th a { display:inline-flex; align-items:center; gap:4px; color:inherit; text-decoration:none; }
+.di-table th a:hover { color:var(--text-100); }
+.di-table th a i { font-size:12px; opacity:.6; }
+.di-table th a.sorted i { opacity:1; color:var(--accent); }
 .di-table td { padding:11px 14px; font-size:13px; color:var(--text-100); border-bottom:1px solid var(--border-subtle); vertical-align:middle; }
 .di-table tr:last-child td { border-bottom:none; }
 .di-table tbody tr:hover td { background:var(--bg-elevated); }
@@ -232,6 +236,9 @@
             </div>
         </div>
         <div style="display:flex;gap:8px">
+            <a href="{{ route('tenant.task-templates.index') }}" class="btn btn-secondary">
+                <i class="ti ti-template" style="font-size:14px"></i> Templates
+            </a>
             <a href="{{ route('tenant.tasks.create') }}" class="btn btn-primary">
                 <i class="ti ti-plus" style="font-size:14px"></i> Add Task
             </a>
@@ -310,6 +317,10 @@
                 <i class="ti ti-filter" style="font-size:13px"></i> Filter
             </button>
 
+            <button type="button" class="btn btn-secondary" onclick="saveCurrentFilter()">
+                <i class="ti ti-bookmark-plus" style="font-size:13px"></i> Save Filter
+            </button>
+
             @if(request()->hasAny(['search','assigned_to','priority']))
             <a href="{{ route('tenant.tasks.index', array_merge(request()->only(['view','stage','sort','dir']))) }}"
                class="btn btn-secondary">
@@ -330,6 +341,33 @@
             </div>
         </div>
     </form>
+
+    <form method="POST" action="{{ route('tenant.tasks.saved_filters.store') }}" id="saveFilterForm" style="display:none">
+        @csrf
+        <input type="hidden" name="name" id="saveFilterName">
+        <input type="hidden" name="view" value="{{ $currentView }}">
+        <input type="hidden" name="search" value="{{ request('search') }}">
+        <input type="hidden" name="stage" value="{{ request('stage') }}">
+        <input type="hidden" name="priority" value="{{ request('priority') }}">
+        <input type="hidden" name="assigned_to" value="{{ request('assigned_to') }}">
+        <input type="hidden" name="sort" value="{{ request('sort') }}">
+        <input type="hidden" name="dir" value="{{ request('dir') }}">
+    </form>
+
+    @if($savedFilters->isNotEmpty())
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+        <span style="font-size:11.5px;color:var(--text-400);font-weight:600">SAVED:</span>
+        @foreach($savedFilters as $sf)
+        <div style="display:inline-flex;align-items:center;gap:6px;padding:5px 6px 5px 12px;border-radius:999px;background:var(--bg-elevated);border:1px solid var(--border-subtle);font-size:12px">
+            <a href="{{ route('tenant.tasks.index', $sf->filters) }}" style="text-decoration:none;color:var(--text-100)">{{ $sf->name }}</a>
+            <form method="POST" action="{{ route('tenant.tasks.saved_filters.destroy', $sf->id) }}" onsubmit="return confirm('Remove this saved filter?')" style="display:inline">
+                @csrf @method('DELETE')
+                <button type="submit" style="background:none;border:none;cursor:pointer;color:var(--text-400);font-size:11px;padding:0;display:flex"><i class="ti ti-x"></i></button>
+            </form>
+        </div>
+        @endforeach
+    </div>
+    @endif
 
     {{-- ═══ KANBAN VIEW ════════════════════════════════════════════ --}}
     @if($currentView === 'kanban')
@@ -386,7 +424,12 @@
                          style="border-left-color:{{ $stage['color'] }}">
 
                         <div class="tc-top">
-                            <div class="tc-title">{{ $task->title }}</div>
+                            <div class="tc-title">
+                                {{ $task->title }}
+                                @if($task->isOverdue())
+                                <span style="margin-left:5px;font-size:9px;font-weight:700;color:var(--red);background:rgba(224,82,82,.12);padding:1px 6px;border-radius:99px;white-space:nowrap">OVERDUE</span>
+                                @endif
+                            </div>
                             <div class="tc-grip">
                                 <i class="ti ti-grip-vertical"></i>
                             </div>
@@ -413,7 +456,7 @@
                         <div class="tc-foot">
                             <div class="tc-cnts">
                                 @if($task->due_at)
-                                <span class="tc-cnt {{ \Carbon\Carbon::parse($task->due_at)->isPast() && $task->status !== 'completed' ? 'style=color:var(--red)' : '' }}">
+                                <span class="tc-cnt" style="{{ $task->isOverdue() ? 'color:var(--red)' : '' }}">
                                     <i class="ti ti-calendar" style="font-size:11px"></i>
                                     {{ \Carbon\Carbon::parse($task->due_at)->format('M d') }}
                                 </span>
@@ -458,7 +501,7 @@
 
     <div class="list-wrap">
         <div class="list-head">
-            <div class="list-count">
+            <div class="list-count" id="listCountLabel">
                 @if(isset($tasks) && $tasks->total())
                     Showing <strong>{{ $tasks->firstItem() }}–{{ $tasks->lastItem() }}</strong>
                     of <strong>{{ number_format($tasks->total()) }}</strong> tasks
@@ -466,7 +509,38 @@
                     <strong>0</strong> tasks found
                 @endif
             </div>
+
+            {{-- Bulk action toolbar — shown once 1+ rows are selected --}}
+            <div id="bulkToolbar" style="display:none;align-items:center;gap:8px;flex-wrap:wrap">
+                <span style="font-size:12px;color:var(--text-300)"><strong id="bulkCount">0</strong> selected</span>
+
+                <select id="bulkStatus" class="di-fi" style="height:32px">
+                    <option value="">Set status...</option>
+                    @foreach($cfgStages as $slug => $stage)
+                    <option value="{{ $slug }}">{{ $stage['label'] }}</option>
+                    @endforeach
+                </select>
+
+                <select id="bulkAssign" class="di-fi" style="height:32px">
+                    <option value="">Assign to...</option>
+                    <option value="__unassign__">— Unassign —</option>
+                    @foreach($staffList as $staff)
+                    <option value="{{ $staff->id }}">{{ $staff->name }}</option>
+                    @endforeach
+                </select>
+
+                <button type="button" class="btn btn-secondary" onclick="submitBulkAction('delete')">
+                    <i class="ti ti-trash" style="font-size:13px"></i> Delete
+                </button>
+            </div>
         </div>
+
+        <form id="bulkActionForm" method="POST" action="{{ route('tenant.tasks.bulk_action') }}" style="display:none">
+            @csrf
+            <input type="hidden" name="action" id="bulkActionInput">
+            <input type="hidden" name="value" id="bulkValueInput">
+            <div id="bulkIdsContainer"></div>
+        </form>
 
         @if(!isset($tasks) || $tasks->isEmpty())
         <div class="di-empty">
@@ -480,12 +554,41 @@
         @else
         <div class="tk-table-wrap" style="overflow-x:auto">
             <table class="di-table">
+                @php
+                    $sortLink = fn(string $col) => route('tenant.tasks.index', array_merge(
+                        request()->except(['page']),
+                        ['sort' => $col, 'dir' => ($sortCol === $col && $sortDir === 'asc') ? 'desc' : 'asc']
+                    ));
+                @endphp
                 <thead>
                     <tr>
-                        <th>Title</th>
-                        <th>Status</th>
-                        <th>Priority</th>
-                        <th>Due Date</th>
+                        <th width="34">
+                            <input type="checkbox" id="selectAllTasks">
+                        </th>
+                        <th>
+                            <a href="{{ $sortLink('title') }}" class="{{ $sortCol === 'title' ? 'sorted' : '' }}">
+                                Title
+                                @if($sortCol === 'title')<i class="ti ti-arrow-{{ $sortDir === 'asc' ? 'up' : 'down' }}"></i>@endif
+                            </a>
+                        </th>
+                        <th>
+                            <a href="{{ $sortLink('status') }}" class="{{ $sortCol === 'status' ? 'sorted' : '' }}">
+                                Status
+                                @if($sortCol === 'status')<i class="ti ti-arrow-{{ $sortDir === 'asc' ? 'up' : 'down' }}"></i>@endif
+                            </a>
+                        </th>
+                        <th>
+                            <a href="{{ $sortLink('priority') }}" class="{{ $sortCol === 'priority' ? 'sorted' : '' }}">
+                                Priority
+                                @if($sortCol === 'priority')<i class="ti ti-arrow-{{ $sortDir === 'asc' ? 'up' : 'down' }}"></i>@endif
+                            </a>
+                        </th>
+                        <th>
+                            <a href="{{ $sortLink('due_at') }}" class="{{ $sortCol === 'due_at' ? 'sorted' : '' }}">
+                                Due Date
+                                @if($sortCol === 'due_at')<i class="ti ti-arrow-{{ $sortDir === 'asc' ? 'up' : 'down' }}"></i>@endif
+                            </a>
+                        </th>
                         <th>Assigned To</th>
                         <th width="100"></th>
                     </tr>
@@ -499,12 +602,18 @@
                         $taskInitials = $task->assignedTo ? $initials($task->assignedTo->name) : '';
                     @endphp
                     <tr>
+                        <td>
+                            <input type="checkbox" class="task-select" value="{{ $task->id }}">
+                        </td>
                         <td data-label="Title">
                             <div style="font-weight:600">
                                 <a href="{{ route('tenant.tasks.show', $task->id) }}"
                                    style="text-decoration:none;color:inherit">
                                     {{ $task->title }}
                                 </a>
+                                @if($task->isOverdue())
+                                <span style="margin-left:6px;font-size:10px;font-weight:700;color:var(--red);background:rgba(224,82,82,.12);padding:2px 7px;border-radius:99px">OVERDUE</span>
+                                @endif
                             </div>
                             @if($task->description)
                             <div style="font-size:12px;color:var(--text-400)">
@@ -529,7 +638,7 @@
                         </td>
                         <td data-label="Due Date">
                             @if($task->due_at)
-                            <span style="font-size:12px;{{ \Carbon\Carbon::parse($task->due_at)->isPast() && $task->status !== 'completed' ? 'color:var(--red)':'' }}">
+                            <span style="font-size:12px;{{ $task->isOverdue() ? 'color:var(--red)':'' }}">
                                 {{ \Carbon\Carbon::parse($task->due_at)->format('d M Y, h:i A') }}
                             </span>
                             @else — @endif
@@ -597,7 +706,7 @@
                 <span>
                     <span class="tk-meta-lbl">Due: </span>
                     @if($task->due_at)
-                    <span class="tk-meta-val" style="{{ \Carbon\Carbon::parse($task->due_at)->isPast() && $task->status !== 'completed' ? 'color:var(--red)' : '' }}">{{ \Carbon\Carbon::parse($task->due_at)->format('d M Y, h:i A') }}</span>
+                    <span class="tk-meta-val" style="{{ $task->isOverdue() ? 'color:var(--red)' : '' }}">{{ \Carbon\Carbon::parse($task->due_at)->format('d M Y, h:i A') }}</span>
                     @else <span class="tk-meta-val">—</span> @endif
                 </span>
             </div>
@@ -796,7 +905,12 @@
             });
 
             if (!resp.ok) {
-                throw new Error('Server error: ' + resp.status);
+                let message = 'Server error: ' + resp.status;
+                try {
+                    const body = await resp.json();
+                    if (body?.message) message = body.message;
+                } catch (parseErr) { /* ignore */ }
+                throw new Error(message);
             }
 
         } catch (err) {
@@ -815,7 +929,7 @@
                 updateCount(newStage);
             }
 
-            showToast('Failed to update. Please try again.', true);
+            showToast(err.message || 'Failed to update. Please try again.', true);
         }
     }
 
@@ -865,5 +979,78 @@
     }
 
 })();
+</script>
+
+<script>
+(function () {
+    'use strict';
+
+    const selectAll   = document.getElementById('selectAllTasks');
+    const toolbar     = document.getElementById('bulkToolbar');
+    const countLabel  = document.getElementById('bulkCount');
+    const statusSel   = document.getElementById('bulkStatus');
+    const assignSel   = document.getElementById('bulkAssign');
+
+    function checkboxes() {
+        return Array.from(document.querySelectorAll('.task-select'));
+    }
+
+    function refreshToolbar() {
+        const checked = checkboxes().filter(cb => cb.checked);
+        if (!toolbar) return;
+        toolbar.style.display = checked.length ? 'flex' : 'none';
+        if (countLabel) countLabel.textContent = checked.length;
+    }
+
+    selectAll?.addEventListener('change', function () {
+        checkboxes().forEach(cb => cb.checked = selectAll.checked);
+        refreshToolbar();
+    });
+
+    checkboxes().forEach(cb => cb.addEventListener('change', refreshToolbar));
+
+    window.submitBulkAction = function (action, value) {
+        const ids = checkboxes().filter(cb => cb.checked).map(cb => cb.value);
+        if (!ids.length) return;
+
+        if (action === 'delete' && !confirm('Delete ' + ids.length + ' task(s)? This cannot be undone.')) {
+            return;
+        }
+
+        const form      = document.getElementById('bulkActionForm');
+        const container = document.getElementById('bulkIdsContainer');
+        container.innerHTML = '';
+        ids.forEach(id => {
+            const input = document.createElement('input');
+            input.type  = 'hidden';
+            input.name  = 'ids[]';
+            input.value = id;
+            container.appendChild(input);
+        });
+
+        document.getElementById('bulkActionInput').value = action;
+        document.getElementById('bulkValueInput').value  = value ?? '';
+        form.submit();
+    };
+
+    statusSel?.addEventListener('change', function () {
+        if (this.value) submitBulkAction('status', this.value);
+    });
+
+    assignSel?.addEventListener('change', function () {
+        if (this.value) submitBulkAction('assign', this.value === '__unassign__' ? '' : this.value);
+    });
+
+})();
+</script>
+
+<script>
+function saveCurrentFilter(){
+    const name = prompt('Name this filter (e.g. "My high-priority tasks"):');
+    if (!name || !name.trim()) return;
+
+    document.getElementById('saveFilterName').value = name.trim();
+    document.getElementById('saveFilterForm').submit();
+}
 </script>
 @endpush

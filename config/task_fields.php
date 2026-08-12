@@ -37,6 +37,14 @@ return [
         'high'   => ['label' => 'High',   'color' => '#E05252', 'bg' => 'rgba(224,82,82,0.1)'],
     ],
 
+    // ── Recurrence types ─────────────────────────────────────────────
+    'recurrence_types' => [
+        'none'    => 'Does not repeat',
+        'daily'   => 'Daily',
+        'weekly'  => 'Weekly',
+        'monthly' => 'Monthly',
+    ],
+
     // ── List columns ──────────────────────────────────────────────
     'list_columns' => [
         'title'       => ['label' => 'Title',       'sortable' => true],
@@ -98,6 +106,16 @@ return [
             'required'    => false,
             'section'     => 'basic',
             'placeholder' => 'Task details...',
+            'span'        => 'full',
+        ],
+
+        [
+            'key'         => 'tags',
+            'label'       => 'Tags',
+            'type'        => 'text',
+            'required'    => false,
+            'section'     => 'basic',
+            'placeholder' => 'e.g. urgent, billing, follow-up (comma separated)',
             'span'        => 'full',
         ],
 
@@ -171,6 +189,57 @@ return [
             'required'  => false,
             'section'   => 'timeline',
             'span'      => 'half',
+        ],
+
+        [
+            'key'       => 'recurrence_type',
+            'label'     => 'Repeat',
+            'type'      => 'select',
+            'required'  => false,
+            'section'   => 'timeline',
+            'options'   => [],
+            'span'      => 'half',
+        ],
+
+        [
+            'key'         => 'recurrence_interval',
+            'label'       => 'Every',
+            'type'        => 'number',
+            'required'    => false,
+            'section'     => 'timeline',
+            'placeholder' => '1',
+            'span'        => 'quarter',
+        ],
+
+        [
+            'key'       => 'recurrence_end_date',
+            'label'     => 'Repeat Until',
+            'type'      => 'date',
+            'required'  => false,
+            'section'   => 'timeline',
+            'span'      => 'quarter',
+        ],
+
+        [
+            'key'         => 'estimated_hours',
+            'label'       => 'Estimated Hours',
+            'type'        => 'number',
+            'step'        => '0.25',
+            'required'    => false,
+            'section'     => 'timeline',
+            'placeholder' => 'e.g. 2.5',
+            'span'        => 'half',
+        ],
+
+        [
+            'key'         => 'actual_hours',
+            'label'       => 'Actual Hours',
+            'type'        => 'number',
+            'step'        => '0.25',
+            'required'    => false,
+            'section'     => 'timeline',
+            'placeholder' => 'e.g. 3',
+            'span'        => 'half',
         ],
     ],
 

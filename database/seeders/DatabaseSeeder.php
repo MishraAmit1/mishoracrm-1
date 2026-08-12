@@ -33,6 +33,7 @@ class DatabaseSeeder extends Seeder
          LeadSeeder::class,
          DealSeeder::class,
          TaskSeeder::class,
+         TaskTemplateSeeder::class,
         //  RolesAndPermissionsSeeder::class
         ]);
     }

@@ -216,6 +216,9 @@ $fuStatusColors = [
     'rescheduled' => ['#FAEEDA', '#854F0B'],
 ];
 
+$tkStatusColors = config('task_fields.stages');
+$tkPriorityColors = config('task_fields.priorities');
+
 $assignInit = $deal->assignedTo
     ? substr(collect(explode(' ', $deal->assignedTo->name))->map(fn($p) => strtoupper($p[0] ?? ''))->join(''), 0, 2)
     : '';
@@ -578,6 +581,60 @@ $assignInit = $deal->assignedTo
                     <div style="font-size:11.5px;color:var(--text-400);margin-top:4px;display:flex;align-items:center;gap:5px">
                         <i class="ti ti-user" style="font-size:11px"></i>
                         {{ $fu->assignedTo->name }}
+                    </div>
+                    @endif
+                </div>
+            </div>
+            @endforeach
+            @endif
+        </div>
+
+        {{-- Tasks --}}
+        <div class="ds-card">
+            <div class="ds-card-hd" style="display:flex;align-items:center;justify-content:space-between">
+                <span class="ds-card-title">Tasks ({{ $deal->tasks->count() }})</span>
+                <a href="{{ route('tenant.tasks.create', ['deal_id' => $deal->id]) }}"
+                   style="font-size:12px;font-weight:600;color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:4px">
+                    <i class="ti ti-plus" style="font-size:13px"></i>
+                    Add Task
+                </a>
+            </div>
+
+            @if($deal->tasks->isEmpty())
+            <div class="ds-empty">
+                <div class="ds-empty-icon"><i class="ti ti-checklist" style="font-size:20px;color:var(--text-400)"></i></div>
+                <div class="ds-empty-txt">No tasks linked to this deal.</div>
+            </div>
+            @else
+            @foreach($deal->tasks as $task)
+            @php
+                $tkStatus = $tkStatusColors[$task->status] ?? ['label' => ucfirst($task->status), 'color' => '#5F5E5A', 'bg' => '#F1EFE8', 'text_color' => '#5F5E5A'];
+                $tkPriority = $tkPriorityColors[$task->priority] ?? null;
+            @endphp
+            <div class="ds-fu-item">
+                <div class="ds-fu-icon" style="background:{{ $tkStatus['bg'] }}">
+                    <i class="ti ti-checklist" style="font-size:14px;color:{{ $tkStatus['text_color'] ?? $tkStatus['color'] }}"></i>
+                </div>
+                <div style="flex:1">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px">
+                        <a href="{{ route('tenant.tasks.show', $task->id) }}" class="ds-fu-type" style="text-decoration:none">{{ $task->title }}</a>
+                        <span class="ds-fu-status" style="background:{{ $tkStatus['bg'] }};color:{{ $tkStatus['text_color'] ?? $tkStatus['color'] }}">
+                            {{ $tkStatus['label'] }}
+                        </span>
+                        @if($tkPriority)
+                        <span class="ds-fu-status" style="background:{{ $tkPriority['bg'] }};color:{{ $tkPriority['color'] }}">
+                            {{ $tkPriority['label'] }}
+                        </span>
+                        @endif
+                    </div>
+                    <div class="ds-fu-time">
+                        <i class="ti ti-clock" style="font-size:11px"></i>
+                        {{ $task->due_at ? $task->due_at->format('M d, Y') : 'No due date' }}
+                    </div>
+                    @if($task->assignedTo)
+                    <div style="font-size:11.5px;color:var(--text-400);margin-top:4px;display:flex;align-items:center;gap:5px">
+                        <i class="ti ti-user" style="font-size:11px"></i>
+                        {{ $task->assignedTo->name }}
                     </div>
                     @endif
                 </div>

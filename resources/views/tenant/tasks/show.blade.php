@@ -319,6 +319,200 @@
     gap:10px;
     flex-wrap:wrap;
 }
+
+/* ─────────────────────────────
+   Checklist / Comments / Attachments / Watchers
+───────────────────────────── */
+.mini-input{
+    flex:1;
+    padding:9px 12px;
+    border-radius:8px;
+    border:1.5px solid var(--border-default);
+    background:var(--bg-input);
+    color:var(--text-100);
+    font-size:13px;
+    outline:none;
+}
+
+.mini-input:focus{
+    border-color:var(--accent);
+}
+
+.mini-form{
+    display:flex;
+    gap:8px;
+    margin-bottom:14px;
+}
+
+.chk-progress-track{
+    height:6px;
+    border-radius:99px;
+    background:var(--bg-elevated);
+    overflow:hidden;
+    margin-bottom:14px;
+}
+
+.chk-progress-fill{
+    height:100%;
+    background:var(--accent);
+    border-radius:99px;
+}
+
+.chk-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:8px 0;
+    border-bottom:1px solid var(--border-subtle);
+}
+
+.chk-item:last-child{
+    border-bottom:none;
+}
+
+.chk-item input[type=checkbox]{
+    width:16px;
+    height:16px;
+    cursor:pointer;
+    accent-color:var(--accent);
+    flex-shrink:0;
+}
+
+.chk-title{
+    flex:1;
+    font-size:13px;
+    color:var(--text-100);
+}
+
+.chk-title.done{
+    text-decoration:line-through;
+    color:var(--text-400);
+}
+
+.chk-del{
+    background:none;
+    border:none;
+    cursor:pointer;
+    color:var(--text-400);
+    font-size:14px;
+    padding:2px;
+}
+
+.chk-del:hover{
+    color:#E24B4A;
+}
+
+.cm-item{
+    padding:12px 0;
+    border-bottom:1px solid var(--border-subtle);
+}
+
+.cm-item:last-child{
+    border-bottom:none;
+}
+
+.cm-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:4px;
+}
+
+.cm-author{
+    font-size:12.5px;
+    font-weight:700;
+    color:var(--text-100);
+}
+
+.cm-time{
+    font-size:11px;
+    color:var(--text-400);
+}
+
+.cm-body{
+    font-size:13px;
+    color:var(--text-300);
+    line-height:1.6;
+    white-space:pre-wrap;
+}
+
+.att-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 0;
+    border-bottom:1px solid var(--border-subtle);
+}
+
+.att-item:last-child{
+    border-bottom:none;
+}
+
+.att-icon{
+    width:32px;
+    height:32px;
+    border-radius:8px;
+    background:var(--bg-elevated);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--accent);
+    flex-shrink:0;
+}
+
+.att-name{
+    font-size:12.5px;
+    font-weight:600;
+    color:var(--text-100);
+    text-decoration:none;
+    display:block;
+}
+
+.att-meta{
+    font-size:11px;
+    color:var(--text-400);
+}
+
+.empty-hint{
+    font-size:12.5px;
+    color:var(--text-400);
+    text-align:center;
+    padding:14px 0;
+}
+
+.watcher-chip{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:5px 10px 5px 5px;
+    border-radius:999px;
+    background:var(--bg-elevated);
+    border:1px solid var(--border-subtle);
+    font-size:12px;
+    margin:3px 4px 3px 0;
+}
+
+.watcher-avatar{
+    width:20px;
+    height:20px;
+    border-radius:50%;
+    background:var(--accent-dim);
+    color:var(--accent);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:9px;
+    font-weight:700;
+}
+
+.watcher-remove{
+    background:none;
+    border:none;
+    cursor:pointer;
+    color:var(--text-400);
+    font-size:12px;
+    padding:0;
+}
 </style>
 @endpush
 
@@ -403,6 +597,38 @@
                     </div>
                     @endif
 
+                    @if(!empty($task->tags))
+                    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:14px">
+                        @foreach($task->tags as $tag)
+                        <span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;font-size:11.5px;font-weight:600;background:var(--accent-dim);color:var(--accent)">
+                            {{ $tag }}
+                        </span>
+                        @endforeach
+                    </div>
+                    @endif
+
+                    @if($task->isRecurring())
+                    @php
+                        $recurrenceUnits = ['daily' => 'day', 'weekly' => 'week', 'monthly' => 'month'];
+                        $unit = $recurrenceUnits[$task->recurrence_type] ?? $task->recurrence_type;
+                    @endphp
+                    <div style="display:flex;align-items:center;gap:6px;margin-top:14px;font-size:12.5px;color:var(--text-300)">
+                        <i class="ti ti-repeat"></i>
+                        Repeats every {{ $task->recurrence_interval > 1 ? $task->recurrence_interval . ' ' : '' }}{{ \Illuminate\Support\Str::plural($unit, $task->recurrence_interval) }}
+                        @if($task->recurrence_end_date)
+                            until {{ $task->recurrence_end_date->format('d M Y') }}
+                        @endif
+                    </div>
+                    @endif
+
+                    @if($task->recurrence_parent_id)
+                    <div style="margin-top:8px;font-size:12.5px">
+                        <a href="{{ route('tenant.tasks.show', $task->recurrence_parent_id) }}" style="color:var(--accent);text-decoration:none">
+                            <i class="ti ti-repeat"></i> Part of a recurring series — view original
+                        </a>
+                    </div>
+                    @endif
+
                 </div>
 
                 {{-- BODY --}}
@@ -458,7 +684,7 @@
                             </div>
 
                             <div class="stat-value">
-                                {{ $task->due_date ? $task->due_date->format('d M Y') : 'Not Set' }}
+                                {{ $task->due_at ? $task->due_at->format('d M Y') : 'Not Set' }}
                             </div>
 
                         </div>
@@ -478,6 +704,36 @@
                             </div>
 
                         </div>
+
+                        @if($task->estimated_hours || $task->actual_hours)
+                        <div class="stat-box">
+
+                            <div class="stat-icon">
+                                <i class="ti ti-hourglass"></i>
+                            </div>
+
+                            <div class="stat-label">
+                                Time Tracked
+                            </div>
+
+                            <div class="stat-value">
+                                @if($task->estimated_hours)
+                                    Est. {{ rtrim(rtrim(number_format($task->estimated_hours, 2), '0'), '.') }}h
+                                @endif
+                                @if($task->actual_hours)
+                                    @if($task->estimated_hours) · @endif
+                                    Actual {{ rtrim(rtrim(number_format($task->actual_hours, 2), '0'), '.') }}h
+                                    @if($task->estimated_hours)
+                                        @php $variance = $task->actual_hours - $task->estimated_hours; @endphp
+                                        <span style="color:{{ $variance > 0 ? 'var(--red)' : 'var(--green, #1D9E75)' }};font-size:11px;font-weight:700">
+                                            ({{ $variance > 0 ? '+' : '' }}{{ rtrim(rtrim(number_format($variance, 2), '0'), '.') }}h)
+                                        </span>
+                                    @endif
+                                @endif
+                            </div>
+
+                        </div>
+                        @endif
 
                     </div>
 
@@ -542,6 +798,205 @@
 
                     </div>
 
+                    @include('components.custom-fields-display')
+
+                </div>
+
+            </div>
+
+            {{-- CHECKLIST --}}
+            <div class="ts-card" style="margin-top:18px">
+
+                <div class="ts-head">
+                    <div>
+                        <div class="ts-title">Checklist</div>
+                        <div class="ts-sub">
+                            {{ $task->checklist_progress['done'] }} of {{ $task->checklist_progress['total'] }} done
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ts-body">
+
+                    @if($task->checklistItems->count())
+                    <div class="chk-progress-track">
+                        <div class="chk-progress-fill"
+                             style="width:{{ $task->checklist_progress['total'] ? round($task->checklist_progress['done'] / $task->checklist_progress['total'] * 100) : 0 }}%"></div>
+                    </div>
+                    @endif
+
+                    <form method="POST" action="{{ route('tenant.tasks.checklist.store', $task->id) }}" class="mini-form">
+                        @csrf
+                        <input type="text" name="title" class="mini-input" placeholder="Add a checklist item..." required maxlength="255">
+                        <button type="submit" class="btn btn-secondary"><i class="ti ti-plus"></i></button>
+                    </form>
+
+                    @forelse($task->checklistItems as $item)
+                    <div class="chk-item">
+                        <form method="POST" action="{{ route('tenant.tasks.checklist.toggle', [$task->id, $item->id]) }}">
+                            @csrf
+                            @method('PATCH')
+                            <input type="checkbox" onchange="this.form.submit()" {{ $item->is_done ? 'checked' : '' }}>
+                        </form>
+                        <span class="chk-title {{ $item->is_done ? 'done' : '' }}">{{ $item->title }}</span>
+                        <form method="POST" action="{{ route('tenant.tasks.checklist.destroy', [$task->id, $item->id]) }}" onsubmit="return confirm('Remove this item?')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="chk-del"><i class="ti ti-x"></i></button>
+                        </form>
+                    </div>
+                    @empty
+                    <div class="empty-hint">No checklist items yet.</div>
+                    @endforelse
+
+                </div>
+
+            </div>
+
+            {{-- DEPENDENCIES --}}
+            <div class="ts-card" style="margin-top:18px">
+
+                <div class="ts-head">
+                    <div>
+                        <div class="ts-title">Dependencies</div>
+                        <div class="ts-sub">Tasks that must finish first</div>
+                    </div>
+                </div>
+
+                <div class="ts-body">
+
+                    @if($task->hasIncompleteDependencies())
+                    <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(224,82,82,.1);border:1px solid rgba(224,82,82,.3);border-radius:8px;margin-bottom:14px;font-size:12.5px;color:var(--red)">
+                        <i class="ti ti-lock"></i>
+                        Blocked — this task can't be marked completed until its dependencies are done.
+                    </div>
+                    @endif
+
+                    <form method="POST" action="{{ route('tenant.tasks.dependencies.store', $task->id) }}" class="mini-form">
+                        @csrf
+                        <select name="depends_on_task_id" class="mini-input" required>
+                            <option value="">— Select task this is blocked by —</option>
+                            @foreach($otherTasks as $ot)
+                            <option value="{{ $ot->id }}">{{ $ot->title }}</option>
+                            @endforeach
+                        </select>
+                        <button type="submit" class="btn btn-secondary"><i class="ti ti-plus"></i></button>
+                    </form>
+
+                    <div style="font-size:11px;font-weight:700;color:var(--text-400);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">
+                        Blocked by ({{ $task->dependencies->count() }})
+                    </div>
+
+                    @forelse($task->dependencies as $dep)
+                    @php $depStatus = config('task_fields.stages')[$dep->status] ?? null; @endphp
+                    <div class="chk-item">
+                        <a href="{{ route('tenant.tasks.show', $dep->id) }}" class="chk-title" style="text-decoration:none">{{ $dep->title }}</a>
+                        @if($depStatus)
+                        <span class="tt-badge" style="background:{{ $depStatus['bg'] }};color:{{ $depStatus['text_color'] }};font-size:11px;padding:2px 8px;border-radius:99px">{{ $depStatus['label'] }}</span>
+                        @endif
+                        <form method="POST" action="{{ route('tenant.tasks.dependencies.destroy', [$task->id, $dep->id]) }}">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="chk-del"><i class="ti ti-x"></i></button>
+                        </form>
+                    </div>
+                    @empty
+                    <div class="empty-hint">No dependencies — this task can start anytime.</div>
+                    @endforelse
+
+                    @if($task->dependents->isNotEmpty())
+                    <div style="font-size:11px;font-weight:700;color:var(--text-400);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 6px">
+                        Blocks ({{ $task->dependents->count() }})
+                    </div>
+                    @foreach($task->dependents as $dep)
+                    <div class="chk-item">
+                        <a href="{{ route('tenant.tasks.show', $dep->id) }}" class="chk-title" style="text-decoration:none">{{ $dep->title }}</a>
+                    </div>
+                    @endforeach
+                    @endif
+
+                </div>
+
+            </div>
+
+            {{-- ATTACHMENTS --}}
+            <div class="ts-card" style="margin-top:18px">
+
+                <div class="ts-head">
+                    <div>
+                        <div class="ts-title">Attachments</div>
+                        <div class="ts-sub">{{ $task->attachments->count() }} file(s)</div>
+                    </div>
+                </div>
+
+                <div class="ts-body">
+
+                    <form method="POST" action="{{ route('tenant.tasks.attachments.store', $task->id) }}" enctype="multipart/form-data" class="mini-form">
+                        @csrf
+                        <input type="file" name="attachments[]" class="mini-input" multiple>
+                        <button type="submit" class="btn btn-secondary"><i class="ti ti-upload"></i></button>
+                    </form>
+
+                    @forelse($task->attachments as $file)
+                    <div class="att-item">
+                        <div class="att-icon"><i class="ti ti-{{ $file->isImage() ? 'photo' : ($file->isPdf() ? 'file-type-pdf' : 'file') }}"></i></div>
+                        <div style="flex:1;min-width:0">
+                            <a href="{{ $file->url }}" target="_blank" class="att-name">{{ $file->original_name }}</a>
+                            <div class="att-meta">{{ $file->file_size_human }} · {{ $file->uploadedBy?->name ?? 'Unknown' }}</div>
+                        </div>
+                        <form method="POST" action="{{ route('tenant.tasks.attachments.destroy', [$task->id, $file->id]) }}" onsubmit="return confirm('Delete this attachment?')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="chk-del"><i class="ti ti-trash"></i></button>
+                        </form>
+                    </div>
+                    @empty
+                    <div class="empty-hint">No attachments yet.</div>
+                    @endforelse
+
+                </div>
+
+            </div>
+
+            {{-- COMMENTS --}}
+            <div class="ts-card" style="margin-top:18px">
+
+                <div class="ts-head">
+                    <div>
+                        <div class="ts-title">Comments</div>
+                        <div class="ts-sub">{{ $task->comments->count() }} comment(s)</div>
+                    </div>
+                </div>
+
+                <div class="ts-body">
+
+                    <form method="POST" action="{{ route('tenant.tasks.comments.store', $task->id) }}" class="mini-form">
+                        @csrf
+                        <textarea name="body" class="mini-input" rows="2" placeholder="Write a comment..." required maxlength="5000"></textarea>
+                        <button type="submit" class="btn btn-secondary"><i class="ti ti-send"></i></button>
+                    </form>
+
+                    @forelse($task->comments as $comment)
+                    <div class="cm-item">
+                        <div class="cm-head">
+                            <span class="cm-author">{{ $comment->user?->name ?? 'Unknown' }}</span>
+                            <div style="display:flex;align-items:center;gap:8px">
+                                <span class="cm-time">{{ $comment->created_at->diffForHumans() }}</span>
+                                @if($comment->user_id === auth()->id())
+                                <form method="POST" action="{{ route('tenant.tasks.comments.destroy', [$task->id, $comment->id]) }}" onsubmit="return confirm('Delete this comment?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="chk-del"><i class="ti ti-trash"></i></button>
+                                </form>
+                                @endif
+                            </div>
+                        </div>
+                        <div class="cm-body">{{ $comment->body }}</div>
+                    </div>
+                    @empty
+                    <div class="empty-hint">No comments yet.</div>
+                    @endforelse
+
                 </div>
 
             </div>
@@ -602,7 +1057,7 @@
 
                         </div>
 
-                        @if($task->due_date)
+                        @if($task->due_at)
 
                         <div class="tl-item">
 
@@ -613,7 +1068,7 @@
                             </div>
 
                             <div class="tl-date">
-                                {{ $task->due_date->format('d M Y h:i A') }}
+                                {{ $task->due_at->format('d M Y') }}
                             </div>
 
                         </div>
@@ -675,6 +1130,87 @@
                         </form>
 
                     </div>
+
+                </div>
+
+            </div>
+
+            {{-- WATCHERS --}}
+            <div class="ts-card">
+
+                <div class="ts-head">
+                    <div>
+                        <div class="ts-title">Watchers</div>
+                        <div class="ts-sub">Notified on updates</div>
+                    </div>
+                </div>
+
+                <div class="ts-body">
+
+                    <form method="POST" action="{{ route('tenant.tasks.watchers.store', $task->id) }}" style="display:flex;gap:8px;margin-bottom:12px">
+                        @csrf
+                        <select name="user_id" class="mini-input" required>
+                            <option value="">— Add watcher —</option>
+                            @foreach($staffList as $staff)
+                                @unless($task->watchers->contains('id', $staff->id))
+                                <option value="{{ $staff->id }}">{{ $staff->name }}</option>
+                                @endunless
+                            @endforeach
+                        </select>
+                        <button type="submit" class="btn btn-secondary"><i class="ti ti-plus"></i></button>
+                    </form>
+
+                    @forelse($task->watchers as $watcher)
+                    <span class="watcher-chip">
+                        <span class="watcher-avatar">{{ strtoupper(substr($watcher->name, 0, 1)) }}</span>
+                        {{ $watcher->name }}
+                        <form method="POST" action="{{ route('tenant.tasks.watchers.destroy', [$task->id, $watcher->id]) }}" style="display:inline">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="watcher-remove"><i class="ti ti-x"></i></button>
+                        </form>
+                    </span>
+                    @empty
+                    <div class="empty-hint">No watchers yet.</div>
+                    @endforelse
+
+                </div>
+
+            </div>
+
+            {{-- AUDIT HISTORY --}}
+            <div class="ts-card">
+
+                <div class="ts-head">
+                    <div>
+                        <div class="ts-title">Audit History</div>
+                        <div class="ts-sub">Field-level change log</div>
+                    </div>
+                </div>
+
+                <div class="ts-body">
+
+                    @forelse($auditLogs as $log)
+                    <div class="cm-item">
+                        <div class="cm-head">
+                            <span class="cm-author">{{ ucfirst($log->action) }} by {{ $log->user?->name ?? 'System' }}</span>
+                            <span class="cm-time">{{ $log->created_at->diffForHumans() }}</span>
+                        </div>
+                        @if($log->action === 'updated' && !empty($log->changed_fields))
+                        <div class="cm-body">
+                            @foreach($log->changed_fields as $change)
+                            <div>
+                                <strong>{{ \Illuminate\Support\Str::headline($change['field']) }}:</strong>
+                                {{ \Illuminate\Support\Str::limit((string) ($change['old'] ?? '—'), 30) }}
+                                → {{ \Illuminate\Support\Str::limit((string) ($change['new'] ?? '—'), 30) }}
+                            </div>
+                            @endforeach
+                        </div>
+                        @endif
+                    </div>
+                    @empty
+                    <div class="empty-hint">No audit history yet.</div>
+                    @endforelse
 
                 </div>
 

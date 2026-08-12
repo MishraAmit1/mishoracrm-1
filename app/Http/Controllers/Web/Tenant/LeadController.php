@@ -159,6 +159,7 @@ class LeadController extends Controller
             'assignedTo',
             'createdBy',
             'followups.assignedTo',
+            'tasks.assignedTo',
             'contact',
             'deal',
             'callLogs.createdBy',

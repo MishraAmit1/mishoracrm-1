@@ -403,11 +403,18 @@
                         <span style="color:var(--text-400);font-weight:500;text-transform:none;letter-spacing:0">({{ $timeline->count() }})</span>
                         @endif
                     </div>
-                    <a href="{{ route('tenant.followups.create', ['contact_id' => $contact->id]) }}"
-                       style="font-size:12px;font-weight:600;color:var(--accent,#185FA5);text-decoration:none;display:inline-flex;align-items:center;gap:4px">
-                        <i class="ti ti-plus" style="font-size:13px" aria-hidden="true"></i>
-                        Schedule Follow-up
-                    </a>
+                    <div style="display:flex;align-items:center;gap:14px">
+                        <a href="{{ route('tenant.tasks.create', ['contact_id' => $contact->id]) }}"
+                           style="font-size:12px;font-weight:600;color:var(--accent,#185FA5);text-decoration:none;display:inline-flex;align-items:center;gap:4px">
+                            <i class="ti ti-plus" style="font-size:13px" aria-hidden="true"></i>
+                            Add Task
+                        </a>
+                        <a href="{{ route('tenant.followups.create', ['contact_id' => $contact->id]) }}"
+                           style="font-size:12px;font-weight:600;color:var(--accent,#185FA5);text-decoration:none;display:inline-flex;align-items:center;gap:4px">
+                            <i class="ti ti-plus" style="font-size:13px" aria-hidden="true"></i>
+                            Schedule Follow-up
+                        </a>
+                    </div>
                 </div>
 
                 @include('components.activity-timeline', ['entries' => $timeline])

@@ -16,6 +16,7 @@ class ActivityTimelineService
     public static function forLead(Lead $lead): Collection
     {
         return static::followupEntries($lead->followups)
+            ->concat(static::taskEntries($lead->tasks))
             ->concat(static::callLogEntries($lead->callLogs))
             ->concat(static::emailEntries($lead->emailLogs))
             ->concat(static::whatsappEntries($lead->whatsappLogs))
@@ -26,10 +27,32 @@ class ActivityTimelineService
     public static function forContact(Contact $contact): Collection
     {
         return static::followupEntries($contact->followups)
+            ->concat(static::taskEntries($contact->tasks))
             ->concat(static::emailEntries($contact->emailLogs))
             ->concat(static::whatsappEntries($contact->whatsappLogs))
             ->sortByDesc('time')
             ->values();
+    }
+
+    private static function taskEntries(Collection $tasks): Collection
+    {
+        $statusMap = [
+            'pending'     => ['bg' => '#E6F1FB', 'color' => '#185FA5', 'label' => 'Pending'],
+            'in_progress' => ['bg' => '#FAEEDA', 'color' => '#854F0B', 'label' => 'In Progress'],
+            'completed'   => ['bg' => '#E1F5EE', 'color' => '#0F6E56', 'label' => 'Completed'],
+            'cancelled'   => ['bg' => '#FCEBEB', 'color' => '#A32D2D', 'label' => 'Cancelled'],
+        ];
+
+        return $tasks->map(fn($task) => [
+            'icon_type'   => 'task',
+            'title'       => $task->title,
+            'badge'       => $statusMap[$task->status] ?? ['bg' => '#F1EFE8', 'color' => '#5F5E5A', 'label' => ucfirst($task->status)],
+            'description' => $task->description,
+            'meta'        => ucfirst($task->priority) . ' priority',
+            'time'        => $task->due_at ?? $task->created_at,
+            'footer'      => $task->assignedTo ? 'assigned to ' . $task->assignedTo->name : null,
+            'url'         => route('tenant.tasks.show', $task->id),
+        ]);
     }
 
     private static function followupEntries(Collection $followups): Collection

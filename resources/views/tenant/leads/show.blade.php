@@ -550,11 +550,18 @@ if ($lead->assignedTo) {
                         <span style="color:var(--text-400);font-weight:500;text-transform:none;letter-spacing:0">({{ $timeline->count() }})</span>
                         @endif
                     </div>
-                    <a href="{{ route('tenant.followups.create', ['lead_id' => $lead->id]) }}"
-                       style="font-size:12px;font-weight:600;color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:4px">
-                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-                        Schedule Follow-up
-                    </a>
+                    <div style="display:flex;align-items:center;gap:14px">
+                        <a href="{{ route('tenant.tasks.create', ['lead_id' => $lead->id]) }}"
+                           style="font-size:12px;font-weight:600;color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:4px">
+                            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                            Add Task
+                        </a>
+                        <a href="{{ route('tenant.followups.create', ['lead_id' => $lead->id]) }}"
+                           style="font-size:12px;font-weight:600;color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:4px">
+                            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                            Schedule Follow-up
+                        </a>
+                    </div>
                 </div>
 
                 @include('components.activity-timeline', ['entries' => $timeline])
@@ -692,6 +699,12 @@ if ($lead->assignedTo) {
                             <svg width="14" height="14" fill="none" stroke="#534AB7" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                         </div>
                         Schedule Follow-up
+                    </a>
+                    <a href="{{ route('tenant.tasks.create', ['lead_id' => $lead->id]) }}" class="ls-qa-btn">
+                        <div class="ls-qa-icon" style="background:#E6F1FB">
+                            <svg width="14" height="14" fill="none" stroke="#185FA5" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+                        </div>
+                        Add Task
                     </a>
                     @if(!$lead->isConverted())
                     <form method="POST" action="{{ route('tenant.leads.convert', $lead) }}">

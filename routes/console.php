@@ -17,3 +17,6 @@ Schedule::command('followups:remind')->everyFiveMinutes();
 
 // ── Invoice payment due/overdue reminders — daily ─────────────────
 Schedule::command('invoices:remind-payments')->daily();
+
+// ── Task due-date reminders — daily ────────────────────────────────
+Schedule::command('tasks:remind')->dailyAt('09:00');

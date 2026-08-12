@@ -400,11 +400,42 @@ Route::middleware(['tenant', 'auth', 'subscription'])
                 Route::get('/', 'index')->name('index');
                 Route::get('/create', 'create')->name('create');
                 Route::post('/', 'store')->name('store');
+                Route::post('/bulk-action', 'bulkAction')->name('bulk_action');
+                Route::post('/saved-filters', 'storeSavedFilter')->name('saved_filters.store');
+                Route::delete('/saved-filters/{id}', 'destroySavedFilter')->name('saved_filters.destroy');
                 Route::get('/{id}', 'show')->name('show');
                 Route::get('/{id}/edit', 'edit')->name('edit');
                 Route::put('/{id}', 'update')->name('update');
                 Route::delete('/{id}', 'destroy')->name('destroy');
                 Route::patch('/{id}/update-stage', 'updateStatus')->name('update_stage');
+
+                Route::post('/{id}/checklist-items', 'storeChecklistItem')->name('checklist.store');
+                Route::patch('/{id}/checklist-items/{item}/toggle', 'toggleChecklistItem')->name('checklist.toggle');
+                Route::delete('/{id}/checklist-items/{item}', 'destroyChecklistItem')->name('checklist.destroy');
+
+                Route::post('/{id}/comments', 'storeComment')->name('comments.store');
+                Route::delete('/{id}/comments/{comment}', 'destroyComment')->name('comments.destroy');
+
+                Route::post('/{id}/attachments', 'storeAttachment')->name('attachments.store');
+                Route::delete('/{id}/attachments/{attachment}', 'destroyAttachment')->name('attachments.destroy');
+
+                Route::post('/{id}/watchers', 'storeWatcher')->name('watchers.store');
+                Route::delete('/{id}/watchers/{userId}', 'destroyWatcher')->name('watchers.destroy');
+
+                Route::post('/{id}/dependencies', 'storeDependency')->name('dependencies.store');
+                Route::delete('/{id}/dependencies/{dependsOnId}', 'destroyDependency')->name('dependencies.destroy');
+            });
+        });
+
+        // Task Templates routes
+        Route::prefix('/task-templates')->name('task-templates.')->group(function () {
+            Route::controller(Tenant\TaskTemplateController::class)->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::get('/create', 'create')->name('create');
+                Route::post('/', 'store')->name('store');
+                Route::get('/{id}/edit', 'edit')->name('edit');
+                Route::put('/{id}', 'update')->name('update');
+                Route::delete('/{id}', 'destroy')->name('destroy');
             });
         });
 

@@ -143,6 +143,27 @@
     cursor:pointer;
 }
 
+.field-input{
+    width:100%;
+    padding:10px 12px;
+    border-radius:8px;
+    border:1.5px solid var(--border-default);
+    background:var(--bg-input);
+    color:var(--text-100);
+    font-size:13.5px;
+    outline:none;
+    transition:.15s;
+}
+
+.field-input:focus{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px var(--accent-dim);
+}
+
+.field-select{
+    cursor:pointer;
+}
+
 .df-err{
     font-size:12px;
     color:#E24B4A;
@@ -583,6 +604,10 @@ $activeStatusData =
                     'deals' => $deals,
 
                 ])
+
+                <div style="padding:0 22px 22px">
+                    @include('components.custom-fields.render')
+                </div>
 
                 {{-- FOOTER --}}
                 <div class="df-footer">

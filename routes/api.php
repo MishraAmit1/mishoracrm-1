@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Tenant\ContactController as ApiContactController;
 use App\Http\Controllers\Api\Tenant\LeadController    as ApiLeadController;
 use App\Http\Controllers\Api\Tenant\DealController    as ApiDealController;
+use App\Http\Controllers\Api\Tenant\TaskController    as ApiTaskController;
 use App\Http\Controllers\Api\WebhookValidationController;
 
 Route::prefix('v1')->group(function () {
@@ -53,5 +54,13 @@ Route::prefix('v1')->group(function () {
         Route::get('/deals/{id}',        [ApiDealController::class, 'show']);
         Route::put('/deals/{id}',        [ApiDealController::class, 'update']);
         Route::delete('/deals/{id}',     [ApiDealController::class, 'destroy']);
+
+        // Tasks
+        Route::get('/tasks',                [ApiTaskController::class, 'index']);
+        Route::post('/tasks',               [ApiTaskController::class, 'store']);
+        Route::get('/tasks/{id}',           [ApiTaskController::class, 'show']);
+        Route::put('/tasks/{id}',           [ApiTaskController::class, 'update']);
+        Route::patch('/tasks/{id}/status',  [ApiTaskController::class, 'updateStatus']);
+        Route::delete('/tasks/{id}',        [ApiTaskController::class, 'destroy']);
     });
 });

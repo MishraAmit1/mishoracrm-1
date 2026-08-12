@@ -144,6 +144,27 @@
     cursor:pointer;
 }
 
+.field-input{
+    width:100%;
+    padding:10px 12px;
+    border-radius:8px;
+    border:1.5px solid var(--border-default);
+    background:var(--bg-input);
+    color:var(--text-100);
+    font-size:13.5px;
+    outline:none;
+    transition:.15s;
+}
+
+.field-input:focus{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px var(--accent-dim);
+}
+
+.field-select{
+    cursor:pointer;
+}
+
 .df-err{
     font-size:12px;
     color:#E24B4A;
@@ -293,6 +314,16 @@ $activeStatus = old('status', request('status', 'pending'));
 $cfgStatuses = $taskConfig['stages'];
 $activeStatusData = $cfgStatuses[$activeStatus];
 
+// Pre-select the related Lead/Contact/Deal when arriving from that record's page
+$prefillModel = null;
+if ($lead) {
+    $prefillModel = (object) ['taskable_type' => \App\Models\Lead::class, 'taskable_id' => $lead->id];
+} elseif ($contact) {
+    $prefillModel = (object) ['taskable_type' => \App\Models\Contact::class, 'taskable_id' => $contact->id];
+} elseif ($deal) {
+    $prefillModel = (object) ['taskable_type' => \App\Models\Deal::class, 'taskable_id' => $deal->id];
+}
+
 @endphp
 
 <div class="df-page">
@@ -339,6 +370,22 @@ $activeStatusData = $cfgStatuses[$activeStatus];
 
         @csrf
         @method('POST')
+        <input type="hidden" name="template_id" id="templateIdInput" value="">
+
+        @if($templates->isNotEmpty())
+        <div style="background:var(--bg-surface);border:1px solid var(--border-default);border-radius:14px;padding:16px 18px;margin-bottom:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+            <div style="font-size:12.5px;font-weight:600;color:var(--text-200);display:flex;align-items:center;gap:6px">
+                <i class="ti ti-template"></i> Start from Template
+            </div>
+            <select id="templateSelect" class="df-input df-sel" style="max-width:280px">
+                <option value="">— Blank task —</option>
+                @foreach($templates as $tpl)
+                <option value="{{ $tpl->id }}">{{ $tpl->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        @endif
+
         <div class="df-layout">
 
             {{-- MAIN --}}
@@ -350,7 +397,7 @@ $activeStatusData = $cfgStatuses[$activeStatus];
 
                     'staffList' => $staffList,
 
-                    'model' => null,
+                    'model' => $prefillModel,
 
                     'isEdit' => false,
 
@@ -361,6 +408,10 @@ $activeStatusData = $cfgStatuses[$activeStatus];
                     'deals' => $deals,
 
                 ])
+
+                <div style="padding:0 22px 22px">
+                    @include('components.custom-fields.render')
+                </div>
 
                 {{-- FOOTER --}}
                 <div class="df-footer">
@@ -669,4 +720,45 @@ $activeStatusData = $cfgStatuses[$activeStatus];
 
 })();
 </script>
+
+@if($templates->isNotEmpty())
+@php
+$templatesJs = $templates->map(function ($t) {
+    return [
+        'id'          => $t->id,
+        'description' => $t->description,
+        'priority'    => $t->default_priority,
+        'tags'        => implode(', ', $t->default_tags ?? []),
+    ];
+})->values();
+@endphp
+<script>
+(function(){
+
+    const templates = @json($templatesJs);
+
+    const select = document.getElementById('templateSelect');
+    const idInput = document.getElementById('templateIdInput');
+
+    select?.addEventListener('change', function(){
+        const tpl = templates.find(t => String(t.id) === this.value);
+        idInput.value = this.value;
+
+        if (!tpl) return;
+
+        const descEl = document.getElementById('df_description');
+        if (descEl && !descEl.value) descEl.value = tpl.description || '';
+
+        const priorityEl = document.getElementById('df_priority');
+        if (priorityEl && tpl.priority) priorityEl.value = tpl.priority;
+
+        const tagsEl = document.getElementById('df_tags');
+        if (tagsEl && !tagsEl.value) tagsEl.value = tpl.tags || '';
+
+        if (typeof updateTaskPreview === 'function') updateTaskPreview();
+    });
+
+})();
+</script>
+@endif
 @endpush
