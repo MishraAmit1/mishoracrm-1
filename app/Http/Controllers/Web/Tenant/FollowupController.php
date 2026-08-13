@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web\Tenant;
 
+use App\Helpers\ViewScope;
 use App\Http\Controllers\Controller;
 use App\Models\Contact;
 use App\Models\Followup;
@@ -67,7 +68,10 @@ class FollowupController extends Controller
     // ── Index ─────────────────────────────────────────────────────
     public function index(Request $request): View
     {
+        $user = Auth::user();
+
         $query = Followup::with(['lead', 'contact', 'assignedTo'])->latest('scheduled_at');
+        ViewScope::apply($query, 'followups', $user);
 
         // Filters
         if ($request->filled('status')) {
@@ -86,6 +90,10 @@ class FollowupController extends Controller
             $query->whereDate('scheduled_at', $request->date);
         }
 
+        if ($request->boolean('overdue')) {
+            $query->overdue();
+        }
+
         // My followups only
         if ($request->boolean('mine')) {
             $query->where('assigned_to', Auth::id());
@@ -93,14 +101,16 @@ class FollowupController extends Controller
 
         $followups = $query->paginate(20)->withQueryString();
 
-        // Counts
+        // Counts — scoped the same way as the listing, so a "view_own" user
+        // never sees totals that reveal other staff members' follow-up counts.
+        $countsBase = fn () => ViewScope::apply(Followup::query(), 'followups', $user);
         $counts = [
-            'all'        => Followup::count(),
-            'scheduled'  => Followup::where('status', 'scheduled')->count(),
-            'today'      => Followup::today()->count(),
-            'overdue'    => Followup::overdue()->count(),
-            'done'       => Followup::where('status', 'done')->count(),
-            'missed'     => Followup::where('status', 'missed')->count(),
+            'all'        => $countsBase()->count(),
+            'scheduled'  => $countsBase()->where('status', 'scheduled')->count(),
+            'today'      => $countsBase()->today()->count(),
+            'overdue'    => $countsBase()->overdue()->count(),
+            'done'       => $countsBase()->where('status', 'done')->count(),
+            'missed'     => $countsBase()->where('status', 'missed')->count(),
         ];
 
         $staffList = $this->getStaffList();
@@ -115,6 +125,8 @@ class FollowupController extends Controller
     // ── Create ────────────────────────────────────────────────────
     public function create(Request $request): View
     {
+        $this->authorize('create', Followup::class);
+
         $staffList = $this->getStaffList();
         $types     = Followup::types();
 
@@ -139,6 +151,8 @@ class FollowupController extends Controller
     // ── Store ─────────────────────────────────────────────────────
     public function store(Request $request): RedirectResponse
     {
+        $this->authorize('create', Followup::class);
+
         $request->validate(array_merge([
             'lead_id'      => ['nullable', 'exists:leads,id'],
             'contact_id'   => ['nullable', 'exists:contacts,id'],
@@ -184,6 +198,8 @@ class FollowupController extends Controller
     // ── Show ──────────────────────────────────────────────────────
     public function show(Followup $followup): View
     {
+        $this->authorize('view', $followup);
+
         $followup->load(['lead', 'contact', 'assignedTo', 'createdBy', 'attachments.uploadedBy']);
 
         return view('tenant.followups.show', compact('followup'));
@@ -192,6 +208,8 @@ class FollowupController extends Controller
     // ── Edit ──────────────────────────────────────────────────────
     public function edit(Followup $followup)
     {
+        $this->authorize('update', $followup);
+
         $staffList = $this->getStaffList();
         $types     = Followup::types();
         $leads     = Lead::orderBy('name')->get(['id', 'name', 'phone']);
@@ -206,6 +224,8 @@ class FollowupController extends Controller
     // ── Update ────────────────────────────────────────────────────
     public function update(Request $request, Followup $followup): RedirectResponse
     {
+        $this->authorize('update', $followup);
+
         $request->validate(array_merge([
             'lead_id'      => ['nullable', 'exists:leads,id'],
             'contact_id'   => ['nullable', 'exists:contacts,id'],
@@ -250,6 +270,8 @@ class FollowupController extends Controller
     // ── Destroy ───────────────────────────────────────────────────
     public function destroy(Followup $followup): RedirectResponse
     {
+        $this->authorize('delete', $followup);
+
         $leadId    = $followup->lead_id;
         $contactId = $followup->contact_id;
 
@@ -269,6 +291,8 @@ class FollowupController extends Controller
     // ── Mark Done ─────────────────────────────────────────────────
     public function markDone(Request $request, Followup $followup): RedirectResponse
     {
+        $this->authorize('update', $followup);
+
         $request->validate(array_merge([
             'outcome' => ['nullable', 'string', 'max:2000'],
         ], $this->attachmentRules()));
@@ -287,6 +311,8 @@ class FollowupController extends Controller
     // ── Mark Missed ───────────────────────────────────────────────
     public function markMissed(Followup $followup): RedirectResponse
     {
+        $this->authorize('update', $followup);
+
         $followup->update(['status' => 'missed']);
 
         return back()->with('success', 'Follow-up marked as missed.');
@@ -318,6 +344,8 @@ class FollowupController extends Controller
     // ── Attachments: Upload ──────────────────────────────────────
     public function storeAttachment(Request $request, Followup $followup): RedirectResponse
     {
+        $this->authorize('update', $followup);
+
         $request->validate(array_merge(
             ['attachments' => ['required', 'array', 'max:5']],
             $this->attachmentRules()
@@ -331,6 +359,8 @@ class FollowupController extends Controller
     // ── Attachments: Delete ──────────────────────────────────────
     public function destroyAttachment(Followup $followup, FollowupAttachment $attachment): RedirectResponse
     {
+        $this->authorize('update', $followup);
+
         abort_unless($attachment->followup_id === $followup->id, 404);
 
         Storage::disk('public')->delete($attachment->path);

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\DealRequest;
 use App\Http\Resources\DealResource;
 use App\Models\Deal;
+use App\Services\DealService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -19,18 +20,6 @@ class DealController extends Controller
         return Deal::where('id', $id)
                    ->where('tenant_id', $tenantId)
                    ->firstOrFail();
-    }
-
-    private function defaultProbability(string $stage): int
-    {
-        return match($stage) {
-            'new'         => 10,
-            'proposal'    => 30,
-            'negotiation' => 60,
-            'won'         => 100,
-            'lost'        => 0,
-            default       => 10,
-        };
     }
 
     // ── Index ─────────────────────────────────────────────────────
@@ -96,19 +85,10 @@ class DealController extends Controller
     // ── Store ─────────────────────────────────────────────────────
     public function store(DealRequest $request): JsonResponse
     {
-        $data               = $request->validated();
-        $data['tenant_id']  = auth()->user()?->tenant_id ?? app('tenant_id');
-        $data['created_by'] = auth()->id();
+        $this->authorize('create', Deal::class);
 
-        if (empty($data['probability'])) {
-            $data['probability'] = $this->defaultProbability($data['stage']);
-        }
-
-        if ($data['stage'] === 'won' && empty($data['actual_close_date'])) {
-            $data['actual_close_date'] = now()->toDateString();
-        }
-
-        $deal = Deal::create($data);
+        $tenantId = auth()->user()?->tenant_id ?? app('tenant_id');
+        $deal     = DealService::create($request->validated(), $tenantId, auth()->id());
         $deal->load('contact', 'assignedTo');
 
         return response()->json([
@@ -137,17 +117,8 @@ class DealController extends Controller
     {
         $deal = $this->findDeal($id);
         $this->authorize('modify', $deal);
-        $data = $request->validated();
 
-        if ($data['stage'] === 'won' && $deal->stage !== 'won') {
-            $data['actual_close_date'] = now()->toDateString();
-        }
-
-        if (empty($data['probability'])) {
-            $data['probability'] = $this->defaultProbability($data['stage']);
-        }
-
-        $deal->update($data);
+        DealService::update($deal, $request->validated());
 
         return response()->json([
             'success' => true,
@@ -160,7 +131,7 @@ class DealController extends Controller
     public function destroy(int $id): JsonResponse
     {
         $deal = $this->findDeal($id);
-        $this->authorize('modify', $deal);
+        $this->authorize('delete', $deal);
         $deal->delete();
 
         return response()->json([
@@ -180,20 +151,7 @@ class DealController extends Controller
         $deal = $this->findDeal($id);
         $this->authorize('modify', $deal);
 
-        $data = [
-            'stage'       => $request->stage,
-            'probability' => $this->defaultProbability($request->stage),
-        ];
-
-        if ($request->stage === 'won') {
-            $data['actual_close_date'] = now()->toDateString();
-        }
-
-        if ($request->stage === 'lost' && $request->filled('lost_reason')) {
-            $data['lost_reason'] = $request->lost_reason;
-        }
-
-        $deal->update($data);
+        DealService::updateStage($deal, $request->stage, $request->lost_reason);
 
         return response()->json([
             'success' => true,
@@ -207,11 +165,8 @@ class DealController extends Controller
     {
         $deal = $this->findDeal($id);
         $this->authorize('modify', $deal);
-        $deal->update([
-            'stage'             => 'won',
-            'probability'       => 100,
-            'actual_close_date' => now()->toDateString(),
-        ]);
+
+        DealService::markWon($deal);
 
         return response()->json([
             'success' => true,
@@ -229,12 +184,8 @@ class DealController extends Controller
 
         $deal = $this->findDeal($id);
         $this->authorize('modify', $deal);
-        $deal->update([
-            'stage'             => 'lost',
-            'probability'       => 0,
-            'actual_close_date' => now()->toDateString(),
-            'lost_reason'       => $request->lost_reason,
-        ]);
+
+        DealService::markLost($deal, $request->lost_reason);
 
         return response()->json([
             'success' => true,

@@ -20,7 +20,7 @@ class AuthenticateWithApiKey
             ], 401);
         }
 
-        $apiKey = ApiKey::where('key', $rawKey)->with('tenant')->first();
+        $apiKey = ApiKey::where('key', $rawKey)->with(['tenant', 'creator'])->first();
 
         if (!$apiKey || !$apiKey->isValid()) {
             return response()->json([
@@ -29,9 +29,21 @@ class AuthenticateWithApiKey
             ], 401);
         }
 
+        if (!$apiKey->creator || !$apiKey->creator->is_active) {
+            return response()->json([
+                'success' => false,
+                'message' => 'API key owner account is no longer active.',
+            ], 401);
+        }
+
         // Bind tenant context — same pattern as IdentifyTenant middleware
         app()->instance('tenant',    $apiKey->tenant);
         app()->instance('tenant_id', $apiKey->tenant_id);
+
+        // Authenticate as the key's creator so policy/permission checks
+        // (Gate::authorize, ViewScope, $user->can(...)) work for API-key
+        // requests the same way they do for session-authenticated ones.
+        auth()->setUser($apiKey->creator);
 
         $apiKey->touchLastUsed();
 

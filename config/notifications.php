@@ -41,8 +41,24 @@ return [
             'channels' => ['in_app'],
             'message'  => 'Lead {{name}} converted to contact',
         ],
+        'lead.sla_breached' => [
+            'label'    => 'Lead SLA Breached',
+            'icon'     => 'alert-circle',
+            'color'    => 'red',
+            'group'    => 'Leads',
+            'channels' => ['in_app'],
+            'message'  => 'Lead {{name}} has had no contact since it was created — follow up now',
+        ],
 
         // ── Deals ─────────────────────────────────────────────────
+        'deal.assigned' => [
+            'label'    => 'Deal Assigned',
+            'icon'     => 'user-check',
+            'color'    => 'accent',
+            'group'    => 'Deals',
+            'channels' => ['in_app'],
+            'message'  => 'Deal "{{title}}" assigned to you',
+        ],
         'deal.created' => [
             'label'    => 'New Deal Created',
             'icon'     => 'briefcase',

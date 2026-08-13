@@ -139,6 +139,7 @@
 
     $canEdit    = $quotation->status !== 'accepted';
     $canConvert = $quotation->status === 'accepted' && !$quotation->invoice;
+    $sym        = $quotation->currencySymbol();
 @endphp
 
 <div class="qs">
@@ -306,9 +307,9 @@
                                 <th style="width:25%">Item / Service</th>
                                 <th style="width:22%">Description</th>
                                 <th style="width:9%;text-align:right">Qty</th>
-                                <th style="width:13%;text-align:right">Rate (₹)</th>
+                                <th style="width:13%;text-align:right">Rate ({{ $sym }})</th>
                                 <th style="width:10%;text-align:right">GST %</th>
-                                <th style="width:16%;text-align:right">Amount (₹)</th>
+                                <th style="width:16%;text-align:right">Amount ({{ $sym }})</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -322,9 +323,9 @@
                                     <div class="item-desc">{{ $item['description'] ?? '—' }}</div>
                                 </td>
                                 <td class="td-right td-num" data-label="Qty">{{ number_format($item['quantity'] ?? 0, 2) }}</td>
-                                <td class="td-right td-num" data-label="Rate (₹)">{{ number_format($item['rate'] ?? 0, 2) }}</td>
+                                <td class="td-right td-num" data-label="Rate ({{ $sym }})">{{ number_format($item['rate'] ?? 0, 2) }}</td>
                                 <td class="td-right td-num" data-label="GST %">{{ number_format($item['tax_percent'] ?? $quotation->tax_percent ?? 0, 1) }}%</td>
-                                <td class="td-right" style="font-family:'DM Mono',monospace;font-weight:600;color:var(--text-100)" data-label="Amount (₹)">
+                                <td class="td-right" style="font-family:'DM Mono',monospace;font-weight:600;color:var(--text-100)" data-label="Amount ({{ $sym }})">
                                     {{ number_format($item['amount'] ?? 0, 2) }}
                                 </td>
                             </tr>
@@ -338,21 +339,21 @@
                     <table class="qs-totals-table">
                         <tr>
                             <td>Subtotal</td>
-                            <td>₹{{ number_format($quotation->subtotal ?? 0, 2) }}</td>
+                            <td>{{ $sym }}{{ number_format($quotation->subtotal ?? 0, 2) }}</td>
                         </tr>
                         @if(($quotation->discount ?? 0) > 0)
                         <tr>
                             <td>Discount</td>
-                            <td style="color:#E24B4A">-₹{{ number_format($quotation->discount, 2) }}</td>
+                            <td style="color:#E24B4A">-{{ $sym }}{{ number_format($quotation->discount, 2) }}</td>
                         </tr>
                         @endif
                         <tr>
                             <td>GST ({{ $quotation->tax_percent ?? 0 }}%)</td>
-                            <td style="color:#1D9E75">+₹{{ number_format($quotation->tax_amount ?? 0, 2) }}</td>
+                            <td style="color:#1D9E75">+{{ $sym }}{{ number_format($quotation->tax_amount ?? 0, 2) }}</td>
                         </tr>
                         <tr class="grand">
                             <td><strong>Total</strong></td>
-                            <td><strong>₹{{ number_format($quotation->total ?? 0, 2) }}</strong></td>
+                            <td><strong>{{ $sym }}{{ number_format($quotation->total ?? 0, 2) }}</strong></td>
                         </tr>
                     </table>
                 </div>
@@ -377,6 +378,41 @@
                 </div>
                 @endif
             </div>
+
+            {{-- Customer Response (self-serve accept/reject) --}}
+            @if($quotation->customer_responded_at)
+            <div class="qs-card">
+                <div class="qs-card-head">
+                    <div class="qs-card-title">
+                        <i class="ti ti-signature" style="font-size:13px;margin-right:5px"></i> Customer Response
+                    </div>
+                </div>
+                <div style="padding:16px 20px">
+                    @if($quotation->status === 'accepted' && $quotation->signed_name)
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+                        <div>
+                            <div style="font-size:13px;color:var(--text-300)">Accepted by</div>
+                            <div style="font-size:15px;font-weight:600;color:var(--text-100)">{{ $quotation->signed_name }}</div>
+                            <div style="font-size:11.5px;color:var(--text-400);margin-top:2px">
+                                {{ $quotation->customer_responded_at->format('d M Y, h:i A') }}
+                                @if($quotation->customer_response_ip) · IP {{ $quotation->customer_response_ip }} @endif
+                            </div>
+                        </div>
+                        @if($quotation->signature_data)
+                        <img src="{{ $quotation->signature_data }}" alt="Signature" style="max-width:200px;max-height:70px;background:#fff;border:1px solid var(--border-subtle);border-radius:8px;padding:4px">
+                        @endif
+                    </div>
+                    @elseif($quotation->status === 'rejected')
+                    <div style="font-size:13px;color:var(--text-300)">
+                        Rejected on {{ $quotation->customer_responded_at->format('d M Y, h:i A') }}
+                        @if($quotation->rejected_reason)
+                        <div style="margin-top:6px;color:var(--text-100)">Reason: {{ $quotation->rejected_reason }}</div>
+                        @endif
+                    </div>
+                    @endif
+                </div>
+            </div>
+            @endif
 
             {{-- Linked Deal --}}
             @if($quotation->deal)
@@ -426,6 +462,39 @@
             </div>
             @endif
 
+            {{-- Version history --}}
+            @if($quotation->parentQuotation || $quotation->revisions->isNotEmpty())
+            <div class="qs-card">
+                <div class="qs-card-head">
+                    <div class="qs-card-title">
+                        <i class="ti ti-history" style="font-size:13px;margin-right:5px"></i> Version History
+                    </div>
+                </div>
+                <div>
+                    @if($quotation->parentQuotation)
+                    <div class="qs-link-row">
+                        <div>
+                            <div style="font-size:13.5px;font-weight:600;color:var(--text-100)">{{ $quotation->parentQuotation->number }} (v{{ $quotation->parentQuotation->version }})</div>
+                            <div style="font-size:12px;color:var(--text-300);margin-top:2px">Original quotation this version was cloned from</div>
+                        </div>
+                        <a href="{{ route('tenant.quotations.show', $quotation->parentQuotation->id) }}"
+                           class="btn btn-secondary" style="font-size:12px;padding:6px 12px">View</a>
+                    </div>
+                    @endif
+                    @foreach($quotation->revisions as $revision)
+                    <div class="qs-link-row" style="border-top:1px solid var(--border-subtle)">
+                        <div>
+                            <div style="font-size:13.5px;font-weight:600;color:var(--text-100)">{{ $revision->number }} (v{{ $revision->version }})</div>
+                            <div style="font-size:12px;color:var(--text-300);margin-top:2px">{{ ucfirst($revision->status) }} · {{ $revision->created_at->format('d M Y') }}</div>
+                        </div>
+                        <a href="{{ route('tenant.quotations.show', $revision->id) }}"
+                           class="btn btn-secondary" style="font-size:12px;padding:6px 12px">View</a>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
         </div>{{-- /qs-main --}}
 
         {{-- ── SIDEBAR ── --}}
@@ -437,7 +506,7 @@
                     {{ $quotation->number }}
                 </div>
                 <div style="font-size:34px;font-weight:600;color:#185FA5;font-family:'DM Mono',monospace;letter-spacing:-1.5px;line-height:1">
-                    ₹{{ number_format($quotation->total ?? 0, 2) }}
+                    {{ $sym }}{{ number_format($quotation->total ?? 0, 2) }}
                 </div>
                 <div style="margin-top:10px">
                     <span class="qs-status-badge"
@@ -479,6 +548,15 @@
                     Download PDF
                 </a>
 
+                @if(!in_array($quotation->status, ['accepted', 'rejected']))
+                <button type="button" class="qs-action-btn" style="margin-top:7px" onclick="copyText('{{ $quotation->publicUrl() }}')">
+                    <div class="qs-act-icon" style="background:#EEEDFE">
+                        <i class="ti ti-link" style="font-size:15px;color:#534AB7"></i>
+                    </div>
+                    Copy Shareable Link
+                </button>
+                @endif
+
                 @php
                     $sendToEmail = $quotation->contact?->primaryEmail();
                     $sendCcCount = $quotation->contact ? count($quotation->contact->ccEmails()) : 0;
@@ -517,6 +595,19 @@
                 </form>
                 @endif
 
+                @can('quotations.create')
+                <form method="POST" action="{{ route('tenant.quotations.new_version',$quotation->id) }}"
+                      onsubmit="return confirm('Create a new draft version cloned from {{ $quotation->number }}?')">
+                    @csrf
+                    <button type="submit" class="qs-action-btn" style="margin-top:7px">
+                        <div class="qs-act-icon" style="background:#FDECEA">
+                            <i class="ti ti-copy" style="font-size:15px;color:#C0392B"></i>
+                        </div>
+                        Create New Version
+                    </button>
+                </form>
+                @endcan
+
                 @if($quotation->invoice)
                 <a href="{{ route('tenant.invoices.show',$quotation->invoice->id) }}" class="qs-action-btn" style="margin-top:7px">
                     <div class="qs-act-icon" style="background:#EAF3DE">
@@ -541,17 +632,17 @@
                     </div>
                     <div class="dl-row">
                         <span class="dl-key">Subtotal</span>
-                        <span class="dl-val" style="font-family:'DM Mono',monospace">₹{{ number_format($quotation->subtotal??0,2) }}</span>
+                        <span class="dl-val" style="font-family:'DM Mono',monospace">{{ $sym }}{{ number_format($quotation->subtotal??0,2) }}</span>
                     </div>
                     @if(($quotation->discount??0)>0)
                     <div class="dl-row">
                         <span class="dl-key">Discount</span>
-                        <span class="dl-val" style="color:#E24B4A;font-family:'DM Mono',monospace">-₹{{ number_format($quotation->discount,2) }}</span>
+                        <span class="dl-val" style="color:#E24B4A;font-family:'DM Mono',monospace">-{{ $sym }}{{ number_format($quotation->discount,2) }}</span>
                     </div>
                     @endif
                     <div class="dl-row">
                         <span class="dl-key">Tax ({{ $quotation->tax_percent??0 }}%)</span>
-                        <span class="dl-val" style="font-family:'DM Mono',monospace">₹{{ number_format($quotation->tax_amount??0,2) }}</span>
+                        <span class="dl-val" style="font-family:'DM Mono',monospace">{{ $sym }}{{ number_format($quotation->tax_amount??0,2) }}</span>
                     </div>
                     <div class="dl-row">
                         <span class="dl-key">Created</span>

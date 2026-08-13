@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web\Tenant;
 
+use App\Exports\DealsExport;
 use App\Helpers\ViewScope;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DealRequest;
@@ -9,12 +10,12 @@ use App\Models\Contact;
 use App\Models\Deal;
 use App\Models\Lead;
 use App\Models\User;
-use App\Services\QuotationService;
-use App\Services\WebhookService;
+use App\Services\DealService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Maatwebsite\Excel\Facades\Excel;
 
 class DealController extends Controller
 {
@@ -35,35 +36,27 @@ class DealController extends Controller
             ->get(['id', 'name']);
     }
 
+    // ── Shared filtered query (index page + export reuse this) ────
+    public static function filteredQuery(int $tenantId, array $filters, User $user): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = Deal::query()->where('tenant_id', $tenantId);
+        $query = ViewScope::apply($query, 'deals', $user);
+
+        if (!empty($filters['search']))      $query->search($filters['search']);
+        if (!empty($filters['stage']))       $query->stage($filters['stage']);
+        if (!empty($filters['assigned_to'])) $query->assignedTo($filters['assigned_to']);
+        if (!empty($filters['value_min']))   $query->where('value', '>=', $filters['value_min']);
+        if (!empty($filters['value_max']))   $query->where('value', '<=', $filters['value_max']);
+
+        return $query;
+    }
+
     // ── Index ─────────────────────────────────────────────────────
     public function index(Request $request)
     {
-        $query = Deal::query()
-            ->where('tenant_id', auth()->user()->tenant_id)
+        $query = self::filteredQuery(auth()->user()->tenant_id, $request->all(), auth()->user())
             ->with(['contact', 'assignedTo'])
             ->withCount(['tasks', 'followups']);
-
-        $query = ViewScope::apply($query, 'deals', auth()->user());
-
-        if ($request->filled('search')) {
-            $query->search($request->search);
-        }
-
-        if ($request->filled('stage')) {
-            $query->stage($request->stage);
-        }
-
-        if ($request->filled('assigned_to')) {
-            $query->assignedTo($request->assigned_to);
-        }
-
-        if ($request->filled('value_min')) {
-            $query->where('value', '>=', $request->value_min);
-        }
-
-        if ($request->filled('value_max')) {
-            $query->where('value', '<=', $request->value_max);
-        }
 
         $sort    = $request->get('sort', 'created_at');
         $dir     = $request->get('dir', 'desc');
@@ -113,6 +106,15 @@ class DealController extends Controller
             'view'
         ));
     }
+    // ── Export (respects current index filters) ───────────────────
+    public function export(Request $request)
+    {
+        return Excel::download(
+            new DealsExport(auth()->user()->tenant_id, $request->query(), auth()->user()),
+            'deals_export_' . now()->format('Y-m-d_His') . '.xlsx'
+        );
+    }
+
     // ── Create ────────────────────────────────────────────────────
     public function create(Request $request): View
     {
@@ -148,23 +150,9 @@ class DealController extends Controller
     // ── Store ─────────────────────────────────────────────────────
     public function store(DealRequest $request): RedirectResponse
     {
-        $data               = $request->validated();
-        $data['tenant_id']  = auth()->user()->tenant_id;
-        $data['created_by'] = auth()->id();
+        $this->authorize('create', Deal::class);
 
-        // Auto set probability based on stage
-        if (empty($data['probability'])) {
-            $data['probability'] = $this->defaultProbability($data['stage']);
-        }
-
-        // If won — set actual close date
-        if ($data['stage'] === 'won' && empty($data['actual_close_date'])) {
-            $data['actual_close_date'] = now()->toDateString();
-        }
-
-        $data['stage_changed_at'] = now();
-
-        $deal = Deal::create($data);
+        $deal = DealService::create($request->validated(), auth()->user()->tenant_id, auth()->id());
 
         return redirect()
             ->route('tenant.deals.show', $deal->id)
@@ -218,29 +206,8 @@ class DealController extends Controller
     {
         $deal = $this->findDeal($id);
         $this->authorize('modify', $deal);
-        $data = $request->validated();
 
-        // Auto set actual_close_date when won
-        $justWon = $data['stage'] === 'won' && $deal->stage !== 'won';
-        if ($justWon) {
-            $data['actual_close_date'] = now()->toDateString();
-        }
-
-        // Auto set probability
-        if (empty($data['probability'])) {
-            $data['probability'] = $this->defaultProbability($data['stage']);
-        }
-
-        // Track stage change time
-        if (isset($data['stage']) && $data['stage'] !== $deal->stage) {
-            $data['stage_changed_at'] = now();
-        }
-
-        $deal->update($data);
-
-        if ($justWon) {
-            $this->syncQuotationAccepted($deal);
-        }
+        DealService::update($deal, $request->validated());
 
         return redirect()
             ->route('tenant.deals.show', $deal->id)
@@ -251,7 +218,7 @@ class DealController extends Controller
     public function destroy(int|string $id): RedirectResponse
     {
         $deal = $this->findDeal($id);
-        $this->authorize('modify', $deal);
+        $this->authorize('delete', $deal);
         $title = $deal->title;
         $deal->delete();
 
@@ -271,26 +238,7 @@ class DealController extends Controller
         $deal = $this->findDeal($id);
         $this->authorize('modify', $deal);
 
-        $data = [
-            'stage'       => $request->stage,
-            'probability' => $this->defaultProbability($request->stage),
-        ];
-
-        if ($request->stage === 'won') {
-            $data['actual_close_date'] = now()->toDateString();
-        }
-
-        if ($request->stage === 'lost' && $request->filled('lost_reason')) {
-            $data['lost_reason'] = $request->lost_reason;
-        }
-
-        $data['stage_changed_at'] = now();
-
-        $deal->update($data);
-
-        if ($request->stage === 'won') {
-            $this->syncQuotationAccepted($deal);
-        }
+        DealService::updateStage($deal, $request->stage, $request->lost_reason);
 
         return back()->with('success', 'Deal stage updated.');
     }
@@ -300,23 +248,8 @@ class DealController extends Controller
     {
         $deal = $this->findDeal($id);
         $this->authorize('modify', $deal);
-        $deal->update([
-            'stage'             => 'won',
-            'probability'       => 100,
-            'actual_close_date' => now()->toDateString(),
-            'stage_changed_at'  => now(),
-        ]);
 
-        WebhookService::fire('deal.won', $deal->tenant_id, [
-            'id'           => $deal->id,
-            'title'        => $deal->title,
-            'value'        => $deal->value,
-            'contact_name' => $deal->contact?->name,
-            'contact_phone'=> $deal->contact?->phone,
-            'close_date'   => $deal->actual_close_date,
-        ]);
-
-        $this->syncQuotationAccepted($deal);
+        DealService::markWon($deal);
 
         return back()->with('success', "Deal marked as Won! 🎉");
     }
@@ -330,20 +263,8 @@ class DealController extends Controller
 
         $deal = $this->findDeal($id);
         $this->authorize('modify', $deal);
-        $deal->update([
-            'stage'             => 'lost',
-            'probability'       => 0,
-            'actual_close_date' => now()->toDateString(),
-            'lost_reason'       => $request->lost_reason,
-            'stage_changed_at'  => now(),
-        ]);
 
-        WebhookService::fire('deal.lost', $deal->tenant_id, [
-            'id'          => $deal->id,
-            'title'       => $deal->title,
-            'value'       => $deal->value,
-            'lost_reason' => $deal->lost_reason,
-        ]);
+        DealService::markLost($deal, $request->lost_reason);
 
         return back()->with('success', 'Deal marked as lost.');
     }
@@ -384,21 +305,25 @@ class DealController extends Controller
             ->get()
             ->keyBy('stage');
 
-        // Monthly closed revenue + win/loss counts — last 6 months
+        // Monthly closed revenue + win/loss counts — last 6 months.
+        // Single query + PHP-side grouping instead of 3 queries × 6 months —
+        // also keeps this portable across MySQL/SQLite (tests use SQLite),
+        // which a raw DATE_FORMAT() group-by would not.
+        $closedByMonth = Deal::where('tenant_id', $tid)
+            ->whereIn('stage', ['won', 'lost'])
+            ->whereNotNull('actual_close_date')
+            ->where('actual_close_date', '>=', now()->subMonths(5)->startOfMonth())
+            ->get(['stage', 'value', 'actual_close_date'])
+            ->groupBy(fn ($d) => $d->actual_close_date->format('Y-m'));
+
         $monthlyRevenue = collect();
         $winLossData    = collect();
         for ($i = 5; $i >= 0; $i--) {
-            $m   = now()->subMonths($i);
-            $rev = Deal::where('tenant_id', $tid)->won()
-                ->whereYear('actual_close_date', $m->year)
-                ->whereMonth('actual_close_date', $m->month)
-                ->sum('value');
-            $w = Deal::where('tenant_id', $tid)->won()
-                ->whereYear('actual_close_date', $m->year)
-                ->whereMonth('actual_close_date', $m->month)->count();
-            $l = Deal::where('tenant_id', $tid)->lost()
-                ->whereYear('actual_close_date', $m->year)
-                ->whereMonth('actual_close_date', $m->month)->count();
+            $m      = now()->subMonths($i);
+            $bucket = $closedByMonth->get($m->format('Y-m'), collect());
+            $rev    = $bucket->where('stage', 'won')->sum('value');
+            $w      = $bucket->where('stage', 'won')->count();
+            $l      = $bucket->where('stage', 'lost')->count();
 
             $monthlyRevenue->push(['month' => $m->format('M Y'), 'short' => $m->format('M'), 'value' => (float) $rev]);
             $winLossData->push(['month' => $m->format('M'), 'won' => $w, 'lost' => $l]);
@@ -436,31 +361,5 @@ class DealController extends Controller
             'closingThisMonth', 'topDeals', 'funnelData',
             'stages', 'wonCount', 'lostCount'
         ));
-    }
-
-    // ── Deal won → auto-accept its latest pending quotation ────────
-    private function syncQuotationAccepted(Deal $deal): void
-    {
-        $quotation = $deal->quotations()
-            ->whereNotIn('status', ['accepted', 'rejected'])
-            ->latest()
-            ->first();
-
-        if ($quotation) {
-            QuotationService::accept($quotation);
-        }
-    }
-
-    // ── Default probability by stage ──────────────────────────────
-    private function defaultProbability(string $stage): int
-    {
-        return match ($stage) {
-            'new'         => 10,
-            'proposal'    => 30,
-            'negotiation' => 60,
-            'won'         => 100,
-            'lost'        => 0,
-            default       => 10,
-        };
     }
 }

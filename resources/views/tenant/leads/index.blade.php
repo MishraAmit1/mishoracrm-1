@@ -217,17 +217,18 @@ $statusCfg=[
     'new'        =>['label'=>'New',        'color'=>'var(--accent)', 'bg'=>'var(--accent-dim)', 'dot'=>'#378ADD'],
     'contacted'  =>['label'=>'Contacted',  'color'=>'var(--amber)',  'bg'=>'var(--amber-dim)',  'dot'=>'#EF9F27'],
     'qualified'  =>['label'=>'Qualified',  'color'=>'var(--purple)', 'bg'=>'var(--purple-dim)', 'dot'=>'#534AB7'],
-    'proposal'   =>['label'=>'Proposal',   'color'=>'var(--accent)', 'bg'=>'var(--accent-dim)', 'dot'=>'#185FA5'],
-    'negotiation'=>['label'=>'Negotiation','color'=>'var(--amber)',  'bg'=>'var(--amber-dim)',  'dot'=>'#854F0B'],
     'converted'  =>['label'=>'Converted',  'color'=>'var(--green)',  'bg'=>'var(--green-dim)',  'dot'=>'#1D9E75'],
     'lost'       =>['label'=>'Lost',       'color'=>'var(--red)',    'bg'=>'var(--red-dim)',    'dot'=>'#E05252'],
 ];
 $AVC=['#378ADD','#534AB7','#1D9E75','#EF9F27','#E05252','#185FA5','#3B6D11'];
-function avc(string $n,array $c):string{return $c[ord($n[0]??'A')%count($c)];}
-function ini(string $n):string{$p=explode(' ',trim($n));return strtoupper(substr($p[0],0,1).(isset($p[1])?substr($p[1],0,1):''));}
-// $kanbanCols=['new','contacted','qualified','proposal','negotiation','converted','lost'];
+if (!function_exists('avc')) {
+    function avc(string $n,array $c):string{return $c[ord($n[0]??'A')%count($c)];}
+}
+if (!function_exists('ini')) {
+    function ini(string $n):string{$p=explode(' ',trim($n));return strtoupper(substr($p[0],0,1).(isset($p[1])?substr($p[1],0,1):''));}
+}
 $kanbanCols=['new','contacted','qualified','converted','lost'];
-$byStatus=$leads->groupBy('status');
+$byStatus=$kanbanLeads->groupBy('status');
 $currentStatus=request('status','');
 $currentView=session('lead_view','list');
 @endphp
@@ -528,10 +529,10 @@ $srcL=is_array($src)?($src['label']??ucfirst($lead->source)):($src??ucfirst($lea
 ════════════════════════════════════════════════════════════ --}}
 <div id="view-kanban" style="display:none">
 
-@if($leads->total() > $leads->perPage())
+@if($kanbanCapped)
 <div style="margin-bottom:12px;padding:9px 14px;background:var(--amber-dim);border:1px solid rgba(239,159,39,.25);border-radius:var(--r-sm);font-size:12.5px;color:var(--amber);display:flex;align-items:center;gap:7px">
     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:14px;height:14px;flex-shrink:0"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg>
-    Kanban shows current page only ({{ $leads->count() }} leads). Use List view for full pipeline.
+    Showing latest {{ number_format($kanbanCap) }} of {{ number_format($kanbanTotal) }} leads — narrow your filters for a complete view.
 </div>
 @endif
 

@@ -2,13 +2,12 @@
 
 namespace App\Http\Controllers\Api\Tenant;
 
+use App\Events\LeadAssigned;
 use App\Helpers\ViewScope;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LeadRequest;
 use App\Http\Resources\LeadResource;
-use App\Models\Contact;
 use App\Models\Lead;
-use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -57,8 +56,14 @@ class LeadController extends Controller
     // ── Store ─────────────────────────────────────────────────────
     public function store(LeadRequest $request): JsonResponse
     {
+        $this->authorize('create', Lead::class);
+
         $lead = Lead::create($request->validated());
         $lead->load('assignedTo', 'createdBy');
+
+        if ($lead->assigned_to) {
+            event(new LeadAssigned($lead, auth()->user()));
+        }
 
         return response()->json([
             'success' => true,
@@ -90,15 +95,12 @@ class LeadController extends Controller
     {
         $this->authorize('modify', $lead);
 
-        if ($request->status === 'contacted' && $lead->status !== 'contacted') {
-            $lead->contacted_at = now();
+        $updates = $request->validated();
+        if (!empty($updates['status'])) {
+            $updates = array_merge($updates, Lead::statusTimestamps($updates['status'], $lead->status));
         }
 
-        if ($request->status === 'converted' && $lead->status !== 'converted') {
-            $lead->converted_at = now();
-        }
-
-        $lead->update($request->validated());
+        $lead->update($updates);
 
         return response()->json([
             'success' => true,
@@ -122,13 +124,14 @@ class LeadController extends Controller
     // ── Assign ────────────────────────────────────────────────────
     public function assign(Request $request, Lead $lead): JsonResponse
     {
-        $this->authorize('modify', $lead);
+        $this->authorize('assign', $lead);
 
         $request->validate([
             'assigned_to' => ['required', 'exists:users,id'],
         ]);
 
         $lead->update(['assigned_to' => $request->assigned_to]);
+        event(new LeadAssigned($lead, auth()->user()));
 
         return response()->json([
             'success' => true,
@@ -138,41 +141,28 @@ class LeadController extends Controller
     }
 
     // ── Convert to contact ────────────────────────────────────────
-    // public function convert(Lead $lead): JsonResponse
-    // {
-    //     if ($lead->isConverted()) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Lead is already converted.',
-    //         ], 422);
-    //     }
+    public function convert(Lead $lead): JsonResponse
+    {
+        $this->authorize('convert', $lead);
 
-    //     $contact = Contact::create([
-    //         'tenant_id'   => $lead->tenant_id,
-    //         'lead_id'     => $lead->id,
-    //         'name'        => $lead->name,
-    //         'phone'       => $lead->phone,
-    //         'email'       => $lead->email,
-    //         'company'     => $lead->company,
-    //         'designation' => $lead->designation,
-    //         'city'        => $lead->city,
-    //         'state'       => $lead->state,
-    //     ]);
+        if ($lead->isConverted()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Lead is already converted.',
+            ], 422);
+        }
 
-    //     $lead->update([
-    //         'status'       => 'converted',
-    //         'converted_at' => now(),
-    //     ]);
+        $contact = $lead->convertToContact();
 
-    //     return response()->json([
-    //         'success' => true,
-    //         'message' => 'Lead converted to contact.',
-    //         'data'    => [
-    //             'lead'    => new LeadResource($lead->fresh()),
-    //             'contact' => ['id' => $contact->id, 'name' => $contact->name],
-    //         ],
-    //     ]);
-    // }
+        return response()->json([
+            'success' => true,
+            'message' => 'Lead converted to contact.',
+            'data'    => [
+                'lead'    => new LeadResource($lead->fresh()),
+                'contact' => ['id' => $contact->id, 'name' => $contact->name],
+            ],
+        ]);
+    }
 
     // ── Update status ─────────────────────────────────────────────
     public function updateStatus(Request $request, Lead $lead): JsonResponse
@@ -180,13 +170,11 @@ class LeadController extends Controller
         $this->authorize('modify', $lead);
 
         $request->validate([
-            'status'      => ['required', 'in:new,contacted,qualified,proposal,negotiation,converted,lost'],
+            'status'      => ['required', 'in:' . implode(',', array_keys(Lead::statuses()))],
             'lost_reason' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $updates = ['status' => $request->status];
-        if ($request->status === 'contacted') $updates['contacted_at'] = now();
-        if ($request->status === 'converted') $updates['converted_at'] = now();
+        $updates = array_merge(['status' => $request->status], Lead::statusTimestamps($request->status, $lead->status));
         if ($request->status === 'lost' && $request->filled('lost_reason')) {
             $updates['lost_reason'] = $request->lost_reason;
         }

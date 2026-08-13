@@ -42,7 +42,7 @@ class QuotationPolicy
 
     public function create(User $user): bool
     {
-        return true;
+        return $user->user_type === 'superadmin' || $user->can('quotations.create');
     }
 
     public function update(User $user, Quotation $quotation): bool

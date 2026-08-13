@@ -9,6 +9,86 @@ use App\Models\Quotation;
 
 class QuotationService
 {
+    // ── Create — totals calc + collision-safe number generation ────
+    // number is a unique column generated from max(id)+1; two concurrent
+    // submissions can race and compute the same number, so retry a few
+    // times on a unique-constraint violation rather than 500ing.
+    public static function store(array $data, int $tenantId, int $userId): Quotation
+    {
+        $totals = Quotation::calculateTotals(
+            $data['items'],
+            $data['discount'] ?? 0,
+            $data['tax_percent'] ?? 18
+        );
+
+        return retry(3, function () use ($data, $totals, $tenantId, $userId) {
+            return Quotation::create(array_merge($data, $totals, [
+                'tenant_id'  => $tenantId,
+                'number'     => Quotation::generateNumber(),
+                'created_by' => $userId,
+                'status'     => $data['status'] ?? 'draft',
+            ]));
+        }, 50, fn ($e) => static::isNumberCollision($e));
+    }
+
+    // ── Update — recompute totals from submitted items ──────────────
+    public static function update(Quotation $quotation, array $data): Quotation
+    {
+        $totals = Quotation::calculateTotals(
+            $data['items'],
+            $data['discount'] ?? 0,
+            $data['tax_percent'] ?? 18
+        );
+
+        $quotation->update(array_merge($data, $totals));
+
+        return $quotation;
+    }
+
+    // ── Clone a quotation as a new draft version, linked to the root ──
+    public static function createNewVersion(Quotation $quotation, int $userId): Quotation
+    {
+        $root = $quotation->parent_quotation_id
+            ? ($quotation->parentQuotation ?? $quotation)
+            : $quotation;
+
+        $latestVersion = Quotation::withoutGlobalScopes()
+            ->where('tenant_id', $quotation->tenant_id)
+            ->where(fn ($q) => $q->where('id', $root->id)->orWhere('parent_quotation_id', $root->id))
+            ->max('version') ?? 1;
+
+        return retry(3, function () use ($quotation, $root, $latestVersion, $userId) {
+            return Quotation::create([
+                'tenant_id'           => $quotation->tenant_id,
+                'contact_id'          => $quotation->contact_id,
+                'lead_id'             => $quotation->lead_id,
+                'deal_id'             => $quotation->deal_id,
+                'number'              => Quotation::generateNumber(),
+                'date'                => now()->toDateString(),
+                'valid_until'         => $quotation->valid_until,
+                'items'               => $quotation->items,
+                'subtotal'            => $quotation->subtotal,
+                'discount'            => $quotation->discount,
+                'tax_percent'         => $quotation->tax_percent,
+                'tax_amount'          => $quotation->tax_amount,
+                'total'               => $quotation->total,
+                'currency'            => $quotation->currency,
+                'notes'               => $quotation->notes,
+                'terms'               => $quotation->terms,
+                'status'              => 'draft',
+                'created_by'          => $userId,
+                'parent_quotation_id' => $root->id,
+                'version'             => $latestVersion + 1,
+            ]);
+        }, 50, fn ($e) => static::isNumberCollision($e));
+    }
+
+    private static function isNumberCollision(\Throwable $e): bool
+    {
+        return $e instanceof \Illuminate\Database\QueryException
+            && str_contains(strtolower($e->getMessage()), 'number');
+    }
+
     // ── Mark quotation accepted, auto-create its invoice, and sync linked deal to Won ──
     public static function accept(Quotation $quotation): ?Invoice
     {
@@ -35,7 +115,7 @@ class QuotationService
             'tenant_id'    => $quotation->tenant_id,
             'contact_id'   => $quotation->contact_id,
             'quotation_id' => $quotation->id,
-            'number'       => Invoice::generateNumber(),
+            'number'       => Invoice::generateNumber($quotation->tenant_id),
             'date'         => now()->toDateString(),
             'due_date'     => now()->addDays(30)->toDateString(),
             'items'        => $quotation->items,
@@ -44,10 +124,11 @@ class QuotationService
             'tax_percent'  => $quotation->tax_percent,
             'tax_amount'   => $quotation->tax_amount,
             'total'        => $quotation->total,
+            'currency'     => $quotation->currency,
             'notes'        => $quotation->notes,
             'terms'        => $quotation->terms,
             'status'       => 'draft',
-            'created_by'   => auth()->id(),
+            'created_by'   => auth()->id() ?? $quotation->created_by,
         ]);
 
         static::syncDealWon($quotation);

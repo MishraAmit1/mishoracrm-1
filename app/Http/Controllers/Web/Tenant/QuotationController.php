@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web\Tenant;
 
+use App\Exports\QuotationsExport;
 use App\Helpers\ViewScope;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\QuotationRequest;
@@ -10,6 +11,8 @@ use App\Models\Deal;
 use App\Models\Lead;
 use App\Models\Product;
 use App\Models\Quotation;
+use App\Models\QuotationTermsTemplate;
+use App\Models\User;
 use App\Services\EmailService;
 use App\Services\QuotationService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -18,6 +21,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\View\View;
+use Maatwebsite\Excel\Facades\Excel;
 
 class QuotationController extends Controller
 {
@@ -29,43 +33,55 @@ class QuotationController extends Controller
             ->firstOrFail();
     }
 
-    // ── Index ─────────────────────────────────────────────────────
-    public function index(Request $request): View
+    // ── Shared filtered query (index page + export reuse this) ────
+    public static function filteredQuery(int $tenantId, array $filters, User $user): \Illuminate\Database\Eloquent\Builder
     {
-        $query = Quotation::with(['contact', 'lead', 'createdBy'])
-            ->latest();
+        $query = Quotation::query()->where('tenant_id', $tenantId);
+        $query = ViewScope::apply($query, 'quotations', $user, 'created_by');
 
-        $query = ViewScope::apply($query, 'quotations', auth()->user(), 'created_by');
-
-        if ($request->filled('status')) {
-            $query->status($request->status);
+        if (!empty($filters['status'])) {
+            $query->status($filters['status']);
         }
 
-        if ($request->filled('search')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('number', 'like', "%{$request->search}%")
-                    ->orWhereHas('contact', fn($q) => $q->where('name', 'like', "%{$request->search}%"));
+        if (!empty($filters['search'])) {
+            $query->where(function ($q) use ($filters) {
+                $q->where('number', 'like', "%{$filters['search']}%")
+                    ->orWhereHas('contact', fn($q) => $q->where('name', 'like', "%{$filters['search']}%"));
             });
         }
 
-        if ($request->filled('date_from')) {
-            $query->whereDate('date', '>=', $request->date_from);
+        if (!empty($filters['date_from'])) {
+            $query->whereDate('date', '>=', $filters['date_from']);
         }
 
-        if ($request->filled('date_to')) {
-            $query->whereDate('date', '<=', $request->date_to);
+        if (!empty($filters['date_to'])) {
+            $query->whereDate('date', '<=', $filters['date_to']);
         }
+
+        return $query;
+    }
+
+    // ── Index ─────────────────────────────────────────────────────
+    public function index(Request $request): View
+    {
+        $query = self::filteredQuery(auth()->user()->tenant_id, $request->all(), auth()->user())
+            ->with(['contact', 'lead', 'createdBy'])
+            ->latest();
 
         $quotations = $query->paginate(15)->withQueryString();
 
-        // Summary counts
-        $countBase = fn() => ViewScope::apply(Quotation::query(), 'quotations', auth()->user(), 'created_by');
+        // Summary counts — single grouped query instead of one COUNT per status
+        $summary = ViewScope::apply(Quotation::where('tenant_id', auth()->user()->tenant_id), 'quotations', auth()->user(), 'created_by')
+            ->selectRaw('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status');
+
         $counts = [
-            'all'      => $countBase()->count(),
-            'draft'    => $countBase()->where('status', 'draft')->count(),
-            'sent'     => $countBase()->where('status', 'sent')->count(),
-            'accepted' => $countBase()->where('status', 'accepted')->count(),
-            'rejected' => $countBase()->where('status', 'rejected')->count(),
+            'all'      => $summary->sum(),
+            'draft'    => $summary->get('draft', 0),
+            'sent'     => $summary->get('sent', 0),
+            'accepted' => $summary->get('accepted', 0),
+            'rejected' => $summary->get('rejected', 0),
         ];
 
         $statuses = Quotation::statuses();
@@ -75,6 +91,15 @@ class QuotationController extends Controller
             'counts',
             'statuses'
         ));
+    }
+
+    // ── Export (respects current index filters) ────────────────────
+    public function export(Request $request)
+    {
+        return Excel::download(
+            new QuotationsExport(auth()->user()->tenant_id, $request->query(), auth()->user()),
+            'quotations_export_' . now()->format('Y-m-d_His') . '.xlsx'
+        );
     }
 
     // ── Create ────────────────────────────────────────────────────
@@ -106,10 +131,12 @@ class QuotationController extends Controller
             $lead    = $lead ?? $deal->lead;
         }
 
-        $number   = Quotation::generateNumber();
-        $statuses = Quotation::statuses();
-        $tenant   = auth()->user()->tenant;
-        $products = Product::where('tenant_id', auth()->user()->tenant_id)->active()->orderBy('name')->get(['id','product_code','name','description','rate','tax_percent','hsn','unit']);
+        $number    = Quotation::generateNumber();
+        $statuses  = Quotation::statuses();
+        $tenant    = auth()->user()->tenant;
+        $products  = Product::where('tenant_id', auth()->user()->tenant_id)->active()->orderBy('name')->get(['id','product_code','name','description','rate','tax_percent','hsn','unit']);
+        $currencies = config('quotation.currencies');
+        $templates  = QuotationTermsTemplate::where('tenant_id', auth()->user()->tenant_id)->orderBy('name')->get(['id', 'name', 'terms', 'notes']);
 
         return view('tenant.quotations.create', compact(
             'contacts',
@@ -120,28 +147,18 @@ class QuotationController extends Controller
             'number',
             'statuses',
             'tenant',
-            'products'
+            'products',
+            'currencies',
+            'templates'
         ));
     }
 
     // ── Store ─────────────────────────────────────────────────────
     public function store(QuotationRequest $request): RedirectResponse
     {
-        $data = $request->validated();
+        $this->authorize('create', Quotation::class);
 
-        // Calculate totals
-        $totals = Quotation::calculateTotals(
-            $data['items'],
-            $data['discount'] ?? 0,
-            $data['tax_percent'] ?? 18
-        );
-
-        $quotation = Quotation::create(array_merge($data, $totals, [
-            'tenant_id'  => auth()->user()->tenant_id,
-            'number'     => Quotation::generateNumber(),
-            'created_by' => auth()->id(),
-            'status'     => $data['status'] ?? 'draft',
-        ]));
+        $quotation = QuotationService::store($request->validated(), auth()->user()->tenant_id, auth()->id());
 
         return redirect()
             ->route('tenant.quotations.show', $quotation->id)
@@ -153,7 +170,7 @@ class QuotationController extends Controller
     {
         $quotation = $this->findQuotation($id);
         $this->authorize('view', $quotation);
-        $quotation->load(['contact.employees', 'lead', 'deal', 'createdBy', 'invoice']);
+        $quotation->load(['contact.employees', 'lead', 'deal', 'createdBy', 'invoice', 'parentQuotation', 'revisions']);
 
         $tenant   = auth()->user()->tenant;
         $statuses = Quotation::statuses();
@@ -173,11 +190,13 @@ class QuotationController extends Controller
                 ->with('error', 'Accepted quotation cannot be edited.');
         }
 
-        $contacts = Contact::orderBy('name')->get(['id', 'name', 'company', 'phone', 'email', 'address', 'city', 'state', 'gst_number']);
-        $leads    = Lead::orderBy('name')->get(['id', 'name']);
-        $statuses = Quotation::statuses();
-        $tenant   = auth()->user()->tenant;
-        $products = Product::where('tenant_id', auth()->user()->tenant_id)->active()->orderBy('name')->get(['id','product_code','name','description','rate','tax_percent','hsn','unit']);
+        $contacts  = Contact::orderBy('name')->get(['id', 'name', 'company', 'phone', 'email', 'address', 'city', 'state', 'gst_number']);
+        $leads     = Lead::orderBy('name')->get(['id', 'name']);
+        $statuses  = Quotation::statuses();
+        $tenant    = auth()->user()->tenant;
+        $products  = Product::where('tenant_id', auth()->user()->tenant_id)->active()->orderBy('name')->get(['id','product_code','name','description','rate','tax_percent','hsn','unit']);
+        $currencies = config('quotation.currencies');
+        $templates  = QuotationTermsTemplate::where('tenant_id', auth()->user()->tenant_id)->orderBy('name')->get(['id', 'name', 'terms', 'notes']);
 
         return view('tenant.quotations.edit', compact(
             'quotation',
@@ -185,7 +204,9 @@ class QuotationController extends Controller
             'leads',
             'statuses',
             'tenant',
-            'products'
+            'products',
+            'currencies',
+            'templates'
         ));
     }
 
@@ -194,15 +215,8 @@ class QuotationController extends Controller
     {
         $quotation = $this->findQuotation($id);
         $this->authorize('modify', $quotation);
-        $data      = $request->validated();
 
-        $totals = Quotation::calculateTotals(
-            $data['items'],
-            $data['discount'] ?? 0,
-            $data['tax_percent'] ?? 18
-        );
-
-        $quotation->update(array_merge($data, $totals));
+        QuotationService::update($quotation, $request->validated());
 
         $invoice = $quotation->status === 'accepted' ? QuotationService::accept($quotation) : null;
 
@@ -270,6 +284,7 @@ class QuotationController extends Controller
     {
         $quotation = $this->findQuotation($id);
         $this->authorize('view', $quotation);
+        abort_unless(auth()->user()->user_type === 'superadmin' || auth()->user()->can('quotations.send'), 403);
         $quotation->load(['contact.employees', 'createdBy']);
 
         $contact = $quotation->contact;
@@ -286,7 +301,8 @@ class QuotationController extends Controller
         $subject = "Quotation {$quotation->number} from {$tenant->name}";
         $html    = "<p>Dear {$toName},</p>"
             . "<p>Please find attached quotation <strong>{$quotation->number}</strong> for "
-            . "<strong>₹" . number_format($quotation->total, 2) . "</strong>.</p>"
+            . "<strong>" . $quotation->currencySymbol() . number_format($quotation->total, 2) . "</strong>.</p>"
+            . "<p><a href=\"{$quotation->publicUrl()}\">Click here to view and accept/reject this quotation online</a>.</p>"
             . "<p>Thank you for your interest.</p><p>{$tenant->name}</p>";
 
         $pdfContent = Pdf::loadView('tenant.quotations.pdf', compact('quotation', 'tenant'))
@@ -348,6 +364,20 @@ class QuotationController extends Controller
         return redirect()
             ->route('tenant.invoices.show', $invoice->id)
             ->with('success', "Invoice {$invoice->number} created from quotation {$quotation->number}.");
+    }
+
+    // ── Create a new draft version cloned from this quotation ──────
+    public function newVersion(int|string $id): RedirectResponse
+    {
+        $quotation = $this->findQuotation($id);
+        $this->authorize('view', $quotation);
+        $this->authorize('create', Quotation::class);
+
+        $newVersion = QuotationService::createNewVersion($quotation, auth()->id());
+
+        return redirect()
+            ->route('tenant.quotations.edit', $newVersion->id)
+            ->with('success', "Version {$newVersion->version} ({$newVersion->number}) created from {$quotation->number}. Review and save when ready.");
     }
 
     public function quotationData(string $tenant, int|string $quotation): JsonResponse

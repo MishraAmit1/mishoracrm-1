@@ -307,6 +307,16 @@
                                 <input type="text" class="qf-input" value="{{ $tenant->name ?? auth()->user()->name }}"
                                        readonly style="background:var(--bg-elevated);color:var(--text-300);cursor:default"/>
                             </div>
+                            <div class="qf-field">
+                                <label class="qf-label" for="q_currency">Currency</label>
+                                <select name="currency" id="q_currency" class="qf-input qf-sel" onchange="onCurrencyChange(this)">
+                                    @foreach($currencies as $code => $c)
+                                    <option value="{{ $code }}" data-symbol="{{ $c['symbol'] }}" {{ old('currency', 'INR') === $code ? 'selected':'' }}>
+                                        {{ $code }} ({{ $c['symbol'] }}) — {{ $c['label'] }}
+                                    </option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
                     </div>
 
@@ -458,6 +468,20 @@
                             </div>
                         </div>
                         <div class="qf-grid">
+                            @if($templates->isNotEmpty())
+                            <div class="qf-field span-full">
+                                <label class="qf-label">Apply Saved Template</label>
+                                <select class="qf-input qf-sel" onchange="applyTemplate(this.value)">
+                                    <option value="">— Select a saved template —</option>
+                                    @foreach($templates as $t)
+                                    <option value="{{ $t->id }}">{{ $t->name }}</option>
+                                    @endforeach
+                                </select>
+                                <span class="qf-hint">
+                                    <a href="{{ route('tenant.quotation-terms-templates.index') }}" target="_blank" style="color:var(--accent)">Manage Templates ↗</a>
+                                </span>
+                            </div>
+                            @endif
                             <div class="qf-field span-full">
                                 <label class="qf-label">Notes</label>
                                 <textarea name="notes" class="qf-input qf-area"
@@ -563,8 +587,22 @@
 /* ── Config from PHP ── */
 const STATUSES = @json(config('quotation.statuses'));
 window.PRODUCTS = @json($products->keyBy('id'));
+const TEMPLATES = @json($templates->keyBy('id'));
+window.CURRENT_SYMBOL = document.getElementById('q_currency')?.selectedOptions[0]?.dataset.symbol || '₹';
 /* ── Item Row Template ── */
 let rowIndex = 0;
+
+window.onCurrencyChange = function(sel){
+    window.CURRENT_SYMBOL = sel.options[sel.selectedIndex].dataset.symbol || '';
+    recalcTotals();
+};
+
+window.applyTemplate = function(id){
+    if(!id || !TEMPLATES[id]) return;
+    const t = TEMPLATES[id];
+    if(t.terms) document.querySelector('textarea[name="terms"]').value = t.terms;
+    if(t.notes) document.querySelector('textarea[name="notes"]').value = t.notes;
+};
 
 /* ── fillRowFromProduct called by shared partial ── */
 window.fillRowFromProduct = function(i, p) {
@@ -573,12 +611,14 @@ window.fillRowFromProduct = function(i, p) {
     row.querySelector(`[name="items[${i}][name]"]`).value        = p.name;
     row.querySelector(`[name="items[${i}][description]"]`).value = p.description || '';
     row.querySelector(`[name="items[${i}][rate]"]`).value        = p.rate;
+    const productIdInput = row.querySelector(`[name="items[${i}][product_id]"]`);
+    if (productIdInput) productIdInput.value = p.id;
     const taxInput = row.querySelector(`[name="items[${i}][tax_percent]"]`);
     if (taxInput) taxInput.value = p.tax_percent;
     calcRowAmount(i);
 };
 
-function addItemRow(name='', desc='', qty=1, rate=0, taxPct=''){
+function addItemRow(name='', desc='', qty=1, rate=0, taxPct='', productId=''){
     const i    = rowIndex++;
     const amt  = (parseFloat(qty)||0) * (parseFloat(rate)||0);
     const gst  = taxPct !== '' ? taxPct : 18;
@@ -588,6 +628,7 @@ function addItemRow(name='', desc='', qty=1, rate=0, taxPct=''){
     tr.innerHTML = `
         <td data-label="Item / Service">
             <div id="ps_container_${i}"></div>
+            <input type="hidden" name="items[${i}][product_id]" value="${productId}"/>
             <input type="text" name="items[${i}][name]"
                    class="item-input {{ $errors->has("items.*.name")?"is-err":"" }}"
                    placeholder="Item / Service name" value="${escHtml(name)}" required/>
@@ -674,7 +715,7 @@ window.recalcTotals = function(){
     const total     = afterDisc + taxAmt;
     const avgTaxPct = afterDisc > 0 ? (taxAmt / afterDisc * 100) : 0;
 
-    const fmt = n => '₹' + n.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
+    const fmt = n => window.CURRENT_SYMBOL + n.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
 
     document.getElementById('displaySubtotal').textContent = fmt(subtotal);
     document.getElementById('displayDiscount').textContent = '-' + fmt(discount);
@@ -772,7 +813,7 @@ document.getElementById('quotationForm').addEventListener('submit', function(){
 const oldItems = @json(old('items'));
 if(oldItems && oldItems.length){
     oldItems.forEach(item => {
-        addItemRow(item.name||'', item.description||'', item.quantity||1, item.rate||0, item.tax_percent||'');
+        addItemRow(item.name||'', item.description||'', item.quantity||1, item.rate||0, item.tax_percent||'', item.product_id||'');
     });
 }
 @else

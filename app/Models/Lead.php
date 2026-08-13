@@ -3,8 +3,10 @@
 namespace App\Models;
 
 use App\BelongsToTenant;
+use App\Events\LeadConverted;
 use App\HasAuditLog;
 use App\HasCustomFields;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -12,7 +14,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Lead extends TenantModel
 {
-    use SoftDeletes, BelongsToTenant, HasCustomFields, HasAuditLog;
+    use SoftDeletes, BelongsToTenant, HasCustomFields, HasAuditLog, HasFactory;
 
     public static string $customFieldModule = 'lead';
 
@@ -29,18 +31,24 @@ class Lead extends TenantModel
         'status',
         'priority',
         'lead_value',
+        'score',
         'assigned_to',
         'created_by',
         'notes',
         'lost_reason',
         'contacted_at',
+        'qualified_at',
+        'sla_notified_at',
         'converted_at',
         'expected_close_date',
     ];
 
     protected $casts = [
         'lead_value'           => 'decimal:2',
+        'score'                => 'integer',
         'contacted_at'         => 'datetime',
+        'qualified_at'         => 'datetime',
+        'sla_notified_at'      => 'datetime',
         'converted_at'         => 'datetime',
         'expected_close_date'  => 'datetime',
     ];
@@ -171,6 +179,29 @@ class Lead extends TenantModel
         return $this->status === 'lost';
     }
 
+    // ── Status transition timestamps ──────────────────────────────
+    // Single source of truth for which *_at column to stamp when a
+    // lead's status changes — used by every status-update call site
+    // (web + API) so they can't drift from one another again.
+    public static function statusTimestamps(string $newStatus, ?string $oldStatus): array
+    {
+        $timestamps = [];
+
+        if ($newStatus === 'contacted' && $oldStatus !== 'contacted') {
+            $timestamps['contacted_at'] = now();
+        }
+
+        if ($newStatus === 'qualified' && $oldStatus !== 'qualified') {
+            $timestamps['qualified_at'] = now();
+        }
+
+        if ($newStatus === 'converted' && $oldStatus !== 'converted') {
+            $timestamps['converted_at'] = now();
+        }
+
+        return $timestamps;
+    }
+
     // ── Convert to Contact ───────────────────────────────────────
     // Reused by LeadController::convert() and by QuotationController
     // when an accepted, lead-only quotation is converted to an invoice.
@@ -221,7 +252,18 @@ class Lead extends TenantModel
             'converted_at' => now(),
         ]);
 
+        event(new LeadConverted($this, $contact));
+
         return $contact;
+    }
+
+    public function getScoreLabelAttribute(): string
+    {
+        return match (true) {
+            $this->score >= 70 => 'Hot',
+            $this->score >= 40 => 'Warm',
+            default             => 'Cold',
+        };
     }
 
     public function getStatusColorAttribute(): string
@@ -230,8 +272,6 @@ class Lead extends TenantModel
             'new'         => 'blue',
             'contacted'   => 'amber',
             'qualified'   => 'purple',
-            'proposal'    => 'indigo',
-            'negotiation' => 'orange',
             'converted'   => 'green',
             'lost'        => 'red',
             default       => 'gray',
@@ -275,19 +315,6 @@ class Lead extends TenantModel
             'other'      => 'Other',
         ];
     }
-
-    // public static function statuses(): array
-    // {
-    //     return [
-    //         'new'         => 'New',
-    //         'contacted'   => 'Contacted',
-    //         'qualified'   => 'Qualified',
-    //         'proposal'    => 'Proposal',
-    //         'negotiation' => 'Negotiation',
-    //         'converted'   => 'Converted',
-    //         'lost'        => 'Lost',
-    //     ];
-    // }
 
     public static function statuses(): array
     {

@@ -14,7 +14,9 @@ return new class extends Migration
         Schema::create('subscriptions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('tenant_id')->constrained()->onDelete('cascade');
-            $table->foreignId('plan_id')->constrained();
+            // FK to plans added in 2026_04_23_103942_add_plan_foreign_key_to_subscriptions_table.php —
+            // the plans table doesn't exist yet at this point in migration order.
+            $table->foreignId('plan_id');
             $table->string('razorpay_subscription_id')->nullable();
             $table->enum('status', ['trial', 'active', 'cancelled', 'expired', 'past_due'])->default('trial');
             $table->enum('billing_cycle', ['monthly', 'yearly'])->default('monthly');

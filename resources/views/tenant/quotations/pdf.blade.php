@@ -285,7 +285,11 @@ $taxPct   = (float)($quotation->tax_percent ?? 0);
 $taxAmt   = (float)($quotation->tax_amount  ?? 0);
 $total    = (float)($quotation->total       ?? 0);
 $halfTax  = $taxAmt / 2;
-$words    = toIndianWords($total);
+$isInr    = ($quotation->currency ?? 'INR') === 'INR';
+// DejaVu Sans renders the rupee glyph correctly only via its HTML entity;
+// other currency symbols ($ € £) are plain Latin-1 and render fine raw.
+$symHtml  = $isInr ? '&#8377;' : e($quotation->currencySymbol());
+$words    = $isInr ? toIndianWords($total) : null;
 @endphp
 
 {{-- Watermark --}}
@@ -386,7 +390,7 @@ $words    = toIndianWords($total);
                 <td class="md">&nbsp;</td>
                 <td class="mc" style="width:25%">
                     <div class="mtl">Total Amount</div>
-                    <div class="mtv">&#8377;{{ number_format($total, 2) }}</div>
+                    <div class="mtv">{!! $symHtml !!}{{ number_format($total, 2) }}</div>
                 </td>
             </tr>
         </table>
@@ -452,9 +456,9 @@ $words    = toIndianWords($total);
                 <th style="width:24%">Item / Service</th>
                 <th style="width:22%">Description</th>
                 <th class="c" style="width:8%">Qty</th>
-                <th class="r" style="width:14%">Rate (&#8377;)</th>
+                <th class="r" style="width:14%">Rate ({!! $symHtml !!})</th>
                 <th class="c" style="width:9%">GST %</th>
-                <th class="r" style="width:18%">Amount (&#8377;)</th>
+                <th class="r" style="width:18%">Amount ({!! $symHtml !!})</th>
             </tr>
         </thead>
         <tbody>
@@ -495,10 +499,12 @@ $words    = toIndianWords($total);
         <tr>
             {{-- Left: amount in words + lead ref --}}
             <td style="width:50%;vertical-align:top;padding-right:14px">
+                @if($words)
                 <div class="wb">
                     <span class="wl">Amount in Words</span>
                     <span class="wv">{{ $words }}</span>
                 </div>
+                @endif
                 @if($quotation->lead)
                     <div class="rb">
                         <span class="rl">Lead Reference</span>
@@ -516,35 +522,37 @@ $words    = toIndianWords($total);
                 <table class="tt" width="100%">
                     <tr class="ts">
                         <td>Subtotal</td>
-                        <td class="v">&#8377;{{ number_format($subtotal, 2) }}</td>
+                        <td class="v">{!! $symHtml !!}{{ number_format($subtotal, 2) }}</td>
                     </tr>
                     @if($discount > 0)
                         <tr class="td">
                             <td><span class="dl">Discount</span></td>
-                            <td class="v">&#8722;&#8377;{{ number_format($discount, 2) }}</td>
+                            <td class="v">&#8722;{!! $symHtml !!}{{ number_format($discount, 2) }}</td>
                         </tr>
                     @endif
                     @if($taxPct > 0)
                         <tr class="tx">
                             <td>
-                                <span class="tl">GST {{ $taxPct }}%</span>
+                                <span class="tl">{{ $isInr ? 'GST' : 'Tax' }} {{ $taxPct }}%</span>
+                                @if($isInr)
                                 <div class="gs">
-                                    CGST {{ number_format($taxPct/2,1) }}% (&#8377;{{ number_format($halfTax,2) }})
+                                    CGST {{ number_format($taxPct/2,1) }}% ({!! $symHtml !!}{{ number_format($halfTax,2) }})
                                     &nbsp;+&nbsp;
-                                    SGST {{ number_format($taxPct/2,1) }}% (&#8377;{{ number_format($halfTax,2) }})
+                                    SGST {{ number_format($taxPct/2,1) }}% ({!! $symHtml !!}{{ number_format($halfTax,2) }})
                                 </div>
+                                @endif
                             </td>
-                            <td class="v">+&#8377;{{ number_format($taxAmt, 2) }}</td>
+                            <td class="v">+{!! $symHtml !!}{{ number_format($taxAmt, 2) }}</td>
                         </tr>
                     @else
                         <tr class="tn">
                             <td>Tax (0%)</td>
-                            <td class="v">&#8377;0.00</td>
+                            <td class="v">{!! $symHtml !!}0.00</td>
                         </tr>
                     @endif
                     <tr class="tg">
                         <td>Total</td>
-                        <td class="v">&#8377;{{ number_format($total, 2) }}</td>
+                        <td class="v">{!! $symHtml !!}{{ number_format($total, 2) }}</td>
                     </tr>
                 </table>
             </td>

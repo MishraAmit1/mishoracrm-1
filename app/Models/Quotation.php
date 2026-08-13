@@ -4,14 +4,16 @@ namespace App\Models;
 
 use App\BelongsToTenant;
 use App\HasAuditLog;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Quotation extends Model
 {
-    use SoftDeletes, BelongsToTenant, HasAuditLog;
+    use SoftDeletes, BelongsToTenant, HasAuditLog, HasFactory;
 
     protected $fillable = [
         'tenant_id',
@@ -31,17 +33,27 @@ class Quotation extends Model
         'terms',
         'status',
         'created_by',
+        'parent_quotation_id',
+        'version',
+        'currency',
+        'public_token',
+        'signed_name',
+        'signature_data',
+        'customer_response_ip',
+        'customer_responded_at',
+        'rejected_reason',
     ];
 
     protected $casts = [
-        'items'       => 'array',
-        'date'        => 'date',
-        'valid_until' => 'date',
-        'subtotal'    => 'decimal:2',
-        'discount'    => 'decimal:2',
-        'tax_percent' => 'decimal:2',
-        'tax_amount'  => 'decimal:2',
-        'total'       => 'decimal:2',
+        'items'                  => 'array',
+        'date'                   => 'date',
+        'valid_until'            => 'date',
+        'subtotal'               => 'decimal:2',
+        'discount'               => 'decimal:2',
+        'tax_percent'            => 'decimal:2',
+        'tax_amount'             => 'decimal:2',
+        'total'                  => 'decimal:2',
+        'customer_responded_at'  => 'datetime',
     ];
 
     // ── Relationships ─────────────────────────────────────────────
@@ -76,6 +88,18 @@ class Quotation extends Model
         return $this->hasOne(Invoice::class);
     }
 
+    // Root quotation this one was revised from (null if this IS the original).
+    public function parentQuotation(): BelongsTo
+    {
+        return $this->belongsTo(Quotation::class, 'parent_quotation_id');
+    }
+
+    // Later versions revised from this quotation.
+    public function revisions(): HasMany
+    {
+        return $this->hasMany(Quotation::class, 'parent_quotation_id')->orderByDesc('version');
+    }
+
     // ── Scopes ────────────────────────────────────────────────────
 
     public function scopeStatus($query, string $status)
@@ -104,7 +128,33 @@ class Quotation extends Model
 
     public function getFormattedTotalAttribute(): string
     {
-        return '₹' . number_format($this->total, 2);
+        return $this->currencySymbol() . number_format($this->total, 2);
+    }
+
+    public function currencySymbol(): string
+    {
+        return config("quotation.currencies.{$this->currency}.symbol", $this->currency ?? '₹');
+    }
+
+    // ── Public sharing / customer self-serve accept-reject ──────────
+
+    public function ensurePublicToken(): string
+    {
+        if (!$this->public_token) {
+            $this->update(['public_token' => \Illuminate\Support\Str::random(48)]);
+        }
+
+        return $this->public_token;
+    }
+
+    public function publicUrl(): string
+    {
+        return route('public.quotations.show', $this->ensurePublicToken());
+    }
+
+    public function hasCustomerResponded(): bool
+    {
+        return in_array($this->status, ['accepted', 'rejected']) && $this->customer_responded_at !== null;
     }
 
     // ── Auto generate number ──────────────────────────────────────

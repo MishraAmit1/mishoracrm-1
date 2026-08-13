@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\Deal;
+use App\Models\Lead;
+use App\Observers\DealObserver;
+use App\Observers\LeadObserver;
 use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Auth;
@@ -46,5 +50,8 @@ class AppServiceProvider extends ServiceProvider
 
             return route('tenant.dashboard', ['tenant' => $user->tenant->subdomain]);
         });
+
+        Lead::observe(LeadObserver::class);
+        Deal::observe(DealObserver::class);
     }
 }

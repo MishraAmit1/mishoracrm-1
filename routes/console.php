@@ -12,6 +12,9 @@ Artisan::command('inspire', function () {
 // ── IndiaMART lead sync — every 30 minutes ────────────────────────
 Schedule::job(new SyncIndiaMartLeadsJob)->everyThirtyMinutes();
 
+// ── Lead SLA breach check — every 15 minutes ──────────────────────
+Schedule::command('leads:check-sla')->everyFifteenMinutes();
+
 // ── Follow-up due/overdue reminders — every 5 minutes ─────────────
 Schedule::command('followups:remind')->everyFiveMinutes();
 

@@ -35,7 +35,7 @@ class DealPolicy
 
     public function create(User $user): bool
     {
-        return true;
+        return $user->can('deals.create');
     }
 
     public function update(User $user, Deal $deal): bool
@@ -45,6 +45,10 @@ class DealPolicy
 
     public function delete(User $user, Deal $deal): bool
     {
-        return $this->modify($user, $deal);
+        if ($user->tenant_id !== $deal->tenant_id) {
+            return false;
+        }
+
+        return $user->user_type === 'superadmin' || $user->can('deals.delete');
     }
 }

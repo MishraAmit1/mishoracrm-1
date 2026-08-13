@@ -46,6 +46,18 @@ Route::post('/logout', [LoginController::class, 'destroy'])
     ->middleware('auth');
 
 // ══════════════════════════════════════════════════════════════════
+// PUBLIC — Customer-facing quotation accept/reject (token-guarded, no auth)
+// ══════════════════════════════════════════════════════════════════
+
+Route::prefix('/quote')->name('public.quotations.')->controller(\App\Http\Controllers\Public\QuotationController::class)->group(function () {
+    Route::get('/{token}', 'show')->name('show');
+    Route::middleware('throttle:20,1')->group(function () {
+        Route::post('/{token}/accept', 'accept')->name('accept');
+        Route::post('/{token}/reject', 'reject')->name('reject');
+    });
+});
+
+// ══════════════════════════════════════════════════════════════════
 // RAZORPAY WEBHOOK (no CSRF, no auth — Razorpay se aata hai)
 // ══════════════════════════════════════════════════════════════════
 
@@ -258,7 +270,6 @@ Route::middleware(['tenant', 'auth', 'subscription'])
         Route::post('/leads/{lead}/status',  [Tenant\LeadController::class, 'updateStatus'])->name('leads.status');
         Route::get('/leads/{id}/data',     [Tenant\LeadController::class, 'leadData'])->name('leads.data');
         Route::post('/leads/save-view', [Tenant\LeadController::class, 'saveView'])->name('leads.view');
-        Route::patch('/leads/{id}/status',  [Tenant\LeadController::class, 'updateStatus'])->name('leads.status.update');
         Route::post('/leads/bulk-status',        [Tenant\LeadController::class, 'bulkUpdateStatus'])->name('leads.bulk-status');
         Route::post('/leads/bulk-destroy',       [Tenant\LeadController::class, 'bulkDestroy'])->name('leads.bulk-destroy');
         Route::post('/leads/bulk-assign',        [Tenant\LeadController::class, 'bulkAssign'])->name('leads.bulk-assign');
@@ -325,6 +336,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
             Route::controller(Tenant\DealController::class)->group(function () {
                 Route::get('/', 'index')->name('index');
                 Route::get('/pipeline', 'pipelineAnalytics')->name('pipeline');
+                Route::get('/export', 'export')->name('export')->middleware('permission:deals.export');
                 Route::get('/create', 'create')->name('create');
                 Route::post('/', 'store')->name('store');
                 Route::get('/{id}', 'show')->name('show');
@@ -341,6 +353,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
         Route::prefix('/quotations')->name('quotations.')->group(function () {
             Route::controller(Tenant\QuotationController::class)->group(function () {
                 Route::get('/', 'index')->name('index');
+                Route::get('/export', 'export')->name('export')->middleware('permission:quotations.export');
                 Route::get('/create', 'create')->name('create');
                 Route::post('/', 'store')->name('store');
                 Route::get('/{id}', 'show')->name('show');
@@ -351,9 +364,23 @@ Route::middleware(['tenant', 'auth', 'subscription'])
                 Route::get('/{id}/pdf', 'pdf')->name('pdf');
                 Route::post('/{id}/send', 'send')->name('send');
                 Route::post('/{id}/convert', 'convertToInvoice')->name('convert');
+                Route::post('/{id}/new-version', 'newVersion')->name('new_version');
                 Route::get('/{id}/data', 'quotationData')->name('data');
             });
         });
+
+        // Quotation Terms & Conditions templates (reusable snippets)
+        Route::prefix('/quotation-terms-templates')->name('quotation-terms-templates.')
+            ->controller(Tenant\QuotationTermsTemplateController::class)
+            ->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::get('/{id}/edit', 'edit')->name('edit');
+                Route::middleware('permission:quotations.edit')->group(function () {
+                    Route::post('/', 'store')->name('store');
+                    Route::put('/{id}', 'update')->name('update');
+                    Route::delete('/{id}', 'destroy')->name('destroy');
+                });
+            });
 
 
         // Invoices routes

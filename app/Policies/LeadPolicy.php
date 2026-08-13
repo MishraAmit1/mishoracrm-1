@@ -35,7 +35,21 @@ class LeadPolicy
 
     public function create(User $user): bool
     {
-        return true;
+        return $user->can('leads.create');
+    }
+
+    public function assign(User $user, Lead $lead): bool
+    {
+        if ($user->tenant_id !== $lead->tenant_id) {
+            return false;
+        }
+
+        return $user->user_type === 'superadmin' || $user->can('leads.assign');
+    }
+
+    public function convert(User $user, Lead $lead): bool
+    {
+        return $user->can('leads.convert') && $this->modify($user, $lead);
     }
 
     public function update(User $user, Lead $lead): bool

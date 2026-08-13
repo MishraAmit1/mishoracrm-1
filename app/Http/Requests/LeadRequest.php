@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Lead;
 use App\Models\TenantFieldAssignment;
 
 class LeadRequest extends FormRequest
@@ -91,8 +92,8 @@ class LeadRequest extends FormRequest
             'designation'          => ['nullable', 'string', 'max:255'],
             'city'                 => ['nullable', 'string', 'max:100'],
             'state'                => ['nullable', 'string', 'max:100'],
-            'source'               => ['nullable', 'in:facebook,instagram,google,website,whatsapp,referral,cold_call,email,walk_in,other'],
-            'status'               => ['nullable', 'in:new,contacted,qualified,proposal,negotiation,converted,lost'],
+            'source'               => ['nullable', 'in:' . implode(',', array_keys(Lead::sources()))],
+            'status'               => ['nullable', 'in:' . implode(',', array_keys(Lead::statuses()))],
             'priority'             => ['nullable', 'in:low,medium,high'],
             'lead_value'           => ['nullable', 'numeric', 'min:0'],
             'assigned_to'          => ['nullable', 'exists:users,id'],

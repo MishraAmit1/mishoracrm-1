@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\Tenant\ContactController as ApiContactController;
 use App\Http\Controllers\Api\Tenant\LeadController    as ApiLeadController;
 use App\Http\Controllers\Api\Tenant\DealController    as ApiDealController;
 use App\Http\Controllers\Api\Tenant\TaskController    as ApiTaskController;
+use App\Http\Controllers\Api\Tenant\QuotationController as ApiQuotationController;
 use App\Http\Controllers\Api\WebhookValidationController;
 
 Route::prefix('v1')->group(function () {
@@ -42,18 +43,36 @@ Route::prefix('v1')->group(function () {
         Route::delete('/contacts/{id}',  [ApiContactController::class, 'destroy']);
 
         // Leads
-        Route::get('/leads',             [ApiLeadController::class, 'index']);
-        Route::post('/leads',            [ApiLeadController::class, 'store']);
-        Route::get('/leads/{id}',        [ApiLeadController::class, 'show']);
-        Route::put('/leads/{id}',        [ApiLeadController::class, 'update']);
-        Route::delete('/leads/{id}',     [ApiLeadController::class, 'destroy']);
+        Route::get('/leads',                  [ApiLeadController::class, 'index']);
+        Route::post('/leads',                 [ApiLeadController::class, 'store']);
+        Route::get('/leads/stats',            [ApiLeadController::class, 'stats']);
+        Route::get('/leads/{id}',             [ApiLeadController::class, 'show']);
+        Route::put('/leads/{id}',             [ApiLeadController::class, 'update']);
+        Route::delete('/leads/{id}',          [ApiLeadController::class, 'destroy']);
+        Route::post('/leads/{lead}/assign',   [ApiLeadController::class, 'assign']);
+        Route::post('/leads/{lead}/convert',  [ApiLeadController::class, 'convert']);
+        Route::patch('/leads/{lead}/status',  [ApiLeadController::class, 'updateStatus']);
 
         // Deals
         Route::get('/deals',             [ApiDealController::class, 'index']);
         Route::post('/deals',            [ApiDealController::class, 'store']);
+        Route::get('/deals/kanban',      [ApiDealController::class, 'kanban']);
+        Route::get('/deals/stats',       [ApiDealController::class, 'stats']);
         Route::get('/deals/{id}',        [ApiDealController::class, 'show']);
         Route::put('/deals/{id}',        [ApiDealController::class, 'update']);
         Route::delete('/deals/{id}',     [ApiDealController::class, 'destroy']);
+        Route::patch('/deals/{id}/stage',     [ApiDealController::class, 'updateStage']);
+        Route::post('/deals/{id}/mark-won',   [ApiDealController::class, 'markWon']);
+        Route::post('/deals/{id}/mark-lost',  [ApiDealController::class, 'markLost']);
+
+        // Quotations
+        Route::get('/quotations',                  [ApiQuotationController::class, 'index']);
+        Route::post('/quotations',                 [ApiQuotationController::class, 'store']);
+        Route::get('/quotations/{id}',              [ApiQuotationController::class, 'show']);
+        Route::put('/quotations/{id}',              [ApiQuotationController::class, 'update']);
+        Route::delete('/quotations/{id}',           [ApiQuotationController::class, 'destroy']);
+        Route::patch('/quotations/{id}/status',     [ApiQuotationController::class, 'updateStatus']);
+        Route::post('/quotations/{id}/new-version', [ApiQuotationController::class, 'newVersion']);
 
         // Tasks
         Route::get('/tasks',                [ApiTaskController::class, 'index']);

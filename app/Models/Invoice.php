@@ -26,6 +26,7 @@ class Invoice extends Model
         'tax_percent',
         'tax_amount',
         'total',
+        'currency',
         'paid_amount',
         'notes',
         'terms',
@@ -140,7 +141,12 @@ class Invoice extends Model
 
     public function getFormattedTotalAttribute(): string
     {
-        return '₹' . number_format($this->total, 2);
+        return $this->currencySymbol() . number_format($this->total, 2);
+    }
+
+    public function currencySymbol(): string
+    {
+        return config("quotation.currencies.{$this->currency}.symbol", $this->currency ?? '₹');
     }
 
     public function getFormattedPaidAttribute(): string
@@ -154,10 +160,14 @@ class Invoice extends Model
     }
 
     // ── Auto generate invoice number ──────────────────────────────
-    public static function generateNumber(): string
+    // Accepts an explicit tenant id for contexts with no authenticated user
+    // (e.g. the customer self-serve accept flow), falling back to auth().
+    public static function generateNumber(?int $tenantId = null): string
     {
+        $tenantId = $tenantId ?? auth()->user()->tenant_id;
+
         $lastId = static::withoutGlobalScopes()
-            ->where('tenant_id', auth()->user()->tenant_id)
+            ->where('tenant_id', $tenantId)
             ->max('id') ?? 0;
 
         $num = str_pad($lastId + 1, 4, '0', STR_PAD_LEFT);

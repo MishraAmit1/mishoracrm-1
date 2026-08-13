@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\TenantIntegration;
+use App\Services\Integrations\GenericLeadWebhookService;
 use App\Services\Integrations\MetaLeadService;
 use App\Services\Integrations\JustDialLeadService;
 use Illuminate\Http\JsonResponse;
@@ -125,34 +126,16 @@ class LeadWebhookController extends Controller
 
     private function handleGenericWebhook(Request $request, TenantIntegration $integration): JsonResponse
     {
-        $data = $request->all();
+        $service = GenericLeadWebhookService::forIntegration($integration);
 
-        $name  = $data['name']    ?? $data['full_name']    ?? $data['contact_name'] ?? 'Lead';
-        $phone = $data['phone']   ?? $data['mobile']       ?? $data['contact']      ?? null;
-        $email = $data['email']   ?? $data['email_id']     ?? null;
-        $city  = $data['city']    ?? $data['location']     ?? null;
-        $msg   = $data['message'] ?? $data['requirements'] ?? $data['query']         ?? null;
-
-        if (!$name && !$phone && !$email) {
-            return response()->json(['ok' => true, 'skipped' => 'no_data']);
+        // Optional shared secret in header or query param
+        $providedKey = $request->header('X-Webhook-Key', $request->query('key', ''));
+        if (!$service->verifyRequest($providedKey)) {
+            return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        \App\Models\Lead::create([
-            'tenant_id'  => $integration->tenant_id,
-            'name'       => $name,
-            'phone'      => $phone,
-            'email'      => $email,
-            'city'       => $city,
-            'source'     => $integration->platform,
-            'status'     => 'new',
-            'priority'   => 'medium',
-            'notes'      => $msg,
-            'created_by' => null,
-        ]);
+        $created = $service->processWebhook($request->all());
 
-        $integration->increment('leads_imported');
-        $integration->update(['last_synced_at' => now()]);
-
-        return response()->json(['ok' => true]);
+        return response()->json(['ok' => true, 'created' => $created]);
     }
 }

@@ -58,6 +58,11 @@ class User extends Authenticatable
         return $this->hasMany(Lead::class, 'created_by');
     }
 
+    public function assignedLeads(): HasMany
+    {
+        return $this->hasMany(Lead::class, 'assigned_to');
+    }
+
     // ── Helper methods ────────────────────────────────────────────
 
     public function isSuperAdmin(): bool

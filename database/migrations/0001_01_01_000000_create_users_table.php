@@ -18,7 +18,9 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();
-            $table->foreignId('tenant_id')->nullable()->constrained()->onDelete('cascade');
+            // FK to tenants added in 2026_04_23_102821_add_tenant_foreign_key_to_users_table.php —
+            // the tenants table doesn't exist yet at this point in migration order.
+            $table->foreignId('tenant_id')->nullable();
             $table->string('phone')->nullable();
             $table->string('avatar')->nullable();
             $table->boolean('is_active')->default(true);

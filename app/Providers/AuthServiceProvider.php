@@ -3,10 +3,12 @@
 namespace App\Providers;
 
 use App\Models\Deal;
+use App\Models\Followup;
 use App\Models\Lead;
 use App\Models\Quotation;
 use App\Models\Task;
 use App\Policies\DealPolicy;
+use App\Policies\FollowupPolicy;
 use App\Policies\LeadPolicy;
 use App\Policies\QuotationPolicy;
 use App\Policies\TaskPolicy;
@@ -21,5 +23,6 @@ class AuthServiceProvider extends ServiceProvider
         Gate::policy(Deal::class, DealPolicy::class);
         Gate::policy(Task::class, TaskPolicy::class);
         Gate::policy(Quotation::class, QuotationPolicy::class);
+        Gate::policy(Followup::class, FollowupPolicy::class);
     }
 }

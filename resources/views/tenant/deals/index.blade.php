@@ -347,9 +347,11 @@ $allTotal = $stageSummary->sum('total');
         <a href="{{ route('tenant.deals.pipeline') }}" class="btn btn-secondary">
             <i class="ti ti-chart-bar" style="font-size:14px"></i> Analytics
         </a>
-        <button class="btn btn-secondary" onclick="exportDeals()">
+        @can('deals.export')
+        <a href="{{ route('tenant.deals.export', request()->query()) }}" class="btn btn-secondary">
             <i class="ti ti-download" style="font-size:14px"></i> Export
-        </button>
+        </a>
+        @endcan
         <a href="{{ route('tenant.deals.create') }}" class="btn btn-primary">
             <i class="ti ti-plus" style="font-size:14px"></i> Add Deal
         </a>
@@ -957,13 +959,6 @@ if(sa){
 /* ─── Search debounce ─── */
 const si = document.querySelector('.di-fi-s');
 if(si){ let t; si.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => document.getElementById('filterForm').submit(), 500); }); }
-
-/* ─── Export ─── */
-window.exportDeals = function(){
-    const p = new URLSearchParams(window.location.search);
-    p.set('export','csv');
-    window.location.href = '{{ route("tenant.deals.index") }}?' + p.toString();
-};
 
 })();
 </script>

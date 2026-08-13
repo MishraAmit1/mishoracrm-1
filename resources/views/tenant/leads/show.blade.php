@@ -268,21 +268,9 @@ $deal            = $lead->deal;
 $dealStageIdx    = $deal ? array_search($deal->stage, $dealStages) : false;
 if ($dealStageIdx === false) $dealStageIdx = 0;
 
-/* Score: simple server-side calc */
-$score = 20;
-if (($lead->priority ?? '') === 'high')        $score += 25;
-elseif (($lead->priority ?? '') === 'medium')  $score += 15;
-else                                            $score += 5;
-if (($lead->source ?? '') === 'referral')      $score += 20;
-elseif (($lead->source ?? '') === 'website')   $score += 15;
-elseif (($lead->source ?? '') === 'social')    $score += 10;
-else                                            $score += 5;
-if (($lead->lead_value ?? 0) > 100000)        $score += 20;
-elseif (($lead->lead_value ?? 0) > 50000)     $score += 15;
-elseif (($lead->lead_value ?? 0) > 10000)     $score += 10;
-if ($lead->expected_close_date)               $score += 10;
-if (strlen($lead->notes ?? '') > 20)          $score += 5;
-$score = min($score, 100);
+/* Lead Score — persisted, calculated by LeadScoringService on creation
+   and on engagement (call/note logged), not recomputed ad-hoc per view. */
+$score = $lead->score ?? 0;
 
 /* Ring circumference = 2π×26 ≈ 163.4 */
 $ringOffset = 163.4 - (163.4 * $score / 100);

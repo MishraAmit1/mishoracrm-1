@@ -2,18 +2,17 @@
 
 namespace App\Http\Controllers\Web\Tenant;
 
+use App\Events\LeadAssigned;
 use App\Helpers\ViewScope;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LeadRequest;
 use App\Models\Contact;
 use App\Models\CustomFieldValue;
-use App\Models\Deal;
 use App\Models\Lead;
 use App\Models\LeadCallLog;
 use App\Models\TenantFieldAssignment;
 use App\Models\User;
 use App\Services\DuplicateMatcher;
-use App\Services\WebhookService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -99,14 +98,31 @@ class LeadController extends Controller
             'lost'      => $base()->where('status', 'lost')->count(),
         ];
 
+        // Kanban renders alongside the list view on the same page load (JS
+        // toggles visibility, no reload), so it needs its own query — capped
+        // at $kanbanCap instead of the list's 20/page so the board reflects
+        // the real pipeline rather than just the current page.
+        $kanbanCap   = 500;
+        $kanbanBase  = fn() => self::filteredQuery($this->tenantId(), $request->all(), $user);
+        $kanbanTotal = $kanbanBase()->count();
+        $kanbanLeads = $kanbanBase()
+            ->with(['assignedTo'])
+            ->orderBy('created_at', 'desc')
+            ->limit($kanbanCap)
+            ->get();
+
         return view('tenant.leads.index', [
-            'leads'      => $leads,
-            'counts'     => $counts,
-            'staffList'  => $this->getStaffList(),
-            'sources'    => Lead::sources(),
-            'statuses'   => Lead::statuses(),
-            'priorities' => Lead::priorities(),
-            'isAdmin'    => $isAdmin,
+            'leads'        => $leads,
+            'counts'       => $counts,
+            'staffList'    => $this->getStaffList(),
+            'sources'      => Lead::sources(),
+            'statuses'     => Lead::statuses(),
+            'priorities'   => Lead::priorities(),
+            'isAdmin'      => $isAdmin,
+            'kanbanLeads'  => $kanbanLeads,
+            'kanbanCapped' => $kanbanTotal > $kanbanCap,
+            'kanbanCap'    => $kanbanCap,
+            'kanbanTotal'  => $kanbanTotal,
         ]);
     }
 
@@ -125,6 +141,8 @@ class LeadController extends Controller
     // ── Store ─────────────────────────────────────────────────────
     public function store(LeadRequest $request): RedirectResponse
     {
+        $this->authorize('create', Lead::class);
+
         $leadData = $request->leadData();
         $leadData['assigned_to'] = $this->validateAssignee($leadData['assigned_to'] ?? null);
 
@@ -135,14 +153,9 @@ class LeadController extends Controller
 
         $this->saveCustomFields($lead, $request->input('custom_fields', []));
 
-        WebhookService::fire('lead.created', $lead->tenant_id, [
-            'id'     => $lead->id,
-            'name'   => $lead->name,
-            'phone'  => $lead->phone,
-            'email'  => $lead->email,
-            'source' => $lead->source,
-            'status' => $lead->status,
-        ]);
+        if ($lead->assigned_to) {
+            event(new LeadAssigned($lead, auth()->user()));
+        }
 
         return redirect()
             ->route('tenant.leads.show', $lead->id)
@@ -207,15 +220,8 @@ class LeadController extends Controller
 
         $leadData['assigned_to'] = $this->validateAssignee($leadData['assigned_to'] ?? null);
 
-        // contacted_at timestamp
-        if ($request->status === 'contacted' && $lead->status !== 'contacted') {
-            $leadData['contacted_at'] = now();
-        }
-
-        // converted_at — sirf convert() method se hoga, directly nahi
-        // agar koi status manually 'converted' pe set kare toh bhi handle karo
-        if ($request->status === 'converted' && $lead->status !== 'converted') {
-            $leadData['converted_at'] = now();
+        if ($request->status) {
+            $leadData = array_merge($leadData, Lead::statusTimestamps($request->status, $lead->status));
         }
 
         $lead->update($leadData);
@@ -253,37 +259,21 @@ class LeadController extends Controller
     public function updateStatus(Request $request, int|string $id): JsonResponse
     {
         $request->validate([
-            'status' => ['required', 'in:new,contacted,qualified,converted,lost'],
+            'status' => ['required', 'in:' . implode(',', array_keys(Lead::statuses()))],
         ]);
 
         $lead = $this->findLead($id);
+        $this->authorize('modify', $lead);
+
+        $oldStatus = $lead->status;
 
         if ($request->status === 'converted') {
             $this->convert($lead->id);
-            // return response()->json([
-            //     'ok'       => true,
-            //     'redirect' => route('tenant.leads.convert', $lead->id),
-            // ]);
         }
 
-        $data = ['status' => $request->status];
+        $data = array_merge(['status' => $request->status], Lead::statusTimestamps($request->status, $oldStatus));
 
-        if ($request->status === 'contacted' && $lead->status !== 'contacted') {
-            $data['contacted_at'] = now();
-        }
-
-        $oldStatus = $lead->status;
         $lead->update($data);
-
-        if ($oldStatus !== $lead->status) {
-            WebhookService::fire('lead.status_changed', $lead->tenant_id, [
-                'id'         => $lead->id,
-                'name'       => $lead->name,
-                'phone'      => $lead->phone,
-                'old_status' => $oldStatus,
-                'new_status' => $lead->status,
-            ]);
-        }
 
         return response()->json(['ok' => true, 'status' => $lead->status]);
     }
@@ -310,6 +300,7 @@ class LeadController extends Controller
     public function convert(int|string $id): RedirectResponse
     {
         $lead = $this->findLead($id);
+        $this->authorize('convert', $lead);
 
         // Already converted check
         if ($lead->isConverted()) {
@@ -339,7 +330,9 @@ class LeadController extends Controller
     {
         $request->validate(['assigned_to' => ['required', 'exists:users,id']]);
 
-        $lead  = $this->findLead($id);
+        $lead = $this->findLead($id);
+        $this->authorize('assign', $lead);
+
         $valid = User::where('id', $request->assigned_to)
             ->where('tenant_id', $this->tenantId())
             ->exists();
@@ -347,6 +340,8 @@ class LeadController extends Controller
         if (!$valid) return back()->with('error', 'Invalid staff member.');
 
         $lead->update(['assigned_to' => $request->assigned_to]);
+        event(new LeadAssigned($lead, auth()->user()));
+
         return back()->with('success', 'Lead assigned.');
     }
 
@@ -354,12 +349,12 @@ class LeadController extends Controller
     public function updateStatusForm(Request $request, int|string $id): RedirectResponse
     {
         $request->validate([
-            'status'      => ['required', 'in:new,contacted,qualified,converted,lost'],
+            'status'      => ['required', 'in:' . implode(',', array_keys(Lead::statuses()))],
             'lost_reason' => ['nullable', 'string', 'max:500'],
         ]);
 
         $lead = $this->findLead($id);
-        $data = ['status' => $request->status];
+        $this->authorize('modify', $lead);
 
         // Block direct 'converted' status change — use convert() instead
         if ($request->status === 'converted') {
@@ -367,7 +362,8 @@ class LeadController extends Controller
                 ->route('tenant.leads.convert', $lead->id);
         }
 
-        if ($request->status === 'contacted') $data['contacted_at'] = now();
+        $data = array_merge(['status' => $request->status], Lead::statusTimestamps($request->status, $lead->status));
+
         if ($request->status === 'lost' && $request->filled('lost_reason')) {
             $data['lost_reason'] = $request->lost_reason;
         }
@@ -388,8 +384,7 @@ class LeadController extends Controller
             'lost_reason' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $data = ['status' => $request->status];
-        if ($request->status === 'contacted') $data['contacted_at'] = now();
+        $data = array_merge(['status' => $request->status], Lead::statusTimestamps($request->status, null));
         if ($request->status === 'lost' && $request->filled('lost_reason')) {
             $data['lost_reason'] = $request->lost_reason;
         }
@@ -454,11 +449,16 @@ class LeadController extends Controller
             return response()->json(['error' => 'Invalid staff member.'], 422);
         }
 
-        $count = Lead::whereIn('id', $request->ids)
+        $leads = Lead::whereIn('id', $request->ids)
             ->where('tenant_id', $this->tenantId())
-            ->update(['assigned_to' => $request->assigned_to]);
+            ->get();
 
-        return response()->json(['assigned' => $count]);
+        foreach ($leads as $lead) {
+            $lead->update(['assigned_to' => $request->assigned_to]);
+            event(new LeadAssigned($lead, auth()->user()));
+        }
+
+        return response()->json(['assigned' => $leads->count()]);
     }
 
     // ── Lead data for Contact/Deal pre-fill (API) ─────────────────
@@ -485,7 +485,7 @@ class LeadController extends Controller
     // ── Store Call Log / Note ─────────────────────────────────────
     public function storeCallLog(Request $request, Lead $lead): RedirectResponse
     {
-        abort_unless($lead->tenant_id === $this->tenantId(), 403);
+        $this->authorize('view', $lead);
 
         $request->validate([
             'type'          => ['required', 'in:call,note,email,meeting,whatsapp'],
@@ -504,6 +504,8 @@ class LeadController extends Controller
             'logged_at'     => now(),
             'created_by'    => auth()->id(),
         ]);
+
+        \App\Services\LeadScoringService::recalculate($lead);
 
         return back()->with('success', ucfirst($request->type) . ' logged successfully.');
     }
