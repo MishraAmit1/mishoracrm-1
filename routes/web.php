@@ -421,6 +421,52 @@ Route::middleware(['tenant', 'auth', 'subscription'])
             });
         });
 
+        // Vendors routes
+        Route::prefix('/vendors')->name('vendors.')->group(function () {
+            Route::controller(Tenant\VendorController::class)->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::get('/create', 'create')->name('create');
+                Route::post('/', 'store')->name('store');
+                Route::get('/{id}', 'show')->name('show');
+                Route::get('/{id}/edit', 'edit')->name('edit');
+                Route::put('/{id}', 'update')->name('update');
+                Route::delete('/{id}', 'destroy')->name('destroy');
+            });
+        });
+
+        // Purchase Requests routes
+        Route::prefix('/purchase-requests')->name('purchase-requests.')->group(function () {
+            Route::controller(Tenant\PurchaseRequestController::class)->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::get('/create', 'create')->name('create');
+                Route::post('/', 'store')->name('store');
+                Route::get('/{id}', 'show')->name('show');
+                Route::get('/{id}/edit', 'edit')->name('edit');
+                Route::put('/{id}', 'update')->name('update');
+                Route::delete('/{id}', 'destroy')->name('destroy');
+                Route::post('/{id}/approve', 'approve')->name('approve');
+                Route::post('/{id}/reject', 'reject')->name('reject');
+            });
+        });
+
+        // Purchase Orders routes
+        Route::prefix('/purchase-orders')->name('purchase-orders.')->group(function () {
+            Route::controller(Tenant\PurchaseOrderController::class)->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::get('/export', 'export')->name('export')->middleware('permission:purchase_orders.export');
+                Route::get('/create', 'create')->name('create');
+                Route::post('/', 'store')->name('store');
+                Route::get('/{id}', 'show')->name('show');
+                Route::get('/{id}/edit', 'edit')->name('edit');
+                Route::put('/{id}', 'update')->name('update');
+                Route::delete('/{id}', 'destroy')->name('destroy');
+                Route::post('/{id}/status', 'updateStatus')->name('update_status');
+                Route::post('/{id}/receive', 'receive')->name('receive');
+                Route::get('/{id}/pdf', 'pdf')->name('pdf');
+                Route::post('/{id}/send', 'send')->name('send');
+            });
+        });
+
         //Tasks routes
         Route::prefix('/tasks')->name('tasks.')->group(function () {
             Route::controller(Tenant\TaskController::class)->group(function () {

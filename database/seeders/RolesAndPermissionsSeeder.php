@@ -89,6 +89,30 @@ class RolesAndPermissionsSeeder extends Seeder
             'invoices.record_payment',
             'invoices.export',
 
+            // ── Vendors ───────────────────────────────────────────
+            'vendors.view',
+            'vendors.create',
+            'vendors.edit',
+            'vendors.delete',
+
+            // ── Purchase Requests ─────────────────────────────────
+            'purchase_requests.view_own',
+            'purchase_requests.view_all',
+            'purchase_requests.create',
+            'purchase_requests.edit',
+            'purchase_requests.approve',
+            'purchase_requests.delete',
+
+            // ── Purchase Orders ───────────────────────────────────
+            'purchase_orders.view_own',
+            'purchase_orders.view_all',
+            'purchase_orders.create',
+            'purchase_orders.edit',
+            'purchase_orders.delete',
+            'purchase_orders.send',
+            'purchase_orders.receive',
+            'purchase_orders.export',
+
             // ── Staff ─────────────────────────────────────────────
             'staff.view',
             'staff.create',
@@ -164,6 +188,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'tasks.view_own',
             'tasks.create',
             'tasks.edit_own',
+            'purchase_requests.view_own',
+            'purchase_requests.create',
             'whatsapp.send',
             'email.send',
             'reports.view_basic',

@@ -1,0 +1,201 @@
+@extends('layouts.app')
+@section('title', 'Purchase Orders')
+
+@push('styles')
+<style>
+.filter-bar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:20px; }
+.filter-input {
+    padding:8px 12px; height:36px; background:var(--bg-input); border:1.5px solid var(--border-default);
+    border-radius:var(--r-sm); color:var(--text-100); font-family:var(--font); font-size:13px; outline:none;
+}
+.filter-input:focus { border-color:var(--accent); }
+.search-wrap { position:relative; flex:1; min-width:180px; max-width:280px; }
+.search-wrap svg { position:absolute; left:10px; top:50%; transform:translateY(-50%); width:15px; height:15px; color:var(--text-300); pointer-events:none; }
+.search-wrap input { width:100%; padding-left:34px; }
+.status-tabs { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:20px; }
+.status-tab { padding:6px 14px; border-radius:20px; font-size:12.5px; font-weight:600; text-decoration:none; border:1.5px solid var(--border-default); color:var(--text-300); background:none; display:flex; align-items:center; gap:6px; }
+.status-tab:hover { border-color:var(--border-strong); color:var(--text-100); }
+.status-tab.active { background:var(--accent-dim); border-color:var(--accent); color:var(--accent); }
+.tab-count { font-size:11px; font-family:var(--mono); background:var(--bg-elevated); padding:0 5px; border-radius:10px; color:var(--text-300); }
+.status-tab.active .tab-count { background:var(--accent); color:#fff; }
+.pagination-wrap { display:flex; align-items:center; justify-content:space-between; padding:14px 20px; border-top:1px solid var(--border-subtle); font-size:13px; color:var(--text-300); }
+.pagination-links { display:flex; gap:4px; }
+.page-link { padding:5px 10px; border-radius:var(--r-sm); border:1px solid var(--border-default); color:var(--text-200); text-decoration:none; font-size:13px; }
+.page-link:hover { border-color:var(--accent); color:var(--accent); }
+.page-link.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+.page-link.disabled { opacity:0.4; pointer-events:none; }
+.empty-state { padding:60px 20px; text-align:center; }
+.empty-icon { font-size:40px; margin-bottom:12px; }
+.empty-title { font-size:15px; font-weight:700; color:var(--text-100); margin-bottom:6px; }
+.empty-sub { font-size:13px; color:var(--text-300); margin-bottom:20px; }
+</style>
+@endpush
+
+@section('content')
+@php $curStatus = request('status', ''); @endphp
+
+<div class="page-head">
+    <div>
+        <div class="page-title">Purchase Orders</div>
+        <div class="page-sub">{{ $counts['all'] }} total purchase orders</div>
+    </div>
+    <div class="page-actions">
+        @can('purchase_orders.export')
+        <a href="{{ route('tenant.purchase-orders.export', request()->query()) }}" class="btn btn-secondary">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+            </svg>
+            Export
+        </a>
+        @endcan
+        @can('create', \App\Models\PurchaseOrder::class)
+        <a href="{{ route('tenant.purchase-orders.create') }}" class="btn btn-primary">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+            </svg>
+            New Purchase Order
+        </a>
+        @endcan
+    </div>
+</div>
+
+<div class="status-tabs">
+    <a href="{{ route('tenant.purchase-orders.index') }}" class="status-tab {{ $curStatus === '' ? 'active' : '' }}">
+        All <span class="tab-count">{{ $counts['all'] }}</span>
+    </a>
+    @foreach($statuses as $key => $label)
+    <a href="{{ route('tenant.purchase-orders.index', ['status' => $key]) }}" class="status-tab {{ $curStatus === $key ? 'active' : '' }}">
+        {{ $label }} <span class="tab-count">{{ $counts[$key] ?? 0 }}</span>
+    </a>
+    @endforeach
+</div>
+
+<form method="GET" action="{{ route('tenant.purchase-orders.index') }}" id="filterForm">
+    @if($curStatus) <input type="hidden" name="status" value="{{ $curStatus }}"/> @endif
+    <div class="filter-bar">
+        <div class="search-wrap">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
+            </svg>
+            <input type="text" name="search" class="filter-input" placeholder="Search number, vendor..." value="{{ request('search') }}"/>
+        </div>
+        <input type="date" name="date_from" class="filter-input" value="{{ request('date_from') }}" onchange="this.form.submit()"/>
+        <input type="date" name="date_to" class="filter-input" value="{{ request('date_to') }}" onchange="this.form.submit()"/>
+        <button type="submit" class="btn btn-secondary">Search</button>
+        @if(request()->hasAny(['search','date_from','date_to']))
+        <a href="{{ route('tenant.purchase-orders.index', $curStatus ? ['status'=>$curStatus] : []) }}" class="btn btn-secondary">Clear</a>
+        @endif
+    </div>
+</form>
+
+<div class="card">
+    @if($purchaseOrders->isEmpty())
+    <div class="empty-state">
+        <div class="empty-icon">📦</div>
+        <div class="empty-title">No purchase orders found</div>
+        <div class="empty-sub">Create your first purchase order</div>
+        @can('create', \App\Models\PurchaseOrder::class)
+        <a href="{{ route('tenant.purchase-orders.create') }}" class="btn btn-primary">Create Purchase Order</a>
+        @endcan
+    </div>
+    @else
+    <div style="overflow-x:auto">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Number</th>
+                    <th>Vendor</th>
+                    <th>Date</th>
+                    <th>Expected Delivery</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($purchaseOrders as $po)
+                @php
+                    $badgeColors = [
+                        'draft'              => ['bg' => '#F3F4F6', 'color' => '#374151'],
+                        'sent'               => ['bg' => '#FAEEDA', 'color' => '#854F0B'],
+                        'partially_received' => ['bg' => '#E6F1FB', 'color' => '#185FA5'],
+                        'received'           => ['bg' => '#E1F5EE', 'color' => '#0F6E56'],
+                        'cancelled'          => ['bg' => '#FCEBEB', 'color' => '#A32D2D'],
+                    ];
+                    $bc = $badgeColors[$po->status] ?? $badgeColors['draft'];
+                @endphp
+                <tr>
+                    <td data-label="Number">
+                        <a href="{{ route('tenant.purchase-orders.show', $po->id) }}" style="text-decoration:none;color:var(--text-100);font-weight:600">{{ $po->number }}</a>
+                        <div style="font-size:11.5px;color:var(--text-400)">{{ $po->created_at->format('d M Y') }}</div>
+                    </td>
+                    <td data-label="Vendor">{{ $po->vendor?->name ?? '—' }}</td>
+                    <td class="td-mono" style="font-size:12.5px" data-label="Date">{{ $po->date?->format('d M Y') }}</td>
+                    <td class="td-mono" style="font-size:12.5px" data-label="Expected Delivery">{{ $po->expected_delivery_date?->format('d M Y') ?? '—' }}</td>
+                    <td data-label="Amount">
+                        <div style="font-size:14px;font-weight:700;color:var(--accent);font-family:var(--mono)">₹{{ number_format($po->total,2) }}</div>
+                    </td>
+                    <td data-label="Status">
+                        <span class="badge" style="background:{{ $bc['bg'] }};color:{{ $bc['color'] }};padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:600">
+                            {{ ucfirst(str_replace('_',' ',$po->status)) }}
+                        </span>
+                    </td>
+                    <td>
+                        <div style="display:flex;gap:6px;align-items:center">
+                            <a href="{{ route('tenant.purchase-orders.show', $po->id) }}" class="btn btn-secondary btn-sm btn-icon" title="View">
+                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                            </a>
+                            <a href="{{ route('tenant.purchase-orders.pdf', $po->id) }}" class="btn btn-secondary btn-sm btn-icon" title="Download PDF" target="_blank">
+                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+                                </svg>
+                            </a>
+                            @if(!in_array($po->status, ['received','cancelled']))
+                            @can('modify', $po)
+                            <a href="{{ route('tenant.purchase-orders.edit', $po->id) }}" class="btn btn-secondary btn-sm btn-icon" title="Edit">
+                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/>
+                                </svg>
+                            </a>
+                            @endcan
+                            @endif
+                            @if($po->status === 'draft')
+                            @can('delete', $po)
+                            <form method="POST" action="{{ route('tenant.purchase-orders.destroy', $po->id) }}"
+                                  onsubmit="return confirm('Delete {{ $po->number }}?')">
+                                @csrf @method('DELETE')
+                                <button type="submit" class="btn btn-secondary btn-sm btn-icon" style="color:var(--red)" title="Delete">
+                                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
+                                    </svg>
+                                </button>
+                            </form>
+                            @endcan
+                            @endif
+                        </div>
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+
+    @if($purchaseOrders->hasPages())
+    <div class="pagination-wrap">
+        <span>Showing {{ $purchaseOrders->firstItem() }}–{{ $purchaseOrders->lastItem() }} of {{ $purchaseOrders->total() }}</span>
+        <div class="pagination-links">
+            <a href="{{ $purchaseOrders->previousPageUrl() ?? '#' }}" class="page-link {{ !$purchaseOrders->previousPageUrl() ? 'disabled' : '' }}">←</a>
+            @foreach($purchaseOrders->getUrlRange(max(1,$purchaseOrders->currentPage()-2), min($purchaseOrders->lastPage(),$purchaseOrders->currentPage()+2)) as $page => $url)
+            <a href="{{ $url }}" class="page-link {{ $page == $purchaseOrders->currentPage() ? 'active' : '' }}">{{ $page }}</a>
+            @endforeach
+            <a href="{{ $purchaseOrders->nextPageUrl() ?? '#' }}" class="page-link {{ !$purchaseOrders->nextPageUrl() ? 'disabled' : '' }}">→</a>
+        </div>
+    </div>
+    @endif
+    @endif
+</div>
+
+@endsection

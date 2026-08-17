@@ -283,6 +283,57 @@
             </a>
         </div>
 
+        {{-- Purchase --}}
+        <div class="sb-section-label">Purchase</div>
+
+        <button type="button"
+                class="sb-item {{ request()->routeIs('purchase-requests.*','purchase-orders.*','vendors.*') ? 'sub-open' : '' }}"
+                onclick="toggleSub('sub-purchase', this)">
+            <span class="sb-icon">
+                <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 1.94-4.788 2.436-7.404.083-.436-.24-.836-.68-.836H5.106M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"/>
+                </svg>
+            </span>
+            <span class="sb-label">Purchase</span>
+            <span class="sb-arrow">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
+                </svg>
+            </span>
+        </button>
+
+        <div class="sb-sub {{ request()->routeIs('purchase-requests.*','purchase-orders.*','vendors.*') ? 'open' : '' }}"
+             id="sub-purchase">
+
+            <a href="{{ route('tenant.purchase-requests.index') }}"
+               class="sb-item {{ request()->routeIs('purchase-requests.*') ? 'active' : '' }}">
+                <span class="sb-icon">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75M3.75 4.5h16.5v15a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25v-15zM15 4.5V3a.75.75 0 00-.75-.75h-4.5A.75.75 0 009 3v1.5"/>
+                    </svg>
+                </span>
+                <span class="sb-label">Purchase Requests</span>
+            </a>
+            <a href="{{ route('tenant.purchase-orders.index') }}"
+               class="sb-item {{ request()->routeIs('purchase-orders.*') ? 'active' : '' }}">
+                <span class="sb-icon">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 14.25l6-6m4.5-3.493V21.75l-3.75-1.5-3.75 1.5-3.75-1.5-3.75 1.5V4.757c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0c1.1.128 1.907 1.077 1.907 2.185z"/>
+                    </svg>
+                </span>
+                <span class="sb-label">Purchase Orders</span>
+            </a>
+            <a href="{{ route('tenant.vendors.index') }}"
+               class="sb-item {{ request()->routeIs('vendors.*') ? 'active' : '' }}">
+                <span class="sb-icon">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21"/>
+                    </svg>
+                </span>
+                <span class="sb-label">Vendors</span>
+            </a>
+        </div>
+
         {{-- Communication --}}
         <div class="sb-section-label">Communication</div>
 
