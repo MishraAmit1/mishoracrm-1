@@ -59,6 +59,16 @@
             <span class="sb-label">Coupons</span>
         </a>
 
+        <a href="{{ route('superadmin.permissions.index') }}"
+           class="sb-item {{ request()->routeIs('superadmin.permissions.*') ? 'active' : '' }}">
+            <span class="sb-icon">
+                <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>
+                </svg>
+            </span>
+            <span class="sb-label">Roles & Permissions</span>
+        </a>
+
         <a href="{{ route('superadmin.lead-integrations.index') }}"
            class="sb-item {{ request()->routeIs('superadmin.lead-integrations.*') ? 'active' : '' }}">
             <span class="sb-icon">

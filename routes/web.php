@@ -143,6 +143,16 @@ Route::prefix('superadmin')
             Route::post('/{coupon}/toggle', 'toggle')->name('toggle');
         });
 
+        // Permissions master list (no seeder edits needed for new modules)
+        Route::prefix('permissions')->name('permissions.')->controller(SuperAdmin\PermissionController::class)->group(function () {
+            Route::get('/',                  'index')->name('index');
+            Route::get('/create',            'create')->name('create');
+            Route::post('/',                 'store')->name('store');
+            Route::get('/{permission}/edit', 'edit')->name('edit');
+            Route::put('/{permission}',      'update')->name('update');
+            Route::delete('/{permission}',   'destroy')->name('destroy');
+        });
+
         // Error logs monitoring
         Route::prefix('error-logs')->name('error-logs.')->controller(SuperAdmin\ErrorLogController::class)->group(function () {
             Route::get('/',                       'index')->name('index');
