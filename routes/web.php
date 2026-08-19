@@ -779,6 +779,13 @@ Route::middleware(['tenant', 'auth', 'subscription'])
             Route::post('/assign',  'assignToUser')->name('assign');
         });
 
+        // Add new permissions (tenant_admin can add for new modules — rename/delete stays Super Admin-only
+        // since tenant_admin is one shared role across all tenants)
+        Route::prefix('permissions')->name('permissions.')->controller(Tenant\PermissionController::class)->middleware(['role:tenant_admin'])->group(function () {
+            Route::get('/create', 'create')->name('create');
+            Route::post('/',      'store')->name('store');
+        });
+
         // ── API Key Management (tenant_admin only) ────────────────
         Route::prefix('api-keys')->name('api-keys.')->middleware(['role:tenant_admin'])
             ->controller(Tenant\ApiKeyController::class)->group(function () {

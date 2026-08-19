@@ -30,12 +30,20 @@
         <div class="page-title">Roles & Permissions</div>
         <div class="page-sub">Create custom roles and assign permissions to your staff</div>
     </div>
-    <a href="{{ route('tenant.roles.create') }}" class="btn btn-primary">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:15px;height:15px">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-        </svg>
-        Create Role
-    </a>
+    <div style="display:flex;gap:8px">
+        <a href="{{ route('tenant.permissions.create') }}" class="btn btn-secondary">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:15px;height:15px">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+            </svg>
+            Add Permission
+        </a>
+        <a href="{{ route('tenant.roles.create') }}" class="btn btn-primary">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:15px;height:15px">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+            </svg>
+            Create Role
+        </a>
+    </div>
 </div>
 
 @if(session('success'))
@@ -58,7 +66,7 @@
         <strong style="color:var(--text-200)">How roles work:</strong>
         You can create custom roles and assign any combination of permissions to them.
         System roles (Tenant Admin, Staff) are predefined and cannot be deleted.
-        <strong style="color:var(--text-200)">Permissions are defined by the developer</strong> — you assign them to roles.
+        Need a permission for a new module? <a href="{{ route('tenant.permissions.create') }}" style="color:var(--accent)">Add it here</a> — no need to wait on the developer.
     </div>
 </div>
 
