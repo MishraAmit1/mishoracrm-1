@@ -18,6 +18,11 @@
 
 @section('content')
 
+@php
+    $units = ['Kg','Gram','Quintal','Litre','Millilitre','Metre','Piece','Box','Bag','Dozen','Ton','Set','Roll'];
+    $oldUnit = old('unit');
+@endphp
+
 <div class="page-head">
     <div>
         <div style="font-size:12px;color:var(--text-300);margin-bottom:4px">
@@ -89,8 +94,46 @@
             </div>
             <div class="field">
                 <label class="fl">Unit</label>
-                <input type="text" name="unit" class="fi"
-                       value="{{ old('unit') }}" placeholder="e.g. pcs, hrs, kg"/>
+                <select class="fi" id="unitSelect" onchange="onUnitChange()">
+                    <option value="">— Select unit —</option>
+                    @foreach($units as $u)
+                    <option value="{{ $u }}" {{ $oldUnit === $u ? 'selected' : '' }}>{{ $u }}</option>
+                    @endforeach
+                    <option value="__other__" {{ ($oldUnit && !in_array($oldUnit, $units)) ? 'selected' : '' }}>Other (custom)</option>
+                </select>
+                <input type="text" id="unitOther" class="fi" placeholder="Enter custom unit"
+                       value="{{ ($oldUnit && !in_array($oldUnit, $units)) ? $oldUnit : '' }}"
+                       style="{{ ($oldUnit && !in_array($oldUnit, $units)) ? '' : 'display:none' }};margin-top:6px"/>
+                <input type="hidden" name="unit" id="unitHidden" value="{{ $oldUnit }}">
+            </div>
+        </div>
+
+        <div class="fg2">
+            <div class="field">
+                <label class="fl">Type</label>
+                <select name="type" class="fi" id="typeSelect" onchange="onTypeChange()">
+                    <option value="finished_good" {{ old('type', 'finished_good') === 'finished_good' ? 'selected' : '' }}>Finished Good</option>
+                    <option value="raw_material" {{ old('type') === 'raw_material' ? 'selected' : '' }}>Raw Material</option>
+                </select>
+                <span style="font-size:11.5px;color:var(--text-400)">Finished goods are sold on invoices; raw materials are used in a Bill of Materials</span>
+            </div>
+            <div class="field">
+                <label class="fl">Current Stock</label>
+                <input type="number" name="current_stock" class="fi" min="0" step="0.01"
+                       value="{{ old('current_stock', 0) }}" placeholder="0"/>
+            </div>
+        </div>
+
+        <div class="fg2" id="reorderFields">
+            <div class="field">
+                <label class="fl">Reorder Level</label>
+                <input type="number" name="reorder_level" class="fi" min="0" step="0.01"
+                       value="{{ old('reorder_level') }}" placeholder="Alert when stock falls to/below this"/>
+            </div>
+            <div class="field">
+                <label class="fl">Reorder Quantity</label>
+                <input type="number" name="reorder_quantity" class="fi" min="0" step="0.01"
+                       value="{{ old('reorder_quantity') }}" placeholder="How many units to replenish"/>
             </div>
         </div>
 
@@ -110,5 +153,27 @@
     </div>
 </div>
 </form>
+
+<script>
+function onUnitChange(){
+    const sel   = document.getElementById('unitSelect').value;
+    const other = document.getElementById('unitOther');
+    const hidden = document.getElementById('unitHidden');
+    if(sel === '__other__'){
+        other.style.display = 'block';
+        hidden.value = other.value;
+    } else {
+        other.style.display = 'none';
+        hidden.value = sel;
+    }
+}
+document.getElementById('unitOther')?.addEventListener('input', function(){
+    document.getElementById('unitHidden').value = this.value;
+});
+function onTypeChange(){
+    // Reorder fields are meaningful for both types, so no hide/show here —
+    // kept as a hook in case future rules need it.
+}
+</script>
 
 @endsection

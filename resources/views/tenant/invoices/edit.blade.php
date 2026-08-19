@@ -100,6 +100,7 @@
     $existingItems = old('items') ?? $invoice->items ?? [];
     // Normalize items so view can use them
     $existingItems = collect($existingItems)->map(fn($item) => [
+        'product_id'  => $item['product_id']  ?? '',
         'description' => $item['description'] ?? '',
         'quantity'    => $item['quantity']    ?? 1,
         'rate'        => $item['rate']        ?? 0,
@@ -324,19 +325,7 @@
         </div>
 
         <div class="form-footer">
-            {{-- Danger: delete --}}
-            @if($invoice->status !== 'paid')
-            <form method="POST" action="{{ route('tenant.invoices.destroy', $invoice->id) }}"
-                  onsubmit="return confirm('Delete this invoice permanently?')">
-                @csrf @method('DELETE')
-                <button type="submit"
-                        style="padding:8px 14px;border-radius:var(--r-sm);border:1.5px solid rgba(255,82,87,.3);background:var(--red-dim);color:var(--red);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)">
-                    🗑 Delete
-                </button>
-            </form>
-            @else
             <div></div>
-            @endif
 
             <div style="display:flex;gap:10px">
                 <a href="{{ route('tenant.invoices.show', $invoice->id) }}" class="btn btn-secondary">Cancel</a>
@@ -420,6 +409,23 @@
 </div>
 </form>
 
+@if($invoice->status !== 'paid')
+<div style="margin-top:16px;padding:16px 18px;background:var(--bg-surface);border:1px solid rgba(255,82,87,.3);border-radius:var(--r-lg);display:flex;align-items:center;justify-content:space-between;gap:12px">
+    <div>
+        <div style="font-size:13px;font-weight:600;color:var(--red)">Danger Zone</div>
+        <span style="font-size:12px;color:var(--text-400)">Permanently delete this invoice. This cannot be undone.</span>
+    </div>
+    <form method="POST" action="{{ route('tenant.invoices.destroy', $invoice->id) }}"
+          onsubmit="return confirm('Delete this invoice permanently?')">
+        @csrf @method('DELETE')
+        <button type="submit"
+                style="padding:8px 14px;border-radius:var(--r-sm);border:1.5px solid rgba(255,82,87,.3);background:var(--red-dim);color:var(--red);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)">
+            🗑 Delete Invoice
+        </button>
+    </form>
+</div>
+@endif
+
 @endsection
 
 @include('tenant.partials.product-search-js')
@@ -451,12 +457,14 @@ window.fillRowFromProduct = function(i, p) {
     row.querySelector(`[name="items[${i}][description]"]`).value  = p.description || p.name;
     row.querySelector(`[name="items[${i}][rate]"]`).value         = p.rate;
     row.querySelector(`[name="items[${i}][tax_percent]"]`).value  = p.tax_percent;
+    const pidInput = row.querySelector(`[name="items[${i}][product_id]"]`);
+    if (pidInput) pidInput.value = p.id;
     calcRow(i);
     calcTotals();
 };
 
 // ── Add row ───────────────────────────────────────────────────────
-function addRow(desc = '', qty = 1, rate = '', taxPct = '') {
+function addRow(desc = '', qty = 1, rate = '', taxPct = '', productId = '') {
     const tbody = document.getElementById('itemsBody');
     const i     = rowCount++;
     const tr    = document.createElement('tr');
@@ -468,6 +476,7 @@ function addRow(desc = '', qty = 1, rate = '', taxPct = '') {
     tr.innerHTML = `
         <td data-label="Description">
             <div id="ps_container_${i}"></div>
+            <input type="hidden" name="items[${i}][product_id]" value="${productId}"/>
             <input type="text"
                    name="items[${i}][description]"
                    class="item-input"
@@ -580,7 +589,7 @@ function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&
 (function () {
     if (EXISTING_ITEMS && EXISTING_ITEMS.length) {
         EXISTING_ITEMS.forEach(item => {
-            addRow(item.description || '', item.quantity || 1, item.rate || 0, item.tax_percent ?? '');
+            addRow(item.description || '', item.quantity || 1, item.rate || 0, item.tax_percent ?? '', item.product_id || '');
         });
     } else {
         addRow();

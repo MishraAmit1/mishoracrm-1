@@ -65,14 +65,24 @@ class PurchaseOrderService
     }
 
     // ── Receive — record received qty per line (clamped to ordered
-    // qty), re-derive status from the resulting item rows. ─────────
+    // qty), re-derive status from the resulting item rows. Also bumps
+    // raw-material stock for any row linked to a product_id, by the
+    // delta (not the cumulative total) so repeated partial receives
+    // don't double-count. ────────────────────────────────────────
     public static function receive(PurchaseOrder $purchaseOrder, array $receivedByRowIndex): PurchaseOrder
     {
         $items = collect($purchaseOrder->items ?? [])->map(function ($item, $index) use ($receivedByRowIndex) {
             if (array_key_exists($index, $receivedByRowIndex)) {
                 $qty         = (float) ($item['quantity'] ?? 0);
-                $newReceived = (float) $receivedByRowIndex[$index];
-                $item['received_quantity'] = max(0, min($qty, $newReceived));
+                $oldReceived = (float) ($item['received_quantity'] ?? 0);
+                $newReceived = max(0, min($qty, (float) $receivedByRowIndex[$index]));
+                $delta       = $newReceived - $oldReceived;
+
+                $item['received_quantity'] = $newReceived;
+
+                if ($delta != 0 && !empty($item['product_id'])) {
+                    StockService::applyReceivedDelta((int) $item['product_id'], $delta);
+                }
             }
 
             return $item;

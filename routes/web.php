@@ -415,6 +415,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
                 Route::get('/create', 'create')->name('create');
                 Route::post('/', 'store')->name('store');
                 Route::get('/search', 'search')->name('search');
+                Route::get('/low-stock', 'lowStock')->name('low-stock');
                 Route::get('/{id}/edit', 'edit')->name('edit');
                 Route::put('/{id}', 'update')->name('update');
                 Route::delete('/{id}', 'destroy')->name('destroy');

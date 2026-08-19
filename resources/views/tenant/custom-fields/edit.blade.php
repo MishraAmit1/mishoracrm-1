@@ -218,15 +218,7 @@
             </div>
 
             <div class="form-footer">
-                {{-- Danger zone --}}
-                <form method="POST" action="{{ route('tenant.custom-fields.destroy', $field->id) }}"
-                      onsubmit="return confirm('Delete \'{{ $field->label }}\' permanently? All saved data will be lost.')">
-                    @csrf @method('DELETE')
-                    <button type="submit"
-                            style="padding:8px 16px;border-radius:var(--r-sm);border:1.5px solid rgba(255,82,87,.3);background:var(--red-dim);color:var(--red);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)">
-                        🗑 Delete Field
-                    </button>
-                </form>
+                <div></div>
 
                 <div style="display:flex;gap:10px">
                     <a href="{{ route('tenant.custom-fields.module', $module) }}" class="btn btn-secondary">Cancel</a>
@@ -283,6 +275,21 @@
         </div>
     </div>
 
+</div>
+
+<div style="margin-top:16px;padding:16px 18px;background:var(--bg-surface);border:1px solid rgba(255,82,87,.3);border-radius:var(--r-lg);display:flex;align-items:center;justify-content:space-between;gap:12px">
+    <div>
+        <div style="font-size:13px;font-weight:600;color:var(--red)">Danger Zone</div>
+        <span style="font-size:12px;color:var(--text-400)">Permanently delete this field. All saved data will be lost.</span>
+    </div>
+    <form method="POST" action="{{ route('tenant.custom-fields.destroy', $field->id) }}"
+          onsubmit="return confirm('Delete \'{{ $field->label }}\' permanently? All saved data will be lost.')">
+        @csrf @method('DELETE')
+        <button type="submit"
+                style="padding:8px 16px;border-radius:var(--r-sm);border:1.5px solid rgba(255,82,87,.3);background:var(--red-dim);color:var(--red);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)">
+            🗑 Delete Field
+        </button>
+    </form>
 </div>
 
 @endsection

@@ -253,23 +253,6 @@
                     </div>
                 </div>
 
-                {{-- Danger Zone --}}
-                <div class="df-sc" style="border-color:#F09595">
-                    <div class="df-sc-title" style="color:#A32D2D">Danger Zone</div>
-                    <div style="font-size:12px;color:var(--text-300);margin-bottom:12px;line-height:1.5">
-                        Deal delete karne ke baad permanently remove ho jayega.
-                    </div>
-                    <form method="POST" action="{{ route('tenant.deals.destroy', $deal->id) }}"
-                          onsubmit="return confirm('Delete deal \'{{ addslashes($deal->title) }}\'?')">
-                        @csrf @method('DELETE')
-                        <button type="submit" class="btn"
-                                style="width:100%;justify-content:center;background:#FCEBEB;border-color:#F09595;color:#A32D2D;font-size:12.5px">
-                            <i class="ti ti-trash" style="font-size:14px"></i>
-                            Delete Deal
-                        </button>
-                    </form>
-                </div>
-
                 {{-- Tips --}}
                 <div class="df-sc">
                     <div class="df-sc-title">Tips</div>
@@ -282,6 +265,22 @@
             </div>
         </div>
     </form>
+
+    <div class="df-sc" style="border-color:#F09595;margin-top:14px">
+        <div class="df-sc-title" style="color:#A32D2D">Danger Zone</div>
+        <div style="font-size:12px;color:var(--text-300);margin-bottom:12px;line-height:1.5">
+            Deal delete karne ke baad permanently remove ho jayega.
+        </div>
+        <form method="POST" action="{{ route('tenant.deals.destroy', $deal->id) }}"
+              onsubmit="return confirm('Delete deal \'{{ addslashes($deal->title) }}\'?')">
+            @csrf @method('DELETE')
+            <button type="submit" class="btn"
+                    style="width:100%;justify-content:center;background:#FCEBEB;border-color:#F09595;color:#A32D2D;font-size:12.5px">
+                <i class="ti ti-trash" style="font-size:14px"></i>
+                Delete Deal
+            </button>
+        </form>
+    </div>
 </div>
 
 {{-- Mark Lost Modal --}}

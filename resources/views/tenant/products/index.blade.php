@@ -11,7 +11,14 @@
 .prod-table tr:hover td { background:var(--bg-elevated); }
 .badge-active   { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11.5px; font-weight:600; background:var(--green-dim); color:var(--green); }
 .badge-inactive { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11.5px; font-weight:600; background:var(--bg-elevated); color:var(--text-400); }
+.badge-type-fg  { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11.5px; font-weight:600; background:var(--accent-dim); color:var(--accent); }
+.badge-type-rm  { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11.5px; font-weight:600; background:#EEEDFE; color:#534AB7; }
+.badge-low-stock { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11.5px; font-weight:600; background:var(--red-dim); color:var(--red); margin-left:6px; }
 .mono { font-family:var(--mono); }
+.status-tabs { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:16px; }
+.s-tab { padding:7px 14px; border-radius:var(--r-sm); font-size:12.5px; font-weight:600; text-decoration:none; color:var(--text-300); border:1.5px solid transparent; transition:all .15s; }
+.s-tab:hover { color:var(--text-100); background:var(--bg-elevated); }
+.s-tab.active { background:var(--accent-dim); color:var(--accent); border-color:rgba(var(--accent-rgb),.25); }
 @media(max-width:768px) {
     .prod-table { border:none; }
     .prod-table thead { display:none; }
@@ -47,7 +54,10 @@
         <div class="page-title">Products / Services</div>
         <div class="page-sub">Item catalog used for auto-filling invoices & quotations</div>
     </div>
-    <a href="{{ route('tenant.products.create') }}" class="btn btn-primary">+ Add Product</a>
+    <div style="display:flex;gap:8px">
+        <a href="{{ route('tenant.products.low-stock') }}" class="btn btn-secondary">Low Stock</a>
+        <a href="{{ route('tenant.products.create') }}" class="btn btn-primary">+ Add Product</a>
+    </div>
 </div>
 
 @if(session('success'))
@@ -56,13 +66,21 @@
 </div>
 @endif
 
+@php $currentType = request('type', ''); @endphp
+<div class="status-tabs">
+    <a href="{{ route('tenant.products.index', ['search'=>request('search')]) }}" class="s-tab {{ $currentType === '' ? 'active' : '' }}">All</a>
+    <a href="{{ route('tenant.products.index', ['type'=>'finished_good','search'=>request('search')]) }}" class="s-tab {{ $currentType === 'finished_good' ? 'active' : '' }}">Finished Goods</a>
+    <a href="{{ route('tenant.products.index', ['type'=>'raw_material','search'=>request('search')]) }}" class="s-tab {{ $currentType === 'raw_material' ? 'active' : '' }}">Raw Materials</a>
+</div>
+
 <form method="GET" style="margin-bottom:14px;display:flex;gap:8px">
+    @if($currentType) <input type="hidden" name="type" value="{{ $currentType }}"/> @endif
     <input type="text" name="search" value="{{ request('search') }}"
            placeholder="Search products..."
            style="padding:9px 13px;border:1.5px solid var(--border-default);border-radius:var(--r-sm);background:var(--bg-input);color:var(--text-100);font-size:13.5px;outline:none;width:280px"/>
     <button class="btn btn-secondary" type="submit">Search</button>
     @if(request('search'))
-    <a href="{{ route('tenant.products.index') }}" class="btn btn-secondary">Clear</a>
+    <a href="{{ route('tenant.products.index', $currentType ? ['type'=>$currentType] : []) }}" class="btn btn-secondary">Clear</a>
     @endif
 </form>
 
@@ -73,10 +91,12 @@
             <th>Code</th>
             <th>Name</th>
             <th>Description</th>
+            <th>Type</th>
             <th>HSN</th>
             <th>Rate (₹)</th>
             <th>GST %</th>
             <th>Unit</th>
+            <th>Stock</th>
             <th>Status</th>
             <th style="width:100px"></th>
         </tr>
@@ -89,10 +109,21 @@
             <td style="color:var(--text-300);font-size:12.5px;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" data-label="Description">
                 {{ $p->description ?: '—' }}
             </td>
+            <td data-label="Type">
+                @if($p->type === 'raw_material')
+                    <span class="badge-type-rm">Raw Material</span>
+                @else
+                    <span class="badge-type-fg">Finished Good</span>
+                @endif
+            </td>
             <td class="mono" style="font-size:12.5px" data-label="HSN">{{ $p->hsn ?: '—' }}</td>
             <td class="mono" data-label="Rate (₹)">₹{{ number_format($p->rate, 2) }}</td>
             <td class="mono" data-label="GST %">{{ $p->tax_percent }}%</td>
             <td data-label="Unit">{{ $p->unit ?: '—' }}</td>
+            <td class="mono" data-label="Stock">
+                {{ number_format($p->current_stock, 2) }}
+                @if($p->isLowStock())<span class="badge-low-stock">Low</span>@endif
+            </td>
             <td data-label="Status">
                 @if($p->is_active)
                     <span class="badge-active">Active</span>
@@ -114,7 +145,7 @@
         </tr>
         @empty
         <tr>
-            <td colspan="8" style="text-align:center;padding:40px;color:var(--text-400)">
+            <td colspan="10" style="text-align:center;padding:40px;color:var(--text-400)">
                 No products yet. <a href="{{ route('tenant.products.create') }}" style="color:var(--accent)">Add your first product</a>.
             </td>
         </tr>
@@ -132,11 +163,18 @@
             <div class="pr-name">{{ $p->name }}</div>
             @if($p->product_code)<div class="pr-code">{{ $p->product_code }}</div>@endif
         </div>
-        @if($p->is_active)
-            <span class="badge-active">Active</span>
-        @else
-            <span class="badge-inactive">Inactive</span>
-        @endif
+        <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+            @if($p->is_active)
+                <span class="badge-active">Active</span>
+            @else
+                <span class="badge-inactive">Inactive</span>
+            @endif
+            @if($p->type === 'raw_material')
+                <span class="badge-type-rm">Raw Material</span>
+            @else
+                <span class="badge-type-fg">Finished Good</span>
+            @endif
+        </div>
     </div>
     @if($p->description)
     <div class="pr-desc">{{ $p->description }}</div>
@@ -153,6 +191,10 @@
         <div class="pr-info-item">
             <span class="pr-info-lbl">Unit</span>
             <span class="pr-info-val">{{ $p->unit ?: '—' }}</span>
+        </div>
+        <div class="pr-info-item">
+            <span class="pr-info-lbl">Stock</span>
+            <span class="pr-info-val">{{ number_format($p->current_stock, 2) }}{{ $p->isLowStock() ? ' ⚠' : '' }}</span>
         </div>
         @if($p->hsn)
         <div class="pr-info-item">

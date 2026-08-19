@@ -11,6 +11,7 @@ use App\Models\Quotation;
 use App\Services\EmailService;
 use App\Services\InvoicePdfTemplateRenderer;
 use App\Services\NotificationService;
+use App\Services\StockService;
 use App\Services\WebhookService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
@@ -108,6 +109,7 @@ class InvoiceController extends Controller
             'date'        => ['required', 'date'],
             'due_date'    => ['required', 'date', 'after_or_equal:date'],
             'items'       => ['required', 'array', 'min:1'],
+            'items.*.product_id'  => ['nullable', 'integer', 'exists:products,id'],
             'items.*.description' => ['required', 'string'],
             'items.*.quantity'    => ['required', 'numeric', 'min:0.01'],
             'items.*.rate'        => ['required', 'numeric', 'min:0'],
@@ -138,6 +140,9 @@ class InvoiceController extends Controller
             'paid_amount'  => 0,
             'created_by'   => auth()->id(),
         ]));
+
+        // Sale reduces finished-good stock for any item linked to a product.
+        StockService::applyInvoiceItems($items, -1);
 
         WebhookService::fire('invoice.created', $invoice->tenant_id, [
             'id'           => $invoice->id,
@@ -205,6 +210,7 @@ class InvoiceController extends Controller
             'date'        => ['required', 'date'],
             'due_date'    => ['required', 'date', 'after_or_equal:date'],
             'items'       => ['required', 'array', 'min:1'],
+            'items.*.product_id'  => ['nullable', 'integer', 'exists:products,id'],
             'items.*.description' => ['required', 'string'],
             'items.*.quantity'    => ['required', 'numeric', 'min:0.01'],
             'items.*.rate'        => ['required', 'numeric', 'min:0'],
@@ -221,6 +227,10 @@ class InvoiceController extends Controller
             $request->tax_percent ?? $invoice->tax_percent
         );
 
+        // Undo the old item quantities' stock effect, then apply the new
+        // ones — a correct net delta even if items/quantities changed.
+        StockService::applyInvoiceItems($invoice->items ?? [], +1);
+
         $invoice->update(array_merge($totals, [
             'contact_id' => $request->contact_id,
             'date'       => $request->date,
@@ -229,6 +239,8 @@ class InvoiceController extends Controller
             'notes'      => $request->notes,
             'terms'      => $request->terms,
         ]));
+
+        StockService::applyInvoiceItems($items, -1);
 
         return redirect()
             ->route('tenant.invoices.show', $invoice->id)
@@ -243,6 +255,10 @@ class InvoiceController extends Controller
         if ($invoice->status === 'paid') {
             return back()->with('error', 'Paid invoice cannot be deleted.');
         }
+
+        // Restore stock — only reachable for draft/sent/partial invoices
+        // since paid invoices already block deletion above.
+        StockService::applyInvoiceItems($invoice->items ?? [], +1);
 
         $number = $invoice->number;
         $invoice->delete();

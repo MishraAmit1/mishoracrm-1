@@ -369,12 +369,14 @@ window.fillRowFromProduct = function(i, p) {
     row.querySelector(`[name="items[${i}][description]"]`).value = p.description || p.name;
     row.querySelector(`[name="items[${i}][rate]"]`).value        = p.rate;
     row.querySelector(`[name="items[${i}][tax_percent]"]`).value = p.tax_percent;
+    const pidInput = row.querySelector(`[name="items[${i}][product_id]"]`);
+    if (pidInput) pidInput.value = p.id;
     calcRow(i);
     calcTotals();
 };
 
 // ── Add row ───────────────────────────────────────────────────────
-function addRow(desc = '', qty = 1, rate = '', taxPct = '') {
+function addRow(desc = '', qty = 1, rate = '', taxPct = '', productId = '') {
     const tbody = document.getElementById('itemsBody');
     const i     = rowCount++;
     const tr    = document.createElement('tr');
@@ -386,6 +388,7 @@ function addRow(desc = '', qty = 1, rate = '', taxPct = '') {
     tr.innerHTML = `
         <td data-label="Description">
             <div id="ps_container_${i}"></div>
+            <input type="hidden" name="items[${i}][product_id]" value="${productId}"/>
             <input type="text"
                    name="items[${i}][description]"
                    class="item-input"
@@ -512,7 +515,7 @@ document.querySelector('[name="due_date"]')?.addEventListener('change', function
     // Load prefill items
     const items = PREFILL_ITEMS;
     if (items && items.length) {
-        items.forEach(it => addRow(it.description || '', it.quantity || 1, it.rate || '', it.tax_percent ?? ''));
+        items.forEach(it => addRow(it.description || '', it.quantity || 1, it.rate || '', it.tax_percent ?? '', it.product_id || ''));
     } else {
         addRow();
     }

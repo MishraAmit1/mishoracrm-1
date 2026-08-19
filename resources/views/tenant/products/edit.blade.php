@@ -18,6 +18,11 @@
 
 @section('content')
 
+@php
+    $units = ['Kg','Gram','Quintal','Litre','Millilitre','Metre','Piece','Box','Bag','Dozen','Ton','Set','Roll'];
+    $oldUnit = old('unit', $product->unit);
+@endphp
+
 <div class="page-head">
     <div>
         <div style="font-size:12px;color:var(--text-300);margin-bottom:4px">
@@ -95,8 +100,46 @@
             </div>
             <div class="field">
                 <label class="fl">Unit</label>
-                <input type="text" name="unit" class="fi"
-                       value="{{ old('unit', $product->unit) }}" placeholder="e.g. pcs, hrs, kg"/>
+                <select class="fi" id="unitSelect" onchange="onUnitChange()">
+                    <option value="">— Select unit —</option>
+                    @foreach($units as $u)
+                    <option value="{{ $u }}" {{ $oldUnit === $u ? 'selected' : '' }}>{{ $u }}</option>
+                    @endforeach
+                    <option value="__other__" {{ ($oldUnit && !in_array($oldUnit, $units)) ? 'selected' : '' }}>Other (custom)</option>
+                </select>
+                <input type="text" id="unitOther" class="fi" placeholder="Enter custom unit"
+                       value="{{ ($oldUnit && !in_array($oldUnit, $units)) ? $oldUnit : '' }}"
+                       style="{{ ($oldUnit && !in_array($oldUnit, $units)) ? '' : 'display:none' }};margin-top:6px"/>
+                <input type="hidden" name="unit" id="unitHidden" value="{{ $oldUnit }}">
+            </div>
+        </div>
+
+        <div class="fg2">
+            <div class="field">
+                <label class="fl">Type</label>
+                <select name="type" class="fi" id="typeSelect">
+                    <option value="finished_good" {{ old('type', $product->type) === 'finished_good' ? 'selected' : '' }}>Finished Good</option>
+                    <option value="raw_material" {{ old('type', $product->type) === 'raw_material' ? 'selected' : '' }}>Raw Material</option>
+                </select>
+                <span style="font-size:11.5px;color:var(--text-400)">Finished goods are sold on invoices; raw materials are used in a Bill of Materials</span>
+            </div>
+            <div class="field">
+                <label class="fl">Current Stock</label>
+                <input type="number" name="current_stock" class="fi" min="0" step="0.01"
+                       value="{{ old('current_stock', $product->current_stock) }}" placeholder="0"/>
+            </div>
+        </div>
+
+        <div class="fg2">
+            <div class="field">
+                <label class="fl">Reorder Level</label>
+                <input type="number" name="reorder_level" class="fi" min="0" step="0.01"
+                       value="{{ old('reorder_level', $product->reorder_level) }}" placeholder="Alert when stock falls to/below this"/>
+            </div>
+            <div class="field">
+                <label class="fl">Reorder Quantity</label>
+                <input type="number" name="reorder_quantity" class="fi" min="0" step="0.01"
+                       value="{{ old('reorder_quantity', $product->reorder_quantity) }}" placeholder="How many units to replenish"/>
             </div>
         </div>
 
@@ -111,20 +154,102 @@
 
     </div>
     <div class="pf-foot">
-        <form method="POST" action="{{ route('tenant.products.destroy', $product->id) }}"
-              onsubmit="return confirm('Delete this product?')" style="display:inline">
-            @csrf @method('DELETE')
-            <button type="submit"
-                    style="padding:8px 14px;border-radius:var(--r-sm);border:1.5px solid rgba(255,82,87,.3);background:var(--red-dim);color:var(--red);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)">
-                Delete
-            </button>
-        </form>
+        <div></div>
         <div style="display:flex;gap:8px">
             <a href="{{ route('tenant.products.index') }}" class="btn btn-secondary">Cancel</a>
             <button type="submit" class="btn btn-primary">Save Changes</button>
         </div>
     </div>
 </div>
+
+@if($product->type === 'finished_good')
+<div class="pf-card" style="margin-top:20px">
+    <div class="pf-body">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+            <label class="fl" style="font-size:13px">Bill of Materials</label>
+        </div>
+        <span style="font-size:11.5px;color:var(--text-400);margin-bottom:10px;display:block">
+            Raw materials consumed per 1 unit of {{ $product->name }} produced
+        </span>
+
+        <div style="overflow-x:auto">
+            <table style="width:100%;border-collapse:collapse;font-size:13px" id="bomTable">
+                <thead>
+                    <tr>
+                        <th style="text-align:left;padding:6px 8px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--text-400);border-bottom:1px solid var(--border-subtle)">Raw Material</th>
+                        <th style="text-align:left;padding:6px 8px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--text-400);border-bottom:1px solid var(--border-subtle);width:160px">Qty per Unit</th>
+                        <th style="width:40px;border-bottom:1px solid var(--border-subtle)"></th>
+                    </tr>
+                </thead>
+                <tbody id="bomBody"></tbody>
+            </table>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" style="margin-top:10px" onclick="addBomRow()">+ Add Material</button>
+    </div>
+</div>
+@endif
+
 </form>
+
+<div class="pf-card" style="margin-top:20px;border-color:rgba(255,82,87,.3)">
+    <div class="pf-body" style="flex-direction:row;align-items:center;justify-content:space-between">
+        <div>
+            <div class="fl" style="color:var(--red)">Danger Zone</div>
+            <span style="font-size:12px;color:var(--text-400)">Permanently delete this product. This cannot be undone.</span>
+        </div>
+        <form method="POST" action="{{ route('tenant.products.destroy', $product->id) }}"
+              onsubmit="return confirm('Delete this product?')">
+            @csrf @method('DELETE')
+            <button type="submit"
+                    style="padding:8px 14px;border-radius:var(--r-sm);border:1.5px solid rgba(255,82,87,.3);background:var(--red-dim);color:var(--red);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)">
+                Delete Product
+            </button>
+        </form>
+    </div>
+</div>
+
+@if($product->type === 'finished_good')
+<script>
+(function(){
+const RAW_MATERIALS = @json($rawMaterials);
+const EXISTING_BOM  = @json($bomItems->map(fn($b) => ['material_id' => $b->material_id, 'quantity_per_unit' => $b->quantity_per_unit])->values());
+let bomIndex = 0;
+
+function materialOptions(selectedId){
+    let opts = '<option value="">— Select material —</option>';
+    RAW_MATERIALS.forEach(m => {
+        opts += `<option value="${m.id}" ${String(selectedId)===String(m.id)?'selected':''}>${m.name}${m.unit ? ' ('+m.unit+')' : ''}</option>`;
+    });
+    return opts;
+}
+
+window.addBomRow = function(materialId = '', qty = ''){
+    const i = bomIndex++;
+    const tbody = document.getElementById('bomBody');
+    const tr = document.createElement('tr');
+    tr.id = 'bom_row_' + i;
+    tr.innerHTML = `
+        <td style="padding:6px 8px;border-bottom:1px solid var(--border-subtle)">
+            <select name="materials[${i}][material_id]" class="fi" style="padding:7px 10px">${materialOptions(materialId)}</select>
+        </td>
+        <td style="padding:6px 8px;border-bottom:1px solid var(--border-subtle)">
+            <input type="number" name="materials[${i}][quantity_per_unit]" class="fi" style="padding:7px 10px" min="0.0001" step="0.0001" value="${qty}" placeholder="0"/>
+        </td>
+        <td style="padding:6px 8px;border-bottom:1px solid var(--border-subtle);text-align:center">
+            <button type="button" onclick="document.getElementById('bom_row_${i}').remove()"
+                    style="background:none;border:none;color:var(--red);cursor:pointer;font-size:15px" title="Remove">✕</button>
+        </td>
+    `;
+    tbody.appendChild(tr);
+};
+
+if(EXISTING_BOM.length){
+    EXISTING_BOM.forEach(row => addBomRow(row.material_id, row.quantity_per_unit));
+} else {
+    addBomRow();
+}
+})();
+</script>
+@endif
 
 @endsection

@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Web\Tenant;
 
 use App\Http\Controllers\Controller;
+use App\Models\BillOfMaterialItem;
 use App\Models\Product;
+use App\Services\StockService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class ProductController extends Controller
@@ -32,6 +35,10 @@ class ProductController extends Controller
             $query->where('name', 'like', "%{$request->search}%");
         }
 
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+
         $products = $query->paginate(20)->withQueryString();
 
         return view('tenant.products.index', compact('products'));
@@ -47,18 +54,23 @@ class ProductController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'name'         => ['required', 'string', 'max:255'],
-            'product_code' => ['nullable', 'string', 'max:50'],
-            'description'  => ['nullable', 'string'],
-            'rate'         => ['required', 'numeric', 'min:0'],
-            'tax_percent'  => ['required', 'numeric', 'min:0', 'max:100'],
-            'hsn'          => ['nullable', 'string', 'max:50'],
-            'unit'         => ['nullable', 'string', 'max:50'],
-            'is_active'    => ['nullable', 'boolean'],
+            'name'              => ['required', 'string', 'max:255'],
+            'product_code'      => ['nullable', 'string', 'max:50'],
+            'description'       => ['nullable', 'string'],
+            'rate'              => ['required', 'numeric', 'min:0'],
+            'tax_percent'       => ['required', 'numeric', 'min:0', 'max:100'],
+            'hsn'               => ['nullable', 'string', 'max:50'],
+            'unit'              => ['nullable', 'string', 'max:50'],
+            'is_active'         => ['nullable', 'boolean'],
+            'type'              => ['nullable', 'in:finished_good,raw_material'],
+            'current_stock'     => ['nullable', 'numeric', 'min:0'],
+            'reorder_level'     => ['nullable', 'numeric', 'min:0'],
+            'reorder_quantity'  => ['nullable', 'numeric', 'min:0'],
         ]);
 
         $data['tenant_id'] = $this->tenantId();
         $data['is_active'] = $request->boolean('is_active', true);
+        $data['type']      = $data['type'] ?? 'finished_good';
 
         Product::create($data);
 
@@ -71,7 +83,20 @@ class ProductController extends Controller
     {
         $product = $this->findProduct($id);
 
-        return view('tenant.products.edit', compact('product'));
+        $rawMaterials = [];
+        $bomItems     = collect();
+
+        if ($product->type === 'finished_good') {
+            $rawMaterials = Product::where('tenant_id', $this->tenantId())
+                ->rawMaterial()
+                ->active()
+                ->orderBy('name')
+                ->get(['id', 'name', 'product_code', 'unit']);
+
+            $bomItems = $product->billOfMaterials()->with('material')->get();
+        }
+
+        return view('tenant.products.edit', compact('product', 'rawMaterials', 'bomItems'));
     }
 
     // ── Update ────────────────────────────────────────────────────
@@ -80,18 +105,59 @@ class ProductController extends Controller
         $product = $this->findProduct($id);
 
         $data = $request->validate([
-            'name'         => ['required', 'string', 'max:255'],
-            'product_code' => ['nullable', 'string', 'max:50'],
-            'description'  => ['nullable', 'string'],
-            'rate'         => ['required', 'numeric', 'min:0'],
-            'tax_percent'  => ['required', 'numeric', 'min:0', 'max:100'],
-            'hsn'          => ['nullable', 'string', 'max:50'],
-            'unit'         => ['nullable', 'string', 'max:50'],
-            'is_active'    => ['nullable', 'boolean'],
+            'name'              => ['required', 'string', 'max:255'],
+            'product_code'      => ['nullable', 'string', 'max:50'],
+            'description'       => ['nullable', 'string'],
+            'rate'              => ['required', 'numeric', 'min:0'],
+            'tax_percent'       => ['required', 'numeric', 'min:0', 'max:100'],
+            'hsn'               => ['nullable', 'string', 'max:50'],
+            'unit'              => ['nullable', 'string', 'max:50'],
+            'is_active'         => ['nullable', 'boolean'],
+            'type'              => ['nullable', 'in:finished_good,raw_material'],
+            'current_stock'     => ['nullable', 'numeric', 'min:0'],
+            'reorder_level'     => ['nullable', 'numeric', 'min:0'],
+            'reorder_quantity'  => ['nullable', 'numeric', 'min:0'],
+            'materials'                       => ['nullable', 'array'],
+            'materials.*.material_id'         => ['nullable', 'integer', 'exists:products,id'],
+            'materials.*.quantity_per_unit'   => ['nullable', 'numeric', 'min:0.0001'],
         ]);
 
+        $materials = $data['materials'] ?? null;
+        unset($data['materials']);
+
         $data['is_active'] = $request->boolean('is_active', true);
-        $product->update($data);
+        $data['type']      = $data['type'] ?? 'finished_good';
+
+        DB::transaction(function () use ($product, $data, $materials) {
+            $product->update($data);
+
+            if ($product->type === 'finished_good' && is_array($materials)) {
+                $keepIds = [];
+
+                foreach ($materials as $row) {
+                    if (empty($row['material_id']) || empty($row['quantity_per_unit'])) {
+                        continue;
+                    }
+
+                    $bomRow = BillOfMaterialItem::updateOrCreate(
+                        [
+                            'tenant_id'   => $product->tenant_id,
+                            'product_id'  => $product->id,
+                            'material_id' => $row['material_id'],
+                        ],
+                        [
+                            'quantity_per_unit' => $row['quantity_per_unit'],
+                        ]
+                    );
+
+                    $keepIds[] = $bomRow->id;
+                }
+
+                BillOfMaterialItem::where('product_id', $product->id)
+                    ->whereNotIn('id', $keepIds)
+                    ->delete();
+            }
+        });
 
         return redirect()->route('tenant.products.index')
             ->with('success', 'Product updated successfully.');
@@ -104,6 +170,18 @@ class ProductController extends Controller
 
         return redirect()->route('tenant.products.index')
             ->with('success', 'Product deleted.');
+    }
+
+    // ── Low Stock ─────────────────────────────────────────────────
+    public function lowStock(): View
+    {
+        $products = StockService::lowStockProducts($this->tenantId());
+
+        $suggestions = $products
+            ->filter(fn ($p) => $p->type === 'finished_good')
+            ->mapWithKeys(fn ($p) => [$p->id => StockService::suggestedMaterialsFor($p)]);
+
+        return view('tenant.products.low-stock', compact('products', 'suggestions'));
     }
 
     // ── JSON search (used by invoice/quotation item rows) ─────────

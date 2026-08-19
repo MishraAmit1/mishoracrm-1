@@ -270,6 +270,13 @@ if(oldItems && oldItems.length){
 } else {
     addItemRow();
 }
+@elseif(!empty($prefillItems))
+const prefillItems = @json($prefillItems);
+if(prefillItems && prefillItems.length){
+    prefillItems.forEach(item => addItemRow(item.name||'', item.description||'', item.quantity||1, item.reason||'', item.material_id||''));
+} else {
+    addItemRow();
+}
 @else
 addItemRow();
 @endif

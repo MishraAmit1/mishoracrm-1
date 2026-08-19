@@ -204,6 +204,42 @@ return [
             'message'  => 'Invoice {{number}} is overdue — ₹{{amount}} pending',
         ],
 
+        // ── Products ──────────────────────────────────────────────
+        'product.low_stock' => [
+            'label'    => 'Low Stock Alert',
+            'icon'     => 'alert-triangle',
+            'color'    => 'amber',
+            'group'    => 'Products',
+            'channels' => ['in_app'],
+            'message'  => '{{name}} is low on stock ({{stock}} remaining)',
+        ],
+
+        // ── Purchase ──────────────────────────────────────────────
+        'purchase_request.submitted' => [
+            'label'    => 'New Purchase Request',
+            'icon'     => 'file-text',
+            'color'    => 'accent',
+            'group'    => 'Purchase',
+            'channels' => ['in_app'],
+            'message'  => 'Purchase request {{number}} from {{requester}} needs your approval',
+        ],
+        'purchase_request.approved' => [
+            'label'    => 'Purchase Request Approved',
+            'icon'     => 'check-circle',
+            'color'    => 'green',
+            'group'    => 'Purchase',
+            'channels' => ['in_app'],
+            'message'  => 'Your purchase request {{number}} was approved',
+        ],
+        'purchase_request.rejected' => [
+            'label'    => 'Purchase Request Rejected',
+            'icon'     => 'x-circle',
+            'color'    => 'red',
+            'group'    => 'Purchase',
+            'channels' => ['in_app'],
+            'message'  => 'Your purchase request {{number}} was rejected',
+        ],
+
         // ── System ────────────────────────────────────────────────
         'system.announcement' => [
             'label'    => 'Announcement',

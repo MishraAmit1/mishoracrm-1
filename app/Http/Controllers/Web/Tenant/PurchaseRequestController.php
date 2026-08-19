@@ -9,7 +9,9 @@ use App\Models\Department;
 use App\Models\Product;
 use App\Models\PurchaseRequest;
 use App\Models\User;
+use App\Services\NotificationService;
 use App\Services\PurchaseRequestService;
+use App\Services\StockService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -69,7 +71,10 @@ class PurchaseRequestController extends Controller
     }
 
     // ── Create ────────────────────────────────────────────────────
-    public function create(): View
+    // Supports ?suggest_from=<product_id> — coming from the Low Stock
+    // page, this pre-fills the item rows with the BOM-explosion
+    // suggestion for that finished good (StockService).
+    public function create(Request $request): View
     {
         $this->authorize('create', PurchaseRequest::class);
 
@@ -77,7 +82,19 @@ class PurchaseRequestController extends Controller
         $products    = Product::where('tenant_id', auth()->user()->tenant_id)->active()->orderBy('name')->get(['id', 'product_code', 'name', 'description', 'unit']);
         $number      = PurchaseRequest::generateNumber();
 
-        return view('tenant.purchase-requests.create', compact('departments', 'products', 'number'));
+        $prefillItems = null;
+
+        if ($request->filled('suggest_from')) {
+            $sourceProduct = Product::where('id', $request->suggest_from)
+                ->where('tenant_id', auth()->user()->tenant_id)
+                ->first();
+
+            if ($sourceProduct) {
+                $prefillItems = StockService::suggestedMaterialsFor($sourceProduct);
+            }
+        }
+
+        return view('tenant.purchase-requests.create', compact('departments', 'products', 'number', 'prefillItems'));
     }
 
     // ── Store ─────────────────────────────────────────────────────
@@ -87,9 +104,48 @@ class PurchaseRequestController extends Controller
 
         $purchaseRequest = PurchaseRequestService::store($request->validated(), auth()->user()->tenant_id, auth()->id());
 
+        $this->notifyApprovers($purchaseRequest);
+
         return redirect()
             ->route('tenant.purchase-requests.show', $purchaseRequest->id)
             ->with('success', "Purchase Request {$purchaseRequest->number} created successfully.");
+    }
+
+    // ── Notify everyone who can approve requests that a new one is waiting ──
+    private function notifyApprovers(PurchaseRequest $purchaseRequest): void
+    {
+        $approvers = User::withoutGlobalScopes()
+            ->where('tenant_id', $purchaseRequest->tenant_id)
+            ->where('is_active', true)
+            ->where('id', '!=', auth()->id())
+            ->get()
+            ->filter(fn (User $user) => $user->user_type === 'tenant_admin' || $user->can('purchase_requests.approve'));
+
+        app(NotificationService::class)->sendToMany(
+            'purchase_request.submitted',
+            $approvers->all(),
+            ['number' => $purchaseRequest->number, 'requester' => auth()->user()->name],
+            auth()->user(),
+            route('tenant.purchase-requests.show', $purchaseRequest->id),
+            $purchaseRequest
+        );
+    }
+
+    // ── Notify the original requester of the approve/reject outcome ─────
+    private function notifyRequester(PurchaseRequest $purchaseRequest, string $type): void
+    {
+        if ($purchaseRequest->requested_by === auth()->id() || !$purchaseRequest->requestedBy) {
+            return;
+        }
+
+        app(NotificationService::class)->send(
+            $type,
+            $purchaseRequest->requestedBy,
+            ['number' => $purchaseRequest->number],
+            auth()->user(),
+            route('tenant.purchase-requests.show', $purchaseRequest->id),
+            $purchaseRequest
+        );
     }
 
     // ── Show ──────────────────────────────────────────────────────
@@ -148,6 +204,8 @@ class PurchaseRequestController extends Controller
 
         $purchaseOrder = PurchaseRequestService::approve($purchaseRequest, auth()->id());
 
+        $this->notifyRequester($purchaseRequest, 'purchase_request.approved');
+
         $message = $purchaseOrder
             ? "Purchase Request approved. Draft Purchase Order {$purchaseOrder->number} created."
             : 'Purchase Request approved.';
@@ -168,6 +226,8 @@ class PurchaseRequestController extends Controller
         ]);
 
         PurchaseRequestService::reject($purchaseRequest, $request->rejection_reason);
+
+        $this->notifyRequester($purchaseRequest, 'purchase_request.rejected');
 
         return redirect()
             ->route('tenant.purchase-requests.show', $purchaseRequest->id)
