@@ -132,6 +132,7 @@
                 @endif
             </td>
             <td style="display:flex;gap:6px">
+                <a href="{{ route('tenant.products.batches', $p->id) }}" class="btn btn-secondary btn-sm">Batches</a>
                 <a href="{{ route('tenant.products.edit', $p->id) }}" class="btn btn-secondary btn-sm">Edit</a>
                 <form method="POST" action="{{ route('tenant.products.destroy', $p->id) }}"
                       onsubmit="return confirm('Delete this product?')">

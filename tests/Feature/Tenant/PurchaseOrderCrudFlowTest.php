@@ -9,7 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\SetsUpTenant;
 use Tests\TestCase;
 
-class PurchaseOrderCrudTest extends TestCase
+class PurchaseOrderCrudFlowTest extends TestCase
 {
     use RefreshDatabase, SetsUpTenant;
 

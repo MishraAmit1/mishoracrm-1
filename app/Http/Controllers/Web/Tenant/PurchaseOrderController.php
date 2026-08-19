@@ -130,9 +130,13 @@ class PurchaseOrderController extends Controller
     {
         $purchaseOrder = $this->findPurchaseOrder($id);
         $this->authorize('view', $purchaseOrder);
-        $purchaseOrder->load(['vendor', 'purchaseRequest', 'createdBy']);
+        $purchaseOrder->load(['vendor', 'purchaseRequest', 'createdBy', 'vendorQuotes.vendor']);
 
-        return view('tenant.purchase-orders.show', compact('purchaseOrder'));
+        $vendors = ($purchaseOrder->status === 'draft' && !$purchaseOrder->vendor_id)
+            ? Vendor::where('tenant_id', auth()->user()->tenant_id)->orderBy('name')->get(['id', 'name', 'company'])
+            : collect();
+
+        return view('tenant.purchase-orders.show', compact('purchaseOrder', 'vendors'));
     }
 
     // ── Edit ──────────────────────────────────────────────────────
@@ -207,11 +211,16 @@ class PurchaseOrderController extends Controller
         $purchaseOrder = $this->findPurchaseOrder($id);
         $this->authorize('receive', $purchaseOrder);
 
-        $receivedByRowIndex = collect($request->validated()['items'])
-            ->map(fn ($row) => $row['received_quantity'])
-            ->toArray();
+        $items = collect($request->validated()['items']);
 
-        PurchaseOrderService::receive($purchaseOrder, $receivedByRowIndex);
+        $receivedByRowIndex = $items->map(fn ($row) => $row['received_quantity'])->toArray();
+
+        $batchInfoByRowIndex = $items->map(fn ($row) => [
+            'batch_number' => $row['batch_number'] ?? null,
+            'expiry_date'  => $row['expiry_date'] ?? null,
+        ])->toArray();
+
+        PurchaseOrderService::receive($purchaseOrder, $receivedByRowIndex, $batchInfoByRowIndex);
 
         return redirect()
             ->route('tenant.purchase-orders.show', $purchaseOrder->id)

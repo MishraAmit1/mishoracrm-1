@@ -184,6 +184,19 @@ class ProductController extends Controller
         return view('tenant.products.low-stock', compact('products', 'suggestions'));
     }
 
+    // ── Batches — traceability list for one product ─────────────────
+    public function batches(int|string $id): View
+    {
+        $product = $this->findProduct($id);
+
+        $batches = $product->batches()
+            ->orderByRaw('expiry_date IS NULL, expiry_date ASC')
+            ->orderByDesc('received_at')
+            ->get();
+
+        return view('tenant.products.batches', compact('product', 'batches'));
+    }
+
     // ── JSON search (used by invoice/quotation item rows) ─────────
     public function search(Request $request): JsonResponse
     {

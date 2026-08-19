@@ -213,6 +213,14 @@ return [
             'channels' => ['in_app'],
             'message'  => '{{name}} is low on stock ({{stock}} remaining)',
         ],
+        'product.batch_expiring' => [
+            'label'    => 'Batch Expiring Soon',
+            'icon'     => 'alert-triangle',
+            'color'    => 'amber',
+            'group'    => 'Products',
+            'channels' => ['in_app'],
+            'message'  => 'Batch {{batch_number}} of {{name}} ({{quantity}} left) expires on {{expiry_date}}',
+        ],
 
         // ── Purchase ──────────────────────────────────────────────
         'purchase_request.submitted' => [

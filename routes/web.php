@@ -416,6 +416,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
                 Route::post('/', 'store')->name('store');
                 Route::get('/search', 'search')->name('search');
                 Route::get('/low-stock', 'lowStock')->name('low-stock');
+                Route::get('/{id}/batches', 'batches')->name('batches');
                 Route::get('/{id}/edit', 'edit')->name('edit');
                 Route::put('/{id}', 'update')->name('update');
                 Route::delete('/{id}', 'destroy')->name('destroy');
@@ -465,6 +466,28 @@ Route::middleware(['tenant', 'auth', 'subscription'])
                 Route::post('/{id}/receive', 'receive')->name('receive');
                 Route::get('/{id}/pdf', 'pdf')->name('pdf');
                 Route::post('/{id}/send', 'send')->name('send');
+            });
+
+            Route::prefix('/{id}/vendor-quotes')->name('vendor-quotes.')->controller(Tenant\VendorQuoteController::class)->group(function () {
+                Route::post('/', 'store')->name('store');
+                Route::post('/{quoteId}/select', 'select')->name('select');
+                Route::delete('/{quoteId}', 'destroy')->name('destroy');
+            });
+        });
+
+        // Work Orders routes
+        Route::prefix('/work-orders')->name('work-orders.')->group(function () {
+            Route::controller(Tenant\WorkOrderController::class)->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::get('/create', 'create')->name('create');
+                Route::post('/', 'store')->name('store');
+                Route::get('/{id}', 'show')->name('show');
+                Route::get('/{id}/edit', 'edit')->name('edit');
+                Route::put('/{id}', 'update')->name('update');
+                Route::delete('/{id}', 'destroy')->name('destroy');
+                Route::post('/{id}/start', 'start')->name('start');
+                Route::post('/{id}/complete', 'complete')->name('complete');
+                Route::post('/{id}/cancel', 'cancel')->name('cancel');
             });
         });
 

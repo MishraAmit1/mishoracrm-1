@@ -9,7 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\SetsUpTenant;
 use Tests\TestCase;
 
-class LowStockSuggestionTest extends TestCase
+class ProductLowStockSuggestionTest extends TestCase
 {
     use RefreshDatabase, SetsUpTenant;
 

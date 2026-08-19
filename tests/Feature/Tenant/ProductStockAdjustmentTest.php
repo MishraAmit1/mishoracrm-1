@@ -10,7 +10,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\SetsUpTenant;
 use Tests\TestCase;
 
-class ProductStockTest extends TestCase
+class ProductStockAdjustmentTest extends TestCase
 {
     use RefreshDatabase, SetsUpTenant;
 

@@ -555,6 +555,106 @@ textarea.form-control { height: auto; padding: 12px 14px; resize: vertical; min-
 select.form-control { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg fill='none' stroke='%235c6380' stroke-width='2' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 14px; padding-right: 36px; }
 select.form-control option { background: var(--bg-elevated); color: var(--text-100); }
 
+/* ── App-wide premium polish for form inputs/selects ──────────────
+   Many pages define their own local input classes (.qf-input, .pf-input,
+   .field-input, .item-input) in per-page <style> blocks that load after
+   this file, so their background/border/padding stay untouched here.
+   These rules only add shadow/radius/transition/focus-ring consistency,
+   using !important so the shared depth + focus ring survive those later,
+   equal-specificity page styles without having to edit every view. */
+.form-control, .qf-input, .qf-sel, .pf-input, .field-input, .item-input, .select {
+  border-radius: 9px !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.03) !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease !important;
+}
+[data-theme="light"] .form-control, [data-theme="light"] .qf-input, [data-theme="light"] .qf-sel,
+[data-theme="light"] .pf-input, [data-theme="light"] .field-input, [data-theme="light"] .item-input,
+[data-theme="light"] .select {
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
+}
+.form-control:focus, .qf-input:focus, .qf-sel:focus, .pf-input:focus,
+.field-input:focus, .item-input:focus, .select:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px var(--accent-glow) !important;
+}
+.form-control:hover:not(:focus):not(:disabled), .qf-input:hover:not(:focus):not(:disabled),
+.pf-input:hover:not(:focus):not(:disabled), .field-input:hover:not(:focus):not(:disabled),
+.item-input:hover:not(:focus):not(:disabled), .select:hover:not(:focus):not(:disabled) {
+  border-color: var(--border-strong) !important;
+}
+
+/* ── Select2 theme — match the CRM's dark/light tokens instead of the
+   library's default white/Bootstrap look ─────────────────────────── */
+.select2-container--default .select2-selection--single {
+  height: 40px !important;
+  background: var(--bg-input) !important;
+  border: 1.5px solid var(--border-default) !important;
+  border-radius: 9px !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+[data-theme="light"] .select2-container--default .select2-selection--single {
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+  line-height: 37px !important;
+  padding-left: 14px !important;
+  padding-right: 34px !important;
+  color: var(--text-100) !important;
+  font-family: var(--font); font-size: 13.5px;
+}
+.select2-container--default .select2-selection--single .select2-selection__placeholder { color: var(--text-400); }
+.select2-container--default .select2-selection--single .select2-selection__arrow { height: 38px !important; right: 10px !important; }
+.select2-container--default .select2-selection--single .select2-selection__arrow b {
+  border-color: var(--text-400) transparent transparent transparent !important;
+}
+.select2-container--open .select2-selection--single .select2-selection__arrow b {
+  border-color: transparent transparent var(--text-400) transparent !important;
+}
+.select2-container--default.select2-container--open .select2-selection--single {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px var(--accent-glow) !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__clear { color: var(--text-400); margin-right: 6px; }
+.select2-dropdown {
+  background: var(--bg-surface) !important;
+  border: 1.5px solid var(--border-default) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28) !important;
+  overflow: hidden;
+}
+.select2-search--dropdown { padding: 8px !important; background: var(--bg-surface); }
+.select2-search--dropdown .select2-search__field {
+  background: var(--bg-input) !important;
+  border: 1.5px solid var(--border-default) !important;
+  border-radius: 7px !important;
+  color: var(--text-100) !important;
+  padding: 7px 10px !important;
+  font-family: var(--font); font-size: 13px;
+  outline: none;
+}
+.select2-search--dropdown .select2-search__field:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.select2-results__options { background: var(--bg-surface); padding: 4px; }
+.select2-results__option {
+  color: var(--text-100) !important;
+  border-radius: 7px !important;
+  padding: 8px 10px !important;
+  font-size: 13.5px;
+}
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+  background: var(--accent) !important;
+  color: #fff !important;
+}
+.select2-container--default .select2-results__option[aria-selected="true"] {
+  background: var(--accent-dim) !important;
+  color: var(--accent) !important;
+}
+.select2-results__message { color: var(--text-400) !important; }
+.select2-container--disabled .select2-selection--single { cursor: default; opacity: 0.6; }
+
 .input-group { position: relative; display: flex; align-items: center; }
 .input-group-icon { position: absolute; left: 12px; color: var(--text-400); pointer-events: none; }
 .input-group-icon svg { width: 15px; height: 15px; }
@@ -1015,10 +1115,6 @@ select.form-control option { background: var(--bg-elevated); color: var(--text-1
 @media(max-width:480px) {
   .stats-grid { grid-template-columns: 1fr 1fr; }
   .modal-box { padding: 22px 18px 20px; }
-}
-
-.select2-container {
-    width: 100% !important;
 }
 
 .select2-dropdown {

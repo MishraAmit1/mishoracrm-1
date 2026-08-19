@@ -113,6 +113,14 @@ class RolesAndPermissionsSeeder extends Seeder
             'purchase_orders.receive',
             'purchase_orders.export',
 
+            // ── Work Orders ───────────────────────────────────────
+            'work_orders.view_own',
+            'work_orders.view_all',
+            'work_orders.create',
+            'work_orders.edit',
+            'work_orders.manage',
+            'work_orders.delete',
+
             // ── Staff ─────────────────────────────────────────────
             'staff.view',
             'staff.create',

@@ -51,6 +51,11 @@ class Product extends Model
         return $this->hasMany(BillOfMaterialItem::class, 'product_id');
     }
 
+    public function batches(): HasMany
+    {
+        return $this->hasMany(ProductBatch::class);
+    }
+
     // ── Scopes ────────────────────────────────────────────────────
 
     public function scopeActive($query)

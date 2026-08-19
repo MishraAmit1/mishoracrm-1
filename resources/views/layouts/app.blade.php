@@ -368,24 +368,49 @@
             setTimeout(() => { if (el.isConnected) dismissFlash(el.querySelector('.flash-close')); }, 5000);
         }
 
-        function initSelect2() {
-            $('.select2').each(function () {
+        /* ──────────────────────────────────────────────
+           Select2 — auto-applied to every real <select> app-wide so
+           dropdowns are searchable, without needing per-page markup.
+           Opt out with class="no-select2" or data-no-select2.
+        ────────────────────────────────────────────── */
+        function initSelect2(scope) {
+            $(scope || document).find('select').each(function () {
+                const $el = $(this);
+                if ($el.hasClass('select2-hidden-accessible')) return;
+                if ($el.hasClass('no-select2') || $el.is('[data-no-select2]')) return;
+                if ($el.is(':disabled')) return;
 
-                if ($(this).hasClass('select2-hidden-accessible')) {
-                    return;
-                }
+                const $modal = $el.closest('.modal-box');
+                const hasBlankOption = $el.find('option[value=""]').length > 0;
 
-                $(this).select2({
-                    width: '100%'
+                $el.select2({
+                    // 'resolve' sizes the widget from the <select>'s own CSS width
+                    // (or its natural shrink-to-content width if none is set), so
+                    // full-width form selects stay full width and compact inline
+                    // filter-bar selects stay compact instead of all becoming 100%.
+                    width: 'resolve',
+                    allowClear: hasBlankOption && !$el.prop('required'),
+                    placeholder: hasBlankOption ? ($el.find('option[value=""]').first().text() || ' ') : undefined,
+                    dropdownParent: $modal.length ? $modal : $(document.body),
                 });
-
             });
         }
 
         $(document).ready(function () {
-
             initSelect2();
 
+            // Re-scan for <select> elements added dynamically later on (e.g. rows
+            // inserted by page JS), so new dropdowns also become searchable.
+            const selectObserver = new MutationObserver(function (mutations) {
+                for (const m of mutations) {
+                    m.addedNodes.forEach(function (node) {
+                        if (node.nodeType !== 1) return;
+                        if (node.matches && node.matches('select')) initSelect2(node.parentNode);
+                        else if (node.querySelector && node.querySelector('select')) initSelect2(node);
+                    });
+                }
+            });
+            selectObserver.observe(document.body, { childList: true, subtree: true });
         });
 
     </script>

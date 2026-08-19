@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Product;
 use App\Models\PurchaseOrder;
 
 class PurchaseOrderService
@@ -68,10 +69,14 @@ class PurchaseOrderService
     // qty), re-derive status from the resulting item rows. Also bumps
     // raw-material stock for any row linked to a product_id, by the
     // delta (not the cumulative total) so repeated partial receives
-    // don't double-count. ────────────────────────────────────────
-    public static function receive(PurchaseOrder $purchaseOrder, array $receivedByRowIndex): PurchaseOrder
+    // don't double-count. A positive delta (the normal "goods arrived"
+    // case) lands in a new batch (optionally numbered/dated from
+    // $batchInfoByRowIndex); a negative delta (correcting an
+    // over-received entry back down) just adjusts the aggregate —
+    // reattributing which batch to shrink isn't worth the complexity. ──
+    public static function receive(PurchaseOrder $purchaseOrder, array $receivedByRowIndex, array $batchInfoByRowIndex = []): PurchaseOrder
     {
-        $items = collect($purchaseOrder->items ?? [])->map(function ($item, $index) use ($receivedByRowIndex) {
+        $items = collect($purchaseOrder->items ?? [])->map(function ($item, $index) use ($receivedByRowIndex, $batchInfoByRowIndex, $purchaseOrder) {
             if (array_key_exists($index, $receivedByRowIndex)) {
                 $qty         = (float) ($item['quantity'] ?? 0);
                 $oldReceived = (float) ($item['received_quantity'] ?? 0);
@@ -81,7 +86,20 @@ class PurchaseOrderService
                 $item['received_quantity'] = $newReceived;
 
                 if ($delta != 0 && !empty($item['product_id'])) {
-                    StockService::applyReceivedDelta((int) $item['product_id'], $delta);
+                    $product = Product::find($item['product_id']);
+
+                    if ($product && $delta > 0) {
+                        $batchInfo = $batchInfoByRowIndex[$index] ?? [];
+                        StockService::receiveBatch(
+                            $product,
+                            $delta,
+                            $batchInfo['batch_number'] ?? null,
+                            $batchInfo['expiry_date'] ?? null,
+                            $purchaseOrder->id
+                        );
+                    } elseif ($product) {
+                        $product->adjustStock($delta);
+                    }
                 }
             }
 

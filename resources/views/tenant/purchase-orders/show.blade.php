@@ -146,6 +146,100 @@
             </div>
             @endif
 
+            @can('modify', $purchaseOrder)
+            @if($purchaseOrder->status === 'draft' && !$purchaseOrder->vendor_id)
+            <div class="qs-card">
+                <div class="qs-card-head"><div class="qs-card-title"><i class="ti ti-scale" style="font-size:13px;margin-right:5px"></i> Compare Vendor Quotes</div></div>
+
+                @if($purchaseOrder->vendorQuotes->isNotEmpty())
+                <div style="padding:6px 20px 0">
+                    @foreach($purchaseOrder->vendorQuotes as $quote)
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--border-subtle);flex-wrap:wrap">
+                        <div>
+                            <div style="font-size:13.5px;font-weight:600;color:var(--text-100)">{{ $quote->vendor->name }}</div>
+                            <div style="font-size:12px;color:var(--text-300);margin-top:2px">
+                                {{ $quote->vendor->company }} · Total ₹{{ number_format($quote->total, 2) }} · {{ $quote->createdBy?->name ?? '—' }}, {{ $quote->created_at->diffForHumans() }}
+                            </div>
+                            @if($quote->notes)
+                            <div style="font-size:12px;color:var(--text-400);margin-top:3px;font-style:italic">{{ $quote->notes }}</div>
+                            @endif
+                        </div>
+                        <div style="display:flex;gap:8px;align-items:center">
+                            <span style="font-size:16px;font-weight:600;color:#185FA5;font-family:'DM Mono',monospace">₹{{ number_format($quote->total, 2) }}</span>
+                            <form method="POST" action="{{ route('tenant.purchase-orders.vendor-quotes.select', [$purchaseOrder->id, $quote->id]) }}"
+                                  onsubmit="return confirm('Select {{ addslashes($quote->vendor->name) }}? Their rates will be applied to this Purchase Order.')">
+                                @csrf
+                                <button type="submit" class="btn btn-primary btn-sm">Select</button>
+                            </form>
+                            <form method="POST" action="{{ route('tenant.purchase-orders.vendor-quotes.destroy', [$purchaseOrder->id, $quote->id]) }}"
+                                  onsubmit="return confirm('Remove this quote?')">
+                                @csrf @method('DELETE')
+                                <button type="submit" class="btn btn-secondary btn-sm">Remove</button>
+                            </form>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+                @endif
+
+                <details style="padding:14px 20px">
+                    <summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--accent)">+ Add a vendor quote</summary>
+                    <form method="POST" action="{{ route('tenant.purchase-orders.vendor-quotes.store', $purchaseOrder->id) }}" style="margin-top:14px">
+                        @csrf
+                        <div style="max-width:320px;margin-bottom:12px">
+                            <label style="font-size:11.5px;font-weight:600;color:var(--text-200);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">Vendor <span style="color:#E24B4A">*</span></label>
+                            <select name="vendor_id" required style="width:100%;padding:9px 12px;background:var(--bg-input);border:1.5px solid var(--border-default);border-radius:8px;color:var(--text-100);font-size:13.5px">
+                                <option value="">— Select vendor —</option>
+                                @foreach($vendors as $v)
+                                <option value="{{ $v->id }}">{{ $v->name }}{{ $v->company ? ' — '.$v->company : '' }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div style="overflow-x:auto">
+                            <table class="qs-items-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width:30%">Item</th>
+                                        <th style="width:15%;text-align:right">Qty</th>
+                                        <th style="width:20%;text-align:right">Quoted Rate</th>
+                                        <th style="width:15%;text-align:right">GST %</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($items as $idx => $item)
+                                    <tr>
+                                        <td style="font-weight:500">
+                                            {{ $item['name'] ?? '—' }}
+                                            <input type="hidden" name="items[{{ $idx }}][product_id]" value="{{ $item['product_id'] ?? '' }}"/>
+                                            <input type="hidden" name="items[{{ $idx }}][name]" value="{{ $item['name'] ?? '' }}"/>
+                                            <input type="hidden" name="items[{{ $idx }}][description]" value="{{ $item['description'] ?? '' }}"/>
+                                            <input type="hidden" name="items[{{ $idx }}][quantity]" value="{{ $item['quantity'] ?? 0 }}"/>
+                                        </td>
+                                        <td class="td-right">{{ number_format($item['quantity'] ?? 0, 2) }}</td>
+                                        <td class="td-right">
+                                            <input type="number" class="recv-input" name="items[{{ $idx }}][rate]" min="0" step="0.01" required/>
+                                        </td>
+                                        <td class="td-right">
+                                            <input type="number" class="recv-input" name="items[{{ $idx }}][tax_percent]" min="0" max="100" step="0.01" value="{{ $item['tax_percent'] ?? 0 }}"/>
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                        <textarea name="notes" placeholder="Notes (delivery timeline, payment terms, etc.)" rows="2"
+                                  style="width:100%;margin-top:12px;padding:8px 10px;border:1.5px solid var(--border-default);border-radius:7px;background:var(--bg-input);color:var(--text-100);font-family:'DM Sans',var(--font),sans-serif;font-size:12.5px"></textarea>
+                        <div style="margin-top:12px">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="ti ti-plus" style="font-size:14px"></i> Add Quote
+                            </button>
+                        </div>
+                    </form>
+                </details>
+            </div>
+            @endif
+            @endcan
+
             <div class="qs-card">
                 <div class="qs-card-head"><div class="qs-card-title"><i class="ti ti-list-details" style="font-size:13px;margin-right:5px"></i> Line Items ({{ count($items) }})</div></div>
                 <div style="overflow-x:auto">
@@ -216,10 +310,12 @@
                         <table class="qs-items-table">
                             <thead>
                                 <tr>
-                                    <th style="width:35%">Item</th>
-                                    <th style="width:20%;text-align:right">Ordered</th>
-                                    <th style="width:20%;text-align:right">Already Received</th>
-                                    <th style="width:25%;text-align:right">Received Now</th>
+                                    <th style="width:22%">Item</th>
+                                    <th style="width:12%;text-align:right">Ordered</th>
+                                    <th style="width:14%;text-align:right">Already Received</th>
+                                    <th style="width:16%;text-align:right">Received Now</th>
+                                    <th style="width:18%">Batch # <span style="font-weight:400;text-transform:none">(optional)</span></th>
+                                    <th style="width:18%">Expiry <span style="font-weight:400;text-transform:none">(optional)</span></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -232,6 +328,14 @@
                                     <td class="td-right">
                                         <input type="number" class="recv-input" name="items[{{ $idx }}][received_quantity]"
                                                value="{{ $recv }}" min="0" max="{{ $qty }}" step="0.01"/>
+                                    </td>
+                                    <td>
+                                        <input type="text" class="recv-input" name="items[{{ $idx }}][batch_number]"
+                                               placeholder="Auto if blank" @if(empty($item['product_id'])) disabled @endif/>
+                                    </td>
+                                    <td>
+                                        <input type="date" class="recv-input" name="items[{{ $idx }}][expiry_date]"
+                                               @if(empty($item['product_id'])) disabled @endif/>
                                     </td>
                                 </tr>
                                 @endforeach

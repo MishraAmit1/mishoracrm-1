@@ -23,3 +23,6 @@ Schedule::command('invoices:remind-payments')->daily();
 
 // ── Task due-date reminders — daily ────────────────────────────────
 Schedule::command('tasks:remind')->dailyAt('09:00');
+
+// ── Product batch expiry alerts — daily ────────────────────────────
+Schedule::command('products:check-batch-expiry')->dailyAt('08:00');
