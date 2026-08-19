@@ -37,9 +37,14 @@
             <h1>Roles & Permissions</h1>
             <p>Master permission list — add a permission here to make it instantly available for Tenant Admin and the tenant-side role builder. No seeder/code changes needed.</p>
         </div>
-        <a href="{{ route('superadmin.permissions.create') }}" class="btn btn-primary" style="padding:9px 18px;border-radius:var(--r-md);background:var(--accent);color:#fff;font-size:13.5px;font-weight:700;text-decoration:none;">
-            + Add Permission
-        </a>
+        <div style="display:flex;gap:8px">
+            <a href="{{ route('superadmin.roles.tenant-admin.edit') }}" class="btn btn-secondary" style="padding:9px 18px;border-radius:var(--r-md);background:var(--bg-input);color:var(--text-200);border:1px solid var(--border-subtle);font-size:13.5px;font-weight:600;text-decoration:none;">
+                Edit Tenant Admin Permissions
+            </a>
+            <a href="{{ route('superadmin.permissions.create') }}" class="btn btn-primary" style="padding:9px 18px;border-radius:var(--r-md);background:var(--accent);color:#fff;font-size:13.5px;font-weight:700;text-decoration:none;">
+                + Add Permission
+            </a>
+        </div>
     </div>
 
     @if(session('success'))

@@ -143,6 +143,12 @@ Route::prefix('superadmin')
             Route::post('/{coupon}/toggle', 'toggle')->name('toggle');
         });
 
+        // Tenant Admin role permissions (only Super Admin can change this — it's one shared role across all tenants)
+        Route::prefix('roles')->name('roles.')->controller(SuperAdmin\RoleController::class)->group(function () {
+            Route::get('/tenant-admin/edit', 'editTenantAdmin')->name('tenant-admin.edit');
+            Route::put('/tenant-admin',      'updateTenantAdmin')->name('tenant-admin.update');
+        });
+
         // Permissions master list (no seeder edits needed for new modules)
         Route::prefix('permissions')->name('permissions.')->controller(SuperAdmin\PermissionController::class)->group(function () {
             Route::get('/',                  'index')->name('index');
