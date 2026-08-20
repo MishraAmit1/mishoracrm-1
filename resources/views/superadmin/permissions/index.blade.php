@@ -3,20 +3,14 @@
 
 @push('styles')
 <style>
-.page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
-.page-header h1 { font-size:22px; font-weight:700; color:var(--text-100); }
-.page-header p { font-size:13px; color:var(--text-400); margin-top:4px; }
 .badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:100px; font-size:11px; font-weight:700; }
 .badge-blue  { background:rgba(99,102,241,.1); color:var(--accent); }
 .badge-gray  { background:var(--bg-input); color:var(--text-400); }
 .action-btns { display:flex; gap:6px; }
-.btn-sm { padding:5px 12px; border-radius:var(--r-md); font-size:12px; font-weight:600; cursor:pointer; border:none; text-decoration:none; display:inline-block; }
-.btn-edit { background:var(--bg-input); color:var(--text-200); }
-.btn-del  { background:rgba(239,68,68,.1); color:#ef4444; }
 .empty-state { text-align:center; padding:56px 16px; color:var(--text-400); font-size:14px; }
 
-.perm-module { background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--r-lg); margin-bottom:14px; overflow:hidden; }
-.pm-head { display:flex; align-items:center; gap:10px; padding:14px 18px; background:var(--bg-input); cursor:pointer; user-select:none; }
+.perm-module { background:var(--bg-surface); border:1px solid var(--border-default); border-radius:var(--r-lg); margin-bottom:14px; overflow:hidden; }
+.pm-head { display:flex; align-items:center; gap:10px; padding:14px 18px; background:var(--bg-elevated); cursor:pointer; user-select:none; }
 .pm-emoji { font-size:16px; }
 .pm-module-name { font-size:14px; font-weight:700; color:var(--text-100); flex:1; }
 .pm-count { font-size:12px; color:var(--text-400); }
@@ -30,31 +24,33 @@
 @endpush
 
 @section('content')
-<div class="page-content">
 
-    <div class="page-header">
+    <div class="page-head">
         <div>
-            <h1>Roles & Permissions</h1>
-            <p>Master permission list — add a permission here to make it instantly available for Tenant Admin and the tenant-side role builder. No seeder/code changes needed.</p>
+            <div class="page-title">Roles & Permissions</div>
+            <div class="page-sub">Master permission list — add a permission here to make it instantly available for Tenant Admin and the tenant-side role builder. No seeder/code changes needed.</div>
         </div>
-        <div style="display:flex;gap:8px">
-            <a href="{{ route('superadmin.roles.tenant-admin.edit') }}" class="btn btn-secondary" style="padding:9px 18px;border-radius:var(--r-md);background:var(--bg-input);color:var(--text-200);border:1px solid var(--border-subtle);font-size:13.5px;font-weight:600;text-decoration:none;">
+        <div class="page-actions">
+            <a href="{{ route('superadmin.roles.tenant-admin.edit') }}" class="btn btn-secondary">
                 Edit Tenant Admin Permissions
             </a>
-            <a href="{{ route('superadmin.permissions.create') }}" class="btn btn-primary" style="padding:9px 18px;border-radius:var(--r-md);background:var(--accent);color:#fff;font-size:13.5px;font-weight:700;text-decoration:none;">
-                + Add Permission
+            <a href="{{ route('superadmin.permissions.create') }}" class="btn btn-primary">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:15px;height:15px">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                </svg>
+                Add Permission
             </a>
         </div>
     </div>
 
     @if(session('success'))
-    <div class="alert alert-success" style="background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.25);color:#16a34a;padding:12px 16px;border-radius:var(--r-md);margin-bottom:16px;font-size:13.5px;">
-        {{ session('success') }}
+    <div style="padding:12px 16px;background:var(--green-dim);border:1px solid rgba(29,158,117,.2);border-radius:var(--r-sm);font-size:13px;color:var(--green);margin-bottom:16px">
+        ✓ {{ session('success') }}
     </div>
     @endif
 
     @if(session('error'))
-    <div class="alert alert-error" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:#ef4444;padding:12px 16px;border-radius:var(--r-md);margin-bottom:16px;font-size:13.5px;">
+    <div style="padding:12px 16px;background:var(--red-dim);border:1px solid rgba(224,82,82,.18);border-radius:var(--r-sm);font-size:13px;color:var(--red);margin-bottom:16px">
         {{ session('error') }}
     </div>
     @endif
@@ -105,11 +101,11 @@
                     <span class="badge badge-gray">unused</span>
                 @endif
                 <div class="action-btns">
-                    <a href="{{ route('superadmin.permissions.edit', $perm) }}" class="btn-sm btn-edit">Edit</a>
+                    <a href="{{ route('superadmin.permissions.edit', $perm) }}" class="btn btn-secondary btn-sm">Edit</a>
                     <form action="{{ route('superadmin.permissions.destroy', $perm) }}" method="POST" style="display:inline"
                           onsubmit="return confirm('Delete permission {{ $perm->name }}?{{ $perm->roles_count > 0 ? ' It is used by ' . $perm->roles_count . ' role(s) and will be removed from them.' : '' }}')">
                         @csrf @method('DELETE')
-                        <button type="submit" class="btn-sm btn-del">Delete</button>
+                        <button type="submit" class="btn btn-secondary btn-sm" style="color:var(--red)">Delete</button>
                     </form>
                 </div>
             </div>
@@ -122,5 +118,4 @@
     </div>
     @endforelse
 
-</div>
 @endsection

@@ -3,43 +3,39 @@
 
 @push('styles')
 <style>
-.page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
-.page-header h1 { font-size:22px; font-weight:700; color:var(--text-100); }
-.table-card { background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--r-lg); overflow:hidden; }
+.table-card { background:var(--bg-surface); border:1px solid var(--border-default); border-radius:var(--r-lg); overflow:hidden; }
 .data-table { width:100%; border-collapse:collapse; }
-.data-table th { padding:11px 16px; text-align:left; font-size:12px; font-weight:600; color:var(--text-400); text-transform:uppercase; letter-spacing:.04em; border-bottom:1px solid var(--border-subtle); background:var(--bg-input); }
+.data-table th { padding:11px 16px; text-align:left; font-size:12px; font-weight:600; color:var(--text-400); text-transform:uppercase; letter-spacing:.04em; border-bottom:1px solid var(--border-subtle); background:var(--bg-elevated); }
 .data-table td { padding:13px 16px; font-size:13.5px; color:var(--text-200); border-bottom:1px solid var(--border-subtle); vertical-align:middle; }
 .data-table tr:last-child td { border-bottom:none; }
 .data-table tr:hover td { background:var(--bg-hover); }
 .badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:100px; font-size:11px; font-weight:700; }
-.badge-green  { background:rgba(22,163,74,.1); color:#16a34a; }
-.badge-red    { background:rgba(239,68,68,.1); color:#ef4444; }
-.badge-blue   { background:rgba(99,102,241,.1); color:var(--accent); }
-.badge-yellow { background:rgba(234,179,8,.1); color:#ca8a04; }
+.badge-green  { background:var(--green-dim); color:var(--green); }
+.badge-red    { background:var(--red-dim); color:var(--red); }
+.badge-blue   { background:var(--accent-dim); color:var(--accent); }
+.badge-yellow { background:var(--amber-dim); color:var(--amber); }
 .badge-gray   { background:var(--bg-input); color:var(--text-400); }
-.code-chip { font-family:monospace; font-size:13px; font-weight:700; background:var(--bg-input); padding:3px 8px; border-radius:6px; color:var(--text-100); letter-spacing:.05em; }
+.code-chip { font-family:var(--mono); font-size:13px; font-weight:700; background:var(--bg-input); padding:3px 8px; border-radius:6px; color:var(--text-100); letter-spacing:.05em; }
 .action-btns { display:flex; gap:6px; }
-.btn-sm { padding:5px 12px; border-radius:var(--r-md); font-size:12px; font-weight:600; cursor:pointer; border:none; text-decoration:none; display:inline-block; }
-.btn-edit   { background:var(--bg-input); color:var(--text-200); }
-.btn-toggle { background:rgba(99,102,241,.1); color:var(--accent); }
-.btn-del    { background:rgba(239,68,68,.1); color:#ef4444; }
 .empty-state { text-align:center; padding:56px 16px; color:var(--text-400); font-size:14px; }
 </style>
 @endpush
 
 @section('content')
-<div class="page-content">
 
-    <div class="page-header">
-        <h1>Coupon Management</h1>
-        <a href="{{ route('superadmin.coupons.create') }}" class="btn btn-primary" style="padding:9px 18px;border-radius:var(--r-md);background:var(--accent);color:#fff;font-size:13.5px;font-weight:700;text-decoration:none;">
-            + New Coupon
+    <div class="page-head">
+        <div class="page-title">Coupon Management</div>
+        <a href="{{ route('superadmin.coupons.create') }}" class="btn btn-primary">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:15px;height:15px">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+            </svg>
+            New Coupon
         </a>
     </div>
 
     @if(session('success'))
-    <div class="alert alert-success" style="background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.25);color:#16a34a;padding:12px 16px;border-radius:var(--r-md);margin-bottom:16px;font-size:13.5px;">
-        {{ session('success') }}
+    <div style="padding:12px 16px;background:var(--green-dim);border:1px solid rgba(29,158,117,.2);border-radius:var(--r-sm);font-size:13px;color:var(--green);margin-bottom:16px">
+        ✓ {{ session('success') }}
     </div>
     @endif
 
@@ -99,7 +95,7 @@
                     </td>
                     <td data-label="Expires">
                         @if($coupon->expires_at)
-                            <span style="color: {{ $coupon->expires_at->isPast() ? '#ef4444' : 'var(--text-200)' }}">
+                            <span style="color: {{ $coupon->expires_at->isPast() ? 'var(--red)' : 'var(--text-200)' }}">
                                 {{ $coupon->expires_at->format('d M Y') }}
                             </span>
                         @else
@@ -113,17 +109,17 @@
                     </td>
                     <td>
                         <div class="action-btns">
-                            <a href="{{ route('superadmin.coupons.edit', $coupon) }}" class="btn-sm btn-edit">Edit</a>
+                            <a href="{{ route('superadmin.coupons.edit', $coupon) }}" class="btn btn-secondary btn-sm">Edit</a>
                             <form action="{{ route('superadmin.coupons.toggle', $coupon) }}" method="POST" style="display:inline">
                                 @csrf
-                                <button type="submit" class="btn-sm btn-toggle">
+                                <button type="submit" class="btn btn-secondary btn-sm" style="color:var(--accent)">
                                     {{ $coupon->is_active ? 'Disable' : 'Enable' }}
                                 </button>
                             </form>
                             <form action="{{ route('superadmin.coupons.destroy', $coupon) }}" method="POST" style="display:inline"
                                   onsubmit="return confirm('Delete coupon {{ $coupon->code }}?')">
                                 @csrf @method('DELETE')
-                                <button type="submit" class="btn-sm btn-del">Delete</button>
+                                <button type="submit" class="btn btn-secondary btn-sm" style="color:var(--red)">Delete</button>
                             </form>
                         </div>
                     </td>
@@ -145,5 +141,4 @@
     <div style="margin-top:16px">{{ $coupons->links() }}</div>
     @endif
 
-</div>
 @endsection

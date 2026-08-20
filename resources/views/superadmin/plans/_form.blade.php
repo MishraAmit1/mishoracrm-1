@@ -85,7 +85,7 @@
                        placeholder="e.g. 20" min="0" max="100" id="disc-input">
                 <span class="input-suffix">%</span>
             </div>
-            <div class="form-hint" id="disc-preview" style="color:#16a34a;display:none"></div>
+            <div class="form-hint" id="disc-preview" style="color:var(--green);display:none"></div>
             @error('discount_percentage')<div class="invalid-feedback">{{ $message }}</div>@enderror
         </div>
     </div>
@@ -207,10 +207,10 @@
     </div>
 
     <div class="form-footer">
-        <button type="submit" class="btn-primary">
+        <button type="submit" class="btn btn-primary">
             {{ $isEdit ? 'Save Changes' : 'Create Plan' }}
         </button>
-        <a href="{{ route('superadmin.plans.index') }}" class="btn-secondary">Cancel</a>
+        <a href="{{ route('superadmin.plans.index') }}" class="btn btn-secondary">Cancel</a>
     </div>
 </form>
 

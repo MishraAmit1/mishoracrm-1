@@ -6,7 +6,6 @@
 @endpush
 
 @section('content')
-<div class="page-content">
 <div class="form-wrap">
 
     <a href="{{ route('superadmin.plans.index') }}" class="back-link">
@@ -24,6 +23,5 @@
         ])
     </div>
 
-</div>
 </div>
 @endsection

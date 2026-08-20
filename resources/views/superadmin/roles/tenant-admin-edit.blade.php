@@ -3,11 +3,7 @@
 
 @push('styles')
 <style>
-.page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
-.page-header h1 { font-size:22px; font-weight:700; color:var(--text-100); }
-.page-header p { font-size:13px; color:var(--text-400); margin-top:4px; }
-
-.form-card { background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--r-lg); overflow:hidden; }
+.form-card { background:var(--bg-surface); border:1px solid var(--border-default); border-radius:var(--r-lg); overflow:hidden; }
 .fc-sec { padding:22px 24px; }
 .fc-title { font-size:13px; font-weight:700; color:var(--text-100); text-transform:uppercase; letter-spacing:.4px; margin-bottom:0; }
 .fc-sub   { font-size:12.5px; color:var(--text-300); margin-top:2px; }
@@ -16,11 +12,11 @@
 .pm-head {
     display:flex; align-items:center; gap:10px;
     padding:10px 14px;
-    background:var(--bg-input); border:1px solid var(--border-subtle);
-    border-radius:var(--r-md); cursor:pointer;
+    background:var(--bg-elevated); border:1px solid var(--border-subtle);
+    border-radius:var(--r-sm); cursor:pointer;
     margin-bottom:1px;
 }
-.pm-head.open { border-radius:var(--r-md) var(--r-md) 0 0; }
+.pm-head.open { border-radius:var(--r-sm) var(--r-sm) 0 0; }
 .pm-module-name { font-size:13px; font-weight:700; color:var(--text-100); text-transform:capitalize; flex:1; }
 .pm-count { font-size:12px; font-weight:700; font-family:var(--mono); color:var(--accent); min-width:60px; text-align:right; }
 .pm-chevron { transition:transform .2s; color:var(--text-300); }
@@ -28,20 +24,20 @@
 .pm-perms {
     padding:12px 14px;
     border:1px solid var(--border-subtle); border-top:none;
-    border-radius:0 0 var(--r-md) var(--r-md);
-    background:var(--bg-card);
+    border-radius:0 0 var(--r-sm) var(--r-sm);
+    background:var(--bg-surface);
     display:grid; grid-template-columns:repeat(auto-fill, minmax(220px,1fr)); gap:8px;
 }
 .pm-perms.collapsed { display:none !important; }
 .perm-item {
     display:flex; align-items:center; gap:9px;
-    padding:8px 10px; border-radius:var(--r-md);
+    padding:8px 10px; border-radius:var(--r-sm);
     border:1.5px solid var(--border-subtle);
-    background:var(--bg-input); cursor:pointer;
+    background:var(--bg-elevated); cursor:pointer;
     transition:border-color .12s, background .12s;
 }
-.perm-item:hover { border-color:var(--accent); }
-.perm-item.checked { border-color:var(--accent); background:rgba(99,102,241,.1); }
+.perm-item:hover { border-color:var(--accent); background:var(--accent-dim); }
+.perm-item.checked { border-color:var(--accent); background:var(--accent-dim); }
 .perm-item input { width:15px; height:15px; accent-color:var(--accent); cursor:pointer; flex-shrink:0; }
 .perm-label { font-size:12.5px; color:var(--text-200); line-height:1.3; }
 .perm-item.checked .perm-label { color:var(--accent); font-weight:600; }
@@ -49,14 +45,11 @@
 .select-all-btn { font-size:11.5px; font-weight:600; color:var(--accent); background:none; border:none; cursor:pointer; padding:0; }
 .select-all-btn:hover { text-decoration:underline; }
 
-.form-footer { padding:16px 24px; background:var(--bg-input); border-top:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center; }
-.btn-primary { padding:10px 22px; background:var(--accent); color:#fff; border:none; border-radius:var(--r-md); font-size:14px; font-weight:700; cursor:pointer; text-decoration:none; }
-.btn-secondary { padding:10px 18px; background:var(--bg-input); color:var(--text-200); border:1px solid var(--border-subtle); border-radius:var(--r-md); font-size:14px; font-weight:600; cursor:pointer; text-decoration:none; }
+.form-footer { padding:16px 24px; background:var(--bg-elevated); border-top:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center; }
 </style>
 @endpush
 
 @section('content')
-<div class="page-content">
 
 @php
     $selPerms = old('permissions', $rolePermIds);
@@ -70,17 +63,17 @@
     ];
 @endphp
 
-<div class="page-header">
+<div class="page-head">
     <div>
-        <h1>Tenant Admin Role Permissions</h1>
-        <p>Controls what every Tenant Admin can access across all tenants. Only Super Admin can change this.</p>
+        <div class="page-title">Tenant Admin Role Permissions</div>
+        <div class="page-sub">Controls what every Tenant Admin can access across all tenants. Only Super Admin can change this.</div>
     </div>
     <a href="{{ route('superadmin.permissions.index') }}" class="btn btn-secondary">← Back to Roles & Permissions</a>
 </div>
 
 @if(session('success'))
-<div class="alert alert-success" style="background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.25);color:#16a34a;padding:12px 16px;border-radius:var(--r-md);margin-bottom:16px;font-size:13.5px;">
-    {{ session('success') }}
+<div style="padding:12px 16px;background:var(--green-dim);border:1px solid rgba(29,158,117,.2);border-radius:var(--r-sm);font-size:13px;color:var(--green);margin-bottom:16px">
+    ✓ {{ session('success') }}
 </div>
 @endif
 
@@ -101,8 +94,8 @@
                     </div>
                 </div>
                 <div style="display:flex;gap:8px">
-                    <button type="button" onclick="selectAll()" class="btn-secondary" style="padding:6px 14px;font-size:12.5px">Select All</button>
-                    <button type="button" onclick="clearAll()"  class="btn-secondary" style="padding:6px 14px;font-size:12.5px">Clear All</button>
+                    <button type="button" onclick="selectAll()" class="btn btn-secondary btn-sm">Select All</button>
+                    <button type="button" onclick="clearAll()"  class="btn btn-secondary btn-sm">Clear All</button>
                 </div>
             </div>
 
@@ -149,13 +142,12 @@
         </div>
 
         <div class="form-footer">
-            <a href="{{ route('superadmin.permissions.index') }}" class="btn-secondary">Cancel</a>
-            <button type="submit" class="btn-primary" id="submitBtn">Save Changes</button>
+            <a href="{{ route('superadmin.permissions.index') }}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary" id="submitBtn">Save Changes</button>
         </div>
     </div>
 </form>
 
-</div>
 @endsection
 
 @push('scripts')

@@ -4,36 +4,34 @@
 @push('styles')
 <style>
 .form-wrap { max-width:640px; margin:0 auto; }
-.form-card { background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--r-lg); padding:28px; }
+.form-card { background:var(--bg-surface); border:1px solid var(--border-default); border-radius:var(--r-lg); padding:28px; }
 .form-card h2 { font-size:18px; font-weight:700; color:var(--text-100); margin-bottom:4px; }
 .form-card .sub { font-size:13px; color:var(--text-400); margin-bottom:24px; }
 .form-group { margin-bottom:18px; }
 .form-label { display:block; font-size:13px; font-weight:600; color:var(--text-300); margin-bottom:6px; }
-.form-label span.req { color:#ef4444; margin-left:2px; }
+.form-label span.req { color:var(--red); margin-left:2px; }
 .form-control {
     width:100%; padding:9px 12px;
-    background:var(--bg-input); border:1px solid var(--border-subtle);
-    border-radius:var(--r-md); color:var(--text-100); font-size:13.5px; outline:none;
-    box-sizing:border-box;
+    background:var(--bg-input); border:1.5px solid var(--border-default);
+    border-radius:var(--r-sm); color:var(--text-100); font-size:13.5px; outline:none;
+    box-sizing:border-box; transition:border-color .15s, box-shadow .15s;
 }
-.form-control:focus { border-color:var(--accent); }
-.form-control.is-invalid { border-color:#ef4444; }
-.invalid-feedback { font-size:12px; color:#ef4444; margin-top:4px; }
+.form-control:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-dim); }
+.form-control.is-invalid { border-color:var(--red); }
+.invalid-feedback { font-size:12px; color:var(--red); margin-top:4px; }
 .form-hint { font-size:12px; color:var(--text-400); margin-top:4px; }
 .form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
 @media(max-width:540px){ .form-row { grid-template-columns:1fr; } }
 .form-footer { display:flex; gap:10px; margin-top:24px; }
-.btn-primary { padding:10px 22px; background:var(--accent); color:#fff; border:none; border-radius:var(--r-md); font-size:14px; font-weight:700; cursor:pointer; }
-.btn-secondary { padding:10px 18px; background:var(--bg-input); color:var(--text-200); border:1px solid var(--border-subtle); border-radius:var(--r-md); font-size:14px; font-weight:600; cursor:pointer; text-decoration:none; }
 .back-link { display:flex; align-items:center; gap:6px; color:var(--text-400); font-size:13px; text-decoration:none; margin-bottom:18px; }
 .back-link:hover { color:var(--text-100); }
-.used-info { background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:var(--r-md); padding:10px 14px; font-size:13px; color:var(--text-300); margin-bottom:18px; }
+.used-info { background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--r-sm); padding:10px 14px; font-size:13px; color:var(--text-300); margin-bottom:18px; }
 .used-info strong { color:var(--text-100); }
 #users-field { display:none; }
 .user-check-list {
     max-height:260px; overflow-y:auto;
-    border:1px solid var(--border-subtle); border-radius:var(--r-md);
-    background:var(--bg-input);
+    border:1px solid var(--border-subtle); border-radius:var(--r-sm);
+    background:var(--bg-elevated);
 }
 .user-check-item {
     display:flex; align-items:center; gap:10px;
@@ -54,7 +52,6 @@
 @endpush
 
 @section('content')
-<div class="page-content">
 <div class="form-wrap">
 
     <a href="{{ route('superadmin.coupons.index') }}" class="back-link">
@@ -180,12 +177,11 @@
             </div>
 
             <div class="form-footer">
-                <button type="submit" class="btn-primary">Save Changes</button>
-                <a href="{{ route('superadmin.coupons.index') }}" class="btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <a href="{{ route('superadmin.coupons.index') }}" class="btn btn-secondary">Cancel</a>
             </div>
         </form>
     </div>
-</div>
 </div>
 @endsection
 
