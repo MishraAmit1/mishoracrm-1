@@ -19,6 +19,8 @@ class ServiceSubscription extends Model
         'expires_at',
         'duration_value',
         'duration_unit',
+        'total_quantity',
+        'used_quantity',
         'status',
         'expiry_notified_at',
         'notes',
@@ -28,6 +30,8 @@ class ServiceSubscription extends Model
         'starts_at'          => 'date',
         'expires_at'         => 'date',
         'duration_value'     => 'integer',
+        'total_quantity'     => 'integer',
+        'used_quantity'      => 'integer',
         'expiry_notified_at' => 'datetime',
     ];
 
@@ -100,6 +104,36 @@ class ServiceSubscription extends Model
     public function isExpired(): bool
     {
         return $this->expires_at !== null && $this->expires_at->lt(now()->startOfDay());
+    }
+
+    // ── Usage tracking (quantity-limited services, e.g. "10 sessions") ──
+
+    public function hasQuantityTracking(): bool
+    {
+        return $this->total_quantity !== null;
+    }
+
+    public function remainingQuantity(): ?int
+    {
+        return $this->hasQuantityTracking()
+            ? max(0, $this->total_quantity - $this->used_quantity)
+            : null;
+    }
+
+    public function isFullyUsed(): bool
+    {
+        return $this->hasQuantityTracking() && $this->used_quantity >= $this->total_quantity;
+    }
+
+    // Increments used_quantity by $count, capped at total_quantity so it
+    // never overshoots even if clicked after the last unit was used.
+    public function markUsed(int $count = 1): void
+    {
+        if (!$this->hasQuantityTracking()) {
+            return;
+        }
+
+        $this->update(['used_quantity' => min($this->total_quantity, $this->used_quantity + $count)]);
     }
 
     // Computes an expiry date from a start date + duration_value/duration_unit.

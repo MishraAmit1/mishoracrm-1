@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web\Tenant;
 
 use App\Helpers\ViewScope;
 use App\Http\Controllers\Controller;
+use App\Models\Appointment;
 use App\Models\Deal;
 use App\Models\Followup;
 use App\Models\Reminder;
@@ -81,6 +82,14 @@ class CalendarController extends Controller
             ->whereBetween('expected_close_date', [$start, $end])
             ->get();
 
+        // Appointments have no per-staff assignment (simple capacity-based
+        // booking, not a per-staff calendar) — shown to everyone who can
+        // see the shared calendar, unaffected by the ?staff_id= filter.
+        $appointments = Appointment::with(['contact', 'service'])
+            ->where('tenant_id', $tenantId)
+            ->whereBetween('starts_at', [$start, $end])
+            ->get();
+
         $statusColors = [
             'scheduled' => '#378ADD',
             'done'      => '#1D9E75',
@@ -126,6 +135,16 @@ class CalendarController extends Controller
                 'url'      => route('tenant.deals.show', $d->id),
                 'editable' => false,
                 'extendedProps' => ['type' => 'deal', 'recordId' => $d->id],
+            ]))
+            ->concat($appointments->map(fn($a) => [
+                'id'       => 'appointment-' . $a->id,
+                'title'    => '📅 ' . ($a->contact?->name ?? 'Appointment') . ($a->service ? ' — ' . $a->service->name : ''),
+                'start'    => $a->starts_at?->toIso8601String(),
+                'end'      => $a->ends_at?->toIso8601String(),
+                'color'    => in_array($a->status, ['cancelled', 'no_show']) ? '#9CA3AF' : '#0F9D6D',
+                'url'      => route('tenant.appointments.index'),
+                'editable' => false,
+                'extendedProps' => ['type' => 'appointment', 'recordId' => $a->id],
             ]))
             ->filter(fn($e) => !empty($e['start']))
             ->values();

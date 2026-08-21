@@ -312,6 +312,9 @@
                     'notifications' => '🔔',
                     'roles'         => '🔐',
                     'attendance'    => '🕐',
+                    'subscriptions' => '📆',
+                    'appointments'  => '🗓️',
+                    'time_entries'  => '⏱️',
                 ];
                 @endphp
 

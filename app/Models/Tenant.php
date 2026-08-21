@@ -140,4 +140,46 @@ class Tenant extends Model
 
         return is_string($value) && trim($value) !== '' ? $value : null;
     }
+
+    // ── Public booking link — same settings['...'] token convention as
+    // getWebhookToken() above, so no new tenants column is needed. ──────
+    public function ensureBookingToken(): string
+    {
+        $settings = $this->settings ?? [];
+
+        if (empty($settings['booking_token'])) {
+            $settings['booking_token'] = Str::random(40);
+            $this->update(['settings' => $settings]);
+        }
+
+        return $settings['booking_token'];
+    }
+
+    public function bookingPublicUrl(): string
+    {
+        return route('public.booking.show', $this->ensureBookingToken());
+    }
+
+    // settings['booking'][...] — configured via the tenant's Appointments
+    // Settings page. Defaults keep booking OFF until the tenant opts in.
+    public function bookingSettings(): array
+    {
+        $defaults = [
+            'enabled'               => false,
+            'slot_duration_minutes' => 30,
+            'capacity_per_slot'     => 1,
+            'advance_booking_days'  => 14,
+            'hours'                 => [
+                'mon' => ['closed' => false, 'open' => '09:00', 'close' => '18:00'],
+                'tue' => ['closed' => false, 'open' => '09:00', 'close' => '18:00'],
+                'wed' => ['closed' => false, 'open' => '09:00', 'close' => '18:00'],
+                'thu' => ['closed' => false, 'open' => '09:00', 'close' => '18:00'],
+                'fri' => ['closed' => false, 'open' => '09:00', 'close' => '18:00'],
+                'sat' => ['closed' => false, 'open' => '09:00', 'close' => '18:00'],
+                'sun' => ['closed' => true,  'open' => '09:00', 'close' => '18:00'],
+            ],
+        ];
+
+        return array_replace_recursive($defaults, $this->settings['booking'] ?? []);
+    }
 }

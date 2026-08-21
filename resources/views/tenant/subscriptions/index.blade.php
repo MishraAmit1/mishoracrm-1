@@ -153,15 +153,26 @@ updatePreview();
     <a href="{{ route('tenant.subscriptions.index', ['status'=>'cancelled']) }}" class="s-tab {{ $status === 'cancelled' ? 'active' : '' }}">Cancelled ({{ $counts['cancelled'] }})</a>
 </div>
 
+{{-- Bulk action bar — hidden until at least one row is checked --}}
+<div id="bulkBar" style="display:none;align-items:center;gap:12px;padding:10px 14px;background:var(--accent-dim);border:1px solid rgba(var(--accent-rgb),.25);border-radius:var(--r-md);margin-bottom:12px">
+    <span id="bulkCount" style="font-size:13px;font-weight:600;color:var(--accent)"></span>
+    <button type="button" class="btn btn-secondary btn-sm" onclick="submitBulk('bulk-renew', 'Renew all selected subscriptions and create a draft invoice for each?')">Bulk Renew</button>
+    <button type="button" class="btn btn-sm" style="background:var(--red-dim);color:var(--red);border:1px solid rgba(255,82,87,.25)" onclick="submitBulk('bulk-cancel', 'Cancel all selected subscriptions?')">Bulk Cancel</button>
+    <button type="button" class="btn btn-secondary btn-sm" onclick="clearSelection()" style="margin-left:auto">Clear</button>
+</div>
+<form method="POST" id="bulkForm" style="display:none">@csrf <div id="bulkIdsContainer"></div></form>
+
 <div class="sub-table-wrap">
 <table class="sub-table">
     <thead>
         <tr>
+            <th style="width:32px"><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)" style="width:14px;height:14px;cursor:pointer"/></th>
             <th>Contact</th>
             <th>Service</th>
             <th>Start</th>
             <th>Expiry</th>
             <th>Days Left</th>
+            <th>Usage</th>
             <th>Status</th>
             <th style="width:160px"></th>
         </tr>
@@ -174,6 +185,11 @@ updatePreview();
             $isExpiring = $s->status === 'active' && !$isExpired && $days !== null && $days <= $reminderPrefs['days'];
         @endphp
         <tr>
+            <td data-label="">
+                @if($s->status === 'active')
+                <input type="checkbox" class="rowCheck" value="{{ $s->id }}" onchange="onRowCheckChange()" style="width:14px;height:14px;cursor:pointer"/>
+                @endif
+            </td>
             <td style="font-weight:600" data-label="Contact">
                 {{ $s->contact?->name ?? '—' }}
                 @if($s->contact?->company)<div style="font-size:11.5px;color:var(--text-400)">{{ $s->contact->company }}</div>@endif
@@ -183,6 +199,14 @@ updatePreview();
             <td class="mono" data-label="Expiry">{{ $s->expires_at?->format('d M Y') ?? '—' }}</td>
             <td class="mono" data-label="Days Left">
                 @if($days === null) — @elseif($days < 0) {{ abs($days) }}d overdue @else {{ $days }}d @endif
+            </td>
+            <td class="mono" data-label="Usage">
+                @if($s->hasQuantityTracking())
+                    {{ $s->used_quantity }} of {{ $s->total_quantity }}
+                    @if($s->isFullyUsed())<div style="font-size:11px;color:var(--red)">Fully used</div>@endif
+                @else
+                    —
+                @endif
             </td>
             <td data-label="Status">
                 @if($s->status === 'cancelled')
@@ -202,6 +226,12 @@ updatePreview();
                     @csrf
                     <button class="btn btn-secondary btn-sm" type="submit" title="Email/WhatsApp this customer now">Send Reminder</button>
                 </form>
+                @if($s->hasQuantityTracking() && !$s->isFullyUsed())
+                <form method="POST" action="{{ route('tenant.subscriptions.mark-used', $s->id) }}">
+                    @csrf
+                    <button class="btn btn-secondary btn-sm" type="submit" title="Record one unit as used">Mark 1 Used</button>
+                </form>
+                @endif
                 <form method="POST" action="{{ route('tenant.subscriptions.renew', $s->id) }}"
                       onsubmit="return confirm('Renew this subscription and create a draft invoice for {{ addslashes($s->contact?->name ?? 'this customer') }}?')">
                     @csrf
@@ -217,7 +247,7 @@ updatePreview();
         </tr>
         @empty
         <tr>
-            <td colspan="7" style="text-align:center;padding:40px;color:var(--text-400)">
+            <td colspan="9" style="text-align:center;padding:40px;color:var(--text-400)">
                 No subscriptions yet. <a href="{{ route('tenant.subscriptions.create') }}" style="color:var(--accent)">Add your first subscription</a>.
             </td>
         </tr>
@@ -227,5 +257,59 @@ updatePreview();
 </div>
 
 <div style="margin-top:14px">{{ $subscriptions->links() }}</div>
+
+<script>
+function checkedIds(){
+    return Array.from(document.querySelectorAll('.rowCheck:checked')).map(c => c.value);
+}
+
+function onRowCheckChange(){
+    const ids = checkedIds();
+    const bar = document.getElementById('bulkBar');
+    if(ids.length > 0){
+        bar.style.display = 'flex';
+        document.getElementById('bulkCount').textContent = ids.length + ' selected';
+    } else {
+        bar.style.display = 'none';
+    }
+    const all = document.querySelectorAll('.rowCheck');
+    document.getElementById('selectAll').checked = all.length > 0 && ids.length === all.length;
+}
+
+function toggleSelectAll(cb){
+    document.querySelectorAll('.rowCheck').forEach(c => c.checked = cb.checked);
+    onRowCheckChange();
+}
+
+function clearSelection(){
+    document.querySelectorAll('.rowCheck').forEach(c => c.checked = false);
+    document.getElementById('selectAll').checked = false;
+    onRowCheckChange();
+}
+
+const BULK_URLS = {
+    'bulk-renew': "{{ route('tenant.subscriptions.bulk-renew') }}",
+    'bulk-cancel': "{{ route('tenant.subscriptions.bulk-cancel') }}",
+};
+
+function submitBulk(action, confirmMsg){
+    const ids = checkedIds();
+    if(!ids.length) return;
+    if(!confirm(confirmMsg)) return;
+
+    const form = document.getElementById('bulkForm');
+    const container = document.getElementById('bulkIdsContainer');
+    container.innerHTML = '';
+    ids.forEach(id => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'ids[]';
+        input.value = id;
+        container.appendChild(input);
+    });
+    form.action = BULK_URLS[action];
+    form.submit();
+}
+</script>
 
 @endsection

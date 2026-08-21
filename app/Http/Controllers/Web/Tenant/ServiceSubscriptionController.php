@@ -128,7 +128,7 @@ class ServiceSubscriptionController extends Controller
     {
         $contacts = Contact::where('tenant_id', $this->tenantId())->orderBy('name')->get(['id', 'name', 'company']);
         $services = Service::where('tenant_id', $this->tenantId())->active()->orderBy('name')
-            ->get(['id', 'name', 'rate', 'billing_cycle', 'duration_value', 'duration_unit']);
+            ->get(['id', 'name', 'rate', 'billing_cycle', 'duration_value', 'duration_unit', 'total_quantity']);
 
         return view('tenant.subscriptions.create', compact('contacts', 'services'));
     }
@@ -149,6 +149,9 @@ class ServiceSubscriptionController extends Controller
 
         $data['tenant_id'] = $this->tenantId();
         $data['status']    = 'active';
+        // Snapshot the quantity limit from the catalog at creation time —
+        // later edits to the Service don't retroactively change it.
+        $data['total_quantity'] = Service::where('tenant_id', $this->tenantId())->find($data['service_id'])?->total_quantity;
 
         ServiceSubscription::create($data);
 
@@ -207,6 +210,25 @@ class ServiceSubscriptionController extends Controller
         return back()->with('success', 'Subscription cancelled.');
     }
 
+    // ── Mark 1 Used — for quantity-limited services (e.g. "10 sessions").
+    // No-op if the service isn't quantity-tracked or is already fully used.
+    public function markUsed(int|string $id): RedirectResponse
+    {
+        $subscription = $this->findSubscription($id);
+
+        if (!$subscription->hasQuantityTracking()) {
+            return back()->with('error', 'This service has no quantity limit to track.');
+        }
+
+        if ($subscription->isFullyUsed()) {
+            return back()->with('error', 'All units already used.');
+        }
+
+        $subscription->markUsed();
+
+        return back()->with('success', "Marked 1 used — {$subscription->used_quantity} of {$subscription->total_quantity} now used.");
+    }
+
     // ── Renew — extends expiry by the subscription's own snapshotted
     // duration, starting from today or the old expiry (whichever is later),
     // reactivates it, resets the reminder guard so the next cycle can
@@ -216,7 +238,60 @@ class ServiceSubscriptionController extends Controller
     public function renew(int|string $id): RedirectResponse
     {
         $subscription = $this->findSubscription($id);
-        $service      = $subscription->service;
+        $invoice      = $this->renewOne($subscription);
+        $expiryText   = $subscription->expires_at?->format('d M Y') ?? '—';
+
+        if ($invoice) {
+            return redirect()->route('tenant.invoices.show', $invoice->id)
+                ->with('success', "Subscription renewed — new expiry: {$expiryText}. Draft invoice {$invoice->number} created, review and send it.");
+        }
+
+        return back()->with('success', "Subscription renewed. New expiry: {$expiryText}");
+    }
+
+    // ── Bulk Renew — same per-subscription logic as renew(), one invoice
+    // per subscription, run over a set of selected IDs. ────────────────
+    public function bulkRenew(Request $request): RedirectResponse
+    {
+        $request->validate(['ids' => ['required', 'array', 'min:1'], 'ids.*' => ['integer']]);
+
+        $subscriptions = ServiceSubscription::where('tenant_id', $this->tenantId())
+            ->where('status', 'active')
+            ->whereIn('id', $request->ids)
+            ->get();
+
+        $invoiceCount = 0;
+        foreach ($subscriptions as $subscription) {
+            if ($this->renewOne($subscription)) {
+                $invoiceCount++;
+            }
+        }
+
+        return back()->with('success', "{$subscriptions->count()} subscription(s) renewed. {$invoiceCount} draft invoice(s) created.");
+    }
+
+    // ── Bulk Cancel ───────────────────────────────────────────────────
+    public function bulkCancel(Request $request): RedirectResponse
+    {
+        $request->validate(['ids' => ['required', 'array', 'min:1'], 'ids.*' => ['integer']]);
+
+        $count = ServiceSubscription::where('tenant_id', $this->tenantId())
+            ->whereIn('id', $request->ids)
+            ->update(['status' => 'cancelled']);
+
+        return back()->with('success', "{$count} subscription(s) cancelled.");
+    }
+
+    // Extends expiry by the subscription's own snapshotted duration
+    // (starting from today or the old expiry, whichever is later),
+    // reactivates it, resets the reminder guard so the next cycle can
+    // alert again, resets used_quantity for quantity-tracked services,
+    // and auto-creates a draft renewal Invoice prefilled with the
+    // subscribed service. Returns the created Invoice, or null if the
+    // subscription has no linked Service to bill.
+    private function renewOne(ServiceSubscription $subscription): ?Invoice
+    {
+        $service = $subscription->service;
 
         $base = $subscription->expires_at && $subscription->expires_at->gt(now())
             ? $subscription->expires_at
@@ -261,16 +336,10 @@ class ServiceSubscriptionController extends Controller
             'expires_at'         => $newExpiry ?? $subscription->expires_at,
             'expiry_notified_at' => null,
             'invoice_id'         => $invoice?->id ?? $subscription->invoice_id,
+            'used_quantity'      => $subscription->hasQuantityTracking() ? 0 : $subscription->used_quantity,
         ]);
 
-        $expiryText = $newExpiry?->format('d M Y') ?? '—';
-
-        if ($invoice) {
-            return redirect()->route('tenant.invoices.show', $invoice->id)
-                ->with('success', "Subscription renewed — new expiry: {$expiryText}. Draft invoice {$invoice->number} created, review and send it.");
-        }
-
-        return back()->with('success', "Subscription renewed. New expiry: {$expiryText}");
+        return $invoice;
     }
 
     // ── JSON — a contact's invoices, for the optional "link invoice" dropdown ──

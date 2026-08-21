@@ -75,6 +75,7 @@ class InvoiceController extends Controller
                 'expires_at'     => $expiresAt,
                 'duration_value' => $service->duration_value,
                 'duration_unit'  => $service->duration_unit,
+                'total_quantity' => $service->total_quantity,
                 'status'         => 'active',
             ]);
         }
@@ -141,7 +142,7 @@ class InvoiceController extends Controller
         $statuses = Invoice::statuses();
         $tenant   = auth()->user()->tenant;
         $products = Product::where('tenant_id', $this->tenantId())->active()->orderBy('name')->get(['id','product_code','name','description','rate','tax_percent','hsn','unit']);
-        $services = Service::where('tenant_id', $this->tenantId())->active()->orderBy('name')->get(['id','service_code','name','description','rate','tax_percent','hsn','unit','billing_cycle','duration_value','duration_unit']);
+        $services = Service::where('tenant_id', $this->tenantId())->active()->orderBy('name')->get(['id','service_code','name','description','rate','tax_percent','hsn','unit','billing_cycle','duration_value','duration_unit','is_package']);
 
         return view('tenant.invoices.create', compact(
             'contacts', 'contact', 'quotation',
@@ -242,7 +243,7 @@ class InvoiceController extends Controller
         $statuses = Invoice::statuses();
         $tenant   = auth()->user()->tenant;
         $products = Product::where('tenant_id', $this->tenantId())->active()->orderBy('name')->get(['id','product_code','name','description','rate','tax_percent','hsn','unit']);
-        $services = Service::where('tenant_id', $this->tenantId())->active()->orderBy('name')->get(['id','service_code','name','description','rate','tax_percent','hsn','unit','billing_cycle','duration_value','duration_unit']);
+        $services = Service::where('tenant_id', $this->tenantId())->active()->orderBy('name')->get(['id','service_code','name','description','rate','tax_percent','hsn','unit','billing_cycle','duration_value','duration_unit','is_package']);
 
         return view('tenant.invoices.edit', compact(
             'invoice', 'contacts', 'statuses', 'tenant', 'products', 'services'

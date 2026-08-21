@@ -58,6 +58,20 @@ Route::prefix('/quote')->name('public.quotations.')->controller(\App\Http\Contro
 });
 
 // ══════════════════════════════════════════════════════════════════
+// PUBLIC — Customer-facing appointment booking (token-guarded, no auth)
+// ══════════════════════════════════════════════════════════════════
+
+Route::prefix('/book')->name('public.booking.')->controller(\App\Http\Controllers\Public\AppointmentController::class)->group(function () {
+    Route::get('/appointment/{token}', 'showAppointment')->name('appointment');
+    Route::get('/{token}', 'show')->name('show');
+    Route::get('/{token}/slots', 'slots')->name('slots');
+    Route::middleware('throttle:20,1')->group(function () {
+        Route::post('/{token}/store', 'store')->name('store');
+        Route::post('/appointment/{token}/cancel', 'cancelByCustomer')->name('cancel');
+    });
+});
+
+// ══════════════════════════════════════════════════════════════════
 // RAZORPAY WEBHOOK (no CSRF, no auth — Razorpay se aata hai)
 // ══════════════════════════════════════════════════════════════════
 
@@ -456,22 +470,74 @@ Route::middleware(['tenant', 'auth', 'subscription'])
         });
 
         // Service Subscriptions routes — customer-level tracking + expiry,
-        // gated behind the same Service module toggle
+        // gated behind the same Service module toggle, plus per-action
+        // permissions so tenant admins can control which staff can send
+        // customer messages, cancel subscriptions, or edit templates.
         Route::prefix('/subscriptions')->name('subscriptions.')->middleware('module:service')->group(function () {
             Route::controller(Tenant\ServiceSubscriptionController::class)->group(function () {
-                Route::get('/', 'index')->name('index');
-                Route::get('/create', 'create')->name('create');
-                Route::post('/', 'store')->name('store');
-                Route::get('/contact-invoices/{contactId}', 'contactInvoices')->name('contact-invoices');
-                Route::post('/preferences', 'updatePreferences')->name('preferences');
-                Route::post('/preferences/test-email', 'sendTestEmail')->name('preferences.test-email');
-                Route::get('/history', 'history')->name('history');
-                Route::get('/{id}/edit', 'edit')->name('edit');
-                Route::put('/{id}', 'update')->name('update');
-                Route::delete('/{id}', 'destroy')->name('destroy');
-                Route::post('/{id}/cancel', 'cancel')->name('cancel');
-                Route::post('/{id}/renew', 'renew')->name('renew');
-                Route::post('/{id}/send-reminder', 'sendReminder')->name('send-reminder');
+                Route::middleware('permission:subscriptions.view')->group(function () {
+                    Route::get('/', 'index')->name('index');
+                    Route::get('/history', 'history')->name('history');
+                    Route::get('/contact-invoices/{contactId}', 'contactInvoices')->name('contact-invoices');
+                });
+                Route::middleware('permission:subscriptions.create')->group(function () {
+                    Route::get('/create', 'create')->name('create');
+                    Route::post('/', 'store')->name('store');
+                });
+                Route::middleware('permission:subscriptions.manage_templates')->group(function () {
+                    Route::post('/preferences', 'updatePreferences')->name('preferences');
+                    Route::post('/preferences/test-email', 'sendTestEmail')->name('preferences.test-email');
+                });
+                Route::middleware('permission:subscriptions.edit')->group(function () {
+                    Route::get('/{id}/edit', 'edit')->name('edit');
+                    Route::put('/{id}', 'update')->name('update');
+                });
+                Route::delete('/{id}', 'destroy')->name('destroy')->middleware('permission:subscriptions.delete');
+                Route::post('/{id}/cancel', 'cancel')->name('cancel')->middleware('permission:subscriptions.cancel');
+                Route::post('/bulk-renew', 'bulkRenew')->name('bulk-renew')->middleware('permission:subscriptions.renew');
+                Route::post('/bulk-cancel', 'bulkCancel')->name('bulk-cancel')->middleware('permission:subscriptions.cancel');
+                Route::post('/{id}/mark-used', 'markUsed')->name('mark-used')->middleware('permission:subscriptions.edit');
+                Route::post('/{id}/renew', 'renew')->name('renew')->middleware('permission:subscriptions.renew');
+                Route::post('/{id}/send-reminder', 'sendReminder')->name('send-reminder')->middleware('permission:subscriptions.send_reminder');
+            });
+        });
+
+        // Appointments / Booking routes — gated behind the Service module toggle
+        Route::prefix('/appointments')->name('appointments.')->middleware('module:service')->group(function () {
+            Route::controller(Tenant\AppointmentController::class)->group(function () {
+                Route::middleware('permission:appointments.view')->group(function () {
+                    Route::get('/', 'index')->name('index');
+                });
+                Route::middleware('permission:appointments.create')->group(function () {
+                    Route::get('/create', 'create')->name('create');
+                    Route::post('/', 'store')->name('store');
+                    Route::get('/slots', 'slots')->name('slots');
+                });
+                Route::middleware('permission:appointments.manage_settings')->group(function () {
+                    Route::get('/settings', 'settings')->name('settings');
+                    Route::post('/settings', 'updateSettings')->name('settings.update');
+                });
+                Route::post('/{id}/status', 'updateStatus')->name('status')->middleware('permission:appointments.edit');
+                Route::delete('/{id}', 'destroy')->name('destroy')->middleware('permission:appointments.cancel');
+            });
+        });
+
+        // Time Tracking routes — gated behind the Service module toggle
+        Route::prefix('/time-entries')->name('time-entries.')->middleware('module:service')->group(function () {
+            Route::controller(Tenant\TimeEntryController::class)->group(function () {
+                Route::middleware('permission:time_entries.view')->group(function () {
+                    Route::get('/', 'index')->name('index');
+                });
+                Route::middleware('permission:time_entries.create')->group(function () {
+                    Route::post('/start', 'start')->name('start');
+                    Route::post('/{id}/stop', 'stop')->name('stop');
+                    Route::post('/', 'store')->name('store');
+                });
+                Route::middleware('permission:time_entries.edit')->group(function () {
+                    Route::put('/{id}', 'update')->name('update');
+                });
+                Route::delete('/{id}', 'destroy')->name('destroy')->middleware('permission:time_entries.delete');
+                Route::post('/convert-to-invoice', 'convertToInvoice')->name('convert-to-invoice')->middleware('permission:time_entries.convert_to_invoice');
             });
         });
 

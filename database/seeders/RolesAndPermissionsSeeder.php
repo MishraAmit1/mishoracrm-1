@@ -121,6 +121,30 @@ class RolesAndPermissionsSeeder extends Seeder
             'work_orders.manage',
             'work_orders.delete',
 
+            // ── Service Subscriptions ─────────────────────────────
+            'subscriptions.view',
+            'subscriptions.create',
+            'subscriptions.edit',
+            'subscriptions.delete',
+            'subscriptions.cancel',
+            'subscriptions.renew',
+            'subscriptions.send_reminder',
+            'subscriptions.manage_templates', // reminder channels, timing, message templates
+
+            // ── Appointments / Booking ─────────────────────────────
+            'appointments.view',
+            'appointments.create',
+            'appointments.edit',
+            'appointments.cancel',
+            'appointments.manage_settings', // business hours, slot duration, bookable services
+
+            // ── Time Tracking ──────────────────────────────────────
+            'time_entries.view',
+            'time_entries.create',
+            'time_entries.edit',
+            'time_entries.delete',
+            'time_entries.convert_to_invoice',
+
             // ── Staff ─────────────────────────────────────────────
             'staff.view',
             'staff.create',
@@ -203,6 +227,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'reports.view_basic',
             'notifications.view',
             'notifications.manage_preferences',
+            'subscriptions.view',
+            'subscriptions.send_reminder',
+            'appointments.view',
+            'appointments.create',
+            'time_entries.view',
+            'time_entries.create',
         ]);
 
         $this->command->info('✅ Permissions seeded: ' . Permission::count());

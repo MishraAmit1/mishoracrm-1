@@ -103,7 +103,8 @@ window.buildProductSearch = function(rowIndex, containerEl) {
                 div.dataset.idx = idx;
                 div.innerHTML = `
                     <div>
-                        ${p._kind === 'service' ? '<span class="ps-kind-tag">Service</span>' : ''}
+                        ${p._kind === 'service' && p.is_package ? '<span class="ps-kind-tag">📦 Package</span>' : ''}
+                        ${p._kind === 'service' && !p.is_package ? '<span class="ps-kind-tag">Service</span>' : ''}
                         ${p.product_code ? `<span class="ps-code">${esc(p.product_code)}</span>` : ''}
                         ${p.service_code ? `<span class="ps-code">${esc(p.service_code)}</span>` : ''}
                         <span class="ps-name">${esc(p.name)}</span>

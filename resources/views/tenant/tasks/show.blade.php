@@ -804,6 +804,95 @@
 
             </div>
 
+            @if(auth()->user()->tenant?->hasModuleEnabled('service'))
+            {{-- TIME TRACKING --}}
+            @php
+                $runningEntry = $task->timeEntries->firstWhere(fn($e) => $e->isRunning() && $e->user_id === auth()->id());
+                $taskContactId = $task->taskable_type === \App\Models\Contact::class ? $task->taskable_id : null;
+            @endphp
+            <div class="ts-card" style="margin-top:18px">
+                <div class="ts-head">
+                    <div>
+                        <div class="ts-title">Time Tracking</div>
+                        <div class="ts-sub">{{ $task->actual_hours ? number_format($task->actual_hours, 2) . ' hrs logged' : 'No time logged yet' }}</div>
+                    </div>
+                </div>
+                <div class="ts-body">
+                    @if($runningEntry)
+                    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px">
+                        <div style="width:10px;height:10px;border-radius:50%;background:var(--red);animation:tt-pulse 1.5s infinite"></div>
+                        <div class="mono" id="taskLiveTimer" style="font-size:18px;font-weight:700;color:var(--accent)" data-started="{{ $runningEntry->started_at->toIso8601String() }}">00:00:00</div>
+                        <form method="POST" action="{{ route('tenant.time-entries.stop', $runningEntry->id) }}">
+                            @csrf
+                            <button class="btn btn-primary btn-sm" type="submit">Stop Timer</button>
+                        </form>
+                    </div>
+                    <style>@keyframes tt-pulse { 0%,100%{opacity:1} 50%{opacity:.3} }</style>
+                    <script>
+                    (function(){
+                        const el = document.getElementById('taskLiveTimer');
+                        if(!el) return;
+                        const started = new Date(el.dataset.started).getTime();
+                        setInterval(() => {
+                            const diff = Math.floor((Date.now() - started) / 1000);
+                            const h = String(Math.floor(diff/3600)).padStart(2,'0');
+                            const m = String(Math.floor((diff%3600)/60)).padStart(2,'0');
+                            const s = String(diff%60).padStart(2,'0');
+                            el.textContent = `${h}:${m}:${s}`;
+                        }, 1000);
+                    })();
+                    </script>
+                    @else
+                    <form method="POST" action="{{ route('tenant.time-entries.start') }}" style="margin-bottom:14px">
+                        @csrf
+                        <input type="hidden" name="task_id" value="{{ $task->id }}"/>
+                        @if($taskContactId)<input type="hidden" name="contact_id" value="{{ $taskContactId }}"/>@endif
+                        <button class="btn btn-primary btn-sm" type="submit">▶ Start Timer</button>
+                    </form>
+                    @endif
+
+                    <details style="margin-bottom:14px">
+                        <summary style="cursor:pointer;font-size:12.5px;color:var(--text-300)">+ Log time manually</summary>
+                        <form method="POST" action="{{ route('tenant.time-entries.store') }}" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:flex-end">
+                            @csrf
+                            <input type="hidden" name="task_id" value="{{ $task->id }}"/>
+                            @if($taskContactId)<input type="hidden" name="contact_id" value="{{ $taskContactId }}"/>@endif
+                            <div>
+                                <label style="font-size:11px;color:var(--text-400);display:block;margin-bottom:4px">Date</label>
+                                <input type="date" name="date" value="{{ now()->toDateString() }}" required style="padding:7px 10px;border:1.5px solid var(--border-default);border-radius:6px;background:var(--bg-input);color:var(--text-100);font-size:12.5px"/>
+                            </div>
+                            <div>
+                                <label style="font-size:11px;color:var(--text-400);display:block;margin-bottom:4px">Hours</label>
+                                <input type="number" name="hours" step="0.25" min="0.25" max="24" required style="width:80px;padding:7px 10px;border:1.5px solid var(--border-default);border-radius:6px;background:var(--bg-input);color:var(--text-100);font-size:12.5px"/>
+                            </div>
+                            <button class="btn btn-secondary btn-sm" type="submit">Log Time</button>
+                        </form>
+                    </details>
+
+                    @if($task->timeEntries->isNotEmpty())
+                    <table style="width:100%;border-collapse:collapse">
+                        <thead>
+                            <tr>
+                                <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-400);text-transform:uppercase;border-bottom:1px solid var(--border-subtle)">Staff</th>
+                                <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-400);text-transform:uppercase;border-bottom:1px solid var(--border-subtle)">Date</th>
+                                <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-400);text-transform:uppercase;border-bottom:1px solid var(--border-subtle)">Duration</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($task->timeEntries as $entry)
+                            <tr>
+                                <td style="padding:6px 8px;font-size:12.5px;color:var(--text-200);border-bottom:1px solid var(--border-subtle)">{{ $entry->user?->name ?? '—' }}</td>
+                                <td style="padding:6px 8px;font-size:12.5px;color:var(--text-200);border-bottom:1px solid var(--border-subtle)" class="mono">{{ $entry->started_at->format('d M Y') }}</td>
+                                <td style="padding:6px 8px;font-size:12.5px;color:var(--text-200);border-bottom:1px solid var(--border-subtle)" class="mono">{{ $entry->isRunning() ? 'Running…' : $entry->durationHours() . 'h' }}</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                    @endif
+                </div>
+            </div>
+            @endif
+
             {{-- CHECKLIST --}}
             <div class="ts-card" style="margin-top:18px">
 

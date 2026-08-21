@@ -81,6 +81,11 @@ class Task extends Model
         return $this->hasMany(TaskAttachment::class)->latest();
     }
 
+    public function timeEntries(): HasMany
+    {
+        return $this->hasMany(TimeEntry::class)->latest('started_at');
+    }
+
     public function watchers(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'task_watchers')->withTimestamps();
@@ -140,6 +145,17 @@ class Task extends Model
     public function isRecurring(): bool
     {
         return in_array($this->recurrence_type, ['daily', 'weekly', 'monthly'], true);
+    }
+
+    // Sums all logged time entries (completed ones only — a still-running
+    // timer's elapsed time isn't counted until it's stopped) and writes the
+    // total to actual_hours, keeping the existing tasks/show.blade.php
+    // "Est. Xh · Actual Yh" display accurate.
+    public function recalculateActualHours(): void
+    {
+        $totalMinutes = $this->timeEntries()->whereNotNull('duration_minutes')->sum('duration_minutes');
+
+        $this->update(['actual_hours' => $totalMinutes > 0 ? round($totalMinutes / 60, 2) : null]);
     }
 
     public function hasIncompleteDependencies(): bool

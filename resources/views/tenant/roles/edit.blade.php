@@ -90,6 +90,9 @@
         'reports'       => '📊',
         'settings'      => '⚙️',
         'notifications' => '🔔',
+        'subscriptions' => '📆',
+        'appointments'  => '🗓️',
+        'time_entries'  => '⏱️',
     ];
 @endphp
 

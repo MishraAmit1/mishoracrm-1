@@ -45,11 +45,38 @@
 <div class="pf-card">
     <div class="pf-body">
 
+        <div class="field" style="flex-direction:row;align-items:center;gap:10px;padding:10px 12px;background:var(--bg-elevated);border-radius:var(--r-sm)">
+            <input type="checkbox" name="is_package" value="1" id="isPackage"
+                   {{ old('is_package') ? 'checked' : '' }} onchange="onPackageToggle()"
+                   style="width:16px;height:16px;cursor:pointer"/>
+            <label for="isPackage" style="font-size:13.5px;color:var(--text-200);cursor:pointer">
+                This is a Package (bundle of other services at a combined price)
+            </label>
+        </div>
+
         <div class="field">
             <label class="fl">Name <span style="color:var(--red)">*</span></label>
             <input type="text" name="name" class="fi {{ $errors->has('name')?'border-red':'' }}"
                    value="{{ old('name') }}" placeholder="e.g. Website Maintenance" required autofocus/>
             @error('name') <span class="fe">{{ $message }}</span> @enderror
+        </div>
+
+        <div class="field" id="packageComponentsField" style="{{ old('is_package') ? '' : 'display:none' }}">
+            <label class="fl">Included Services</label>
+            <div style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;padding:10px 12px;background:var(--bg-input);border:1.5px solid var(--border-default);border-radius:var(--r-sm)">
+                @forelse($availableComponents as $c)
+                @php $oldSelected = old('component_service_ids', []); @endphp
+                <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-200);cursor:pointer">
+                    <input type="checkbox" name="component_service_ids[]" value="{{ $c->id }}"
+                           {{ in_array($c->id, $oldSelected) ? 'checked' : '' }}
+                           style="width:14px;height:14px;cursor:pointer"/>
+                    {{ $c->name }} <span style="color:var(--text-400)">(₹{{ number_format($c->rate, 2) }})</span>
+                </label>
+                @empty
+                <span style="font-size:12.5px;color:var(--text-400)">Koi standalone service nahi hai — pehle kuch services add karo, phir unhe package mein bundle kar sakte ho.</span>
+                @endforelse
+            </div>
+            <span style="font-size:11.5px;color:var(--text-400)">Ye sirf reference ke liye hai (customer ko dikhane ke liye "kya kya included hai") — Rate/Tax/Billing Cycle neeche khud set karo, ye components ke rate se automatically calculate nahi hote.</span>
         </div>
 
         <div class="fg2">
@@ -133,6 +160,13 @@
             <span style="font-size:11.5px;color:var(--text-400)">Poora commitment/agreement kitne time ka hai — billing frequency se alag ho sakta hai. Sirf tab bharo jab customer ek fixed period ke liye lock-in ho. E.g. AMC: quarterly billing par 12-month contract &middot; Coaching course: monthly fees par 6-month course. Simple monthly/yearly service ho to khali chhod do.</span>
         </div>
 
+        <div class="field">
+            <label class="fl">Total Quantity <span style="font-weight:400;text-transform:none;color:var(--text-400)">(optional)</span></label>
+            <input type="number" name="total_quantity" class="fi" min="1"
+                   value="{{ old('total_quantity') }}" placeholder="e.g. 10"/>
+            <span style="font-size:11.5px;color:var(--text-400)">Agar service ek fixed count ki hai (jaise "10 sessions" package), yahan 10 daalo — customer ki subscription mein "X of 10 used" track hoga. Membership jaisi unlimited service ke liye khali chhod do.</span>
+        </div>
+
         <div class="field" style="flex-direction:row;align-items:center;gap:10px">
             <input type="checkbox" name="is_active" value="1" id="is_active"
                    {{ old('is_active', true) ? 'checked' : '' }}
@@ -171,6 +205,11 @@ function onBillingCycleChange(){
     const cycle = document.getElementById('billingCycleSelect').value;
     const field = document.getElementById('durationField');
     field.style.display = cycle === 'one_time' ? 'none' : '';
+}
+
+function onPackageToggle(){
+    const checked = document.getElementById('isPackage').checked;
+    document.getElementById('packageComponentsField').style.display = checked ? '' : 'none';
 }
 </script>
 

@@ -70,7 +70,15 @@
         @forelse($services as $s)
         <tr>
             <td class="mono" style="font-size:12px;color:var(--text-300)" data-label="Code">{{ $s->service_code ?: '—' }}</td>
-            <td style="font-weight:600" data-label="Name">{{ $s->name }}</td>
+            <td style="font-weight:600" data-label="Name">
+                {{ $s->name }}
+                @if($s->is_package)
+                    <span style="display:inline-block;padding:1px 7px;border-radius:20px;font-size:10.5px;font-weight:600;background:var(--accent-dim);color:var(--accent);margin-left:4px">📦 Package</span>
+                @endif
+                @if($s->is_package && $s->packageComponents->isNotEmpty())
+                    <div style="font-size:11px;color:var(--text-400);margin-top:2px">{{ $s->packageComponents->pluck('name')->join(', ') }}</div>
+                @endif
+            </td>
             <td style="color:var(--text-300);font-size:12.5px;max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" data-label="Description">
                 {{ $s->description ?: '—' }}
             </td>
