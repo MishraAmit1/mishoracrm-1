@@ -114,4 +114,30 @@ class Tenant extends Model
     {
         return (bool) $this->subscription?->plan?->hasFeature($module);
     }
+
+    // ── Tenant-controlled preferences (opt-in, off by default) ──────
+    // settings['preferences'][$key] — same array-in-JSON convention as
+    // settings['modules']/settings['integrations'], but tenant-admin
+    // self-service rather than superadmin-controlled.
+    public function wantsSubscriptionReminder(string $channel): bool
+    {
+        return (bool) ($this->settings['preferences']["subscription_reminder_{$channel}"] ?? false);
+    }
+
+    // How many days before expiry the automatic reminder should fire.
+    public function subscriptionReminderDays(): int
+    {
+        $days = (int) ($this->settings['preferences']['subscription_reminder_days'] ?? 7);
+
+        return $days > 0 ? $days : 7;
+    }
+
+    // Tenant's custom message template for a channel, or null to use the
+    // built-in default (see SubscriptionReminderService::DEFAULT_*).
+    public function subscriptionReminderTemplate(string $key): ?string
+    {
+        $value = $this->settings['preferences']["subscription_reminder_{$key}"] ?? null;
+
+        return is_string($value) && trim($value) !== '' ? $value : null;
+    }
 }

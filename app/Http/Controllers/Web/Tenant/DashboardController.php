@@ -7,6 +7,7 @@ use App\Models\Deal;
 use App\Models\Followup;
 use App\Models\Invoice;
 use App\Models\Lead;
+use App\Models\ServiceSubscription;
 use App\Models\Task;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -330,6 +331,17 @@ class DashboardController extends Controller
         // ── New leads badge for sidebar ───────────────────────────
         $newLeadsCount = $stats['new_leads_count'];
 
+        // ── Service subscription alerts (only when the module's on) ──
+        $subscriptionAlerts = null;
+        $tenant = auth()->user()->tenant;
+        if ($tenant?->hasModuleEnabled('service')) {
+            $reminderDays = $tenant->subscriptionReminderDays();
+            $subscriptionAlerts = [
+                'expiring' => ServiceSubscription::where('tenant_id', $tenantId)->expiringSoon($reminderDays)->count(),
+                'expired'  => ServiceSubscription::where('tenant_id', $tenantId)->expired()->count(),
+            ];
+        }
+
         // ── Compile all data ──────────────────────────────────────
         $data = compact(
             'stats',
@@ -339,7 +351,8 @@ class DashboardController extends Controller
             'todayTasks',
             'activities',
             'leadSources',
-            'newLeadsCount'
+            'newLeadsCount',
+            'subscriptionAlerts'
         );
 
         // ── Web or API ────────────────────────────────────────────

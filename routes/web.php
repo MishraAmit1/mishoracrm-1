@@ -455,6 +455,26 @@ Route::middleware(['tenant', 'auth', 'subscription'])
             });
         });
 
+        // Service Subscriptions routes — customer-level tracking + expiry,
+        // gated behind the same Service module toggle
+        Route::prefix('/subscriptions')->name('subscriptions.')->middleware('module:service')->group(function () {
+            Route::controller(Tenant\ServiceSubscriptionController::class)->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::get('/create', 'create')->name('create');
+                Route::post('/', 'store')->name('store');
+                Route::get('/contact-invoices/{contactId}', 'contactInvoices')->name('contact-invoices');
+                Route::post('/preferences', 'updatePreferences')->name('preferences');
+                Route::post('/preferences/test-email', 'sendTestEmail')->name('preferences.test-email');
+                Route::get('/history', 'history')->name('history');
+                Route::get('/{id}/edit', 'edit')->name('edit');
+                Route::put('/{id}', 'update')->name('update');
+                Route::delete('/{id}', 'destroy')->name('destroy');
+                Route::post('/{id}/cancel', 'cancel')->name('cancel');
+                Route::post('/{id}/renew', 'renew')->name('renew');
+                Route::post('/{id}/send-reminder', 'sendReminder')->name('send-reminder');
+            });
+        });
+
         // Vendors routes
         Route::prefix('/vendors')->name('vendors.')->group(function () {
             Route::controller(Tenant\VendorController::class)->group(function () {

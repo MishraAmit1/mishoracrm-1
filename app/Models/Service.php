@@ -5,6 +5,7 @@ namespace App\Models;
 use App\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Service extends Model
@@ -47,6 +48,11 @@ class Service extends Model
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
+    }
+
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(ServiceSubscription::class);
     }
 
     public function scopeActive($query)

@@ -222,6 +222,16 @@ return [
             'message'  => 'Batch {{batch_number}} of {{name}} ({{quantity}} left) expires on {{expiry_date}}',
         ],
 
+        // ── Services ──────────────────────────────────────────────
+        'subscription.expiring' => [
+            'label'    => 'Subscription Expiring Soon',
+            'icon'     => 'clock',
+            'color'    => 'amber',
+            'group'    => 'Services',
+            'channels' => ['in_app', 'email'],
+            'message'  => '{{contact_name}}\'s {{service_name}} subscription expires on {{expiry_date}}',
+        ],
+
         // ── Purchase ──────────────────────────────────────────────
         'purchase_request.submitted' => [
             'label'    => 'New Purchase Request',

@@ -67,6 +67,11 @@ class Contact extends Model
         return $this->hasMany(Invoice::class)->latest();
     }
 
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(ServiceSubscription::class)->latest();
+    }
+
     public function emailLogs(): HasMany
     {
         return $this->hasMany(EmailLog::class)->latest();

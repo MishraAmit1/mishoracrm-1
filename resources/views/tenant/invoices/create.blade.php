@@ -379,9 +379,29 @@ window.fillRowFromProduct = function(i, p) {
         if (pidInput) pidInput.value = p.id;
         if (sidInput) sidInput.value = '';
     }
+    renderSubscriptionToggle(i, p);
     calcRow(i);
     calcTotals();
 };
+
+// Recurring/duration-bearing service → show a "Track as subscription"
+// checkbox on that row so saving the invoice can auto-create a
+// ServiceSubscription without a separate manual step.
+function renderSubscriptionToggle(i, p){
+    const box = document.getElementById('sub_track_' + i);
+    if (!box) return;
+
+    const isRecurring = p._kind === 'service' && p.billing_cycle && p.billing_cycle !== 'one_time';
+    if (!isRecurring) { box.innerHTML = ''; return; }
+
+    const cycleLabel = p.billing_cycle.charAt(0).toUpperCase() + p.billing_cycle.slice(1);
+    box.innerHTML = `
+        <label style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-300);margin-top:5px;cursor:pointer">
+            <input type="checkbox" name="items[${i}][track_subscription]" value="1" checked style="width:13px;height:13px;cursor:pointer"/>
+            Track as subscription (${cycleLabel}${p.duration_value && p.duration_unit ? ' · ' + p.duration_value + ' ' + p.duration_unit : ''})
+        </label>
+    `;
+}
 
 // ── Add row ───────────────────────────────────────────────────────
 function addRow(desc = '', qty = 1, rate = '', taxPct = '', productId = '', serviceId = '') {
@@ -404,6 +424,7 @@ function addRow(desc = '', qty = 1, rate = '', taxPct = '', productId = '', serv
                    placeholder="Item description"
                    value="${escHtml(desc)}"
                    required/>
+            <div id="sub_track_${i}"></div>
         </td>
         <td data-label="Qty">
             <input type="number"
@@ -445,6 +466,9 @@ function addRow(desc = '', qty = 1, rate = '', taxPct = '', productId = '', serv
 
     tbody.appendChild(tr);
     buildProductSearch(i, document.getElementById('ps_container_' + i));
+    if (serviceId && window.SERVICES && window.SERVICES[serviceId]) {
+        renderSubscriptionToggle(i, {...window.SERVICES[serviceId], _kind: 'service'}, false);
+    }
     calcTotals();
 }
 

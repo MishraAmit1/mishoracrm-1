@@ -181,6 +181,25 @@
         </a>
     </div>
 
+    @if($subscriptionAlerts && ($subscriptionAlerts['expiring'] > 0 || $subscriptionAlerts['expired'] > 0))
+    <a href="{{ route('tenant.subscriptions.index', ['status' => $subscriptionAlerts['expired'] > 0 ? 'expired' : 'expiring']) }}"
+       style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:#FFF4E5;border:1px solid rgba(179,107,0,.25);border-radius:var(--r-md);margin-bottom:16px;text-decoration:none;color:#B36B00;font-size:13.5px;font-weight:600">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:18px;height:18px;flex-shrink:0">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+        </svg>
+        <span>
+            @if($subscriptionAlerts['expiring'] > 0)
+                {{ $subscriptionAlerts['expiring'] }} subscription(s) expiring soon
+            @endif
+            @if($subscriptionAlerts['expiring'] > 0 && $subscriptionAlerts['expired'] > 0) &middot; @endif
+            @if($subscriptionAlerts['expired'] > 0)
+                {{ $subscriptionAlerts['expired'] }} already expired
+            @endif
+            — click to review →
+        </span>
+    </a>
+    @endif
+
     {{-- Stat cards --}}
     <div class="stats-grid">
         <div class="stat-card s-blue">

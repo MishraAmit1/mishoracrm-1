@@ -9,6 +9,7 @@ use App\Models\InvoicePdfSetting;
 use App\Models\Product;
 use App\Models\Quotation;
 use App\Models\Service;
+use App\Models\ServiceSubscription;
 use App\Services\EmailService;
 use App\Services\InvoicePdfTemplateRenderer;
 use App\Services\NotificationService;
@@ -32,6 +33,51 @@ class InvoiceController extends Controller
         return Invoice::where('id', $id)
             ->where('tenant_id', $this->tenantId())
             ->firstOrFail();
+    }
+
+    // Auto-creates a ServiceSubscription for any line item the staff
+    // explicitly checked "Track as subscription" on — idempotent per
+    // (invoice, service) pair so re-saving the same invoice never
+    // creates duplicates. Unchecking the box on a later edit does NOT
+    // remove a subscription already created; cancel it manually instead.
+    private function syncSubscriptionsFromItems(Invoice $invoice, array $items): void
+    {
+        foreach ($items as $item) {
+            if (empty($item['track_subscription']) || empty($item['service_id'])) {
+                continue;
+            }
+
+            $service = Service::where('tenant_id', $this->tenantId())->find($item['service_id']);
+            if (!$service) {
+                continue;
+            }
+
+            $alreadyTracked = ServiceSubscription::where('invoice_id', $invoice->id)
+                ->where('service_id', $service->id)
+                ->exists();
+            if ($alreadyTracked) {
+                continue;
+            }
+
+            $expiresAt = ServiceSubscription::computeExpiry(
+                $invoice->date,
+                $service->duration_value,
+                $service->duration_unit,
+                $service->billing_cycle
+            );
+
+            ServiceSubscription::create([
+                'tenant_id'      => $this->tenantId(),
+                'contact_id'     => $invoice->contact_id,
+                'service_id'     => $service->id,
+                'invoice_id'     => $invoice->id,
+                'starts_at'      => $invoice->date,
+                'expires_at'     => $expiresAt,
+                'duration_value' => $service->duration_value,
+                'duration_unit'  => $service->duration_unit,
+                'status'         => 'active',
+            ]);
+        }
     }
 
     // ── Index ─────────────────────────────────────────────────────
@@ -116,6 +162,7 @@ class InvoiceController extends Controller
             'items.*.description' => ['required', 'string'],
             'items.*.quantity'    => ['required', 'numeric', 'min:0.01'],
             'items.*.rate'        => ['required', 'numeric', 'min:0'],
+            'items.*.track_subscription' => ['nullable', 'boolean'],
             'discount'    => ['nullable', 'numeric', 'min:0'],
             'tax_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'notes'       => ['nullable', 'string'],
@@ -146,6 +193,8 @@ class InvoiceController extends Controller
 
         // Sale reduces finished-good stock for any item linked to a product.
         StockService::applyInvoiceItems($items, -1);
+
+        $this->syncSubscriptionsFromItems($invoice, $items);
 
         WebhookService::fire('invoice.created', $invoice->tenant_id, [
             'id'           => $invoice->id,
@@ -219,6 +268,7 @@ class InvoiceController extends Controller
             'items.*.description' => ['required', 'string'],
             'items.*.quantity'    => ['required', 'numeric', 'min:0.01'],
             'items.*.rate'        => ['required', 'numeric', 'min:0'],
+            'items.*.track_subscription' => ['nullable', 'boolean'],
             'discount'    => ['nullable', 'numeric', 'min:0'],
             'tax_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'notes'       => ['nullable', 'string'],
@@ -246,6 +296,8 @@ class InvoiceController extends Controller
         ]));
 
         StockService::applyInvoiceItems($items, -1);
+
+        $this->syncSubscriptionsFromItems($invoice, $items);
 
         return redirect()
             ->route('tenant.invoices.show', $invoice->id)
