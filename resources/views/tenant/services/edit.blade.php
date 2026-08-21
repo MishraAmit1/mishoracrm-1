@@ -1,0 +1,179 @@
+@extends('layouts.app')
+@section('title', 'Edit Service')
+
+@push('styles')
+<style>
+.pf-card  { background:var(--bg-surface); border:1px solid var(--border-default); border-radius:var(--r-lg); overflow:hidden; max-width:680px; }
+.pf-body  { padding:24px; display:flex; flex-direction:column; gap:16px; }
+.pf-foot  { padding:14px 24px; background:var(--bg-elevated); border-top:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center; }
+.field    { display:flex; flex-direction:column; gap:6px; }
+.fl       { font-size:12px; font-weight:600; color:var(--text-200); text-transform:uppercase; letter-spacing:.4px; }
+.fi       { padding:9px 13px; background:var(--bg-input); border:1.5px solid var(--border-default); border-radius:var(--r-sm); color:var(--text-100); font-family:var(--font); font-size:14px; outline:none; transition:border-color .15s; width:100%; }
+.fi:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-dim); }
+.fg2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.fe  { font-size:12px; color:var(--red); }
+@media(max-width:640px) { .fg2 { grid-template-columns:1fr; } }
+</style>
+@endpush
+
+@section('content')
+
+@php
+    $units = ['Hour','Day','Job','Visit','Month','Session','Piece'];
+    $oldUnit = old('unit', $service->unit);
+@endphp
+
+<div class="page-head">
+    <div>
+        <div style="font-size:12px;color:var(--text-300);margin-bottom:4px">
+            <a href="{{ route('tenant.services.index') }}" style="color:var(--text-300);text-decoration:none">Services</a>
+            › Edit
+        </div>
+        <div class="page-title">Edit Service</div>
+    </div>
+    <a href="{{ route('tenant.services.index') }}" class="btn btn-secondary">← Back</a>
+</div>
+
+@if($errors->any())
+<div style="padding:10px 14px;background:var(--red-dim);border:1px solid rgba(255,82,87,.25);border-radius:var(--r-sm);margin-bottom:14px;font-size:13px;color:var(--red)">
+    {{ $errors->first() }}
+</div>
+@endif
+
+<form method="POST" action="{{ route('tenant.services.update', $service->id) }}">
+@csrf
+@method('PUT')
+<div class="pf-card">
+    <div class="pf-body">
+
+        <div class="field">
+            <label class="fl">Name <span style="color:var(--red)">*</span></label>
+            <input type="text" name="name" class="fi {{ $errors->has('name')?'border-red':'' }}"
+                   value="{{ old('name', $service->name) }}" placeholder="e.g. Website Maintenance" required autofocus/>
+            @error('name') <span class="fe">{{ $message }}</span> @enderror
+        </div>
+
+        <div class="fg2">
+            <div class="field">
+                <label class="fl">Service Code / SKU</label>
+                <input type="text" name="service_code" class="fi"
+                       value="{{ old('service_code', $service->service_code) }}" placeholder="e.g. SRV-WD001"
+                       style="font-family:var(--mono,monospace);letter-spacing:.5px"/>
+                <span style="font-size:11.5px;color:var(--text-400)">Search mein code se bhi dhundh sakte hain</span>
+            </div>
+            <div class="field">
+                <label class="fl">HSN / SAC Code</label>
+                <input type="text" name="hsn" class="fi"
+                       value="{{ old('hsn', $service->hsn) }}" placeholder="e.g. 998314"/>
+            </div>
+        </div>
+
+        <div class="field">
+            <label class="fl">Description</label>
+            <textarea name="description" class="fi" rows="3"
+                      style="resize:vertical" placeholder="Optional — shown in invoice/quotation item description">{{ old('description', $service->description) }}</textarea>
+        </div>
+
+        <div class="fg2">
+            <div class="field">
+                <label class="fl">Rate (₹) <span style="color:var(--red)">*</span></label>
+                <input type="number" name="rate" class="fi" min="0" step="0.01"
+                       value="{{ old('rate', $service->rate) }}" placeholder="0.00" required/>
+                @error('rate') <span class="fe">{{ $message }}</span> @enderror
+            </div>
+            <div class="field">
+                <label class="fl">GST / Tax % <span style="color:var(--red)">*</span></label>
+                <select name="tax_percent" class="fi" required>
+                    @foreach([0,5,12,18,28] as $rate)
+                    <option value="{{ $rate }}" {{ old('tax_percent', $service->tax_percent) == $rate ? 'selected' : '' }}>
+                        {{ $rate }}%{{ $rate === 18 ? ' (Default)' : '' }}
+                    </option>
+                    @endforeach
+                </select>
+                @error('tax_percent') <span class="fe">{{ $message }}</span> @enderror
+            </div>
+        </div>
+
+        <div class="field">
+            <label class="fl">Unit</label>
+            <select class="fi" id="unitSelect" onchange="onUnitChange()">
+                <option value="">— Select unit —</option>
+                @foreach($units as $u)
+                <option value="{{ $u }}" {{ $oldUnit === $u ? 'selected' : '' }}>{{ $u }}</option>
+                @endforeach
+                <option value="__other__" {{ ($oldUnit && !in_array($oldUnit, $units)) ? 'selected' : '' }}>Other (custom)</option>
+            </select>
+            <input type="text" id="unitOther" class="fi" placeholder="Enter custom unit"
+                   value="{{ ($oldUnit && !in_array($oldUnit, $units)) ? $oldUnit : '' }}"
+                   style="{{ ($oldUnit && !in_array($oldUnit, $units)) ? '' : 'display:none' }};margin-top:6px"/>
+            <input type="hidden" name="unit" id="unitHidden" value="{{ $oldUnit }}">
+            <span style="font-size:11.5px;color:var(--text-400)">Rate kis basis pe hai — per Hour, per Session, per Month, per Project, etc.</span>
+        </div>
+
+        @php $oldCycle = old('billing_cycle', $service->billing_cycle ?? 'one_time'); @endphp
+        <div class="field">
+            <label class="fl">Billing Cycle</label>
+            <select name="billing_cycle" class="fi" id="billingCycleSelect" onchange="onBillingCycleChange()">
+                @foreach(\App\Models\Service::billingCycles() as $val => $label)
+                <option value="{{ $val }}" {{ $oldCycle === $val ? 'selected' : '' }}>{{ $label }}</option>
+                @endforeach
+            </select>
+            <span style="font-size:11.5px;color:var(--text-400)">Customer ko kitni baar bill/invoice jayega — sirf ek baar (One-time), ya baar-baar (Monthly/Quarterly/Yearly)</span>
+        </div>
+
+        <div class="field" id="durationField" style="{{ $oldCycle === 'one_time' ? 'display:none' : '' }}">
+            <label class="fl">Contract Length <span style="font-weight:400;text-transform:none;color:var(--text-400)">(optional)</span></label>
+            <div style="display:flex;gap:8px">
+                <input type="number" name="duration_value" class="fi" min="1"
+                       value="{{ old('duration_value', $service->duration_value) }}" placeholder="e.g. 6" style="flex:1"/>
+                <select name="duration_unit" class="fi" style="flex:1">
+                    <option value="">— Unit —</option>
+                    <option value="days" {{ old('duration_unit', $service->duration_unit) === 'days' ? 'selected' : '' }}>Days</option>
+                    <option value="months" {{ old('duration_unit', $service->duration_unit) === 'months' ? 'selected' : '' }}>Months</option>
+                </select>
+            </div>
+            <span style="font-size:11.5px;color:var(--text-400)">Poora commitment/agreement kitne time ka hai — billing frequency se alag ho sakta hai. Sirf tab bharo jab customer ek fixed period ke liye lock-in ho. E.g. AMC: quarterly billing par 12-month contract &middot; Coaching course: monthly fees par 6-month course. Simple monthly/yearly service ho to khali chhod do.</span>
+        </div>
+
+        <div class="field" style="flex-direction:row;align-items:center;gap:10px">
+            <input type="checkbox" name="is_active" value="1" id="is_active"
+                   {{ old('is_active', $service->is_active) ? 'checked' : '' }}
+                   style="width:16px;height:16px;cursor:pointer"/>
+            <label for="is_active" style="font-size:13.5px;color:var(--text-200);cursor:pointer">
+                Active (visible in invoice/quotation selectors)
+            </label>
+        </div>
+
+    </div>
+    <div class="pf-foot">
+        <a href="{{ route('tenant.services.index') }}" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">Update Service</button>
+    </div>
+</div>
+</form>
+
+<script>
+function onUnitChange(){
+    const sel   = document.getElementById('unitSelect').value;
+    const other = document.getElementById('unitOther');
+    const hidden = document.getElementById('unitHidden');
+    if(sel === '__other__'){
+        other.style.display = 'block';
+        hidden.value = other.value;
+    } else {
+        other.style.display = 'none';
+        hidden.value = sel;
+    }
+}
+document.getElementById('unitOther')?.addEventListener('input', function(){
+    document.getElementById('unitHidden').value = this.value;
+});
+
+function onBillingCycleChange(){
+    const cycle = document.getElementById('billingCycleSelect').value;
+    const field = document.getElementById('durationField');
+    field.style.display = cycle === 'one_time' ? 'none' : '';
+}
+</script>
+
+@endsection

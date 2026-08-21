@@ -1,7 +1,9 @@
 {{--
-    Product Search Dropdown — reusable partial
+    Product + Service Search Dropdown — reusable partial
     Include karo: @include('tenant.partials.product-search-js')
-    Requires: PRODUCTS constant already defined in the page (keyed by id)
+    Requires: window.PRODUCTS defined in the page (keyed by id).
+    window.SERVICES (keyed by id) is optional — include it too when the
+    Service module is enabled to let rows pick a service instead of a product.
 --}}
 <style>
 .ps-wrap       { position:relative; }
@@ -37,6 +39,9 @@
 .ps-selected-badge.show { display:flex; }
 .ps-remove-sel { background:none; border:none; cursor:pointer; color:var(--accent);
                  font-size:14px; padding:0; line-height:1; margin-left:auto; }
+.ps-kind-tag   { display:inline-block; font-size:10px; font-weight:700; text-transform:uppercase;
+                 letter-spacing:.3px; padding:1px 5px; border-radius:4px; margin-right:6px;
+                 background:#EEEDFE; color:#534AB7; vertical-align:middle; }
 </style>
 <script>
 (function(){
@@ -75,10 +80,13 @@ window.buildProductSearch = function(rowIndex, containerEl) {
 
     function render(q) {
         q = (q || '').toLowerCase().trim();
-        const all = Object.values(PRODUCTS);
+        const products = Object.values(PRODUCTS || {}).map(p => ({...p, _kind: 'product'}));
+        const services = Object.values(window.SERVICES || {}).map(s => ({...s, _kind: 'service'}));
+        const all = [...products, ...services];
         const results = q
             ? all.filter(p =>
                 (p.product_code || '').toLowerCase().includes(q) ||
+                (p.service_code || '').toLowerCase().includes(q) ||
                 p.name.toLowerCase().includes(q) ||
                 (p.description || '').toLowerCase().includes(q)
               )
@@ -86,7 +94,7 @@ window.buildProductSearch = function(rowIndex, containerEl) {
 
         dropdown.innerHTML = '';
         if (!results.length) {
-            dropdown.innerHTML = '<div class="ps-empty">No products found</div>';
+            dropdown.innerHTML = '<div class="ps-empty">No products/services found</div>';
         } else {
             results.forEach((p, idx) => {
                 const div = document.createElement('div');
@@ -95,7 +103,9 @@ window.buildProductSearch = function(rowIndex, containerEl) {
                 div.dataset.idx = idx;
                 div.innerHTML = `
                     <div>
+                        ${p._kind === 'service' ? '<span class="ps-kind-tag">Service</span>' : ''}
                         ${p.product_code ? `<span class="ps-code">${esc(p.product_code)}</span>` : ''}
+                        ${p.service_code ? `<span class="ps-code">${esc(p.service_code)}</span>` : ''}
                         <span class="ps-name">${esc(p.name)}</span>
                     </div>
                     <div class="ps-meta">
@@ -103,6 +113,8 @@ window.buildProductSearch = function(rowIndex, containerEl) {
                         &nbsp;·&nbsp; GST ${p.tax_percent}%
                         ${p.unit ? '&nbsp;·&nbsp; ' + esc(p.unit) : ''}
                         ${p.hsn ? '&nbsp;·&nbsp; HSN: ' + esc(p.hsn) : ''}
+                        ${p._kind === 'service' && p.billing_cycle && p.billing_cycle !== 'one_time' ? '&nbsp;·&nbsp; ' + esc(p.billing_cycle) : ''}
+                        ${p._kind === 'service' && p.duration_value && p.duration_unit ? '&nbsp;·&nbsp; ' + esc(String(p.duration_value)) + ' ' + esc(p.duration_unit) : ''}
                     </div>
                 `;
                 div.addEventListener('mousedown', e => {
@@ -117,11 +129,15 @@ window.buildProductSearch = function(rowIndex, containerEl) {
     }
 
     function selectProduct(p) {
-        /* fill the row fields */
+        /* fill the row fields — fillRowFromProduct checks p._kind to set
+           product_id vs service_id */
         fillRowFromProduct(rowIndex, p);
 
         /* show badge, hide input */
-        const label = (p.product_code ? '[' + p.product_code + '] ' : '') + p.name + ' · GST ' + p.tax_percent + '%';
+        const tag = p._kind === 'service'
+            ? (p.service_code ? '[' + p.service_code + '] ' : '[Service] ')
+            : (p.product_code ? '[' + p.product_code + '] ' : '');
+        const label = tag + p.name + ' · GST ' + p.tax_percent + '%';
         badgeTxt.textContent = label;
         badge.classList.add('show');
         input.value = '';

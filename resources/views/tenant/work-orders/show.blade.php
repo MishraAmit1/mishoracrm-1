@@ -161,6 +161,41 @@
                 @endif
             </div>
 
+            @can('editCosts', $workOrder)
+            <div class="ps-card">
+                <div class="ps-card-head">
+                    <div class="ps-card-title"><i class="ti ti-calculator" style="font-size:13px;margin-right:5px"></i> Production Cost</div>
+                </div>
+                <div style="padding:16px 20px">
+                    <div class="dl-row"><span class="dl-key">Material Cost <span style="opacity:.6">(from BOM)</span></span><span class="dl-val" style="font-family:'DM Mono',monospace">₹{{ number_format($workOrder->material_cost, 2) }}</span></div>
+
+                    <form method="POST" action="{{ route('tenant.work-orders.update-costs',$workOrder->id) }}" style="margin-top:10px">
+                        @csrf
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                            <div>
+                                <label class="pf-label" for="wo_labor_cost">Labor Cost (₹)</label>
+                                <input type="number" name="labor_cost" id="wo_labor_cost" class="pf-input" min="0" step="0.01"
+                                       value="{{ old('labor_cost', $workOrder->labor_cost) }}" style="margin-top:5px"/>
+                            </div>
+                            <div>
+                                <label class="pf-label" for="wo_machine_cost">Machine Cost (₹)</label>
+                                <input type="number" name="machine_cost" id="wo_machine_cost" class="pf-input" min="0" step="0.01"
+                                       value="{{ old('machine_cost', $workOrder->machine_cost) }}" style="margin-top:5px"/>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-secondary" style="margin-top:10px;width:100%;justify-content:center">
+                            <i class="ti ti-device-floppy" style="font-size:14px"></i> Save Costs
+                        </button>
+                    </form>
+
+                    <div style="height:1px;background:var(--border-subtle);margin:14px 0"></div>
+
+                    <div class="dl-row"><span class="dl-key">Total Cost</span><span class="dl-val" style="font-family:'DM Mono',monospace;font-weight:700">₹{{ number_format($workOrder->total_cost, 2) }}</span></div>
+                    <div class="dl-row"><span class="dl-key">Cost / Unit</span><span class="dl-val" style="font-family:'DM Mono',monospace">₹{{ number_format($workOrder->cost_per_unit, 2) }}</span></div>
+                </div>
+            </div>
+            @endcan
+
         </div>
 
         <div style="display:flex;flex-direction:column;gap:14px">

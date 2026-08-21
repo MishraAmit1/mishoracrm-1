@@ -132,7 +132,9 @@
                 @endif
             </td>
             <td style="display:flex;gap:6px">
+                @if(auth()->user()->tenant?->hasModuleEnabled('manufacturing'))
                 <a href="{{ route('tenant.products.batches', $p->id) }}" class="btn btn-secondary btn-sm">Batches</a>
+                @endif
                 <a href="{{ route('tenant.products.edit', $p->id) }}" class="btn btn-secondary btn-sm">Edit</a>
                 <form method="POST" action="{{ route('tenant.products.destroy', $p->id) }}"
                       onsubmit="return confirm('Delete this product?')">

@@ -587,6 +587,7 @@
 /* ── Config from PHP ── */
 const STATUSES = @json(config('quotation.statuses'));
 window.PRODUCTS = @json($products->keyBy('id'));
+window.SERVICES = @json($services->keyBy('id'));
 const TEMPLATES = @json($templates->keyBy('id'));
 window.CURRENT_SYMBOL = document.getElementById('q_currency')?.selectedOptions[0]?.dataset.symbol || '₹';
 /* ── Item Row Template ── */
@@ -612,13 +613,20 @@ window.fillRowFromProduct = function(i, p) {
     row.querySelector(`[name="items[${i}][description]"]`).value = p.description || '';
     row.querySelector(`[name="items[${i}][rate]"]`).value        = p.rate;
     const productIdInput = row.querySelector(`[name="items[${i}][product_id]"]`);
-    if (productIdInput) productIdInput.value = p.id;
+    const serviceIdInput = row.querySelector(`[name="items[${i}][service_id]"]`);
+    if (p._kind === 'service') {
+        if (serviceIdInput) serviceIdInput.value = p.id;
+        if (productIdInput) productIdInput.value = '';
+    } else {
+        if (productIdInput) productIdInput.value = p.id;
+        if (serviceIdInput) serviceIdInput.value = '';
+    }
     const taxInput = row.querySelector(`[name="items[${i}][tax_percent]"]`);
     if (taxInput) taxInput.value = p.tax_percent;
     calcRowAmount(i);
 };
 
-function addItemRow(name='', desc='', qty=1, rate=0, taxPct='', productId=''){
+function addItemRow(name='', desc='', qty=1, rate=0, taxPct='', productId='', serviceId=''){
     const i    = rowIndex++;
     const amt  = (parseFloat(qty)||0) * (parseFloat(rate)||0);
     const gst  = taxPct !== '' ? taxPct : 18;
@@ -629,6 +637,7 @@ function addItemRow(name='', desc='', qty=1, rate=0, taxPct='', productId=''){
         <td data-label="Item / Service">
             <div id="ps_container_${i}"></div>
             <input type="hidden" name="items[${i}][product_id]" value="${productId}"/>
+            <input type="hidden" name="items[${i}][service_id]" value="${serviceId}"/>
             <input type="text" name="items[${i}][name]"
                    class="item-input {{ $errors->has("items.*.name")?"is-err":"" }}"
                    placeholder="Item / Service name" value="${escHtml(name)}" required/>
@@ -813,7 +822,7 @@ document.getElementById('quotationForm').addEventListener('submit', function(){
 const oldItems = @json(old('items'));
 if(oldItems && oldItems.length){
     oldItems.forEach(item => {
-        addItemRow(item.name||'', item.description||'', item.quantity||1, item.rate||0, item.tax_percent||'', item.product_id||'');
+        addItemRow(item.name||'', item.description||'', item.quantity||1, item.rate||0, item.tax_percent||'', item.product_id||'', item.service_id||'');
     });
 }
 @else

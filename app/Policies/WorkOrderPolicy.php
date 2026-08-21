@@ -68,6 +68,18 @@ class WorkOrderPolicy
         return $user->user_type === 'superadmin' || $user->can('work_orders.manage');
     }
 
+    // Labor/machine cost entry — deliberately NOT gated by status (unlike
+    // manage()) since actual costs are usually only known after the work
+    // order is completed, e.g. once timesheets/machine logs come in.
+    public function editCosts(User $user, WorkOrder $workOrder): bool
+    {
+        if ($user->tenant_id !== $workOrder->tenant_id) {
+            return false;
+        }
+
+        return $user->user_type === 'superadmin' || $user->can('work_orders.manage');
+    }
+
     // Deletion is blocked once production has started (in_progress) or
     // finished (completed) — stock has already moved by that point and
     // deleting the record would erase that trail. Cancelled/pending

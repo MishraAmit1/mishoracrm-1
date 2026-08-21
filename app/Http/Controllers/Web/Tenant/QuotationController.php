@@ -12,6 +12,7 @@ use App\Models\Lead;
 use App\Models\Product;
 use App\Models\Quotation;
 use App\Models\QuotationTermsTemplate;
+use App\Models\Service;
 use App\Models\User;
 use App\Services\EmailService;
 use App\Services\QuotationService;
@@ -135,6 +136,7 @@ class QuotationController extends Controller
         $statuses  = Quotation::statuses();
         $tenant    = auth()->user()->tenant;
         $products  = Product::where('tenant_id', auth()->user()->tenant_id)->active()->orderBy('name')->get(['id','product_code','name','description','rate','tax_percent','hsn','unit']);
+        $services  = Service::where('tenant_id', auth()->user()->tenant_id)->active()->orderBy('name')->get(['id','service_code','name','description','rate','tax_percent','hsn','unit','billing_cycle','duration_value','duration_unit']);
         $currencies = config('quotation.currencies');
         $templates  = QuotationTermsTemplate::where('tenant_id', auth()->user()->tenant_id)->orderBy('name')->get(['id', 'name', 'terms', 'notes']);
 
@@ -148,6 +150,7 @@ class QuotationController extends Controller
             'statuses',
             'tenant',
             'products',
+            'services',
             'currencies',
             'templates'
         ));
@@ -195,6 +198,7 @@ class QuotationController extends Controller
         $statuses  = Quotation::statuses();
         $tenant    = auth()->user()->tenant;
         $products  = Product::where('tenant_id', auth()->user()->tenant_id)->active()->orderBy('name')->get(['id','product_code','name','description','rate','tax_percent','hsn','unit']);
+        $services  = Service::where('tenant_id', auth()->user()->tenant_id)->active()->orderBy('name')->get(['id','service_code','name','description','rate','tax_percent','hsn','unit','billing_cycle','duration_value','duration_unit']);
         $currencies = config('quotation.currencies');
         $templates  = QuotationTermsTemplate::where('tenant_id', auth()->user()->tenant_id)->orderBy('name')->get(['id', 'name', 'terms', 'notes']);
 
@@ -205,6 +209,7 @@ class QuotationController extends Controller
             'statuses',
             'tenant',
             'products',
+            'services',
             'currencies',
             'templates'
         ));

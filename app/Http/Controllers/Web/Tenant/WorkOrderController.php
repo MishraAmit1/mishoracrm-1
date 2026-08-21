@@ -192,6 +192,27 @@ class WorkOrderController extends Controller
             ->with('success', "Work Order {$workOrder->number} completed — stock updated.");
     }
 
+    // ── Update labor/machine costs — available regardless of status ──
+    public function updateCosts(Request $request, int|string $id): RedirectResponse
+    {
+        $workOrder = $this->findWorkOrder($id);
+        $this->authorize('editCosts', $workOrder);
+
+        $data = $request->validate([
+            'labor_cost'   => ['nullable', 'numeric', 'min:0'],
+            'machine_cost' => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        $workOrder->update([
+            'labor_cost'   => $data['labor_cost'] ?? 0,
+            'machine_cost' => $data['machine_cost'] ?? 0,
+        ]);
+
+        return redirect()
+            ->route('tenant.work-orders.show', $workOrder->id)
+            ->with('success', 'Production costs updated.');
+    }
+
     // ── Cancel ────────────────────────────────────────────────────
     public function cancel(int|string $id): RedirectResponse
     {

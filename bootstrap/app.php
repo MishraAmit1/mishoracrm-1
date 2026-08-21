@@ -26,6 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant'       => \App\Http\Middleware\IdentifyTenant::class,
             'subscription' => \App\Http\Middleware\CheckSubscription::class,
             'api.key'      => \App\Http\Middleware\AuthenticateWithApiKey::class,
+            'module'       => \App\Http\Middleware\EnsureModuleEnabled::class,
 
             // Spatie — yeh teeno register karne zaroori hain
             'role'               => \Spatie\Permission\Middleware\RoleMiddleware::class,

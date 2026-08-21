@@ -345,6 +345,7 @@
 const CONTACTS      = @json($contactsJson);
 const PREFILL_ITEMS = @json($prefillItems);
 window.PRODUCTS = @json($products->keyBy('id'));
+window.SERVICES = @json($services->keyBy('id'));
 let rowCount = 0;
 
 // ── Contact load ──────────────────────────────────────────────────
@@ -370,13 +371,20 @@ window.fillRowFromProduct = function(i, p) {
     row.querySelector(`[name="items[${i}][rate]"]`).value        = p.rate;
     row.querySelector(`[name="items[${i}][tax_percent]"]`).value = p.tax_percent;
     const pidInput = row.querySelector(`[name="items[${i}][product_id]"]`);
-    if (pidInput) pidInput.value = p.id;
+    const sidInput = row.querySelector(`[name="items[${i}][service_id]"]`);
+    if (p._kind === 'service') {
+        if (sidInput) sidInput.value = p.id;
+        if (pidInput) pidInput.value = '';
+    } else {
+        if (pidInput) pidInput.value = p.id;
+        if (sidInput) sidInput.value = '';
+    }
     calcRow(i);
     calcTotals();
 };
 
 // ── Add row ───────────────────────────────────────────────────────
-function addRow(desc = '', qty = 1, rate = '', taxPct = '', productId = '') {
+function addRow(desc = '', qty = 1, rate = '', taxPct = '', productId = '', serviceId = '') {
     const tbody = document.getElementById('itemsBody');
     const i     = rowCount++;
     const tr    = document.createElement('tr');
@@ -389,6 +397,7 @@ function addRow(desc = '', qty = 1, rate = '', taxPct = '', productId = '') {
         <td data-label="Description">
             <div id="ps_container_${i}"></div>
             <input type="hidden" name="items[${i}][product_id]" value="${productId}"/>
+            <input type="hidden" name="items[${i}][service_id]" value="${serviceId}"/>
             <input type="text"
                    name="items[${i}][description]"
                    class="item-input"
@@ -515,7 +524,7 @@ document.querySelector('[name="due_date"]')?.addEventListener('change', function
     // Load prefill items
     const items = PREFILL_ITEMS;
     if (items && items.length) {
-        items.forEach(it => addRow(it.description || '', it.quantity || 1, it.rate || '', it.tax_percent ?? '', it.product_id || ''));
+        items.forEach(it => addRow(it.description || '', it.quantity || 1, it.rate || '', it.tax_percent ?? '', it.product_id || '', it.service_id || ''));
     } else {
         addRow();
     }

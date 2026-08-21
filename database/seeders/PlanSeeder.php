@@ -52,6 +52,8 @@ class PlanSeeder extends Seeder
                     'whatsapp'  => true,
                     'reports'   => true,
                     'social_leads' => true,
+                    'manufacturing' => true,
+                    'service'   => true,
                 ]),
                 'sort_order'    => 2,
             ],

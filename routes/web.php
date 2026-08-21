@@ -104,6 +104,10 @@ Route::prefix('superadmin')
             Route::get('/',                       'index')->name('index');
             Route::get('/{tenant}',               'show')->name('show');
             Route::post('/{tenant}/toggle-status', 'toggleStatus')->name('toggle-status');
+            Route::post('/{tenant}/toggle-manufacturing', 'toggleManufacturing')->name('toggle-manufacturing');
+            Route::post('/{tenant}/clear-manufacturing-override', 'clearManufacturingOverride')->name('clear-manufacturing-override');
+            Route::post('/{tenant}/toggle-service', 'toggleService')->name('toggle-service');
+            Route::post('/{tenant}/clear-service-override', 'clearServiceOverride')->name('clear-service-override');
         });
 
         // Plan management
@@ -432,7 +436,19 @@ Route::middleware(['tenant', 'auth', 'subscription'])
                 Route::post('/', 'store')->name('store');
                 Route::get('/search', 'search')->name('search');
                 Route::get('/low-stock', 'lowStock')->name('low-stock');
-                Route::get('/{id}/batches', 'batches')->name('batches');
+                Route::get('/{id}/batches', 'batches')->name('batches')->middleware('module:manufacturing');
+                Route::get('/{id}/edit', 'edit')->name('edit');
+                Route::put('/{id}', 'update')->name('update');
+                Route::delete('/{id}', 'destroy')->name('destroy');
+            });
+        });
+
+        // Services / Service Catalog routes — gated behind the Service module toggle
+        Route::prefix('/services')->name('services.')->middleware('module:service')->group(function () {
+            Route::controller(Tenant\ServiceController::class)->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::get('/create', 'create')->name('create');
+                Route::post('/', 'store')->name('store');
                 Route::get('/{id}/edit', 'edit')->name('edit');
                 Route::put('/{id}', 'update')->name('update');
                 Route::delete('/{id}', 'destroy')->name('destroy');
@@ -491,8 +507,8 @@ Route::middleware(['tenant', 'auth', 'subscription'])
             });
         });
 
-        // Work Orders routes
-        Route::prefix('/work-orders')->name('work-orders.')->group(function () {
+        // Work Orders routes — gated behind the Manufacturing module toggle
+        Route::prefix('/work-orders')->name('work-orders.')->middleware('module:manufacturing')->group(function () {
             Route::controller(Tenant\WorkOrderController::class)->group(function () {
                 Route::get('/', 'index')->name('index');
                 Route::get('/create', 'create')->name('create');
@@ -504,6 +520,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
                 Route::post('/{id}/start', 'start')->name('start');
                 Route::post('/{id}/complete', 'complete')->name('complete');
                 Route::post('/{id}/cancel', 'cancel')->name('cancel');
+                Route::post('/{id}/costs', 'updateCosts')->name('update-costs');
             });
         });
 

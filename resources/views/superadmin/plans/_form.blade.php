@@ -162,6 +162,8 @@
             ['key' => 'feat_whatsapp',    'field' => 'whatsapp',     'label' => 'WhatsApp Integration', 'sub' => 'Send messages via WhatsApp'],
             ['key' => 'feat_reports',     'field' => 'reports',      'label' => 'Advanced Reports',     'sub' => 'Analytics & revenue reports'],
             ['key' => 'feat_social_leads','field' => 'social_leads', 'label' => 'Social Media Leads',   'sub' => 'Facebook / Instagram lead capture'],
+            ['key' => 'feat_manufacturing','field' => 'manufacturing', 'label' => 'Manufacturing',       'sub' => 'Work Orders + Product Batches (production tracking)'],
+            ['key' => 'feat_service',      'field' => 'service',       'label' => 'Service Catalog',     'sub' => 'Service Catalog + Quotation/Invoice service line items'],
         ];
     @endphp
     @foreach($boolFeatures as $feat)

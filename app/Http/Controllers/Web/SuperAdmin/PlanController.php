@@ -117,10 +117,14 @@ class PlanController extends Controller
             'whatsapp'     => $request->boolean('feat_whatsapp'),
             'reports'      => $request->boolean('feat_reports'),
             'social_leads' => $request->boolean('feat_social_leads'),
+            'manufacturing' => $request->boolean('feat_manufacturing'),
+            'service' => $request->boolean('feat_service'),
         ];
 
         // remove false booleans to keep JSON clean (optional features only when true)
         if (!$features['social_leads']) unset($features['social_leads']);
+        if (!$features['manufacturing']) unset($features['manufacturing']);
+        if (!$features['service']) unset($features['service']);
 
         return $features;
     }

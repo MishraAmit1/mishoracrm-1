@@ -91,4 +91,54 @@ class TenantController extends Controller
 
         return back()->with('success', "Tenant status changed from {$old} to {$request->status}.");
     }
+
+    // ── Module access — Manufacturing (Work Orders + Product Batches) ──
+    // Sets an explicit force-on/force-off override for this tenant,
+    // regardless of what their Plan includes (see Tenant::hasModuleEnabled()).
+    public function toggleManufacturing(Tenant $tenant, Request $request): RedirectResponse
+    {
+        $request->validate(['enabled' => ['required', 'boolean']]);
+
+        $settings = $tenant->settings ?? [];
+        $settings['modules']['manufacturing'] = $request->boolean('enabled');
+        $tenant->update(['settings' => $settings]);
+
+        $state = $request->boolean('enabled') ? 'enabled' : 'disabled';
+
+        return back()->with('success', "Manufacturing module {$state} for {$tenant->name}.");
+    }
+
+    // Removes the manual override, so access reverts to whatever the
+    // tenant's current Plan dictates.
+    public function clearManufacturingOverride(Tenant $tenant): RedirectResponse
+    {
+        $settings = $tenant->settings ?? [];
+        unset($settings['modules']['manufacturing']);
+        $tenant->update(['settings' => $settings]);
+
+        return back()->with('success', "Manufacturing access for {$tenant->name} now follows their plan.");
+    }
+
+    // ── Module access — Service (Service Catalog for service-based tenants) ──
+    public function toggleService(Tenant $tenant, Request $request): RedirectResponse
+    {
+        $request->validate(['enabled' => ['required', 'boolean']]);
+
+        $settings = $tenant->settings ?? [];
+        $settings['modules']['service'] = $request->boolean('enabled');
+        $tenant->update(['settings' => $settings]);
+
+        $state = $request->boolean('enabled') ? 'enabled' : 'disabled';
+
+        return back()->with('success', "Service module {$state} for {$tenant->name}.");
+    }
+
+    public function clearServiceOverride(Tenant $tenant): RedirectResponse
+    {
+        $settings = $tenant->settings ?? [];
+        unset($settings['modules']['service']);
+        $tenant->update(['settings' => $settings]);
+
+        return back()->with('success', "Service access for {$tenant->name} now follows their plan.");
+    }
 }

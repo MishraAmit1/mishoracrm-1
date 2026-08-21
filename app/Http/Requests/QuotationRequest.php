@@ -21,6 +21,7 @@ class QuotationRequest extends FormRequest
             'valid_until'         => ['nullable', 'date', 'after:date'],
             'items'               => ['required', 'array', 'min:1'],
             'items.*.product_id'  => ['nullable', 'integer', 'exists:products,id'],
+            'items.*.service_id'  => ['nullable', 'integer', 'exists:services,id'],
             'items.*.name'        => ['required', 'string', 'max:255'],
             'items.*.description' => ['nullable', 'string', 'max:500'],
             'items.*.quantity'    => ['required', 'numeric', 'min:0.01'],

@@ -240,6 +240,114 @@
                 @endif
             </div>
         </div>
+
+        {{-- Module access — superadmin per-tenant feature toggle --}}
+        <div class="card" style="margin-top:16px;">
+            <div class="card-header">
+                <div class="card-title">Module Access</div>
+            </div>
+            <div class="card-body">
+                @php
+                    $inPlan   = $tenant->moduleIncludedInPlan('manufacturing');
+                    $override = $tenant->moduleOverride('manufacturing');   // null | true | false
+                    $manufacturingOn = $tenant->hasModuleEnabled('manufacturing');
+                @endphp
+                <div class="info-row">
+                    <span class="info-label">
+                        Manufacturing
+                        <div style="font-size:11px;color:var(--text-400);font-weight:400;margin-top:2px;max-width:220px;">Work Orders + Product Batches (production tracking)</div>
+                    </span>
+                    <span class="t-status {{ $manufacturingOn ? 't-active' : 't-suspended' }}">
+                        {{ $manufacturingOn ? '✓ Enabled' : '✗ Disabled' }}
+                    </span>
+                </div>
+
+                <div style="font-size:11px;color:var(--text-400);margin-top:6px;">
+                    @if($override === true)
+                        Manually <strong style="color:var(--text-200)">force-enabled</strong> for this tenant{{ $inPlan ? ' (their plan already includes it too)' : ", overriding their {$plan?->name} plan" }}.
+                    @elseif($override === false)
+                        Manually <strong style="color:var(--text-200)">force-disabled</strong> for this tenant, overriding their {{ $plan?->name ?? 'current' }} plan.
+                    @elseif($inPlan)
+                        Included automatically via the <strong style="color:var(--text-200)">{{ $plan->name }}</strong> plan.
+                    @else
+                        Not included in the {{ $plan?->name ?? 'current' }} plan, and no manual override set.
+                    @endif
+                </div>
+
+                <div style="display:flex;gap:8px;margin-top:12px;">
+                    <form method="POST" action="{{ route('superadmin.tenants.toggle-manufacturing', $tenant) }}">
+                        @csrf
+                        <input type="hidden" name="enabled" value="1">
+                        <button type="submit" class="btn btn-sm {{ $manufacturingOn ? 'btn-secondary' : 'btn-primary' }}" {{ $override === true ? 'disabled' : '' }}>
+                            Force Enable
+                        </button>
+                    </form>
+                    <form method="POST" action="{{ route('superadmin.tenants.toggle-manufacturing', $tenant) }}">
+                        @csrf
+                        <input type="hidden" name="enabled" value="0">
+                        <button type="submit" class="btn btn-sm {{ !$manufacturingOn ? 'btn-secondary' : 'btn-primary' }}" {{ $override === false ? 'disabled' : '' }}>
+                            Force Disable
+                        </button>
+                    </form>
+                    @if(!is_null($override))
+                    <form method="POST" action="{{ route('superadmin.tenants.clear-manufacturing-override', $tenant) }}">
+                        @csrf
+                        <button type="submit" class="btn btn-sm btn-secondary">Reset to Plan Default</button>
+                    </form>
+                    @endif
+                </div>
+
+                @php
+                    $svcInPlan   = $tenant->moduleIncludedInPlan('service');
+                    $svcOverride = $tenant->moduleOverride('service');   // null | true | false
+                    $serviceOn   = $tenant->hasModuleEnabled('service');
+                @endphp
+                <div class="info-row" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border-subtle);">
+                    <span class="info-label">
+                        Service Catalog
+                        <div style="font-size:11px;color:var(--text-400);font-weight:400;margin-top:2px;max-width:220px;">Service line items in Quotations/Invoices (for service-based companies)</div>
+                    </span>
+                    <span class="t-status {{ $serviceOn ? 't-active' : 't-suspended' }}">
+                        {{ $serviceOn ? '✓ Enabled' : '✗ Disabled' }}
+                    </span>
+                </div>
+
+                <div style="font-size:11px;color:var(--text-400);margin-top:6px;">
+                    @if($svcOverride === true)
+                        Manually <strong style="color:var(--text-200)">force-enabled</strong> for this tenant{{ $svcInPlan ? ' (their plan already includes it too)' : ", overriding their {$plan?->name} plan" }}.
+                    @elseif($svcOverride === false)
+                        Manually <strong style="color:var(--text-200)">force-disabled</strong> for this tenant, overriding their {{ $plan?->name ?? 'current' }} plan.
+                    @elseif($svcInPlan)
+                        Included automatically via the <strong style="color:var(--text-200)">{{ $plan->name }}</strong> plan.
+                    @else
+                        Not included in the {{ $plan?->name ?? 'current' }} plan, and no manual override set.
+                    @endif
+                </div>
+
+                <div style="display:flex;gap:8px;margin-top:12px;">
+                    <form method="POST" action="{{ route('superadmin.tenants.toggle-service', $tenant) }}">
+                        @csrf
+                        <input type="hidden" name="enabled" value="1">
+                        <button type="submit" class="btn btn-sm {{ $serviceOn ? 'btn-secondary' : 'btn-primary' }}" {{ $svcOverride === true ? 'disabled' : '' }}>
+                            Force Enable
+                        </button>
+                    </form>
+                    <form method="POST" action="{{ route('superadmin.tenants.toggle-service', $tenant) }}">
+                        @csrf
+                        <input type="hidden" name="enabled" value="0">
+                        <button type="submit" class="btn btn-sm {{ !$serviceOn ? 'btn-secondary' : 'btn-primary' }}" {{ $svcOverride === false ? 'disabled' : '' }}>
+                            Force Disable
+                        </button>
+                    </form>
+                    @if(!is_null($svcOverride))
+                    <form method="POST" action="{{ route('superadmin.tenants.clear-service-override', $tenant) }}">
+                        @csrf
+                        <button type="submit" class="btn btn-sm btn-secondary">Reset to Plan Default</button>
+                    </form>
+                    @endif
+                </div>
+            </div>
+        </div>
     </div>
 
     {{-- Right: Users + Payment history --}}

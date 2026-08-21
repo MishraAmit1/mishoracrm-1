@@ -8,6 +8,7 @@ use App\Models\Invoice;
 use App\Models\InvoicePdfSetting;
 use App\Models\Product;
 use App\Models\Quotation;
+use App\Models\Service;
 use App\Services\EmailService;
 use App\Services\InvoicePdfTemplateRenderer;
 use App\Services\NotificationService;
@@ -94,10 +95,11 @@ class InvoiceController extends Controller
         $statuses = Invoice::statuses();
         $tenant   = auth()->user()->tenant;
         $products = Product::where('tenant_id', $this->tenantId())->active()->orderBy('name')->get(['id','product_code','name','description','rate','tax_percent','hsn','unit']);
+        $services = Service::where('tenant_id', $this->tenantId())->active()->orderBy('name')->get(['id','service_code','name','description','rate','tax_percent','hsn','unit','billing_cycle','duration_value','duration_unit']);
 
         return view('tenant.invoices.create', compact(
             'contacts', 'contact', 'quotation',
-            'number', 'statuses', 'tenant', 'products'
+            'number', 'statuses', 'tenant', 'products', 'services'
         ));
     }
 
@@ -110,6 +112,7 @@ class InvoiceController extends Controller
             'due_date'    => ['required', 'date', 'after_or_equal:date'],
             'items'       => ['required', 'array', 'min:1'],
             'items.*.product_id'  => ['nullable', 'integer', 'exists:products,id'],
+            'items.*.service_id'  => ['nullable', 'integer', 'exists:services,id'],
             'items.*.description' => ['required', 'string'],
             'items.*.quantity'    => ['required', 'numeric', 'min:0.01'],
             'items.*.rate'        => ['required', 'numeric', 'min:0'],
@@ -190,9 +193,10 @@ class InvoiceController extends Controller
         $statuses = Invoice::statuses();
         $tenant   = auth()->user()->tenant;
         $products = Product::where('tenant_id', $this->tenantId())->active()->orderBy('name')->get(['id','product_code','name','description','rate','tax_percent','hsn','unit']);
+        $services = Service::where('tenant_id', $this->tenantId())->active()->orderBy('name')->get(['id','service_code','name','description','rate','tax_percent','hsn','unit','billing_cycle','duration_value','duration_unit']);
 
         return view('tenant.invoices.edit', compact(
-            'invoice', 'contacts', 'statuses', 'tenant', 'products'
+            'invoice', 'contacts', 'statuses', 'tenant', 'products', 'services'
         ));
     }
 
@@ -211,6 +215,7 @@ class InvoiceController extends Controller
             'due_date'    => ['required', 'date', 'after_or_equal:date'],
             'items'       => ['required', 'array', 'min:1'],
             'items.*.product_id'  => ['nullable', 'integer', 'exists:products,id'],
+            'items.*.service_id'  => ['nullable', 'integer', 'exists:services,id'],
             'items.*.description' => ['required', 'string'],
             'items.*.quantity'    => ['required', 'numeric', 'min:0.01'],
             'items.*.rate'        => ['required', 'numeric', 'min:0'],
