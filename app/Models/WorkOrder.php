@@ -24,6 +24,7 @@ class WorkOrder extends Model
         'created_by',
         'labor_cost',
         'machine_cost',
+        'material_cost_snapshot',
     ];
 
     protected $casts = [
@@ -32,6 +33,7 @@ class WorkOrder extends Model
         'completed_at' => 'datetime',
         'labor_cost'   => 'decimal:2',
         'machine_cost' => 'decimal:2',
+        'material_cost_snapshot' => 'decimal:2',
     ];
 
     // ── Relationships ─────────────────────────────────────────────
@@ -87,12 +89,22 @@ class WorkOrder extends Model
     }
 
     // ── Costing ───────────────────────────────────────────────────
-    // Material cost is computed live from the product's current BOM ×
-    // each material's current rate — this is an approximation (not a
-    // snapshot), so it will drift if rates/BOM change after the work
-    // order is created. Good enough for a quick cost/margin read; not
-    // meant as an immutable historical ledger entry.
+    // Once completed, material cost is FROZEN in material_cost_snapshot
+    // (set by WorkOrderService::complete() at the moment stock is
+    // consumed) so later BOM/rate changes never retroactively alter a
+    // finished Work Order's recorded cost. While still pending/in_progress
+    // there's nothing to freeze yet, so this falls back to a live BOM
+    // calculation — a preview only, not a committed figure.
     public function getMaterialCostAttribute(): float
+    {
+        if ($this->material_cost_snapshot !== null) {
+            return (float) $this->material_cost_snapshot;
+        }
+
+        return $this->calculateLiveMaterialCost();
+    }
+
+    public function calculateLiveMaterialCost(): float
     {
         $this->loadMissing('product.billOfMaterials.material');
 
@@ -108,6 +120,25 @@ class WorkOrder extends Model
     public function getCostPerUnitAttribute(): float
     {
         return (float) $this->quantity > 0 ? $this->total_cost / (float) $this->quantity : 0.0;
+    }
+
+    // ── Margin ────────────────────────────────────────────────────
+    // Compares production cost against the product's current selling
+    // rate — a quick profitability read, not a formal accounting figure
+    // (it uses today's Product.rate, not the rate at time of sale).
+    public function getSellingValueAttribute(): float
+    {
+        return (float) ($this->product?->rate ?? 0) * (float) $this->quantity;
+    }
+
+    public function getMarginAttribute(): float
+    {
+        return $this->selling_value - $this->total_cost;
+    }
+
+    public function getMarginPercentAttribute(): float
+    {
+        return $this->selling_value > 0 ? round($this->margin / $this->selling_value * 100, 1) : 0.0;
     }
 
     public static function statuses(): array

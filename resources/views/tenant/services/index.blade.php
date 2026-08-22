@@ -106,7 +106,7 @@
                     @csrf @method('DELETE')
                     <button class="btn btn-sm" type="submit"
                             style="background:var(--red-dim);color:var(--red);border:1px solid rgba(255,82,87,.25)">
-                        Del
+                        Delete
                     </button>
                 </form>
             </td>

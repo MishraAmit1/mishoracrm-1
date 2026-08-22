@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web\SuperAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
@@ -105,6 +106,15 @@ class TenantController extends Controller
 
         $state = $request->boolean('enabled') ? 'enabled' : 'disabled';
 
+        AuditLog::record([
+            'tenant_id'   => $tenant->id,
+            'action'      => 'module_' . $state,
+            'model_type'  => Tenant::class,
+            'model_id'    => $tenant->id,
+            'model_label' => $tenant->name,
+            'description' => "Superadmin {$state} the Manufacturing module for {$tenant->name}",
+        ]);
+
         return back()->with('success', "Manufacturing module {$state} for {$tenant->name}.");
     }
 
@@ -115,6 +125,15 @@ class TenantController extends Controller
         $settings = $tenant->settings ?? [];
         unset($settings['modules']['manufacturing']);
         $tenant->update(['settings' => $settings]);
+
+        AuditLog::record([
+            'tenant_id'   => $tenant->id,
+            'action'      => 'module_reset',
+            'model_type'  => Tenant::class,
+            'model_id'    => $tenant->id,
+            'model_label' => $tenant->name,
+            'description' => "Superadmin cleared the Manufacturing override for {$tenant->name} — now follows plan",
+        ]);
 
         return back()->with('success', "Manufacturing access for {$tenant->name} now follows their plan.");
     }

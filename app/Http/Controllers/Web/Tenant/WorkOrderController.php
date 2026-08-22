@@ -8,6 +8,7 @@ use App\Http\Requests\WorkOrderRequest;
 use App\Models\Product;
 use App\Models\User;
 use App\Models\WorkOrder;
+use App\Services\NotificationService;
 use App\Services\WorkOrderService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -187,9 +188,36 @@ class WorkOrderController extends Controller
             return back()->with('error', collect($e->errors())->flatten()->first());
         }
 
+        $this->notifyCompletion($workOrder);
+
         return redirect()
             ->route('tenant.work-orders.show', $workOrder->id)
             ->with('success', "Work Order {$workOrder->number} completed — stock updated.");
+    }
+
+    // ── Notify tenant_admins / work_orders.view_all holders that a
+    // production run finished and stock was updated ────────────────
+    private function notifyCompletion(WorkOrder $workOrder): void
+    {
+        $recipients = User::withoutGlobalScopes()
+            ->where('tenant_id', $workOrder->tenant_id)
+            ->where('is_active', true)
+            ->where('id', '!=', auth()->id())
+            ->get()
+            ->filter(fn (User $user) => $user->user_type === 'tenant_admin' || $user->can('work_orders.view_all'));
+
+        app(NotificationService::class)->sendToMany(
+            'work_order.completed',
+            $recipients->all(),
+            [
+                'number'   => $workOrder->number,
+                'quantity' => (float) $workOrder->quantity,
+                'product'  => $workOrder->product?->name,
+            ],
+            auth()->user(),
+            route('tenant.work-orders.show', $workOrder->id),
+            $workOrder
+        );
     }
 
     // ── Update labor/machine costs — available regardless of status ──

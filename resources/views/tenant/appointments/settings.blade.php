@@ -59,7 +59,7 @@
             <div class="field">
                 <label class="fl">Capacity per Slot</label>
                 <input type="number" name="capacity_per_slot" class="fi" min="1" max="100" value="{{ $settings['capacity_per_slot'] }}" required/>
-                <span style="font-size:11px;color:var(--text-400)">Kitne bookings ek saath ek slot mein</span>
+                <span style="font-size:11px;color:var(--text-400)">How many bookings are allowed in the same slot</span>
             </div>
             <div class="field">
                 <label class="fl">Advance Booking (days)</label>
@@ -95,10 +95,10 @@
                     {{ $s->name }}
                 </label>
                 @empty
-                <span style="font-size:12.5px;color:var(--text-400)">Koi active service nahi hai — pehle Services page se kuch add karo.</span>
+                <span style="font-size:12.5px;color:var(--text-400)">No active services available — add some from the Services page first.</span>
                 @endforelse
             </div>
-            <span style="font-size:11.5px;color:var(--text-400)">Sirf checked services customer ko public booking page pe dikhengi.</span>
+            <span style="font-size:11.5px;color:var(--text-400)">Only checked services will be shown to customers on the public booking page.</span>
         </div>
 
     </div>

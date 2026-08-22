@@ -73,10 +73,10 @@
                     {{ $c->name }} <span style="color:var(--text-400)">(₹{{ number_format($c->rate, 2) }})</span>
                 </label>
                 @empty
-                <span style="font-size:12.5px;color:var(--text-400)">Koi standalone service nahi hai — pehle kuch services add karo, phir unhe package mein bundle kar sakte ho.</span>
+                <span style="font-size:12.5px;color:var(--text-400)">No standalone services yet — add some services first, then bundle them into this package.</span>
                 @endforelse
             </div>
-            <span style="font-size:11.5px;color:var(--text-400)">Ye sirf reference ke liye hai (customer ko dikhane ke liye "kya kya included hai") — Rate/Tax/Billing Cycle neeche khud set karo, ye components ke rate se automatically calculate nahi hote.</span>
+            <span style="font-size:11.5px;color:var(--text-400)">This is for reference only (to show the customer what's included) — set the Rate/Tax/Billing Cycle below yourself; they are not auto-calculated from the component rates.</span>
         </div>
 
         <div class="fg2">
@@ -133,7 +133,7 @@
                    value="{{ ($oldUnit && !in_array($oldUnit, $units)) ? $oldUnit : '' }}"
                    style="{{ ($oldUnit && !in_array($oldUnit, $units)) ? '' : 'display:none' }};margin-top:6px"/>
             <input type="hidden" name="unit" id="unitHidden" value="{{ $oldUnit }}">
-            <span style="font-size:11.5px;color:var(--text-400)">Rate kis basis pe hai — per Hour, per Session, per Month, per Project, etc.</span>
+            <span style="font-size:11.5px;color:var(--text-400)">What the rate is based on — per Hour, per Session, per Month, per Project, etc.</span>
         </div>
 
         <div class="field">
@@ -143,7 +143,7 @@
                 <option value="{{ $val }}" {{ old('billing_cycle', 'one_time') === $val ? 'selected' : '' }}>{{ $label }}</option>
                 @endforeach
             </select>
-            <span style="font-size:11.5px;color:var(--text-400)">Customer ko kitni baar bill/invoice jayega — sirf ek baar (One-time), ya baar-baar (Monthly/Quarterly/Yearly)</span>
+            <span style="font-size:11.5px;color:var(--text-400)">How often the customer is billed — once (One-time), or on a recurring basis (Monthly/Quarterly/Yearly).</span>
         </div>
 
         <div class="field" id="durationField" style="{{ old('billing_cycle', 'one_time') === 'one_time' ? 'display:none' : '' }}">
@@ -157,14 +157,14 @@
                     <option value="months" {{ old('duration_unit') === 'months' ? 'selected' : '' }}>Months</option>
                 </select>
             </div>
-            <span style="font-size:11.5px;color:var(--text-400)">Poora commitment/agreement kitne time ka hai — billing frequency se alag ho sakta hai. Sirf tab bharo jab customer ek fixed period ke liye lock-in ho. E.g. AMC: quarterly billing par 12-month contract &middot; Coaching course: monthly fees par 6-month course. Simple monthly/yearly service ho to khali chhod do.</span>
+            <span style="font-size:11.5px;color:var(--text-400)">The full length of the commitment/agreement — can differ from the billing frequency. Fill this in only when the customer is locked into a fixed period. E.g. AMC: quarterly billing on a 12-month contract &middot; Coaching course: monthly fees on a 6-month course. Leave blank for a simple ongoing monthly/yearly service.</span>
         </div>
 
         <div class="field">
             <label class="fl">Total Quantity <span style="font-weight:400;text-transform:none;color:var(--text-400)">(optional)</span></label>
             <input type="number" name="total_quantity" class="fi" min="1"
                    value="{{ old('total_quantity') }}" placeholder="e.g. 10"/>
-            <span style="font-size:11.5px;color:var(--text-400)">Agar service ek fixed count ki hai (jaise "10 sessions" package), yahan 10 daalo — customer ki subscription mein "X of 10 used" track hoga. Membership jaisi unlimited service ke liye khali chhod do.</span>
+            <span style="font-size:11.5px;color:var(--text-400)">If the service has a fixed count (e.g. a "10 sessions" package), enter 10 here — the customer's subscription will track "X of 10 used". Leave blank for unlimited services like a membership.</span>
         </div>
 
         <div class="field" style="flex-direction:row;align-items:center;gap:10px">

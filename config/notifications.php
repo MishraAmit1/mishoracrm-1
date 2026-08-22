@@ -292,6 +292,15 @@ return [
             'message'  => 'Your purchase request {{number}} was rejected',
         ],
 
+        'work_order.completed' => [
+            'label'    => 'Work Order Completed',
+            'icon'     => 'check-circle',
+            'color'    => 'green',
+            'group'    => 'Purchase',
+            'channels' => ['in_app'],
+            'message'  => 'Work Order {{number}} completed — {{quantity}} × {{product}} produced, stock updated',
+        ],
+
         // ── System ────────────────────────────────────────────────
         'system.announcement' => [
             'label'    => 'Announcement',

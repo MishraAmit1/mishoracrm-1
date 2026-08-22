@@ -61,11 +61,17 @@ class WorkOrderService
             ]);
         }
 
+        // Freeze material cost at this exact moment — before consuming
+        // stock — so later BOM/rate edits never retroactively change what
+        // this Work Order is recorded as having cost (see WorkOrder::material_cost).
+        $materialCostSnapshot = $workOrder->calculateLiveMaterialCost();
+
         StockService::consumeForProduction($product, (float) $workOrder->quantity, $workOrder->id, $finishedGoodExpiryDate);
 
         $workOrder->update([
-            'status'       => 'completed',
-            'completed_at' => now(),
+            'status'                 => 'completed',
+            'completed_at'           => now(),
+            'material_cost_snapshot' => $materialCostSnapshot,
         ]);
 
         return $workOrder;

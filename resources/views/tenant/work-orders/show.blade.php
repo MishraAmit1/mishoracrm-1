@@ -167,7 +167,13 @@
                     <div class="ps-card-title"><i class="ti ti-calculator" style="font-size:13px;margin-right:5px"></i> Production Cost</div>
                 </div>
                 <div style="padding:16px 20px">
-                    <div class="dl-row"><span class="dl-key">Material Cost <span style="opacity:.6">(from BOM)</span></span><span class="dl-val" style="font-family:'DM Mono',monospace">₹{{ number_format($workOrder->material_cost, 2) }}</span></div>
+                    <div class="dl-row">
+                        <span class="dl-key">
+                            Material Cost
+                            <span style="opacity:.6">({{ $workOrder->material_cost_snapshot !== null ? 'frozen at completion' : 'live BOM estimate' }})</span>
+                        </span>
+                        <span class="dl-val" style="font-family:'DM Mono',monospace">₹{{ number_format($workOrder->material_cost, 2) }}</span>
+                    </div>
 
                     <form method="POST" action="{{ route('tenant.work-orders.update-costs',$workOrder->id) }}" style="margin-top:10px">
                         @csrf
@@ -192,6 +198,17 @@
 
                     <div class="dl-row"><span class="dl-key">Total Cost</span><span class="dl-val" style="font-family:'DM Mono',monospace;font-weight:700">₹{{ number_format($workOrder->total_cost, 2) }}</span></div>
                     <div class="dl-row"><span class="dl-key">Cost / Unit</span><span class="dl-val" style="font-family:'DM Mono',monospace">₹{{ number_format($workOrder->cost_per_unit, 2) }}</span></div>
+
+                    @if($workOrder->product?->rate)
+                    <div style="height:1px;background:var(--border-subtle);margin:14px 0"></div>
+                    <div class="dl-row"><span class="dl-key">Selling Value <span style="opacity:.6">(at current rate × qty)</span></span><span class="dl-val" style="font-family:'DM Mono',monospace">₹{{ number_format($workOrder->selling_value, 2) }}</span></div>
+                    <div class="dl-row">
+                        <span class="dl-key">Margin</span>
+                        <span class="dl-val" style="font-family:'DM Mono',monospace;font-weight:700;color:{{ $workOrder->margin >= 0 ? '#0F6E56' : '#A32D2D' }}">
+                            ₹{{ number_format($workOrder->margin, 2) }} ({{ $workOrder->margin_percent }}%)
+                        </span>
+                    </div>
+                    @endif
                 </div>
             </div>
             @endcan
