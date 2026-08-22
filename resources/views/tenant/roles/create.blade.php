@@ -315,6 +315,7 @@
                     'subscriptions' => '📆',
                     'appointments'  => '🗓️',
                     'time_entries'  => '⏱️',
+                    'tickets'       => '🎫',
                 ];
                 @endphp
 

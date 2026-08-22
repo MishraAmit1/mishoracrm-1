@@ -145,6 +145,14 @@ class RolesAndPermissionsSeeder extends Seeder
             'time_entries.delete',
             'time_entries.convert_to_invoice',
 
+            // ── Tickets / Helpdesk ─────────────────────────────────
+            'tickets.view_own',
+            'tickets.view_all',
+            'tickets.create',
+            'tickets.reply',
+            'tickets.edit',
+            'tickets.delete',
+
             // ── Staff ─────────────────────────────────────────────
             'staff.view',
             'staff.create',
@@ -233,6 +241,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'appointments.create',
             'time_entries.view',
             'time_entries.create',
+            'tickets.view_own',
+            'tickets.create',
+            'tickets.reply',
         ]);
 
         $this->command->info('✅ Permissions seeded: ' . Permission::count());

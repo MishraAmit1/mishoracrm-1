@@ -72,6 +72,19 @@ Route::prefix('/book')->name('public.booking.')->controller(\App\Http\Controller
 });
 
 // ══════════════════════════════════════════════════════════════════
+// PUBLIC — Customer-facing support ticket submission (token-guarded, no auth)
+// ══════════════════════════════════════════════════════════════════
+
+Route::prefix('/support')->name('public.support.')->controller(\App\Http\Controllers\Public\TicketController::class)->group(function () {
+    Route::get('/ticket/{token}', 'showTicket')->name('ticket');
+    Route::get('/{token}', 'show')->name('show');
+    Route::middleware('throttle:20,1')->group(function () {
+        Route::post('/{token}/store', 'store')->name('store');
+        Route::post('/ticket/{token}/reply', 'replyAsCustomer')->name('reply');
+    });
+});
+
+// ══════════════════════════════════════════════════════════════════
 // RAZORPAY WEBHOOK (no CSRF, no auth — Razorpay se aata hai)
 // ══════════════════════════════════════════════════════════════════
 
@@ -122,6 +135,8 @@ Route::prefix('superadmin')
             Route::post('/{tenant}/clear-manufacturing-override', 'clearManufacturingOverride')->name('clear-manufacturing-override');
             Route::post('/{tenant}/toggle-service', 'toggleService')->name('toggle-service');
             Route::post('/{tenant}/clear-service-override', 'clearServiceOverride')->name('clear-service-override');
+            Route::post('/{tenant}/modules/{module}/toggle', 'toggleModule')->name('toggle-module');
+            Route::post('/{tenant}/modules/{module}/clear', 'clearModuleOverride')->name('clear-module-override');
         });
 
         // Plan management
@@ -473,7 +488,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
         // gated behind the same Service module toggle, plus per-action
         // permissions so tenant admins can control which staff can send
         // customer messages, cancel subscriptions, or edit templates.
-        Route::prefix('/subscriptions')->name('subscriptions.')->middleware('module:service')->group(function () {
+        Route::prefix('/subscriptions')->name('subscriptions.')->middleware('module:subscriptions')->group(function () {
             Route::controller(Tenant\ServiceSubscriptionController::class)->group(function () {
                 Route::middleware('permission:subscriptions.view')->group(function () {
                     Route::get('/', 'index')->name('index');
@@ -503,7 +518,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
         });
 
         // Appointments / Booking routes — gated behind the Service module toggle
-        Route::prefix('/appointments')->name('appointments.')->middleware('module:service')->group(function () {
+        Route::prefix('/appointments')->name('appointments.')->middleware('module:appointments')->group(function () {
             Route::controller(Tenant\AppointmentController::class)->group(function () {
                 Route::middleware('permission:appointments.view')->group(function () {
                     Route::get('/', 'index')->name('index');
@@ -523,7 +538,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
         });
 
         // Time Tracking routes — gated behind the Service module toggle
-        Route::prefix('/time-entries')->name('time-entries.')->middleware('module:service')->group(function () {
+        Route::prefix('/time-entries')->name('time-entries.')->middleware('module:time_tracking')->group(function () {
             Route::controller(Tenant\TimeEntryController::class)->group(function () {
                 Route::middleware('permission:time_entries.view')->group(function () {
                     Route::get('/', 'index')->name('index');
@@ -538,6 +553,34 @@ Route::middleware(['tenant', 'auth', 'subscription'])
                 });
                 Route::delete('/{id}', 'destroy')->name('destroy')->middleware('permission:time_entries.delete');
                 Route::post('/convert-to-invoice', 'convertToInvoice')->name('convert-to-invoice')->middleware('permission:time_entries.convert_to_invoice');
+            });
+        });
+
+        // Tickets / Helpdesk routes — gated behind its own module toggle
+        // (relevant to every tenant, not just service-based ones).
+        Route::prefix('/tickets')->name('tickets.')->middleware('module:tickets')->group(function () {
+            Route::controller(Tenant\TicketController::class)->group(function () {
+                Route::middleware('permission:tickets.view_all|tickets.view_own')->group(function () {
+                    Route::get('/', 'index')->name('index');
+                    Route::get('/{id}', 'show')->name('show');
+                });
+                Route::middleware('permission:tickets.create')->group(function () {
+                    Route::get('/create', 'create')->name('create');
+                    Route::post('/', 'store')->name('store');
+                });
+                Route::middleware('permission:tickets.reply')->group(function () {
+                    Route::post('/{id}/reply', 'reply')->name('reply');
+                    Route::post('/{id}/attachments', 'storeAttachment')->name('attachments.store');
+                });
+                Route::middleware('permission:tickets.edit')->group(function () {
+                    Route::post('/{id}/status', 'updateStatus')->name('status');
+                    Route::post('/{id}/priority', 'updatePriority')->name('priority');
+                    Route::post('/{id}/assign', 'assign')->name('assign');
+                    Route::post('/preferences', 'updatePreferences')->name('preferences');
+                    Route::post('/preferences/test-email', 'sendTestEmail')->name('preferences.test-email');
+                });
+                Route::delete('/{id}', 'destroy')->name('destroy')->middleware('permission:tickets.delete');
+                Route::delete('/{ticketId}/attachments/{attachmentId}', 'destroyAttachment')->name('attachments.destroy')->middleware('permission:tickets.edit');
             });
         });
 

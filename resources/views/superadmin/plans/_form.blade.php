@@ -164,6 +164,10 @@
             ['key' => 'feat_social_leads','field' => 'social_leads', 'label' => 'Social Media Leads',   'sub' => 'Facebook / Instagram lead capture'],
             ['key' => 'feat_manufacturing','field' => 'manufacturing', 'label' => 'Manufacturing',       'sub' => 'Work Orders + Product Batches (production tracking)'],
             ['key' => 'feat_service',      'field' => 'service',       'label' => 'Service Catalog',     'sub' => 'Service Catalog + Quotation/Invoice service line items'],
+            ['key' => 'feat_subscriptions','field' => 'subscriptions','label' => 'Service Subscriptions','sub' => 'Customer-level subscription tracking, expiry reminders, renewals'],
+            ['key' => 'feat_appointments', 'field' => 'appointments', 'label' => 'Appointments / Booking','sub' => 'Public online booking link + staff appointment management'],
+            ['key' => 'feat_time_tracking','field' => 'time_tracking','label' => 'Time Tracking',        'sub' => 'Task timers, billable hours, convert time to invoices'],
+            ['key' => 'feat_tickets',      'field' => 'tickets',      'label' => 'Tickets / Helpdesk',   'sub' => 'Customer support tickets, public submission form, reply thread'],
         ];
     @endphp
     @foreach($boolFeatures as $feat)

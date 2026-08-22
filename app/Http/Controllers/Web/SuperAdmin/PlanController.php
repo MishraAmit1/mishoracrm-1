@@ -119,12 +119,20 @@ class PlanController extends Controller
             'social_leads' => $request->boolean('feat_social_leads'),
             'manufacturing' => $request->boolean('feat_manufacturing'),
             'service' => $request->boolean('feat_service'),
+            'subscriptions' => $request->boolean('feat_subscriptions'),
+            'appointments' => $request->boolean('feat_appointments'),
+            'time_tracking' => $request->boolean('feat_time_tracking'),
+            'tickets' => $request->boolean('feat_tickets'),
         ];
 
         // remove false booleans to keep JSON clean (optional features only when true)
         if (!$features['social_leads']) unset($features['social_leads']);
         if (!$features['manufacturing']) unset($features['manufacturing']);
         if (!$features['service']) unset($features['service']);
+        if (!$features['subscriptions']) unset($features['subscriptions']);
+        if (!$features['appointments']) unset($features['appointments']);
+        if (!$features['time_tracking']) unset($features['time_tracking']);
+        if (!$features['tickets']) unset($features['tickets']);
 
         return $features;
     }

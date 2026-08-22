@@ -232,6 +232,32 @@ return [
             'message'  => '{{contact_name}}\'s {{service_name}} subscription expires on {{expiry_date}}',
         ],
 
+        // ── Tickets ───────────────────────────────────────────────
+        'ticket.created' => [
+            'label'    => 'New Support Ticket',
+            'icon'     => 'life-buoy',
+            'color'    => 'accent',
+            'group'    => 'Tickets',
+            'channels' => ['in_app', 'email'],
+            'message'  => 'New ticket from {{contact_name}}: {{subject}}',
+        ],
+        'ticket.assigned' => [
+            'label'    => 'Ticket Assigned to You',
+            'icon'     => 'life-buoy',
+            'color'    => 'accent',
+            'group'    => 'Tickets',
+            'channels' => ['in_app', 'email'],
+            'message'  => 'You were assigned ticket: {{subject}}',
+        ],
+        'ticket.customer_replied' => [
+            'label'    => 'Customer Replied to Ticket',
+            'icon'     => 'life-buoy',
+            'color'    => 'amber',
+            'group'    => 'Tickets',
+            'channels' => ['in_app'],
+            'message'  => 'New reply on ticket: {{subject}}',
+        ],
+
         // ── Purchase ──────────────────────────────────────────────
         'purchase_request.submitted' => [
             'label'    => 'New Purchase Request',

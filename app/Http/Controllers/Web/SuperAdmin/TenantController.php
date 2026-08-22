@@ -141,4 +141,46 @@ class TenantController extends Controller
 
         return back()->with('success', "Service access for {$tenant->name} now follows their plan.");
     }
+
+    // ── Module access — generic (Subscriptions, Appointments, Time
+    // Tracking, and any future module) so each new sub-feature doesn't
+    // need its own copy-pasted toggle/clear method pair like
+    // manufacturing/service above did. Same tri-state override behavior. ──
+    private const TOGGLEABLE_MODULES = ['subscriptions', 'appointments', 'time_tracking', 'tickets'];
+
+    private function moduleLabel(string $module): string
+    {
+        return match ($module) {
+            'subscriptions' => 'Service Subscriptions',
+            'appointments'  => 'Appointments / Booking',
+            'time_tracking' => 'Time Tracking',
+            'tickets'       => 'Tickets / Helpdesk',
+            default         => ucfirst(str_replace('_', ' ', $module)),
+        };
+    }
+
+    public function toggleModule(Tenant $tenant, string $module, Request $request): RedirectResponse
+    {
+        abort_unless(in_array($module, self::TOGGLEABLE_MODULES, true), 404);
+        $request->validate(['enabled' => ['required', 'boolean']]);
+
+        $settings = $tenant->settings ?? [];
+        $settings['modules'][$module] = $request->boolean('enabled');
+        $tenant->update(['settings' => $settings]);
+
+        $state = $request->boolean('enabled') ? 'enabled' : 'disabled';
+
+        return back()->with('success', $this->moduleLabel($module) . " {$state} for {$tenant->name}.");
+    }
+
+    public function clearModuleOverride(Tenant $tenant, string $module): RedirectResponse
+    {
+        abort_unless(in_array($module, self::TOGGLEABLE_MODULES, true), 404);
+
+        $settings = $tenant->settings ?? [];
+        unset($settings['modules'][$module]);
+        $tenant->update(['settings' => $settings]);
+
+        return back()->with('success', $this->moduleLabel($module) . " access for {$tenant->name} now follows their plan.");
+    }
 }

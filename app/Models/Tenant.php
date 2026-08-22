@@ -141,6 +141,26 @@ class Tenant extends Model
         return is_string($value) && trim($value) !== '' ? $value : null;
     }
 
+    // Ticket confirmation channel preference — unlike subscription reminders
+    // this defaults ON (true) for an unset key, since the confirmation was
+    // originally always-sent and tenants shouldn't lose it silently just
+    // because they've never visited the settings panel.
+    public function wantsTicketConfirmation(string $channel): bool
+    {
+        $value = $this->settings['preferences']["ticket_confirmation_{$channel}"] ?? null;
+
+        return $value === null ? true : (bool) $value;
+    }
+
+    // Tenant's custom ticket-confirmation template for a channel, or null to
+    // use the built-in default (see TicketNotificationService::DEFAULT_*).
+    public function ticketConfirmationTemplate(string $key): ?string
+    {
+        $value = $this->settings['preferences']["ticket_confirmation_{$key}"] ?? null;
+
+        return is_string($value) && trim($value) !== '' ? $value : null;
+    }
+
     // ── Public booking link — same settings['...'] token convention as
     // getWebhookToken() above, so no new tenants column is needed. ──────
     public function ensureBookingToken(): string
@@ -158,6 +178,25 @@ class Tenant extends Model
     public function bookingPublicUrl(): string
     {
         return route('public.booking.show', $this->ensureBookingToken());
+    }
+
+    // ── Public support-ticket submission link — same pattern as the
+    // booking token above. ──────────────────────────────────────────
+    public function ensureSupportToken(): string
+    {
+        $settings = $this->settings ?? [];
+
+        if (empty($settings['support_token'])) {
+            $settings['support_token'] = Str::random(40);
+            $this->update(['settings' => $settings]);
+        }
+
+        return $settings['support_token'];
+    }
+
+    public function supportPublicUrl(): string
+    {
+        return route('public.support.show', $this->ensureSupportToken());
     }
 
     // settings['booking'][...] — configured via the tenant's Appointments

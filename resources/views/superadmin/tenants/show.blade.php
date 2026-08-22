@@ -346,6 +346,66 @@
                     </form>
                     @endif
                 </div>
+
+                @php
+                    $extraModules = [
+                        'subscriptions' => ['label' => 'Service Subscriptions', 'sub' => 'Customer-level subscription tracking, expiry reminders, renewals'],
+                        'appointments'  => ['label' => 'Appointments / Booking', 'sub' => 'Public online booking link + staff appointment management'],
+                        'time_tracking' => ['label' => 'Time Tracking', 'sub' => 'Task timers, billable hours, convert time to invoices'],
+                        'tickets'       => ['label' => 'Tickets / Helpdesk', 'sub' => 'Customer support tickets, public submission form, reply thread'],
+                    ];
+                @endphp
+                @foreach($extraModules as $modKey => $modInfo)
+                @php
+                    $modInPlan   = $tenant->moduleIncludedInPlan($modKey);
+                    $modOverride = $tenant->moduleOverride($modKey);
+                    $modOn       = $tenant->hasModuleEnabled($modKey);
+                @endphp
+                <div class="info-row" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border-subtle);">
+                    <span class="info-label">
+                        {{ $modInfo['label'] }}
+                        <div style="font-size:11px;color:var(--text-400);font-weight:400;margin-top:2px;max-width:220px;">{{ $modInfo['sub'] }}</div>
+                    </span>
+                    <span class="t-status {{ $modOn ? 't-active' : 't-suspended' }}">
+                        {{ $modOn ? '✓ Enabled' : '✗ Disabled' }}
+                    </span>
+                </div>
+
+                <div style="font-size:11px;color:var(--text-400);margin-top:6px;">
+                    @if($modOverride === true)
+                        Manually <strong style="color:var(--text-200)">force-enabled</strong> for this tenant{{ $modInPlan ? ' (their plan already includes it too)' : ", overriding their {$plan?->name} plan" }}.
+                    @elseif($modOverride === false)
+                        Manually <strong style="color:var(--text-200)">force-disabled</strong> for this tenant, overriding their {{ $plan?->name ?? 'current' }} plan.
+                    @elseif($modInPlan)
+                        Included automatically via the <strong style="color:var(--text-200)">{{ $plan->name }}</strong> plan.
+                    @else
+                        Not included in the {{ $plan?->name ?? 'current' }} plan, and no manual override set.
+                    @endif
+                </div>
+
+                <div style="display:flex;gap:8px;margin-top:12px;">
+                    <form method="POST" action="{{ route('superadmin.tenants.toggle-module', [$tenant, $modKey]) }}">
+                        @csrf
+                        <input type="hidden" name="enabled" value="1">
+                        <button type="submit" class="btn btn-sm {{ $modOn ? 'btn-secondary' : 'btn-primary' }}" {{ $modOverride === true ? 'disabled' : '' }}>
+                            Force Enable
+                        </button>
+                    </form>
+                    <form method="POST" action="{{ route('superadmin.tenants.toggle-module', [$tenant, $modKey]) }}">
+                        @csrf
+                        <input type="hidden" name="enabled" value="0">
+                        <button type="submit" class="btn btn-sm {{ !$modOn ? 'btn-secondary' : 'btn-primary' }}" {{ $modOverride === false ? 'disabled' : '' }}>
+                            Force Disable
+                        </button>
+                    </form>
+                    @if(!is_null($modOverride))
+                    <form method="POST" action="{{ route('superadmin.tenants.clear-module-override', [$tenant, $modKey]) }}">
+                        @csrf
+                        <button type="submit" class="btn btn-sm btn-secondary">Reset to Plan Default</button>
+                    </form>
+                    @endif
+                </div>
+                @endforeach
             </div>
         </div>
     </div>
