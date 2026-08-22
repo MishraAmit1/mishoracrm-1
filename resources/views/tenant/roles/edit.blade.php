@@ -211,7 +211,7 @@
         <div class="perm-module" id="mod-{{ $module }}">
             <div class="pm-head open" onclick="toggleModule('{{ $module }}')">
                 <span style="font-size:16px">{{ $icons[$module] ?? '🔧' }}</span>
-                <span class="pm-module-name">{{ ucfirst($module) }}</span>
+                <span class="pm-module-name">{{ ucwords(str_replace('_', ' ', $module)) }}</span>
                 <button type="button" class="select-all-btn"
                         onclick="event.stopPropagation();toggleModulePerms('{{ $module }}')"
                         id="sa-{{ $module }}">

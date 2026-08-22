@@ -26,11 +26,25 @@ class Ticket extends Model
         'source',
         'public_token',
         'resolved_at',
+        'sla_notified_at',
     ];
 
     protected $casts = [
-        'resolved_at' => 'datetime',
+        'resolved_at'      => 'datetime',
+        'sla_notified_at'  => 'datetime',
     ];
+
+    // First-response SLA window per priority — how long a ticket can sit
+    // with no staff reply before it's flagged as breached.
+    public static function slaHours(): array
+    {
+        return [
+            'urgent' => 1,
+            'high'   => 4,
+            'medium' => 24,
+            'low'    => 48,
+        ];
+    }
 
     public static function statuses(): array
     {

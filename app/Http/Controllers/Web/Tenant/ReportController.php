@@ -3,13 +3,18 @@
 namespace App\Http\Controllers\Web\Tenant;
 
 use App\Http\Controllers\Controller;
+use App\Models\Appointment;
 use App\Models\Contact;
 use App\Models\Deal;
 use App\Models\Followup;
 use App\Models\Invoice;
 use App\Models\Lead;
 use App\Models\Quotation;
+use App\Models\Service;
+use App\Models\ServiceSubscription;
 use App\Models\Task;
+use App\Models\Ticket;
+use App\Models\TimeEntry;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -370,6 +375,196 @@ class ReportController extends Controller
 
         return view('tenant.reports.staff', compact(
             'staffList', 'from', 'to', 'request'
+        ));
+    }
+
+    // ── Subscriptions report ──────────────────────────────────────
+    public function subscriptions(Request $request): View
+    {
+        $this->requireViewAll();
+        [$from, $to] = $this->dateRange($request);
+
+        $kpis = [
+            'active'   => ServiceSubscription::currentlyValid()->count(),
+            'expiring' => ServiceSubscription::expiringSoon(auth()->user()->tenant->subscriptionReminderDays())->count(),
+            'expired'  => ServiceSubscription::expired()->count(),
+            'cancelled'=> ServiceSubscription::cancelled()->count(),
+            'new'      => ServiceSubscription::whereBetween('created_at', [$from, $to])->count(),
+        ];
+
+        // Rough MRR estimate — active subscriptions' service rate, monthly
+        // billing_cycle only (weekly/yearly aren't normalized here).
+        $mrr = ServiceSubscription::currentlyValid()
+            ->whereHas('service', fn ($q) => $q->where('billing_cycle', 'monthly'))
+            ->join('services', 'services.id', '=', 'service_subscriptions.service_id')
+            ->sum('services.rate');
+
+        $byService = ServiceSubscription::selectRaw('service_id, COUNT(*) as count')
+            ->groupBy('service_id')
+            ->with('service:id,name')
+            ->orderByDesc('count')
+            ->limit(10)
+            ->get();
+
+        $monthlyTrend = ServiceSubscription::where('created_at', '>=', now()->subMonths(11)->startOfMonth())
+            ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as month, COUNT(*) as count")
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get();
+
+        $expiringList = ServiceSubscription::with(['contact:id,name', 'service:id,name'])
+            ->expiringSoon(auth()->user()->tenant->subscriptionReminderDays())
+            ->orderBy('expires_at')
+            ->limit(10)
+            ->get();
+
+        return view('tenant.reports.subscriptions', compact(
+            'kpis', 'mrr', 'byService', 'monthlyTrend', 'expiringList', 'from', 'to', 'request'
+        ));
+    }
+
+    // ── Appointments report ───────────────────────────────────────
+    public function appointments(Request $request): View
+    {
+        $this->requireViewAll();
+        [$from, $to] = $this->dateRange($request);
+
+        $base = Appointment::whereBetween('starts_at', [$from, $to]);
+
+        $kpis = [
+            'total'     => (clone $base)->count(),
+            'completed' => (clone $base)->where('status', 'completed')->count(),
+            'cancelled' => (clone $base)->where('status', 'cancelled')->count(),
+            'no_show'   => (clone $base)->where('status', 'no_show')->count(),
+            'upcoming'  => Appointment::upcoming()->count(),
+        ];
+        $finished = $kpis['completed'] + $kpis['cancelled'] + $kpis['no_show'];
+        $noShowRate = $finished > 0 ? round(($kpis['no_show'] / $finished) * 100, 1) : 0;
+
+        $byService = Appointment::whereBetween('starts_at', [$from, $to])
+            ->selectRaw('service_id, COUNT(*) as count')
+            ->groupBy('service_id')
+            ->with('service:id,name')
+            ->orderByDesc('count')
+            ->limit(10)
+            ->get();
+
+        $byStatus = Appointment::whereBetween('starts_at', [$from, $to])
+            ->selectRaw('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->get()->keyBy('status');
+
+        $dailyTrend = Appointment::whereBetween('starts_at', [$from, $to])
+            ->selectRaw('DATE(starts_at) as day, COUNT(*) as count')
+            ->groupBy('day')
+            ->orderBy('day')
+            ->get();
+
+        return view('tenant.reports.appointments', compact(
+            'kpis', 'noShowRate', 'byService', 'byStatus', 'dailyTrend', 'from', 'to', 'request'
+        ));
+    }
+
+    // ── Tickets report ────────────────────────────────────────────
+    public function tickets(Request $request): View
+    {
+        $this->requireViewAll();
+        [$from, $to] = $this->dateRange($request);
+
+        $base = Ticket::whereBetween('created_at', [$from, $to]);
+
+        $kpis = [
+            'total'        => (clone $base)->count(),
+            'open'         => (clone $base)->openTickets()->count(),
+            'resolved'     => (clone $base)->where('status', 'resolved')->count(),
+            'closed'       => (clone $base)->where('status', 'closed')->count(),
+            'sla_breached' => (clone $base)->whereNotNull('sla_notified_at')->count(),
+        ];
+
+        // Avg resolution time in hours, for tickets that have a resolved_at
+        $avgResolutionHours = (clone $base)
+            ->whereNotNull('resolved_at')
+            ->selectRaw('AVG(TIMESTAMPDIFF(HOUR, created_at, resolved_at)) as avg_hours')
+            ->value('avg_hours');
+
+        $byPriority = Ticket::whereBetween('created_at', [$from, $to])
+            ->selectRaw('priority, COUNT(*) as count')
+            ->groupBy('priority')
+            ->get()->keyBy('priority');
+
+        $byStatus = Ticket::whereBetween('created_at', [$from, $to])
+            ->selectRaw('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->get()->keyBy('status');
+
+        $byStaff = Ticket::whereBetween('created_at', [$from, $to])
+            ->whereNotNull('assigned_to')
+            ->selectRaw('assigned_to, COUNT(*) as count')
+            ->groupBy('assigned_to')
+            ->with('assignee:id,name')
+            ->orderByDesc('count')
+            ->limit(10)
+            ->get();
+
+        return view('tenant.reports.tickets', compact(
+            'kpis', 'avgResolutionHours', 'byPriority', 'byStatus', 'byStaff', 'from', 'to', 'request'
+        ));
+    }
+
+    // ── Time Tracking report ──────────────────────────────────────
+    public function timeTracking(Request $request): View
+    {
+        $this->requireViewAll();
+        [$from, $to] = $this->dateRange($request);
+        $tid = $this->tenantId();
+
+        $base = TimeEntry::whereBetween('started_at', [$from, $to])->whereNotNull('ended_at');
+
+        $totalMinutes    = (clone $base)->sum('duration_minutes');
+        $billableMinutes = (clone $base)->where('is_billable', true)->sum('duration_minutes');
+        $invoicedMinutes = (clone $base)->where('is_billable', true)->where('is_invoiced', true)->sum('duration_minutes');
+        $uninvoicedBillableMinutes = $billableMinutes - $invoicedMinutes;
+
+        $kpis = [
+            'total_hours'      => round($totalMinutes / 60, 1),
+            'billable_hours'   => round($billableMinutes / 60, 1),
+            'invoiced_hours'   => round($invoicedMinutes / 60, 1),
+            'uninvoiced_hours' => round($uninvoicedBillableMinutes / 60, 1),
+        ];
+
+        $byStaff = User::withoutGlobalScopes()
+            ->where('tenant_id', $tid)
+            ->get()
+            ->map(function ($user) use ($from, $to) {
+                $entries = TimeEntry::where('user_id', $user->id)
+                    ->whereBetween('started_at', [$from, $to])
+                    ->whereNotNull('ended_at');
+
+                $total    = (clone $entries)->sum('duration_minutes');
+                $billable = (clone $entries)->where('is_billable', true)->sum('duration_minutes');
+
+                return [
+                    'user'           => $user,
+                    'total_hours'    => round($total / 60, 1),
+                    'billable_hours' => round($billable / 60, 1),
+                ];
+            })
+            ->filter(fn ($row) => $row['total_hours'] > 0)
+            ->sortByDesc('total_hours')
+            ->values();
+
+        $byService = TimeEntry::whereBetween('started_at', [$from, $to])
+            ->whereNotNull('ended_at')
+            ->whereNotNull('service_id')
+            ->selectRaw('service_id, SUM(duration_minutes) as minutes')
+            ->groupBy('service_id')
+            ->with('service:id,name')
+            ->orderByDesc('minutes')
+            ->limit(10)
+            ->get();
+
+        return view('tenant.reports.time-tracking', compact(
+            'kpis', 'byStaff', 'byService', 'from', 'to', 'request'
         ));
     }
 }

@@ -257,6 +257,14 @@ return [
             'channels' => ['in_app'],
             'message'  => 'New reply on ticket: {{subject}}',
         ],
+        'ticket.sla_breach' => [
+            'label'    => 'Ticket SLA Breached',
+            'icon'     => 'alert-triangle',
+            'color'    => 'red',
+            'group'    => 'Tickets',
+            'channels' => ['in_app', 'email'],
+            'message'  => 'No reply yet on {{priority}} priority ticket "{{subject}}" — SLA window has passed',
+        ],
 
         // ── Purchase ──────────────────────────────────────────────
         'purchase_request.submitted' => [

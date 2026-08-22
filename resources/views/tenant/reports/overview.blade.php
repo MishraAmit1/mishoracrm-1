@@ -94,6 +94,18 @@
         <a href="{{ route('tenant.reports.deal_quotations') }}" class="btn btn-secondary">Deal Quotations</a>
         <a href="{{ route('tenant.reports.revenue') }}"  class="btn btn-secondary">Revenue</a>
         <a href="{{ route('tenant.reports.staff') }}"    class="btn btn-secondary">Staff</a>
+        @if(auth()->user()->tenant?->hasModuleEnabled('subscriptions'))
+        <a href="{{ route('tenant.reports.subscriptions') }}" class="btn btn-secondary">Subscriptions</a>
+        @endif
+        @if(auth()->user()->tenant?->hasModuleEnabled('appointments'))
+        <a href="{{ route('tenant.reports.appointments') }}" class="btn btn-secondary">Appointments</a>
+        @endif
+        @if(auth()->user()->tenant?->hasModuleEnabled('tickets'))
+        <a href="{{ route('tenant.reports.tickets') }}" class="btn btn-secondary">Tickets</a>
+        @endif
+        @if(auth()->user()->tenant?->hasModuleEnabled('time_tracking'))
+        <a href="{{ route('tenant.reports.time-tracking') }}" class="btn btn-secondary">Time Tracking</a>
+        @endif
     </div>
 </div>
 

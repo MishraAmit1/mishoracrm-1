@@ -126,7 +126,7 @@
             </div>
         </div>
         <div class="page-actions">
-            {{-- <a href="{{ route('leads.create') }}" --}} <a href="#" class="btn btn-primary">
+            <a href="{{ route('tenant.leads.create') }}" class="btn btn-primary">
                 <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
@@ -179,6 +179,46 @@
             </div>
             <span class="quick-card-text">Quotation</span>
         </a>
+        @if(auth()->user()->tenant?->hasModuleEnabled('service'))
+        <a href="{{ route('tenant.services.create') }}" class="quick-card">
+            <div class="quick-card-icon" style="background:var(--accent-dim);color:var(--accent)">
+                <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L1.5 3l1.5-1.5L7.5 4.5v1.409l4.26 4.26" />
+                </svg>
+            </div>
+            <span class="quick-card-text">New Service</span>
+        </a>
+        @endif
+        @if(auth()->user()->tenant?->hasModuleEnabled('appointments'))
+        <a href="{{ route('tenant.appointments.create') }}" class="quick-card">
+            <div class="quick-card-icon" style="background:var(--accent-dim);color:var(--accent)">
+                <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                </svg>
+            </div>
+            <span class="quick-card-text">Book Appointment</span>
+        </a>
+        @endif
+        @if(auth()->user()->tenant?->hasModuleEnabled('time_tracking'))
+        <a href="{{ route('tenant.time-entries.index') }}" class="quick-card">
+            <div class="quick-card-icon" style="background:var(--green-dim);color:var(--green)">
+                <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <span class="quick-card-text">Log Time</span>
+        </a>
+        @endif
+        @if(auth()->user()->tenant?->hasModuleEnabled('tickets'))
+        <a href="{{ route('tenant.tickets.create') }}" class="quick-card">
+            <div class="quick-card-icon" style="background:var(--amber-dim);color:var(--amber)">
+                <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+                </svg>
+            </div>
+            <span class="quick-card-text">New Ticket</span>
+        </a>
+        @endif
     </div>
 
     @if($subscriptionAlerts && ($subscriptionAlerts['expiring'] > 0 || $subscriptionAlerts['expired'] > 0))
@@ -200,6 +240,59 @@
     </a>
     @endif
 
+    @if($ticketAlerts && $ticketAlerts['open'] > 0)
+    <a href="{{ route('tenant.tickets.index', ['status' => $ticketAlerts['unassigned'] > 0 ? '' : 'open']) }}"
+       style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:#FFF4E5;border:1px solid rgba(179,107,0,.25);border-radius:var(--r-md);margin-bottom:16px;text-decoration:none;color:#B36B00;font-size:13.5px;font-weight:600">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:18px;height:18px;flex-shrink:0">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z"/>
+        </svg>
+        <span>
+            {{ $ticketAlerts['open'] }} open ticket(s)
+            @if($ticketAlerts['unassigned'] > 0) &middot; {{ $ticketAlerts['unassigned'] }} unassigned @endif
+            — click to review →
+        </span>
+    </a>
+    @endif
+
+    @if($appointmentAlerts && $appointmentAlerts['today'] > 0)
+    <a href="{{ route('tenant.appointments.index') }}"
+       style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--accent-dim);border:1px solid rgba(var(--accent-rgb),.25);border-radius:var(--r-md);margin-bottom:16px;text-decoration:none;color:var(--accent);font-size:13.5px;font-weight:600">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:18px;height:18px;flex-shrink:0">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"/>
+        </svg>
+        <span>{{ $appointmentAlerts['today'] }} appointment(s) today — click to view →</span>
+    </a>
+    @endif
+
+    @if($timeTrackingAlerts && $timeTrackingAlerts['running'] > 0)
+    <a href="{{ route('tenant.time-entries.index') }}"
+       style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--green-dim);border:1px solid rgba(52,199,89,.25);border-radius:var(--r-md);margin-bottom:16px;text-decoration:none;color:var(--green);font-size:13.5px;font-weight:600">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:18px;height:18px;flex-shrink:0">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+        </svg>
+        <span>{{ $timeTrackingAlerts['running'] }} timer(s) currently running — click to review →</span>
+    </a>
+    @endif
+
+    @if($manufacturingAlerts && ($manufacturingAlerts['low_stock'] > 0 || $manufacturingAlerts['pending_purchase'] > 0))
+    <a href="{{ $manufacturingAlerts['low_stock'] > 0 ? route('tenant.products.low-stock') : route('tenant.purchase-requests.index') }}"
+       style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--red-dim);border:1px solid rgba(255,82,87,.25);border-radius:var(--r-md);margin-bottom:16px;text-decoration:none;color:var(--red);font-size:13.5px;font-weight:600">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:18px;height:18px;flex-shrink:0">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6 4.125l2.25 2.25m0 0l2.25-2.25m-2.25 2.25V6.75m-8.25 0h16.5c.621 0 1.125-.504 1.125-1.125V4.125c0-.621-.504-1.125-1.125-1.125H3.75c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/>
+        </svg>
+        <span>
+            @if($manufacturingAlerts['low_stock'] > 0)
+                {{ $manufacturingAlerts['low_stock'] }} product(s) low on stock
+            @endif
+            @if($manufacturingAlerts['low_stock'] > 0 && $manufacturingAlerts['pending_purchase'] > 0) &middot; @endif
+            @if($manufacturingAlerts['pending_purchase'] > 0)
+                {{ $manufacturingAlerts['pending_purchase'] }} purchase request(s) pending
+            @endif
+            — click to review →
+        </span>
+    </a>
+    @endif
+
     {{-- Stat cards --}}
     <div class="stats-grid">
         <div class="stat-card s-blue">
@@ -210,12 +303,18 @@
                             d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.75 3.75 0 11-6.75 0 3.75 3.75 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
                     </svg>
                 </div>
-                <div class="stat-trend up">
+                @php $leadsTrend = $stats['leads_trend'] ?? 0; @endphp
+                <div class="stat-trend {{ $leadsTrend >= 0 ? 'up' : 'down' }}">
                     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        @if($leadsTrend >= 0)
                         <path stroke-linecap="round" stroke-linejoin="round"
                             d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
+                        @else
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M2.25 6L9 12.75l4.286-4.286a11.948 11.948 0 014.306 6.43l.776 2.898m0 0l3.182-5.511m-3.182 5.51l-5.511-3.181" />
+                        @endif
                     </svg>
-                    +12%
+                    {{ $leadsTrend >= 0 ? '+' : '' }}{{ $leadsTrend }}%
                 </div>
             </div>
             <div class="stat-num">{{ $stats['total_leads'] ?? 284 }}</div>
@@ -231,12 +330,18 @@
                             d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75" />
                     </svg>
                 </div>
-                <div class="stat-trend up">
+                @php $revTrend = $stats['revenue_trend'] ?? 0; @endphp
+                <div class="stat-trend {{ $revTrend >= 0 ? 'up' : 'down' }}">
                     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        @if($revTrend >= 0)
                         <path stroke-linecap="round" stroke-linejoin="round"
                             d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
+                        @else
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M2.25 6L9 12.75l4.286-4.286a11.948 11.948 0 014.306 6.43l.776 2.898m0 0l3.182-5.511m-3.182 5.51l-5.511-3.181" />
+                        @endif
                     </svg>
-                    +8%
+                    {{ $revTrend >= 0 ? '+' : '' }}{{ $revTrend }}%
                 </div>
             </div>
             <div class="stat-num">₹{{ number_format(($stats['revenue_this_month'] ?? 284500) / 1000, 0) }}K</div>
@@ -252,12 +357,18 @@
                             d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6" />
                     </svg>
                 </div>
-                <div class="stat-trend down">
+                @php $dealsTrend = $stats['deals_trend'] ?? 0; @endphp
+                <div class="stat-trend {{ $dealsTrend >= 0 ? 'up' : 'down' }}">
                     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        @if($dealsTrend >= 0)
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
+                        @else
                         <path stroke-linecap="round" stroke-linejoin="round"
                             d="M2.25 6L9 12.75l4.286-4.286a11.948 11.948 0 014.306 6.43l.776 2.898m0 0l3.182-5.511m-3.182 5.51l-5.511-3.181" />
+                        @endif
                     </svg>
-                    -3%
+                    {{ $dealsTrend >= 0 ? '+' : '' }}{{ $dealsTrend }}%
                 </div>
             </div>
             <div class="stat-num">{{ $stats['active_deals'] ?? 47 }}</div>
@@ -273,12 +384,18 @@
                             d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                 </div>
-                <div class="stat-trend up">
+                @php $tasksTrend = $stats['tasks_trend'] ?? 0; @endphp
+                <div class="stat-trend {{ $tasksTrend >= 0 ? 'up' : 'down' }}">
                     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        @if($tasksTrend >= 0)
                         <path stroke-linecap="round" stroke-linejoin="round"
                             d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
+                        @else
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M2.25 6L9 12.75l4.286-4.286a11.948 11.948 0 014.306 6.43l.776 2.898m0 0l3.182-5.511m-3.182 5.51l-5.511-3.181" />
+                        @endif
                     </svg>
-                    +5%
+                    {{ $tasksTrend >= 0 ? '+' : '' }}{{ $tasksTrend }}%
                 </div>
             </div>
             <div class="stat-num">{{ $stats['tasks_completed'] ?? 31 }}</div>
@@ -387,7 +504,6 @@
                     <div class="card-subtitle">Latest added to pipeline</div>
                 </div>
                 <a href="{{ route('tenant.leads.index') }}" class="btn btn-secondary btn-sm">View all →</a>
-                     <a href="#" class="btn btn-secondary btn-sm">View all →</a>
             </div>
             <div style="overflow-x:auto">
                 <table class="data-table">
@@ -474,7 +590,11 @@
                     <div class="card-title">Lead Sources</div>
                 </div>
                 <div class="card-body" style="padding-top:12px">
+                    @if(!empty($leadSources))
                     <canvas id="sourceChart" height="180" style="width:100%;display:block"></canvas>
+                    @else
+                    <div style="padding:20px;text-align:center;color:var(--text-300);font-size:13px">No lead source data yet.</div>
+                    @endif
                 </div>
             </div>
 
@@ -488,7 +608,6 @@
                 <div class="card-title">Recent Activity</div>
                 <div class="card-subtitle">All team activity across CRM</div>
             </div>
-            <button class="btn btn-secondary btn-sm">View all</button>
         </div>
         <div class="activity-list">
             @php
@@ -597,14 +716,28 @@
             btn.classList.add('active');
         }
 
-        // Lead source doughnut
+        // Lead source doughnut — real breakdown from the controller, not
+        // a fixed demo split. The surrounding Blade condition above only
+        // renders this block when there's at least one row.
+        @if(!empty($leadSources))
+        @php
+            $sourceLabelsForChart = [];
+            foreach (array_keys($leadSources) as $sourceKey) {
+                $sourceLabelsForChart[] = ucfirst(str_replace('_', ' ', $sourceKey));
+            }
+            $sourceCountsForChart = array_values($leadSources);
+        @endphp
+        const sourcePalette = ['#6378ff', '#2dd4a0', '#a78bfa', '#f8b84e', '#ff5257', '#25D366', '#854f0b', '#9ca3af'];
+        const sourceLabels = @json($sourceLabelsForChart);
+        const sourceCounts = @json($sourceCountsForChart);
+
         new Chart(document.getElementById('sourceChart').getContext('2d'), {
             type: 'doughnut',
             data: {
-                labels: ['Facebook', 'Website', 'WhatsApp', 'Instagram', 'Referral'],
+                labels: sourceLabels,
                 datasets: [{
-                    data: [35, 25, 20, 12, 8],
-                    backgroundColor: ['#6378ff', '#2dd4a0', '#a78bfa', '#f8b84e', '#ff5257'],
+                    data: sourceCounts,
+                    backgroundColor: sourcePalette.slice(0, sourceLabels.length),
                     borderWidth: 0,
                     hoverOffset: 4,
                 }]
@@ -620,11 +753,12 @@
                     tooltip: {
                         backgroundColor: '#181c24', borderColor: 'rgba(255,255,255,0.08)', borderWidth: 1,
                         titleColor: '#f2f4ff', bodyColor: '#9ca3c0', padding: 10,
-                        callbacks: { label: ctx => ' ' + ctx.label + ': ' + ctx.raw + '%' }
+                        callbacks: { label: ctx => ' ' + ctx.label + ': ' + ctx.raw }
                     }
                 },
                 cutout: '68%',
             }
         });
+        @endif
     </script>
 @endpush

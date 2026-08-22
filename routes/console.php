@@ -29,3 +29,14 @@ Schedule::command('products:check-batch-expiry')->dailyAt('08:00');
 
 // ── Service subscription expiry alerts — daily ─────────────────────
 Schedule::command('subscriptions:remind-expiry')->dailyAt('08:30');
+
+// ── Upcoming appointment reminders — hourly (24h-ahead window) ─────
+Schedule::command('appointments:remind-upcoming')->hourly();
+
+// ── Auto-mark past appointments as no-show if staff never updated
+// their status — hourly ─────────────────────────────────────────────
+Schedule::command('appointments:mark-no-show')->hourly();
+
+// ── Ticket SLA breach check (no staff reply within priority window) —
+// every 15 minutes, same cadence as the lead SLA check ─────────────
+Schedule::command('tickets:check-sla')->everyFifteenMinutes();

@@ -3,12 +3,17 @@
 namespace App\Http\Controllers\Web\Tenant;
 
 use App\Http\Controllers\Controller;
+use App\Models\Appointment;
 use App\Models\Deal;
 use App\Models\Followup;
 use App\Models\Invoice;
 use App\Models\Lead;
+use App\Models\Product;
+use App\Models\PurchaseRequest;
 use App\Models\ServiceSubscription;
 use App\Models\Task;
+use App\Models\Ticket;
+use App\Models\TimeEntry;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -181,13 +186,37 @@ class DashboardController extends Controller
             'followups_today'    => Followup::whereDate('scheduled_at', today())
                                             ->where('status', 'scheduled')
                                             ->count(),
-        ];
-        
 
-        // ── Revenue trend (calculate % change) ───────────────────
-        $stats['revenue_trend'] = $stats['revenue_last_month'] > 0
-            ? round((($stats['revenue_this_month'] - $stats['revenue_last_month']) / $stats['revenue_last_month']) * 100, 1)
+            // Month-over-month comparison bases for the stat-card trend badges
+            'new_leads_last_month'      => Lead::whereMonth('created_at', now()->subMonth()->month)
+                                                ->whereYear('created_at', now()->subMonth()->year)
+                                                ->count(),
+            'deals_created_this_month'  => Deal::whereMonth('created_at', now()->month)
+                                                ->whereYear('created_at', now()->year)
+                                                ->count(),
+            'deals_created_last_month'  => Deal::whereMonth('created_at', now()->subMonth()->month)
+                                                ->whereYear('created_at', now()->subMonth()->year)
+                                                ->count(),
+            'tasks_completed_last_month'=> Task::where('tenant_id', $tenantId)
+                                                ->where('status', 'completed')
+                                                ->whereMonth('completed_at', now()->subMonth()->month)
+                                                ->whereYear('completed_at', now()->subMonth()->year)
+                                                ->count(),
+        ];
+
+
+        // ── Trend %s — each stat card's badge is a real month-over-month
+        // comparison, not a hardcoded number. 0 when there's no prior-month
+        // baseline to compare against (avoids a misleading divide-by-zero
+        // "+100%" on a brand new tenant). ──────────────────────────────
+        $trendPct = fn($current, $previous) => $previous > 0
+            ? round((($current - $previous) / $previous) * 100, 1)
             : 0;
+
+        $stats['revenue_trend'] = $trendPct($stats['revenue_this_month'], $stats['revenue_last_month']);
+        $stats['leads_trend']   = $trendPct($stats['new_leads_month'], $stats['new_leads_last_month']);
+        $stats['deals_trend']   = $trendPct($stats['deals_created_this_month'], $stats['deals_created_last_month']);
+        $stats['tasks_trend']   = $trendPct($stats['tasks_completed'], $stats['tasks_completed_last_month']);
 
         // ── Revenue chart — last 12 months ────────────────────────
         $revenueRaw = Invoice::where('status', 'paid')
@@ -334,11 +363,49 @@ class DashboardController extends Controller
         // ── Service subscription alerts (only when the module's on) ──
         $subscriptionAlerts = null;
         $tenant = auth()->user()->tenant;
-        if ($tenant?->hasModuleEnabled('service')) {
+        if ($tenant?->hasModuleEnabled('subscriptions')) {
             $reminderDays = $tenant->subscriptionReminderDays();
             $subscriptionAlerts = [
                 'expiring' => ServiceSubscription::where('tenant_id', $tenantId)->expiringSoon($reminderDays)->count(),
                 'expired'  => ServiceSubscription::where('tenant_id', $tenantId)->expired()->count(),
+            ];
+        }
+
+        // ── Appointment alerts (only when the module's on) — today's
+        // upcoming bookings, so staff notice a full day at a glance. ────
+        $appointmentAlerts = null;
+        if ($tenant?->hasModuleEnabled('appointments')) {
+            $appointmentAlerts = [
+                'today' => Appointment::where('tenant_id', $tenantId)->today()->active()->count(),
+            ];
+        }
+
+        // ── Time tracking alerts — any timer left running is worth
+        // surfacing, since a forgotten timer skews billable-hours totals. ─
+        $timeTrackingAlerts = null;
+        if ($tenant?->hasModuleEnabled('time_tracking')) {
+            $timeTrackingAlerts = [
+                'running' => TimeEntry::where('tenant_id', $tenantId)->whereNull('ended_at')->count(),
+            ];
+        }
+
+        // ── Ticket alerts — open/unassigned tickets need a human to
+        // pick them up, so this mirrors the subscription-alert pattern. ──
+        $ticketAlerts = null;
+        if ($tenant?->hasModuleEnabled('tickets')) {
+            $ticketAlerts = [
+                'open'       => Ticket::where('tenant_id', $tenantId)->openTickets()->count(),
+                'unassigned' => Ticket::where('tenant_id', $tenantId)->openTickets()->whereNull('assigned_to')->count(),
+            ];
+        }
+
+        // ── Manufacturing alerts — low stock / pending purchase requests
+        // (only when the module's on) ─────────────────────────────────
+        $manufacturingAlerts = null;
+        if ($tenant?->hasModuleEnabled('manufacturing')) {
+            $manufacturingAlerts = [
+                'low_stock'        => Product::lowStock()->count(),
+                'pending_purchase' => PurchaseRequest::where('status', 'pending')->count(),
             ];
         }
 
@@ -352,7 +419,11 @@ class DashboardController extends Controller
             'activities',
             'leadSources',
             'newLeadsCount',
-            'subscriptionAlerts'
+            'subscriptionAlerts',
+            'appointmentAlerts',
+            'timeTrackingAlerts',
+            'ticketAlerts',
+            'manufacturingAlerts'
         );
 
         // ── Web or API ────────────────────────────────────────────

@@ -236,14 +236,19 @@ class RolesAndPermissionsSeeder extends Seeder
             'notifications.view',
             'notifications.manage_preferences',
             'subscriptions.view',
+            'subscriptions.create',
             'subscriptions.send_reminder',
             'appointments.view',
             'appointments.create',
+            'appointments.edit',
+            'appointments.cancel',
             'time_entries.view',
             'time_entries.create',
+            'time_entries.edit',
             'tickets.view_own',
             'tickets.create',
             'tickets.reply',
+            'tickets.edit',
         ]);
 
         $this->command->info('✅ Permissions seeded: ' . Permission::count());

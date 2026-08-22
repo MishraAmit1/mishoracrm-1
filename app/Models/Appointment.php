@@ -23,11 +23,13 @@ class Appointment extends Model
         'source',
         'public_token',
         'notes',
+        'reminder_sent_at',
     ];
 
     protected $casts = [
-        'starts_at' => 'datetime',
-        'ends_at'   => 'datetime',
+        'starts_at'         => 'datetime',
+        'ends_at'           => 'datetime',
+        'reminder_sent_at'  => 'datetime',
     ];
 
     public static function statuses(): array

@@ -180,7 +180,7 @@
             <div class="perm-group">
                 <div class="pg-label">
                     <span>{{ $icons[$module] ?? '🔧' }}</span>
-                    {{ ucfirst($module) }}
+                    {{ ucwords(str_replace('_', ' ', $module)) }}
                     <span style="font-weight:400;color:var(--accent)">({{ $perms->count() }})</span>
                 </div>
                 <div class="pg-badges">
@@ -284,7 +284,7 @@
                 @endphp
                 <div style="margin-bottom:10px">
                     <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
-                        <span style="color:var(--text-200);text-transform:capitalize">{{ $icons[$module] ?? '🔧' }} {{ ucfirst($module) }}</span>
+                        <span style="color:var(--text-200);text-transform:capitalize">{{ $icons[$module] ?? '🔧' }} {{ ucwords(str_replace('_', ' ', $module)) }}</span>
                         <span style="font-family:var(--mono);color:var(--accent);font-weight:700">{{ $perms->count() }}/{{ $moduleTotal }}</span>
                     </div>
                     <div style="height:4px;background:var(--bg-elevated);border-radius:100px;overflow:hidden">
