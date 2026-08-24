@@ -41,7 +41,7 @@
                  font-size:14px; padding:0; line-height:1; margin-left:auto; }
 .ps-kind-tag   { display:inline-block; font-size:10px; font-weight:700; text-transform:uppercase;
                  letter-spacing:.3px; padding:1px 5px; border-radius:4px; margin-right:6px;
-                 background:#EEEDFE; color:#534AB7; vertical-align:middle; }
+                 background:var(--purple-dim); color:var(--purple); vertical-align:middle; }
 </style>
 <script>
 (function(){

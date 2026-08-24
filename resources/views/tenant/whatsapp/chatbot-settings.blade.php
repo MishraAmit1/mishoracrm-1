@@ -9,8 +9,8 @@
 
 /* ── Coexistence banner ───────────────────────────────────────── */
 .coex-banner {
-    background:linear-gradient(135deg,#f0fdf4 0%,#eff6ff 100%);
-    border:1.5px solid #86efac;
+    background:linear-gradient(135deg,rgba(240,253,244,0.14) 0%,rgba(239,246,255,0.14) 100%);
+    border:1.5px solid rgba(134,239,172,0.35);
     border-radius:var(--r-lg);
     padding:0;
     margin-bottom:20px;
@@ -24,15 +24,15 @@
 }
 .coex-banner-title {
     display:flex; align-items:center; gap:10px;
-    font-weight:700; font-size:14px; color:#15803d;
+    font-weight:700; font-size:14px; color:#73E89F;
 }
-.coex-banner-sub { font-size:12px; color:#166534; font-weight:400; margin-top:2px; }
-.coex-chevron { color:#16a34a; transition:transform .25s; flex-shrink:0; }
+.coex-banner-sub { font-size:12px; color:#79E2A1; font-weight:400; margin-top:2px; }
+.coex-chevron { color:#6FEC9D; transition:transform .25s; flex-shrink:0; }
 .coex-chevron.open { transform:rotate(180deg); }
 
 .coex-body {
     padding:0 20px 20px;
-    border-top:1px solid #bbf7d0;
+    border-top:1px solid rgba(187,247,208,0.35);
 }
 
 /* ── Method tabs ──────────────────────────────────────────────── */
@@ -42,7 +42,7 @@
     color:var(--text-300); border-bottom:2px solid transparent; margin-bottom:-2px;
     transition:all .15s;
 }
-.method-tab.active { color:#15803d; border-bottom-color:#25d366; }
+.method-tab.active { color:#73E89F; border-bottom-color:#25d366; }
 
 .method-panel { display:none; }
 .method-panel.active { display:block; }
@@ -67,9 +67,9 @@
 
 .coex-note {
     display:flex; gap:8px; align-items:flex-start;
-    background:#fff; border:1px solid #bbf7d0;
+    background:rgba(240,253,244,0.14); border:1px solid rgba(187,247,208,0.35);
     border-radius:var(--r-md); padding:10px 14px;
-    font-size:12px; color:#166534; line-height:1.5;
+    font-size:12px; color:#79E2A1; line-height:1.5;
     margin-top:14px;
 }
 
@@ -90,8 +90,8 @@
     display:flex; align-items:center; gap:10px;
     font-weight:700; font-size:15px; color:var(--text-100);
 }
-.wa-badge-connected    { background:#dcfce7; color:#15803d; border-radius:20px; padding:3px 10px; font-size:12px; font-weight:600; }
-.wa-badge-disconnected { background:#fee2e2; color:#b91c1c; border-radius:20px; padding:3px 10px; font-size:12px; font-weight:600; }
+.wa-badge-connected    { background:rgba(220,252,231,0.14); color:#73E89F; border-radius:20px; padding:3px 10px; font-size:12px; font-weight:600; }
+.wa-badge-disconnected { background:rgba(254,226,226,0.14); color:#EA7171; border-radius:20px; padding:3px 10px; font-size:12px; font-weight:600; }
 
 /* ── Steps bar ────────────────────────────────────────────────── */
 .wa-steps {
@@ -116,10 +116,10 @@
     transition:all .2s;
 }
 .wa-step.active .wa-step-dot { background:#25d366; border-color:#25d366; color:#fff; }
-.wa-step.done   .wa-step-dot { background:#dcfce7; border-color:#22c55e; color:#16a34a; }
+.wa-step.done   .wa-step-dot { background:rgba(220,252,231,0.14); border-color:#22c55e; color:#6FEC9D; }
 .wa-step-label { font-size:11px; color:var(--text-400); text-align:center; line-height:1.3; max-width:80px; }
-.wa-step.active .wa-step-label { color:#16a34a; font-weight:600; }
-.wa-step.done   .wa-step-label { color:#16a34a; }
+.wa-step.active .wa-step-label { color:#6FEC9D; font-weight:600; }
+.wa-step.done   .wa-step-label { color:#6FEC9D; }
 
 /* ── QR body ──────────────────────────────────────────────────── */
 .wa-connect-body { padding:24px; display:flex; gap:32px; align-items:flex-start; flex-wrap:wrap; }
@@ -145,8 +145,8 @@
 .wa-how-item { display:flex; align-items:flex-start; gap:10px; }
 .wa-how-num {
     min-width:22px; height:22px; border-radius:50%;
-    background:#f0fdf4; border:1.5px solid #22c55e;
-    color:#16a34a; font-size:11px; font-weight:700;
+    background:rgba(240,253,244,0.14); border:1.5px solid #22c55e;
+    color:#6FEC9D; font-size:11px; font-weight:700;
     display:flex; align-items:center; justify-content:center; margin-top:1px;
 }
 .wa-how-text { font-size:13px; color:var(--text-200); line-height:1.45; }
@@ -155,21 +155,21 @@
 /* ── Status indicators ────────────────────────────────────────── */
 .wa-status-waiting {
     display:flex; align-items:center; gap:8px;
-    padding:10px 14px; background:#fffbeb; border:1px solid #fde68a;
-    border-radius:var(--r-md); font-size:13px; color:#92400e;
+    padding:10px 14px; background:rgba(255,251,235,0.14); border:1px solid #fde68a;
+    border-radius:var(--r-md); font-size:13px; color:#F19D6A;
 }
 .wa-pulse { width:8px; height:8px; border-radius:50%; background:#f59e0b; animation:waPulse 1.4s ease-in-out infinite; flex-shrink:0; }
 .wa-status-success {
     display:flex; align-items:center; gap:8px;
-    padding:10px 14px; background:#f0fdf4; border:1px solid #86efac;
-    border-radius:var(--r-md); font-size:13px; color:#15803d; font-weight:600;
+    padding:10px 14px; background:rgba(240,253,244,0.14); border:1px solid #86efac;
+    border-radius:var(--r-md); font-size:13px; color:#73E89F; font-weight:600;
 }
 
 /* ── Connected state ──────────────────────────────────────────── */
 .wa-connected-body { padding:24px; display:flex; gap:24px; align-items:center; flex-wrap:wrap; }
-.wa-connected-icon { width:64px; height:64px; border-radius:50%; background:#dcfce7; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.wa-connected-icon { width:64px; height:64px; border-radius:50%; background:rgba(220,252,231,0.14); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 .wa-connected-info { flex:1; min-width:200px; }
-.wa-connected-info h3 { font-weight:700; font-size:16px; color:#16a34a; margin:0 0 6px; }
+.wa-connected-info h3 { font-weight:700; font-size:16px; color:#6FEC9D; margin:0 0 6px; }
 .wa-meta-row { display:flex; gap:20px; flex-wrap:wrap; margin-top:10px; }
 .wa-meta-item { font-size:12px; color:var(--text-300); }
 .wa-meta-item strong { color:var(--text-200); display:block; font-size:11px; margin-bottom:2px; letter-spacing:.03em; text-transform:uppercase; }
@@ -222,25 +222,25 @@
 
         {{-- What coexistence means --}}
         <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;padding-top:4px;">
-            <div style="flex:1;min-width:200px;background:#fff;border:1px solid #bbf7d0;border-radius:var(--r-md);padding:14px 16px;">
-                <div style="font-size:12px;font-weight:700;color:#15803d;margin-bottom:6px;">
+            <div style="flex:1;min-width:200px;background:rgba(240,253,244,0.14);border:1px solid rgba(187,247,208,0.35);border-radius:var(--r-md);padding:14px 16px;">
+                <div style="font-size:12px;font-weight:700;color:#73E89F;margin-bottom:6px;">
                     <svg viewBox="0 0 20 20" fill="#25d366" style="width:14px;height:14px;display:inline;margin-right:4px;vertical-align:middle;"><path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z"/><path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z"/></svg>
                     WhatsApp Business App (Phone)
                 </div>
-                <div style="font-size:12px;color:#166534;line-height:1.5;">
+                <div style="font-size:12px;color:#79E2A1;line-height:1.5;">
                     ✓ Manual chats as usual<br>
                     ✓ Incoming messages dikhenge<br>
                     ✓ Manually reply kar sakte hain<br>
                     ✓ App normally kaam karta hai
                 </div>
             </div>
-            <div style="display:flex;align-items:center;font-size:20px;color:#16a34a;padding:0 4px;">+</div>
-            <div style="flex:1;min-width:200px;background:#fff;border:1px solid #bbf7d0;border-radius:var(--r-md);padding:14px 16px;">
-                <div style="font-size:12px;font-weight:700;color:#15803d;margin-bottom:6px;">
+            <div style="display:flex;align-items:center;font-size:20px;color:#6FEC9D;padding:0 4px;">+</div>
+            <div style="flex:1;min-width:200px;background:rgba(240,253,244,0.14);border:1px solid rgba(187,247,208,0.35);border-radius:var(--r-md);padding:14px 16px;">
+                <div style="font-size:12px;font-weight:700;color:#73E89F;margin-bottom:6px;">
                     <svg viewBox="0 0 20 20" fill="#6366f1" style="width:14px;height:14px;display:inline;margin-right:4px;vertical-align:middle;"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/></svg>
                     CRM (WhatsApp Cloud API)
                 </div>
-                <div style="font-size:12px;color:#166534;line-height:1.5;">
+                <div style="font-size:12px;color:#79E2A1;line-height:1.5;">
                     ✓ Chatbot auto-reply karta hai<br>
                     ✓ Incoming messages webhook pe aate hain<br>
                     ✓ CRM se messages bhejna
@@ -304,7 +304,7 @@
                 </li>
             </ul>
             <div class="coex-note">
-                <svg viewBox="0 0 20 20" fill="currentColor" style="width:15px;height:15px;flex-shrink:0;margin-top:1px;color:#16a34a;"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+                <svg viewBox="0 0 20 20" fill="currentColor" style="width:15px;height:15px;flex-shrink:0;margin-top:1px;color:#6FEC9D;"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
                 <span>
                     Agar <span class="path">WhatsApp Business API</span> option nahi dikh raha, toh app update karein.
                     WhatsApp Business App version 2.23+ mein ye option available hai.
@@ -353,7 +353,7 @@
                 </li>
             </ul>
             <div class="coex-note">
-                <svg viewBox="0 0 20 20" fill="currentColor" style="width:15px;height:15px;flex-shrink:0;margin-top:1px;color:#16a34a;"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                <svg viewBox="0 0 20 20" fill="currentColor" style="width:15px;height:15px;flex-shrink:0;margin-top:1px;color:#6FEC9D;"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
                 <span>
                     Agar aapne pehle number ko API pe migrate kar diya tha (without coexistence), toh WhatsApp Business App pe wapas laane ke liye Meta Business Manager mein number re-register karna hoga.
                 </span>

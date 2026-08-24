@@ -68,6 +68,7 @@ Route::prefix('/book')->name('public.booking.')->controller(\App\Http\Controller
     Route::middleware('throttle:20,1')->group(function () {
         Route::post('/{token}/store', 'store')->name('store');
         Route::post('/appointment/{token}/cancel', 'cancelByCustomer')->name('cancel');
+        Route::post('/appointment/{token}/sign', 'signOff')->name('sign');
     });
 });
 
@@ -532,7 +533,19 @@ Route::middleware(['tenant', 'auth', 'subscription'])
                     Route::get('/settings', 'settings')->name('settings');
                     Route::post('/settings', 'updateSettings')->name('settings.update');
                 });
-                Route::post('/{id}/status', 'updateStatus')->name('status')->middleware('permission:appointments.edit');
+                Route::middleware('permission:appointments.view')->group(function () {
+                    Route::get('/{id}', 'show')->name('show');
+                });
+                Route::middleware('permission:appointments.edit')->group(function () {
+                    Route::get('/{id}/edit', 'edit')->name('edit');
+                    Route::put('/{id}', 'update')->name('update');
+                    Route::post('/{id}/status', 'updateStatus')->name('status');
+                    Route::post('/{id}/start', 'startWork')->name('start');
+                    Route::post('/{id}/complete', 'completeWork')->name('complete');
+                    Route::post('/{id}/attachments', 'uploadAttachment')->name('attachments.store');
+                    Route::delete('/{id}/attachments/{attachmentId}', 'deleteAttachment')->name('attachments.destroy');
+                    Route::post('/{id}/convert-invoice', 'convertToInvoice')->name('convert-invoice');
+                });
                 Route::delete('/{id}', 'destroy')->name('destroy')->middleware('permission:appointments.cancel');
             });
         });

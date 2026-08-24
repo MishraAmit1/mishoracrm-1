@@ -10,7 +10,7 @@
 .tenant-table tr:hover td{background:var(--bg-elevated)}
 .platform-chips{display:flex;flex-wrap:wrap;gap:5px}
 .chip{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
-.chip-on{background:#dcfce7;color:#15803d}
+.chip-on{background:rgba(220,252,231,0.14);color:#73E89F}
 .chip-off{background:var(--bg-elevated);color:var(--text-300)}
 .btn-edit{padding:6px 14px;border-radius:8px;background:var(--accent);color:#fff;font-size:12.5px;font-weight:600;text-decoration:none;white-space:nowrap;transition:opacity .15s}
 .btn-edit:hover{opacity:.85;color:#fff}

@@ -15,6 +15,7 @@
 .mono { font-family:var(--mono); }
 .badge-status { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11.5px; font-weight:600; }
 .badge-booked, .badge-confirmed { background:var(--green-dim); color:var(--green); }
+.badge-in_progress { background:var(--accent-dim); color:var(--accent); }
 .badge-completed { background:var(--accent-dim); color:var(--accent); }
 .badge-cancelled, .badge-no_show { background:var(--red-dim); color:var(--red); }
 </style>
@@ -59,26 +60,29 @@
         <tr>
             <th>Contact</th>
             <th>Service</th>
+            <th>Technician</th>
             <th>Date &amp; Time</th>
             <th>Source</th>
             <th>Status</th>
-            <th style="width:220px"></th>
+            <th style="width:260px"></th>
         </tr>
     </thead>
     <tbody>
         @forelse($appointments as $a)
         <tr>
             <td style="font-weight:600" data-label="Contact">
-                {{ $a->contact?->name ?? '—' }}
+                <a href="{{ route('tenant.appointments.show', $a->id) }}" style="color:var(--text-100);text-decoration:none">{{ $a->contact?->name ?? '—' }}</a>
                 @if($a->contact?->phone)<div style="font-size:11.5px;color:var(--text-400)">{{ $a->contact->phone }}</div>@endif
             </td>
             <td data-label="Service">{{ $a->service?->name ?? '—' }}</td>
+            <td data-label="Technician">{{ $a->assignedTo?->name ?? '—' }}</td>
             <td class="mono" data-label="Date & Time">{{ $a->starts_at->format('d M Y, h:i A') }}</td>
             <td data-label="Source">{{ $a->source === 'public' ? 'Online' : 'Manual' }}</td>
             <td data-label="Status">
                 <span class="badge-status badge-{{ $a->status }}">{{ \App\Models\Appointment::statuses()[$a->status] ?? ucfirst($a->status) }}</span>
             </td>
             <td style="display:flex;gap:6px;flex-wrap:wrap">
+                <a href="{{ route('tenant.appointments.show', $a->id) }}" class="btn btn-secondary btn-sm">View</a>
                 @if(in_array($a->status, ['booked', 'confirmed']))
                 <form method="POST" action="{{ route('tenant.appointments.status', $a->id) }}">
                     @csrf
@@ -105,7 +109,7 @@
         </tr>
         @empty
         <tr>
-            <td colspan="6" style="text-align:center;padding:40px;color:var(--text-400)">
+            <td colspan="7" style="text-align:center;padding:40px;color:var(--text-400)">
                 No appointments yet. <a href="{{ route('tenant.appointments.create') }}" style="color:var(--accent)">Book your first appointment</a>.
             </td>
         </tr>

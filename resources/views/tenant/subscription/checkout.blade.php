@@ -118,9 +118,9 @@
     margin-top: 7px;
     display: none;
 }
-.coupon-msg.success { color: #16a34a; }
-.coupon-msg.error   { color: var(--red, #ef4444); }
-.summary-row.discount .value { color: #16a34a; }
+.coupon-msg.success { color: #6FEC9D; }
+.coupon-msg.error   { color: var(--red); }
+.summary-row.discount .value { color: #6FEC9D; }
 .summary-row.strikethrough .value {
     text-decoration: line-through;
     color: var(--text-400);
@@ -128,8 +128,8 @@
 }
 .plan-discount-badge {
     display: inline-block;
-    background: #dcfce7;
-    color: #16a34a;
+    background: rgba(220,252,231,0.14);
+    color: #6FEC9D;
     font-size: 11px;
     font-weight: 700;
     padding: 2px 7px;

@@ -6,8 +6,8 @@
 .em-settings-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
 @media(max-width:900px) { .em-settings-grid { grid-template-columns:1fr; } }
 
-.em-badge-connected    { background:#dcfce7; color:#15803d; border-radius:20px; padding:3px 10px; font-size:12px; font-weight:600; }
-.em-badge-disconnected { background:#fee2e2; color:#b91c1c; border-radius:20px; padding:3px 10px; font-size:12px; font-weight:600; }
+.em-badge-connected    { background:rgba(220,252,231,0.14); color:#73E89F; border-radius:20px; padding:3px 10px; font-size:12px; font-weight:600; }
+.em-badge-disconnected { background:rgba(254,226,226,0.14); color:#EA7171; border-radius:20px; padding:3px 10px; font-size:12px; font-weight:600; }
 
 .em-steps-list { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:14px; }
 .em-step-item  { display:flex; gap:12px; align-items:flex-start; }

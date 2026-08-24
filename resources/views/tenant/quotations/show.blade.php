@@ -45,11 +45,11 @@
 /* Bill To card */
 .qs-bill-to { padding:18px 20px; }
 .qs-contact-row { display:flex; align-items:flex-start; gap:12px; }
-.qs-avatar { width:42px; height:42px; border-radius:50%; background:#E6F1FB; color:#185FA5; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:600; flex-shrink:0; }
+.qs-avatar { width:42px; height:42px; border-radius:50%; background:var(--accent-dim); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:600; flex-shrink:0; }
 .qs-contact-name    { font-size:15px; font-weight:600; color:var(--text-100); margin-bottom:2px; }
 .qs-contact-company { font-size:13px; color:var(--text-300); margin-bottom:8px; }
 .qs-contact-detail  { display:flex; align-items:center; gap:5px; font-size:12.5px; color:var(--text-300); margin-top:3px; }
-.qs-contact-detail a { color:var(--accent,#185FA5); text-decoration:none; }
+.qs-contact-detail a { color:var(--accent); text-decoration:none; }
 .qs-contact-detail a:hover { text-decoration:underline; }
 
 /* Items table */
@@ -80,7 +80,7 @@
 .qs-totals-table tr td { padding:5px 0; font-size:13px; color:var(--text-200); }
 .qs-totals-table tr td:last-child { text-align:right; font-family:'DM Mono',monospace; font-weight:500; color:var(--text-100); }
 .qs-totals-table .grand { padding-top:10px; font-size:15px; font-weight:600; color:var(--text-100); border-top:1px solid var(--border-default); }
-.qs-totals-table .grand td:last-child { color:#185FA5; font-size:17px; }
+.qs-totals-table .grand td:last-child { color:var(--accent); font-size:17px; }
 @media(max-width:480px){ .qs-totals-table { width:100%; } }
 
 /* Linked Deal / Lead rows */
@@ -111,7 +111,7 @@
 .dl-val { font-size:12.5px; font-weight:500; color:var(--text-100); text-align:right; }
 
 /* Copy toast */
-.copy-toast { position:fixed; bottom:20px; right:20px; background:#185FA5; color:#fff; padding:9px 16px; border-radius:8px; font-size:13px; font-weight:500; opacity:0; transition:opacity .2s; pointer-events:none; z-index:9999; display:flex; align-items:center; gap:7px; }
+.copy-toast { position:fixed; bottom:20px; right:20px; background:var(--accent); color:#fff; padding:9px 16px; border-radius:8px; font-size:13px; font-weight:500; opacity:0; transition:opacity .2s; pointer-events:none; z-index:9999; display:flex; align-items:center; gap:7px; }
 .copy-toast.show { opacity:1; }
 
 /* Watermark for status */
@@ -177,7 +177,7 @@
     {{-- Flash --}}
     @foreach(['success','error','info'] as $type)
     @if(session($type))
-    <div style="display:flex;align-items:center;gap:10px;padding:11px 15px;background:{{ $type==='success'?'#E1F5EE':($type==='error'?'#FCEBEB':'#E6F1FB') }};border:1px solid {{ $type==='success'?'#9FE1CB':($type==='error'?'#F09595':'#B5D4F4') }};border-radius:8px;margin-bottom:14px;font-size:13px;color:{{ $type==='success'?'#0F6E56':($type==='error'?'#A32D2D':'#185FA5') }};font-weight:500">
+    <div style="display:flex;align-items:center;gap:10px;padding:11px 15px;background:{{ $type==='success'?'var(--green-dim)':($type==='error'?'var(--red-dim)':'var(--accent-dim)') }};border:1px solid {{ $type==='success'?'var(--green)':($type==='error'?'var(--red)':'var(--accent)') }};border-radius:8px;margin-bottom:14px;font-size:13px;color:{{ $type==='success'?'var(--green)':($type==='error'?'var(--red)':'var(--accent)') }};font-weight:500">
         <i class="ti ti-{{ $type==='success'?'circle-check':($type==='error'?'alert-circle':'info-circle') }}" style="font-size:16px"></i>
         {{ session($type) }}
     </div>
@@ -208,7 +208,7 @@
                                 {{ $st['label'] }}
                             </div>
                             @if($isExpired)
-                            <div style="font-size:11.5px;color:#E24B4A;margin-top:5px;display:flex;align-items:center;gap:4px;justify-content:flex-end">
+                            <div style="font-size:11.5px;color:var(--red);margin-top:5px;display:flex;align-items:center;gap:4px;justify-content:flex-end">
                                 <i class="ti ti-clock-x" style="font-size:12px"></i> Expired
                             </div>
                             @endif
@@ -225,7 +225,7 @@
                         @if($quotation->valid_until)
                         <div class="qs-date-item">
                             <div class="qs-date-lbl">Valid Until</div>
-                            <div class="qs-date-val" style="{{ $isExpired?'color:#E24B4A':'' }}">
+                            <div class="qs-date-val" style="{{ $isExpired?'color:var(--red)':'' }}">
                                 {{ \Carbon\Carbon::parse($quotation->valid_until)->format('M d, Y') }}
                             </div>
                         </div>
@@ -344,12 +344,12 @@
                         @if(($quotation->discount ?? 0) > 0)
                         <tr>
                             <td>Discount</td>
-                            <td style="color:#E24B4A">-{{ $sym }}{{ number_format($quotation->discount, 2) }}</td>
+                            <td style="color:var(--red)">-{{ $sym }}{{ number_format($quotation->discount, 2) }}</td>
                         </tr>
                         @endif
                         <tr>
                             <td>GST ({{ $quotation->tax_percent ?? 0 }}%)</td>
-                            <td style="color:#1D9E75">+{{ $sym }}{{ number_format($quotation->tax_amount ?? 0, 2) }}</td>
+                            <td style="color:var(--green)">+{{ $sym }}{{ number_format($quotation->tax_amount ?? 0, 2) }}</td>
                         </tr>
                         <tr class="grand">
                             <td><strong>Total</strong></td>
@@ -505,7 +505,7 @@
                 <div style="font-size:13px;color:var(--text-300);font-family:'DM Mono',monospace;margin-bottom:4px">
                     {{ $quotation->number }}
                 </div>
-                <div style="font-size:34px;font-weight:600;color:#185FA5;font-family:'DM Mono',monospace;letter-spacing:-1.5px;line-height:1">
+                <div style="font-size:34px;font-weight:600;color:var(--accent);font-family:'DM Mono',monospace;letter-spacing:-1.5px;line-height:1">
                     {{ $sym }}{{ number_format($quotation->total ?? 0, 2) }}
                 </div>
                 <div style="margin-top:10px">
@@ -542,16 +542,16 @@
                 <div class="qs-sc-title">Actions</div>
 
                 <a href="{{ route('tenant.quotations.pdf',$quotation->id) }}" target="_blank" class="qs-action-btn">
-                    <div class="qs-act-icon" style="background:#FAEEDA">
-                        <i class="ti ti-file-download" style="font-size:15px;color:#BA7517"></i>
+                    <div class="qs-act-icon" style="background:var(--amber-dim)">
+                        <i class="ti ti-file-download" style="font-size:15px;color:var(--amber)"></i>
                     </div>
                     Download PDF
                 </a>
 
                 @if(!in_array($quotation->status, ['accepted', 'rejected']))
                 <button type="button" class="qs-action-btn" style="margin-top:7px" onclick="copyText('{{ $quotation->publicUrl() }}')">
-                    <div class="qs-act-icon" style="background:#EEEDFE">
-                        <i class="ti ti-link" style="font-size:15px;color:#534AB7"></i>
+                    <div class="qs-act-icon" style="background:var(--purple-dim)">
+                        <i class="ti ti-link" style="font-size:15px;color:var(--purple)"></i>
                     </div>
                     Copy Shareable Link
                 </button>
@@ -566,8 +566,8 @@
                       onsubmit="return confirm('Send this quotation to {{ addslashes($sendToEmail) }}{{ $sendCcCount ? ' (cc: '.$sendCcCount.')' : '' }}?')">
                     @csrf
                     <button type="submit" class="qs-action-btn" style="margin-top:7px">
-                        <div class="qs-act-icon" style="background:#E6F1FB">
-                            <i class="ti ti-send" style="font-size:15px;color:#185FA5"></i>
+                        <div class="qs-act-icon" style="background:var(--accent-dim)">
+                            <i class="ti ti-send" style="font-size:15px;color:var(--accent)"></i>
                         </div>
                         Send to {{ $sendToEmail }}@if($sendCcCount) (cc: {{ $sendCcCount }})@endif
                     </button>
@@ -576,8 +576,8 @@
 
                 @if($canEdit)
                 <a href="{{ route('tenant.quotations.edit',$quotation->id) }}" class="qs-action-btn" style="margin-top:7px">
-                    <div class="qs-act-icon" style="background:#EEEDFE">
-                        <i class="ti ti-edit" style="font-size:15px;color:#534AB7"></i>
+                    <div class="qs-act-icon" style="background:var(--purple-dim)">
+                        <i class="ti ti-edit" style="font-size:15px;color:var(--purple)"></i>
                     </div>
                     Edit Quotation
                 </a>
@@ -586,9 +586,9 @@
                 @if($canConvert)
                 <form method="POST" action="{{ route('tenant.quotations.convert',$quotation->id) }}">
                     @csrf
-                    <button type="submit" class="qs-action-btn" style="margin-top:7px;background:#E1F5EE;border-color:#9FE1CB;color:#0F6E56">
-                        <div class="qs-act-icon" style="background:#E1F5EE">
-                            <i class="ti ti-receipt" style="font-size:15px;color:#0F6E56"></i>
+                    <button type="submit" class="qs-action-btn" style="margin-top:7px;background:var(--green-dim);border-color:var(--green);color:var(--green)">
+                        <div class="qs-act-icon" style="background:var(--green-dim)">
+                            <i class="ti ti-receipt" style="font-size:15px;color:var(--green)"></i>
                         </div>
                         Convert to Invoice
                     </button>
@@ -610,8 +610,8 @@
 
                 @if($quotation->invoice)
                 <a href="{{ route('tenant.invoices.show',$quotation->invoice->id) }}" class="qs-action-btn" style="margin-top:7px">
-                    <div class="qs-act-icon" style="background:#EAF3DE">
-                        <i class="ti ti-receipt-2" style="font-size:15px;color:#3B6D11"></i>
+                    <div class="qs-act-icon" style="background:var(--green-dim)">
+                        <i class="ti ti-receipt-2" style="font-size:15px;color:var(--green)"></i>
                     </div>
                     View Invoice
                 </a>
@@ -637,7 +637,7 @@
                     @if(($quotation->discount??0)>0)
                     <div class="dl-row">
                         <span class="dl-key">Discount</span>
-                        <span class="dl-val" style="color:#E24B4A;font-family:'DM Mono',monospace">-{{ $sym }}{{ number_format($quotation->discount,2) }}</span>
+                        <span class="dl-val" style="color:var(--red);font-family:'DM Mono',monospace">-{{ $sym }}{{ number_format($quotation->discount,2) }}</span>
                     </div>
                     @endif
                     <div class="dl-row">
@@ -657,12 +657,12 @@
 
             {{-- Danger Zone --}}
             @if($quotation->status !== 'accepted')
-            <div class="qs-sc" style="border-color:#F09595">
-                <div class="qs-sc-title" style="color:#A32D2D">Danger Zone</div>
+            <div class="qs-sc" style="border-color:var(--red)">
+                <div class="qs-sc-title" style="color:var(--red)">Danger Zone</div>
                 <form method="POST" action="{{ route('tenant.quotations.destroy',$quotation->id) }}"
                       onsubmit="return confirm('Delete quotation {{ $quotation->number }}?')">
                     @csrf @method('DELETE')
-                    <button type="submit" class="btn" style="width:100%;justify-content:center;background:#FCEBEB;border-color:#F09595;color:#A32D2D;font-size:12.5px">
+                    <button type="submit" class="btn" style="width:100%;justify-content:center;background:var(--red-dim);border-color:var(--red);color:var(--red);font-size:12.5px">
                         <i class="ti ti-trash" style="font-size:14px"></i> Delete Quotation
                     </button>
                 </form>

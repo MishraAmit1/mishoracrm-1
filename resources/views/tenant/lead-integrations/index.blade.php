@@ -11,10 +11,10 @@
 .integ-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;flex-shrink:0}
 .integ-name{font-size:15px;font-weight:700;color:var(--text-100)}
 .integ-type{font-size:11px;color:var(--text-300);font-weight:500;text-transform:uppercase;letter-spacing:.07em}
-.badge-on{display:inline-flex;align-items:center;gap:5px;background:#dcfce7;color:#16a34a;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px}
+.badge-on{display:inline-flex;align-items:center;gap:5px;background:rgba(220,252,231,0.14);color:#6FEC9D;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px}
 .badge-on::before{content:'';width:6px;height:6px;border-radius:50%;background:#16a34a}
 .badge-off{display:inline-flex;align-items:center;gap:5px;background:var(--bg-elevated);color:var(--text-300);font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px}
-.badge-locked{display:inline-flex;align-items:center;gap:5px;background:#fef3c7;color:#d97706;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px}
+.badge-locked{display:inline-flex;align-items:center;gap:5px;background:rgba(254,243,199,0.14);color:#F7B364;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px}
 .integ-stats{display:flex;gap:16px;padding:10px 14px;background:var(--bg-elevated);border-radius:10px}
 .integ-stat{display:flex;flex-direction:column;gap:2px}
 .integ-stat-val{font-size:16px;font-weight:800;font-family:var(--mono);color:var(--text-100)}

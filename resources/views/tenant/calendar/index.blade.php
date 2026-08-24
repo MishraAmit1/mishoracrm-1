@@ -307,19 +307,19 @@
     <i class="ti ti-chevron-down cal-legend-chevron" aria-hidden="true"></i>
 </button>
 <div class="cal-legend" id="calLegend">
-    <span class="cal-chip" style="background:rgba(55,138,221,.12);color:#378ADD">
+    <span class="cal-chip" style="background:rgba(55,138,221,.12);color:var(--accent)">
         <i class="ti ti-phone-outgoing" aria-hidden="true"></i> Follow-up · Scheduled
     </span>
-    <span class="cal-chip" style="background:rgba(29,158,117,.12);color:#1D9E75">
+    <span class="cal-chip" style="background:rgba(29,158,117,.12);color:var(--green)">
         <i class="ti ti-circle-check" aria-hidden="true"></i> Follow-up · Done
     </span>
     <span class="cal-chip" style="background:rgba(224,82,82,.12);color:#E05252">
         <i class="ti ti-circle-x" aria-hidden="true"></i> Follow-up · Missed
     </span>
-    <span class="cal-chip" style="background:rgba(239,159,39,.12);color:#BA7517">
+    <span class="cal-chip" style="background:rgba(239,159,39,.12);color:var(--amber)">
         <i class="ti ti-clipboard-list" aria-hidden="true"></i> Task / Reminder
     </span>
-    <span class="cal-chip" style="background:rgba(83,74,183,.12);color:#534AB7">
+    <span class="cal-chip" style="background:rgba(83,74,183,.12);color:var(--purple)">
         <i class="ti ti-target-arrow" aria-hidden="true"></i> Deal · Expected Close
     </span>
 </div>

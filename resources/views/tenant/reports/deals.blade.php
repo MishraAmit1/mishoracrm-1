@@ -53,7 +53,7 @@
     $curRange = $request->get('range','this_month');
     $stagesCfg = config('crm.deal.stages');
     $stageColors = ['new'=>'var(--accent)','proposal'=>'var(--amber)','negotiation'=>'var(--purple)','won'=>'var(--green)','lost'=>'var(--red)'];
-    $avColors = [['#E6F1FB','#185FA5'],['#E1F5EE','#0F6E56'],['#FAEEDA','#854F0B'],['#EEEDFE','#3C3489'],['#FEE2E2','#991B1B']];
+    $avColors = [['var(--accent-dim)','var(--accent)'],['var(--green-dim)','var(--green)'],['var(--amber-dim)','var(--amber)'],['var(--purple-dim)','var(--purple)'],['#FEE2E2','#991B1B']];
     $winPct   = $winRate . '%';
 @endphp
 
@@ -261,7 +261,7 @@ new Chart(document.getElementById('monthlyChart'), {
         labels: md.map(d => { const [y,m]=d.month.split('-'); return new Date(y,m-1).toLocaleString('default',{month:'short',year:'2-digit'}); }),
         datasets: [
             { label:'Deals', data:md.map(d=>d.count), backgroundColor:'rgba(99,120,255,0.7)', borderRadius:4, yAxisID:'y' },
-            { label:'Value',  data:md.map(d=>parseFloat(d.total||0)), type:'line', borderColor:'#1D9E75', backgroundColor:'rgba(29,158,117,0.1)', borderWidth:2.5, pointRadius:4, pointBackgroundColor:'#1D9E75', tension:0.4, fill:true, yAxisID:'y1' }
+            { label:'Value',  data:md.map(d=>parseFloat(d.total||0)), type:'line', borderColor:'var(--green)', backgroundColor:'rgba(29,158,117,0.1)', borderWidth:2.5, pointRadius:4, pointBackgroundColor:'var(--green)', tension:0.4, fill:true, yAxisID:'y1' }
         ]
     },
     options: {
@@ -281,7 +281,7 @@ new Chart(document.getElementById('winChart'), {
     data:{
         datasets:[{
             data:[{{ $winRate }}, {{ 100 - $winRate }}],
-            backgroundColor:['#1D9E75','rgba(255,255,255,0.05)'],
+            backgroundColor:['var(--green)','rgba(255,255,255,0.05)'],
             borderWidth:0, hoverOffset:0
         }]
     },

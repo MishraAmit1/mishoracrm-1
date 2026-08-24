@@ -80,7 +80,7 @@
     $curRange = $request->get('range','this_month');
     $stageColors = ['new'=>'var(--accent)','proposal'=>'var(--amber)','negotiation'=>'var(--purple)','won'=>'var(--green)','lost'=>'var(--red)'];
     $sourceColors = ['facebook'=>'#1877f2','instagram'=>'#e1306c','google'=>'#ea4335','website'=>'#6378ff','whatsapp'=>'#25D366','referral'=>'#0f6e56','cold_call'=>'#854f0b','other'=>'#9ca3af'];
-    $avColors = [['#E6F1FB','#185FA5'],['#E1F5EE','#0F6E56'],['#FAEEDA','#854F0B'],['#EEEDFE','#3C3489'],['#FEE2E2','#991B1B']];
+    $avColors = [['var(--accent-dim)','var(--accent)'],['var(--green-dim)','var(--green)'],['var(--amber-dim)','var(--amber)'],['var(--purple-dim)','var(--purple)'],['#FEE2E2','#991B1B']];
 @endphp
 
 <div class="page-head">

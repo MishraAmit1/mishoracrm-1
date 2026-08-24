@@ -22,14 +22,14 @@
 @media(max-width:640px){ .cf-grid { grid-template-columns:1fr; } .cf-grid .span-full { grid-column:1; } }
 .cf-field { display:flex; flex-direction:column; gap:5px; }
 .cf-label { font-size:11.5px; font-weight:600; color:var(--text-200); text-transform:uppercase; letter-spacing:0.5px; }
-.cf-req { color:var(--red,#E24B4A); margin-left:2px; }
+.cf-req { color:var(--red); margin-left:2px; }
 .cf-input { width:100%; padding:9px 12px; background:var(--bg-input); border:1.5px solid var(--border-default); border-radius:8px; color:var(--text-100); font-family:'DM Sans',var(--font),sans-serif; font-size:13.5px; outline:none; transition:border-color .15s,box-shadow .15s,background .15s; -webkit-appearance:none; }
 .cf-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-dim); background:var(--bg-surface); }
 .cf-input::placeholder { color:var(--text-400); font-size:13px; }
-.cf-input.is-error { border-color:var(--red,#E24B4A); }
+.cf-input.is-error { border-color:var(--red); }
 .cf-select { cursor:pointer; }
 .cf-textarea { resize:vertical; min-height:80px; line-height:1.5; }
-.cf-field-error { font-size:12px; color:var(--red,#E24B4A); font-weight:500; }
+.cf-field-error { font-size:12px; color:var(--red); font-weight:500; }
 .cf-field-hint  { font-size:12px; color:var(--text-400); }
 .cf-footer { display:flex; align-items:center; justify-content:space-between; padding:16px 24px; background:var(--bg-elevated); border-top:1px solid var(--border-subtle); }
 .cf-footer-note { font-size:12px; color:var(--text-300); }
@@ -39,13 +39,13 @@
 .cf-side-title { font-size:11px; font-weight:600; color:var(--text-300); text-transform:uppercase; letter-spacing:.6px; margin-bottom:14px; }
 .tip-list { display:flex; flex-direction:column; gap:9px; }
 .tip-item { display:flex; align-items:flex-start; gap:8px; font-size:12px; color:var(--text-300); line-height:1.45; }
-.tip-dot { width:5px; height:5px; border-radius:50%; background:var(--accent,#378ADD); margin-top:5px; flex-shrink:0; }
+.tip-dot { width:5px; height:5px; border-radius:50%; background:var(--accent); margin-top:5px; flex-shrink:0; }
 
 /* ── Changed Fields Badge ── */
 .changed-badge {
     display:none; align-items:center; gap:5px;
     padding:3px 9px; border-radius:20px;
-    background:#FAEEDA; color:#854F0B;
+    background:var(--amber-dim); color:var(--amber);
     font-size:11px; font-weight:600;
     margin-left:8px;
 }
@@ -175,7 +175,7 @@
                                 $initials = collect(explode(' ',$contact->name))->map(fn($p)=>strtoupper($p[0]??''))->join('');
                                 $initials = substr($initials,0,2);
                             @endphp
-                            <div style="width:40px;height:40px;border-radius:50%;background:#E6F1FB;color:#185FA5;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;flex-shrink:0">
+                            <div style="width:40px;height:40px;border-radius:50%;background:var(--accent-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;flex-shrink:0">
                                 {{ $initials }}
                             </div>
                             <div>
@@ -194,8 +194,8 @@
                 </div>
 
                 {{-- Danger Zone --}}
-                <div class="cf-side-card" style="border-color:#F09595">
-                    <div class="cf-side-title" style="color:#A32D2D">Danger Zone</div>
+                <div class="cf-side-card" style="border-color:var(--red)">
+                    <div class="cf-side-title" style="color:var(--red)">Danger Zone</div>
                     <div style="font-size:12px;color:var(--text-300);margin-bottom:12px;line-height:1.5">
                         Delete karne ke baad yeh contact permanently remove ho jayega.
                     </div>
@@ -203,7 +203,7 @@
                           action="{{ route('tenant.contacts.destroy', ['tenant'=>$tenantSlug,'id'=>$contact->id]) }}"
                           onsubmit="return confirm('Delete contact \'{{ addslashes($contact->name) }}\'? This cannot be undone.')">
                         @csrf @method('DELETE')
-                        <button type="submit" class="btn" style="width:100%;justify-content:center;background:#FCEBEB;border-color:#F09595;color:#A32D2D;font-size:12.5px">
+                        <button type="submit" class="btn" style="width:100%;justify-content:center;background:var(--red-dim);border-color:var(--red);color:var(--red);font-size:12.5px">
                             <i class="ti ti-trash" style="font-size:14px" aria-hidden="true"></i>
                             Delete Contact
                         </button>
@@ -275,7 +275,7 @@
             if (!dupBox) return;
             if (res.duplicate) {
                 dupBox.innerHTML = `This phone/email already belongs to <strong>${res.match.name}</strong>.
-                    <a href="/contacts/${res.match.id}" target="_blank" style="margin-left:auto;color:#185FA5;font-weight:600;text-decoration:none">View Contact &rarr;</a>`;
+                    <a href="/contacts/${res.match.id}" target="_blank" style="margin-left:auto;color:var(--accent);font-weight:600;text-decoration:none">View Contact &rarr;</a>`;
                 dupBox.style.display = 'flex';
             } else {
                 dupBox.style.display = 'none';

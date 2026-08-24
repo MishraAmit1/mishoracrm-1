@@ -14,7 +14,7 @@
 .vs-card-title { font-size:11px; font-weight:600; color:var(--text-300); text-transform:uppercase; letter-spacing:.6px; }
 .vs-hero { padding:20px; }
 .vs-hero-top { display:flex; align-items:flex-start; gap:16px; }
-.vs-avatar { width:52px; height:52px; border-radius:50%; background:#E6F1FB; color:#185FA5; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:600; flex-shrink:0; }
+.vs-avatar { width:52px; height:52px; border-radius:50%; background:var(--accent-dim); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:600; flex-shrink:0; }
 .vs-name { font-size:19px; font-weight:600; color:var(--text-100); letter-spacing:-0.3px; margin-bottom:2px; }
 .vs-sub  { font-size:13px; color:var(--text-300); }
 .vs-info-grid { display:grid; grid-template-columns:1fr 1fr; }
@@ -68,7 +68,7 @@
 
     @foreach(['success','error'] as $type)
     @if(session($type))
-    <div style="display:flex;align-items:center;gap:10px;padding:11px 15px;background:{{ $type==='success'?'#E1F5EE':'#FCEBEB' }};border:1px solid {{ $type==='success'?'#9FE1CB':'#F09595' }};border-radius:8px;margin-bottom:14px;font-size:13px;color:{{ $type==='success'?'#0F6E56':'#A32D2D' }};font-weight:500">
+    <div style="display:flex;align-items:center;gap:10px;padding:11px 15px;background:{{ $type==='success'?'var(--green-dim)':'var(--red-dim)' }};border:1px solid {{ $type==='success'?'var(--green)':'var(--red)' }};border-radius:8px;margin-bottom:14px;font-size:13px;color:{{ $type==='success'?'var(--green)':'var(--red)' }};font-weight:500">
         {{ session($type) }}
     </div>
     @endif
@@ -149,8 +149,8 @@
                 <div class="vs-sc-title">Actions</div>
                 @can('create', \App\Models\PurchaseOrder::class)
                 <a href="{{ route('tenant.purchase-orders.create') }}" class="vs-action-btn">
-                    <div class="vs-act-icon" style="background:#E6F1FB">
-                        <i class="ti ti-file-invoice" style="font-size:15px;color:#185FA5"></i>
+                    <div class="vs-act-icon" style="background:var(--accent-dim)">
+                        <i class="ti ti-file-invoice" style="font-size:15px;color:var(--accent)"></i>
                     </div>
                     New Purchase Order
                 </a>
@@ -158,12 +158,12 @@
             </div>
 
             @can('delete', $vendor)
-            <div class="vs-sc" style="border-color:#F09595">
-                <div class="vs-sc-title" style="color:#A32D2D">Danger Zone</div>
+            <div class="vs-sc" style="border-color:var(--red)">
+                <div class="vs-sc-title" style="color:var(--red)">Danger Zone</div>
                 <form method="POST" action="{{ route('tenant.vendors.destroy',$vendor->id) }}"
                       onsubmit="return confirm('Delete vendor {{ $vendor->name }}?')">
                     @csrf @method('DELETE')
-                    <button type="submit" class="btn" style="width:100%;justify-content:center;background:#FCEBEB;border-color:#F09595;color:#A32D2D;font-size:12.5px">
+                    <button type="submit" class="btn" style="width:100%;justify-content:center;background:var(--red-dim);border-color:var(--red);color:var(--red);font-size:12.5px">
                         <i class="ti ti-trash" style="font-size:14px"></i> Delete Vendor
                     </button>
                 </form>

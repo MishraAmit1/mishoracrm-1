@@ -58,7 +58,7 @@
 @php
     $ranges  = ['today'=>'Today','this_week'=>'This Week','this_month'=>'This Month','last_month'=>'Last Month','this_quarter'=>'This Quarter','this_year'=>'This Year'];
     $curRange = $request->get('range','this_month');
-    $avColors = [['#E6F1FB','#185FA5'],['#E1F5EE','#0F6E56'],['#FAEEDA','#854F0B'],['#EEEDFE','#3C3489'],['#FEE2E2','#991B1B']];
+    $avColors = [['var(--accent-dim)','var(--accent)'],['var(--green-dim)','var(--green)'],['var(--amber-dim)','var(--amber)'],['var(--purple-dim)','var(--purple)'],['#FEE2E2','#991B1B']];
     $rankEmojis = ['🥇','🥈','🥉'];
     $maxScore = collect($staffList)->max('score') ?: 1;
 @endphp

@@ -115,7 +115,7 @@
 }
 
 .df-req{
-    color:#E24B4A;
+    color:var(--red);
 }
 
 .df-input{
@@ -167,7 +167,7 @@
 
 .df-err{
     font-size:12px;
-    color:#E24B4A;
+    color:var(--red);
 }
 
 .df-hint{
@@ -289,11 +289,11 @@
     width:7px;
     height:7px;
     border-radius:50%;
-    background:#E24B4A;
+    background:var(--red);
 }
 
 .req-dot.ok{
-    background:#1D9E75;
+    background:var(--green);
 }
 </style>
 @endpush

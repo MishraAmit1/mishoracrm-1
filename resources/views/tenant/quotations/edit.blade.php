@@ -28,9 +28,9 @@
 @media(max-width:640px){ .qf-grid { grid-template-columns:1fr; } .qf-grid .span-full { grid-column:1; } }
 .qf-field { display:flex; flex-direction:column; gap:5px; }
 .qf-label { font-size:11.5px; font-weight:600; color:var(--text-200); text-transform:uppercase; letter-spacing:.5px; }
-.qf-req   { color:var(--red,#E24B4A); margin-left:2px; }
+.qf-req   { color:var(--red); margin-left:2px; }
 .qf-hint  { font-size:12px; color:var(--text-400); }
-.qf-err   { font-size:12px; color:var(--red,#E24B4A); font-weight:500; }
+.qf-err   { font-size:12px; color:var(--red); font-weight:500; }
 .qf-input {
     width:100%; padding:9px 12px;
     background:var(--bg-input); border:1.5px solid var(--border-default);
@@ -40,7 +40,7 @@
 }
 .qf-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-dim); background:var(--bg-surface); }
 .qf-input::placeholder { color:var(--text-400); font-size:13px; }
-.qf-input.is-err { border-color:var(--red,#E24B4A); }
+.qf-input.is-err { border-color:var(--red); }
 .qf-sel  { cursor:pointer; }
 .qf-area { resize:vertical; min-height:80px; line-height:1.55; }
 
@@ -69,7 +69,7 @@
 .item-input:focus { border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-dim); }
 .item-amount-input { font-family:'DM Mono',monospace; font-weight:600; background:var(--bg-elevated); color:var(--text-100); border-color:var(--border-subtle); cursor:default; }
 .del-row-btn { width:28px;height:28px;border-radius:6px;background:transparent;border:1px solid var(--border-subtle);cursor:pointer;color:var(--text-400);display:flex;align-items:center;justify-content:center;transition:all .15s;margin:2px auto 0; }
-.del-row-btn:hover { background:#FCEBEB;border-color:#F09595;color:#A32D2D; }
+.del-row-btn:hover { background:var(--red-dim);border-color:var(--red);color:var(--red); }
 .add-item-btn { display:flex;align-items:center;gap:6px;padding:9px 16px;margin:12px 0 0;background:transparent;border:1.5px dashed var(--border-default);border-radius:8px;font-size:13px;color:var(--text-300);cursor:pointer;font-family:'DM Sans',var(--font),sans-serif;transition:all .15s; }
 .add-item-btn:hover { border-color:var(--accent);color:var(--accent);background:rgba(55,138,221,.04); }
 
@@ -79,7 +79,7 @@
 .totals-table tr td { padding:5px 0; font-size:13px; color:var(--text-200); }
 .totals-table tr td:last-child { text-align:right; font-family:'DM Mono',monospace; font-weight:500; color:var(--text-100); }
 .totals-table .grand-total td { padding-top:10px; font-size:15px; font-weight:600; color:var(--text-100); border-top:1px solid var(--border-default); }
-.totals-table .grand-total td:last-child { color:#185FA5; font-size:16px; }
+.totals-table .grand-total td:last-child { color:var(--accent); font-size:16px; }
 @media(max-width:480px){ .totals-table { width:100%; } }
 
 /* Footer */
@@ -104,7 +104,7 @@
 .sp-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
 
 /* Changed badge */
-.changed-badge { display:none; align-items:center; gap:5px; padding:3px 9px; border-radius:20px; background:#FAEEDA; color:#854F0B; font-size:11px; font-weight:600; margin-left:8px; }
+.changed-badge { display:none; align-items:center; gap:5px; padding:3px 9px; border-radius:20px; background:var(--amber-dim); color:var(--amber); font-size:11px; font-weight:600; margin-left:8px; }
 .changed-badge.show { display:inline-flex; }
 
 /* Last updated bar */
@@ -117,7 +117,7 @@
 
 .tip-list { display:flex; flex-direction:column; gap:9px; }
 .tip-item { display:flex; align-items:flex-start; gap:8px; font-size:12px; color:var(--text-300); line-height:1.45; }
-.tip-dot  { width:5px; height:5px; border-radius:50%; background:var(--accent,#378ADD); margin-top:5px; flex-shrink:0; }
+.tip-dot  { width:5px; height:5px; border-radius:50%; background:var(--accent); margin-top:5px; flex-shrink:0; }
 
 @keyframes qf-spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 </style>
@@ -164,16 +164,16 @@
 
     {{-- Flash --}}
     @if(session('error'))
-    <div style="display:flex;align-items:center;gap:10px;padding:11px 15px;background:#FCEBEB;border:1px solid #F09595;border-radius:8px;margin-bottom:14px;font-size:13px;color:#A32D2D;font-weight:500">
+    <div style="display:flex;align-items:center;gap:10px;padding:11px 15px;background:var(--red-dim);border:1px solid var(--red);border-radius:8px;margin-bottom:14px;font-size:13px;color:var(--red);font-weight:500">
         <i class="ti ti-alert-circle" style="font-size:16px"></i> {{ session('error') }}
     </div>
     @endif
 
     {{-- Linked Deal (read-only, cannot be changed from here) --}}
     @if($quotation->deal)
-    <div style="display:flex;align-items:center;gap:9px;padding:10px 14px;background:#E1F5EE;border:1px solid #9FE1CB;border-radius:8px;margin-bottom:14px;font-size:12.5px;color:#0F6E56;font-weight:500">
+    <div style="display:flex;align-items:center;gap:9px;padding:10px 14px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;margin-bottom:14px;font-size:12.5px;color:var(--green);font-weight:500">
         <i class="ti ti-briefcase" style="font-size:15px"></i>
-        Linked to Deal <a href="{{ route('tenant.deals.show', $quotation->deal_id) }}" style="color:#0F6E56;text-decoration:underline"><strong>{{ $quotation->deal->title }}</strong></a>
+        Linked to Deal <a href="{{ route('tenant.deals.show', $quotation->deal_id) }}" style="color:var(--green);text-decoration:underline"><strong>{{ $quotation->deal->title }}</strong></a>
     </div>
     @endif
 
@@ -202,8 +202,8 @@
 
                     <div class="qf-section">
                         <div class="qf-sec-head">
-                            <div class="qf-sec-icon" style="background:#E6F1FB">
-                                <i class="ti ti-file-text" style="font-size:15px;color:#185FA5"></i>
+                            <div class="qf-sec-icon" style="background:var(--accent-dim)">
+                                <i class="ti ti-file-text" style="font-size:15px;color:var(--accent)"></i>
                             </div>
                             <div>
                                 <div class="qf-sec-title">Quotation Details</div>
@@ -251,8 +251,8 @@
                     {{-- Contact --}}
                     <div class="qf-section">
                         <div class="qf-sec-head">
-                            <div class="qf-sec-icon" style="background:#EEEDFE">
-                                <i class="ti ti-user" style="font-size:15px;color:#534AB7"></i>
+                            <div class="qf-sec-icon" style="background:var(--purple-dim)">
+                                <i class="ti ti-user" style="font-size:15px;color:var(--purple)"></i>
                             </div>
                             <div>
                                 <div class="qf-sec-title">Bill To</div>
@@ -299,7 +299,7 @@
                         <div id="contactPreview"
                              style="{{ $quotation->contact ? 'display:block' : 'display:none' }};margin-top:12px;padding:12px 14px;background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:8px">
                             <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-                                <div id="cpAvatar" style="width:32px;height:32px;border-radius:50%;background:#E6F1FB;color:#185FA5;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">
+                                <div id="cpAvatar" style="width:32px;height:32px;border-radius:50%;background:var(--accent-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">
                                     {{ $quotation->contact ? strtoupper(substr($quotation->contact->name,0,2)) : '' }}
                                 </div>
                                 <div>
@@ -327,8 +327,8 @@
                 <div class="qf-card" style="margin-bottom:14px">
                     <div class="qf-section" style="border-bottom:none;padding-bottom:0">
                         <div class="qf-sec-head">
-                            <div class="qf-sec-icon" style="background:#E1F5EE">
-                                <i class="ti ti-list-details" style="font-size:15px;color:#0F6E56"></i>
+                            <div class="qf-sec-icon" style="background:var(--green-dim)">
+                                <i class="ti ti-list-details" style="font-size:15px;color:var(--green)"></i>
                             </div>
                             <div>
                                 <div class="qf-sec-title">Line Items <span class="qf-req">*</span></div>
@@ -367,14 +367,14 @@
                                            value="{{ old('discount', $quotation->discount ?? 0) }}"
                                            oninput="recalcTotals()"/>
                                 </td>
-                                <td id="displayDiscount" style="color:#E24B4A">-₹{{ number_format($quotation->discount ?? 0, 2) }}</td>
+                                <td id="displayDiscount" style="color:var(--red)">-₹{{ number_format($quotation->discount ?? 0, 2) }}</td>
                             </tr>
                             <tr>
                                 <td>
                                     GST (<span id="dispTaxPct">{{ number_format($quotation->tax_percent ?? 18, 1) }}</span>%)
                                     <input type="hidden" name="tax_percent" id="taxPercentHidden" value="{{ old('tax_percent', $quotation->tax_percent ?? 18) }}">
                                 </td>
-                                <td id="displayTax" style="color:#1D9E75">+₹{{ number_format($quotation->tax_amount ?? 0, 2) }}</td>
+                                <td id="displayTax" style="color:var(--green)">+₹{{ number_format($quotation->tax_amount ?? 0, 2) }}</td>
                             </tr>
                             <tr class="grand-total">
                                 <td><strong>Total</strong></td>
@@ -392,8 +392,8 @@
                 <div class="qf-card">
                     <div class="qf-section">
                         <div class="qf-sec-head">
-                            <div class="qf-sec-icon" style="background:#FAEEDA">
-                                <i class="ti ti-notes" style="font-size:15px;color:#BA7517"></i>
+                            <div class="qf-sec-icon" style="background:var(--amber-dim)">
+                                <i class="ti ti-notes" style="font-size:15px;color:var(--amber)"></i>
                             </div>
                             <div>
                                 <div class="qf-sec-title">Notes & Terms</div>
@@ -449,7 +449,7 @@
                 <div class="qf-sc">
                     <div class="qf-sc-title">Quotation Info</div>
                     <div style="font-size:18px;font-weight:600;color:var(--text-100);font-family:'DM Mono',monospace">{{ $quotation->number }}</div>
-                    <div style="font-size:28px;font-weight:600;color:#185FA5;font-family:'DM Mono',monospace;letter-spacing:-1px;margin-top:6px" id="sidebarTotal">
+                    <div style="font-size:28px;font-weight:600;color:var(--accent);font-family:'DM Mono',monospace;letter-spacing:-1px;margin-top:6px" id="sidebarTotal">
                         ₹{{ number_format($quotation->total ?? 0, 2) }}
                     </div>
                     <div style="height:1px;background:var(--border-subtle);margin:12px 0"></div>
@@ -458,7 +458,7 @@
                         <div>Updated: <strong style="color:var(--text-200)">{{ $quotation->updated_at->diffForHumans() }}</strong></div>
                         @if($quotation->invoice)
                         <div style="margin-top:4px">
-                            <span style="display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;background:#E1F5EE;color:#0F6E56;font-size:11.5px;font-weight:600">
+                            <span style="display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;background:var(--green-dim);color:var(--green);font-size:11.5px;font-weight:600">
                                 <i class="ti ti-receipt" style="font-size:11px"></i>
                                 Invoice Exists
                             </span>
@@ -490,17 +490,17 @@
                     <div style="display:flex;flex-direction:column;gap:7px">
                         <a href="{{ route('tenant.quotations.pdf',$quotation->id) }}"
                            target="_blank" class="qa-btn">
-                            <div class="qa-icon" style="background:#FAEEDA">
-                                <i class="ti ti-file-download" style="font-size:14px;color:#BA7517"></i>
+                            <div class="qa-icon" style="background:var(--amber-dim)">
+                                <i class="ti ti-file-download" style="font-size:14px;color:var(--amber)"></i>
                             </div>
                             Download PDF
                         </a>
                         @if($quotation->status === 'accepted' && !$quotation->invoice)
                         <form method="POST" action="{{ route('tenant.quotations.convert',$quotation->id) }}">
                             @csrf
-                            <button type="submit" class="qa-btn" style="width:100%;background:#E1F5EE;border-color:#9FE1CB;color:#0F6E56">
-                                <div class="qa-icon" style="background:#E1F5EE">
-                                    <i class="ti ti-receipt" style="font-size:14px;color:#0F6E56"></i>
+                            <button type="submit" class="qa-btn" style="width:100%;background:var(--green-dim);border-color:var(--green);color:var(--green)">
+                                <div class="qa-icon" style="background:var(--green-dim)">
+                                    <i class="ti ti-receipt" style="font-size:14px;color:var(--green)"></i>
                                 </div>
                                 Convert to Invoice
                             </button>
@@ -510,15 +510,15 @@
                 </div>
 
                 {{-- Danger Zone --}}
-                <div class="qf-sc" style="border-color:#F09595">
-                    <div class="qf-sc-title" style="color:#A32D2D">Danger Zone</div>
+                <div class="qf-sc" style="border-color:var(--red)">
+                    <div class="qf-sc-title" style="color:var(--red)">Danger Zone</div>
                     <div style="font-size:12px;color:var(--text-300);margin-bottom:12px;line-height:1.5">
                         Delete karne ke baad yeh quotation permanently remove ho jayega.
                     </div>
                     <form method="POST" action="{{ route('tenant.quotations.destroy',$quotation->id) }}"
                           onsubmit="return confirm('Delete quotation {{ $quotation->number }}?')">
                         @csrf @method('DELETE')
-                        <button type="submit" class="btn" style="width:100%;justify-content:center;background:#FCEBEB;border-color:#F09595;color:#A32D2D;font-size:12.5px">
+                        <button type="submit" class="btn" style="width:100%;justify-content:center;background:var(--red-dim);border-color:var(--red);color:var(--red);font-size:12.5px">
                             <i class="ti ti-trash" style="font-size:14px"></i> Delete Quotation
                         </button>
                     </form>

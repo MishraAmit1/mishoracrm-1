@@ -48,7 +48,7 @@
     letter-spacing: -.5px;
     line-height: 1;
 }
-.di-sum.active .di-sum-val { color: #185FA5; }
+.di-sum.active .di-sum-val { color: var(--accent); }
 .di-sum-lbl {
     font-size: 11px;
     color: var(--text-300);
@@ -111,7 +111,7 @@
     font-weight: 500;
     text-decoration: none;
 }
-.vt-btn.active { background: #185FA5; color: #fff; }
+.vt-btn.active { background: var(--accent); color: #fff; }
 .vt-btn:not(.active):hover { background: var(--bg-elevated); color: var(--text-100); }
 
 /* ── KANBAN ── */
@@ -229,7 +229,7 @@
 /* Toast */
 .move-toast {
     position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
-    background: #185FA5; color: #fff; padding: 10px 20px; border-radius: 10px;
+    background: var(--accent); color: #fff; padding: 10px 20px; border-radius: 10px;
     font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px;
     box-shadow: 0 4px 24px rgba(0,0,0,.2); transition: transform .35s cubic-bezier(.34,1.56,.64,1), opacity .3s;
     z-index: 9999; opacity: 0; pointer-events: none;
@@ -258,14 +258,14 @@
 .di-table tbody tr:hover .row-actions { opacity: 1; }
 .act-btn { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 6px; border: 1px solid var(--border-subtle); background: transparent; cursor: pointer; color: var(--text-300); text-decoration: none; transition: all .15s; }
 .act-btn:hover     { background: var(--bg-elevated); color: var(--text-100); border-color: var(--border-default); }
-.act-btn.del:hover { background: #FCEBEB; border-color: #F09595; color: #A32D2D; }
+.act-btn.del:hover { background: var(--red-dim); border-color: var(--red); color: var(--red); }
 .pag-wrap { display: flex; align-items: center; justify-content: space-between; padding: 13px 18px; border-top: 1px solid var(--border-subtle); background: var(--bg-elevated); flex-wrap: wrap; gap: 8px; }
 .pag-info { font-size: 12px; color: var(--text-300); }
 .pag-info strong { color: var(--text-100); font-weight: 600; }
 .pag-btns { display: flex; gap: 4px; }
 .pg-btn { min-width: 32px; height: 32px; padding: 0 9px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; border-radius: 7px; border: 1px solid var(--border-default); background: var(--bg-surface); font-size: 13px; font-weight: 500; cursor: pointer; color: var(--text-200); text-decoration: none; transition: all .15s; font-family: 'DM Sans', var(--font), sans-serif; }
 .pg-btn:hover    { background: var(--bg-elevated); color: var(--text-100); }
-.pg-btn.active   { background: #185FA5; border-color: #185FA5; color: #fff; }
+.pg-btn.active   { background: var(--accent); border-color: var(--accent); color: #fff; }
 .pg-btn.disabled { opacity: .35; pointer-events: none; }
 .pg-btn.dots     { border: none; background: transparent; pointer-events: none; color: var(--text-300); }
 .di-empty { text-align: center; padding: 56px 24px; }
@@ -302,9 +302,9 @@
     padding: 1px 6px; border-radius: 20px;
     font-size: 10px; font-weight: 600; font-family: 'DM Mono', monospace;
 }
-.age-fresh  { background: #E1F5EE; color: #0F6E56; }
-.age-warm   { background: #FAEEDA; color: #854F0B; }
-.age-stale  { background: #FCEBEB; color: #A32D2D; }
+.age-fresh  { background: var(--green-dim); color: var(--green); }
+.age-warm   { background: var(--amber-dim); color: var(--amber); }
+.age-stale  { background: var(--red-dim); color: var(--red); }
 </style>
 @endpush
 
@@ -322,13 +322,13 @@ $sortUrl = fn(string $col) => route('tenant.deals.index', array_merge(
     ['sort'=>$col,'dir'=>($sortCol===$col && $sortDir==='asc')?'desc':'asc','view'=>'list']
 ));
 $avColors = [
-    ['#E6F1FB','#185FA5'],['#E1F5EE','#0F6E56'],
-    ['#FAEEDA','#854F0B'],['#EEEDFE','#3C3489'],
+    ['var(--accent-dim)','var(--accent)'],['var(--green-dim)','var(--green)'],
+    ['var(--amber-dim)','var(--amber)'],['var(--purple-dim)','var(--purple)'],
 ];
 $probColor = function(int $p): string {
-    if($p >= 60) return '#1D9E75';
-    if($p >= 30) return '#EF9F27';
-    return '#378ADD';
+    if($p >= 60) return 'var(--green)';
+    if($p >= 30) return 'var(--amber)';
+    return 'var(--accent)';
 };
 $initials = fn(string $name): string =>
     substr(collect(explode(' ',$name))->map(fn($p)=>strtoupper($p[0]??''))->join(''),0,2);
@@ -359,7 +359,7 @@ $allTotal = $stageSummary->sum('total');
 </div>
 
 @if(session('success'))
-<div style="display:flex;align-items:center;gap:10px;padding:11px 15px;background:#E1F5EE;border:1px solid #9FE1CB;border-radius:8px;margin-bottom:14px;font-size:13px;color:#0F6E56;font-weight:500">
+<div style="display:flex;align-items:center;gap:10px;padding:11px 15px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;margin-bottom:14px;font-size:13px;color:var(--green);font-weight:500">
     <i class="ti ti-circle-check" style="font-size:16px"></i> {{ session('success') }}
 </div>
 @endif
@@ -371,7 +371,7 @@ $allTotal = $stageSummary->sum('total');
         <div class="di-sum-val">{{ $allCount }}</div>
         <div class="di-sum-lbl">All Deals</div>
         <div class="di-sum-amt">₹{{ number_format($allTotal/100000,1) }}L</div>
-        <div class="di-sum-bar" style="width:100%;background:#378ADD"></div>
+        <div class="di-sum-bar" style="width:100%;background:var(--accent)"></div>
     </a>
     @foreach($cfgStages as $slug => $stage)
     @php $ss=$stageSummary->get($slug); $sc=$ss?->count??0; $sv=$ss?->total??0; $pct=$allCount>0?round(($sc/$allCount)*100):0; @endphp
@@ -682,7 +682,7 @@ $allTotal = $stageSummary->sum('total');
                 @case('expected_close_date')
                     @if($deal->expected_close_date)
                     @php $cd=\Carbon\Carbon::parse($deal->expected_close_date); $ov=$cd->isPast()&&!in_array($deal->stage,['won','lost']); @endphp
-                    <span style="font-family:'DM Mono',monospace;font-size:12px;color:{{ $ov?'#E24B4A':'var(--text-300)' }}">
+                    <span style="font-family:'DM Mono',monospace;font-size:12px;color:{{ $ov?'var(--red)':'var(--text-300)' }}">
                         @if($ov)<i class="ti ti-alert-triangle" style="font-size:12px"></i> @endif{{ $cd->format('M d, Y') }}
                     </span>
                     @else <span style="font-size:12px;color:var(--text-400)">—</span> @endif
@@ -752,7 +752,7 @@ $allTotal = $stageSummary->sum('total');
                 <span class="dm-meta-lbl">Close: </span>
                 @if($deal->expected_close_date)
                 @php $cd=\Carbon\Carbon::parse($deal->expected_close_date); $ov=$cd->isPast()&&!in_array($deal->stage,['won','lost']); @endphp
-                <span class="dm-meta-val" style="{{ $ov?'color:#E24B4A':'' }}">{{ $cd->format('M d, Y') }}</span>
+                <span class="dm-meta-val" style="{{ $ov?'color:var(--red)':'' }}">{{ $cd->format('M d, Y') }}</span>
                 @else <span class="dm-meta-val">—</span> @endif
             </span>
             <span class="dm-cnts">
@@ -934,7 +934,7 @@ function showToast(msg, isErr = false){
     const t    = document.getElementById('moveToast');
     const text = document.getElementById('moveToastText');
     if(!t) return;
-    t.style.background = isErr ? '#A32D2D' : '#185FA5';
+    t.style.background = isErr ? 'var(--red)' : 'var(--accent)';
     text.textContent   = msg;
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 3000);

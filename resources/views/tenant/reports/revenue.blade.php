@@ -36,7 +36,7 @@
     $curRange = $request->get('range','this_month');
     $invoiceStatusCfg = config('crm.invoice.statuses');
     $statusColors = ['draft'=>'var(--amber)','sent'=>'var(--accent)','paid'=>'var(--green)','partial'=>'var(--purple)','overdue'=>'var(--red)'];
-    $avColors = [['#E6F1FB','#185FA5'],['#E1F5EE','#0F6E56'],['#FAEEDA','#854F0B'],['#EEEDFE','#3C3489'],['#FEE2E2','#991B1B']];
+    $avColors = [['var(--accent-dim)','var(--accent)'],['var(--green-dim)','var(--green)'],['var(--amber-dim)','var(--amber)'],['var(--purple-dim)','var(--purple)'],['#FEE2E2','#991B1B']];
 @endphp
 
 <div class="page-head">
@@ -182,9 +182,9 @@ new Chart(ctx, {
         datasets:[{
             label:'Revenue',
             data: rv.map(d => parseFloat(d.revenue||0)),
-            borderColor:'#1D9E75', backgroundColor:grad,
+            borderColor:'var(--green)', backgroundColor:grad,
             borderWidth:2.5, pointRadius:4,
-            pointBackgroundColor:'#1D9E75', pointBorderColor:'#fff', pointBorderWidth:2,
+            pointBackgroundColor:'var(--green)', pointBorderColor:'#fff', pointBorderWidth:2,
             tension:0.4, fill:true
         }]
     },
@@ -200,7 +200,7 @@ new Chart(ctx, {
 
 // ── Invoice status donut ──────────────────────────────────────────
 const statuses = @json($invoiceStatuses);
-const statusColors = {draft:'#EF9F27',sent:'#6378ff',paid:'#1D9E75',partial:'#a78bfa',overdue:'#E05252'};
+const statusColors = {draft:'var(--amber)',sent:'#6378ff',paid:'var(--green)',partial:'#a78bfa',overdue:'#E05252'};
 const keys = Object.keys(statusColors);
 new Chart(document.getElementById('statusChart'), {
     type:'doughnut',

@@ -21,7 +21,7 @@
 @media(max-width:640px){ .pf-grid { grid-template-columns:1fr; } .pf-grid .span-full { grid-column:1; } }
 .pf-field { display:flex; flex-direction:column; gap:5px; }
 .pf-label { font-size:11.5px; font-weight:600; color:var(--text-200); text-transform:uppercase; letter-spacing:.5px; }
-.pf-req { color:var(--red,#E24B4A); margin-left:2px; }
+.pf-req { color:var(--red); margin-left:2px; }
 .pf-input {
     width:100%; padding:9px 12px; background:var(--bg-input); border:1.5px solid var(--border-default);
     border-radius:8px; color:var(--text-100); font-family:'DM Sans',var(--font),sans-serif; font-size:13.5px; outline:none;
@@ -29,7 +29,7 @@
 }
 .pf-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-dim); }
 .pf-area { resize:vertical; min-height:80px; line-height:1.55; }
-.pf-err { font-size:12px; color:var(--red,#E24B4A); font-weight:500; }
+.pf-err { font-size:12px; color:var(--red); font-weight:500; }
 
 .items-table-wrap { overflow-x:auto; }
 .items-table { width:100%; border-collapse:collapse; font-size:13px; min-width:560px; }
@@ -40,7 +40,7 @@
 .item-input { width:100%; padding:7px 9px; background:var(--bg-input); border:1.5px solid var(--border-default); border-radius:7px; color:var(--text-100); font-family:'DM Sans',var(--font),sans-serif; font-size:13px; outline:none; }
 .item-input:focus { border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-dim); }
 .del-row-btn { width:28px; height:28px; border-radius:6px; background:transparent; border:1px solid var(--border-subtle); cursor:pointer; color:var(--text-400); display:flex; align-items:center; justify-content:center; margin:2px auto 0; }
-.del-row-btn:hover { background:#FCEBEB; border-color:#F09595; color:#A32D2D; }
+.del-row-btn:hover { background:var(--red-dim); border-color:var(--red); color:var(--red); }
 .add-item-btn { display:flex; align-items:center; gap:6px; padding:9px 16px; margin:12px 0 0; background:transparent; border:1.5px dashed var(--border-default); border-radius:8px; font-size:13px; color:var(--text-300); cursor:pointer; font-family:'DM Sans',var(--font),sans-serif; }
 .add-item-btn:hover { border-color:var(--accent); color:var(--accent); }
 
@@ -52,7 +52,7 @@
 .pr-number { font-size:18px; font-weight:600; color:var(--text-100); font-family:'DM Mono',monospace; }
 .tip-list { display:flex; flex-direction:column; gap:9px; }
 .tip-item { display:flex; align-items:flex-start; gap:8px; font-size:12px; color:var(--text-300); line-height:1.45; }
-.tip-dot { width:5px; height:5px; border-radius:50%; background:var(--accent,#378ADD); margin-top:5px; flex-shrink:0; }
+.tip-dot { width:5px; height:5px; border-radius:50%; background:var(--accent); margin-top:5px; flex-shrink:0; }
 </style>
 @endpush
 
@@ -80,8 +80,8 @@
                 <div class="pf-card" style="margin-bottom:14px">
                     <div class="pf-section">
                         <div class="pf-sec-head">
-                            <div class="pf-sec-icon" style="background:#E6F1FB">
-                                <i class="ti ti-clipboard-list" style="font-size:15px;color:#185FA5"></i>
+                            <div class="pf-sec-icon" style="background:var(--accent-dim)">
+                                <i class="ti ti-clipboard-list" style="font-size:15px;color:var(--accent)"></i>
                             </div>
                             <div>
                                 <div class="pf-sec-title">Request Details</div>
@@ -116,8 +116,8 @@
                 <div class="pf-card" style="margin-bottom:14px">
                     <div class="pf-section" style="border-bottom:none">
                         <div class="pf-sec-head">
-                            <div class="pf-sec-icon" style="background:#E1F5EE">
-                                <i class="ti ti-list-details" style="font-size:15px;color:#0F6E56"></i>
+                            <div class="pf-sec-icon" style="background:var(--green-dim)">
+                                <i class="ti ti-list-details" style="font-size:15px;color:var(--green)"></i>
                             </div>
                             <div>
                                 <div class="pf-sec-title">Items Needed <span class="pf-req">*</span></div>
@@ -147,8 +147,8 @@
                 <div class="pf-card">
                     <div class="pf-section">
                         <div class="pf-sec-head">
-                            <div class="pf-sec-icon" style="background:#FAEEDA">
-                                <i class="ti ti-notes" style="font-size:15px;color:#BA7517"></i>
+                            <div class="pf-sec-icon" style="background:var(--amber-dim)">
+                                <i class="ti ti-notes" style="font-size:15px;color:var(--amber)"></i>
                             </div>
                             <div>
                                 <div class="pf-sec-title">Reason</div>

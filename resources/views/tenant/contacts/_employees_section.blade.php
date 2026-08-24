@@ -4,8 +4,8 @@
 @endphp
 <div class="cf-section" id="employeesSection" style="{{ ($companyVal || $existingEmps->isNotEmpty()) ? '' : 'display:none' }}">
     <div class="cf-section-header">
-        <div class="cf-section-icon" style="background:#EEEDFE">
-            <i class="ti ti-users" style="font-size:16px;color:#534AB7" aria-hidden="true"></i>
+        <div class="cf-section-icon" style="background:var(--purple-dim)">
+            <i class="ti ti-users" style="font-size:16px;color:var(--purple)" aria-hidden="true"></i>
         </div>
         <div>
             <div class="cf-section-title">Company Employees</div>

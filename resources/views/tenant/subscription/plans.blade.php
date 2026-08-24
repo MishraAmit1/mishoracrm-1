@@ -141,8 +141,8 @@ input:checked + .toggle-slider:before { transform: translateX(22px); }
 }
 .discount-badge {
     display: inline-block;
-    background: #dcfce7;
-    color: #16a34a;
+    background: rgba(220,252,231,0.14);
+    color: #6FEC9D;
     font-size: 11px;
     font-weight: 700;
     padding: 2px 8px;

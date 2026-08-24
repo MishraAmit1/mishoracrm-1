@@ -30,12 +30,12 @@ $stageProbs = collect($cfgStages)->map(fn($s) => $s['probability']);
 
 /* section icon bg colors */
 $secColors = [
-    'blue'   => ['bg'=>'#E6F1FB','ic'=>'#185FA5'],
-    'purple' => ['bg'=>'#EEEDFE','ic'=>'#534AB7'],
-    'teal'   => ['bg'=>'#E1F5EE','ic'=>'#0F6E56'],
-    'amber'  => ['bg'=>'#FAEEDA','ic'=>'#BA7517'],
-    'green'  => ['bg'=>'#EAF3DE','ic'=>'#3B6D11'],
-    'red'    => ['bg'=>'#FCEBEB','ic'=>'#A32D2D'],
+    'blue'   => ['bg'=>'var(--accent-dim)','ic'=>'var(--accent)'],
+    'purple' => ['bg'=>'var(--purple-dim)','ic'=>'var(--purple)'],
+    'teal'   => ['bg'=>'var(--green-dim)','ic'=>'var(--green)'],
+    'amber'  => ['bg'=>'var(--amber-dim)','ic'=>'var(--amber)'],
+    'green'  => ['bg'=>'var(--green-dim)','ic'=>'var(--green)'],
+    'red'    => ['bg'=>'var(--red-dim)','ic'=>'var(--red)'],
 ];
 @endphp
 

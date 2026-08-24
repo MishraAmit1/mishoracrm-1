@@ -8,7 +8,7 @@
 .imp-step .imp-dot{width:22px;height:22px;border-radius:50%;background:var(--bg-elevated);border:1.5px solid var(--border-default);display:flex;align-items:center;justify-content:center;font-size:11px}
 .imp-step.active .imp-dot{background:var(--accent);border-color:var(--accent);color:#fff}
 .imp-step.active{color:var(--text-100)}
-.imp-step.done .imp-dot{background:var(--green,#1D9E75);border-color:var(--green,#1D9E75);color:#fff}
+.imp-step.done .imp-dot{background:var(--green);border-color:var(--green);color:#fff}
 .map-table-wrap{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:14px;overflow-x:auto}
 .map-table{width:100%;border-collapse:collapse;min-width:720px}
 .map-table th{padding:10px 12px;text-align:left;font-size:10.5px;font-weight:700;color:var(--text-400);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border-subtle);background:var(--bg-elevated);white-space:nowrap}

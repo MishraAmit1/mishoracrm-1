@@ -35,7 +35,7 @@
 .cs-hero-top { display:flex; align-items:flex-start; gap:16px; }
 .cs-avatar {
     width: 52px; height: 52px; border-radius: 50%;
-    background: #E6F1FB; color: #185FA5;
+    background: var(--accent-dim); color: var(--accent);
     display: flex; align-items: center; justify-content: center;
     font-size: 17px; font-weight: 600; flex-shrink: 0;
 }
@@ -63,7 +63,7 @@
     display: flex; align-items: center; gap: 5px;
 }
 .cs-info-val { font-size: 13.5px; font-weight: 500; color: var(--text-100); }
-.cs-info-val a { color: var(--accent, #185FA5); text-decoration: none; }
+.cs-info-val a { color: var(--accent); text-decoration: none; }
 .cs-info-val a:hover { text-decoration: underline; }
 .cs-info-val.muted { color: var(--text-400); font-style: italic; font-weight: 400; }
 
@@ -73,7 +73,7 @@
     color: var(--text-400); font-size: 12px; padding: 0; transition: color .15s;
     display: inline-flex; align-items: center;
 }
-.copy-btn:hover { color: var(--accent, #185FA5); }
+.copy-btn:hover { color: var(--accent); }
 
 /* ── Quick Actions ── */
 .cs-qa-list { display:flex; flex-direction:column; gap:6px; padding:12px; }
@@ -124,10 +124,10 @@
 
     // Section color map
     $sectionColors = [
-        'blue'   => ['bg'=>'#E6F1FB','text'=>'#185FA5'],
-        'purple' => ['bg'=>'#EEEDFE','text'=>'#534AB7'],
-        'teal'   => ['bg'=>'#E1F5EE','text'=>'#0F6E56'],
-        'amber'  => ['bg'=>'#FAEEDA','text'=>'#854F0B'],
+        'blue'   => ['bg'=>'var(--accent-dim)','text'=>'var(--accent)'],
+        'purple' => ['bg'=>'var(--purple-dim)','text'=>'var(--purple)'],
+        'teal'   => ['bg'=>'var(--green-dim)','text'=>'var(--green)'],
+        'amber'  => ['bg'=>'var(--amber-dim)','text'=>'var(--amber)'],
     ];
 @endphp
 
@@ -154,7 +154,7 @@
                   onsubmit="return confirm('Delete contact \'{{ addslashes($contact->name) }}\'?')"
                   style="display:inline">
                 @csrf @method('DELETE')
-                <button type="submit" class="btn" style="background:#FCEBEB;border-color:#F09595;color:#A32D2D">
+                <button type="submit" class="btn" style="background:var(--red-dim);border-color:var(--red);color:var(--red)">
                     <i class="ti ti-trash" style="font-size:14px" aria-hidden="true"></i>
                 </button>
             </form>
@@ -163,7 +163,7 @@
 
     {{-- Flash --}}
     @if(session('success'))
-    <div style="display:flex;align-items:center;gap:10px;padding:11px 15px;background:#E1F5EE;border:1px solid #9FE1CB;border-radius:8px;margin-bottom:14px;font-size:13px;color:#0F6E56;font-weight:500">
+    <div style="display:flex;align-items:center;gap:10px;padding:11px 15px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;margin-bottom:14px;font-size:13px;color:var(--green);font-weight:500">
         <i class="ti ti-circle-check" style="font-size:16px" aria-hidden="true"></i>
         {{ session('success') }}
     </div>
@@ -191,19 +191,19 @@
                             </div>
                             <div class="cs-badges">
                                 @if($contact->city)
-                                <span class="cs-badge" style="background:#E6F1FB;color:#185FA5">
+                                <span class="cs-badge" style="background:var(--accent-dim);color:var(--accent)">
                                     <i class="ti ti-map-pin" style="font-size:12px" aria-hidden="true"></i>
                                     {{ $contact->city }}@if($contact->state), {{ $contact->state }}@endif
                                 </span>
                                 @endif
                                 @if($contact->gst_number)
-                                <span class="cs-badge" style="background:#EAF3DE;color:#3B6D11">
+                                <span class="cs-badge" style="background:var(--green-dim);color:var(--green)">
                                     <i class="ti ti-receipt-tax" style="font-size:12px" aria-hidden="true"></i>
                                     GST Verified
                                 </span>
                                 @endif
                                 @if($contact->lead)
-                                <span class="cs-badge" style="background:#EEEDFE;color:#534AB7">
+                                <span class="cs-badge" style="background:var(--purple-dim);color:var(--purple)">
                                     <i class="ti ti-target" style="font-size:12px" aria-hidden="true"></i>
                                     Lead Linked
                                 </span>
@@ -296,25 +296,25 @@
                             <div style="font-size:13.5px;font-weight:600;color:var(--text-100);display:flex;align-items:center;gap:7px">
                                 {{ $employee->name ?: '—' }}
                                 @if($employee->is_primary)
-                                <span class="cs-badge" style="background:#EAF3DE;color:#3B6D11">
+                                <span class="cs-badge" style="background:var(--green-dim);color:var(--green)">
                                     <i class="ti ti-star-filled" style="font-size:11px" aria-hidden="true"></i>
                                     Primary
                                 </span>
                                 @endif
                             </div>
                             @if($employee->designation)
-                            <span class="cs-badge" style="background:#EEEDFE;color:#534AB7">{{ $employee->designation }}</span>
+                            <span class="cs-badge" style="background:var(--purple-dim);color:var(--purple)">{{ $employee->designation }}</span>
                             @endif
                         </div>
                         @if(!empty($employee->emails) || !empty($employee->phones))
                         <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:6px;font-size:12.5px;color:var(--text-300)">
                             @foreach($employee->emails ?? [] as $email)
-                            <a href="mailto:{{ $email }}" style="color:var(--accent,#185FA5);text-decoration:none;display:inline-flex;align-items:center;gap:4px">
+                            <a href="mailto:{{ $email }}" style="color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:4px">
                                 <i class="ti ti-mail" style="font-size:12px" aria-hidden="true"></i>{{ $email }}
                             </a>
                             @endforeach
                             @foreach($employee->phones ?? [] as $phone)
-                            <a href="tel:{{ $phone }}" style="color:var(--accent,#185FA5);text-decoration:none;display:inline-flex;align-items:center;gap:4px">
+                            <a href="tel:{{ $phone }}" style="color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:4px">
                                 <i class="ti ti-phone" style="font-size:12px" aria-hidden="true"></i>{{ $phone }}
                             </a>
                             @endforeach
@@ -405,12 +405,12 @@
                     </div>
                     <div style="display:flex;align-items:center;gap:14px">
                         <a href="{{ route('tenant.tasks.create', ['contact_id' => $contact->id]) }}"
-                           style="font-size:12px;font-weight:600;color:var(--accent,#185FA5);text-decoration:none;display:inline-flex;align-items:center;gap:4px">
+                           style="font-size:12px;font-weight:600;color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:4px">
                             <i class="ti ti-plus" style="font-size:13px" aria-hidden="true"></i>
                             Add Task
                         </a>
                         <a href="{{ route('tenant.followups.create', ['contact_id' => $contact->id]) }}"
-                           style="font-size:12px;font-weight:600;color:var(--accent,#185FA5);text-decoration:none;display:inline-flex;align-items:center;gap:4px">
+                           style="font-size:12px;font-weight:600;color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:4px">
                             <i class="ti ti-plus" style="font-size:13px" aria-hidden="true"></i>
                             Schedule Follow-up
                         </a>
@@ -433,8 +433,8 @@
                 <div class="cs-qa-list">
                     @if($contact->email)
                     <a href="mailto:{{ $contact->email }}" class="cs-qa-btn">
-                        <div class="cs-qa-icon" style="background:#E6F1FB">
-                            <i class="ti ti-mail" style="font-size:15px;color:#185FA5" aria-hidden="true"></i>
+                        <div class="cs-qa-icon" style="background:var(--accent-dim)">
+                            <i class="ti ti-mail" style="font-size:15px;color:var(--accent)" aria-hidden="true"></i>
                         </div>
                         Send Email
                     </a>
@@ -442,14 +442,14 @@
 
                     @if($contact->phone)
                     <a href="https://wa.me/91{{ preg_replace('/\D/','',$contact->phone) }}" target="_blank" class="cs-qa-btn">
-                        <div class="cs-qa-icon" style="background:#E1F5EE">
-                            <i class="ti ti-brand-whatsapp" style="font-size:15px;color:#0F6E56" aria-hidden="true"></i>
+                        <div class="cs-qa-icon" style="background:var(--green-dim)">
+                            <i class="ti ti-brand-whatsapp" style="font-size:15px;color:var(--green)" aria-hidden="true"></i>
                         </div>
                         Send WhatsApp
                     </a>
                     <a href="tel:{{ $contact->phone }}" class="cs-qa-btn">
-                        <div class="cs-qa-icon" style="background:#FAEEDA">
-                            <i class="ti ti-phone" style="font-size:15px;color:#BA7517" aria-hidden="true"></i>
+                        <div class="cs-qa-icon" style="background:var(--amber-dim)">
+                            <i class="ti ti-phone" style="font-size:15px;color:var(--amber)" aria-hidden="true"></i>
                         </div>
                         Call Now
                     </a>
@@ -457,8 +457,8 @@
 
                     <a href="{{ route('tenant.contacts.edit', ['tenant'=>$tenantSlug,'id'=>$contact->id]) }}"
                        class="cs-qa-btn">
-                        <div class="cs-qa-icon" style="background:#EEEDFE">
-                            <i class="ti ti-edit" style="font-size:15px;color:#534AB7" aria-hidden="true"></i>
+                        <div class="cs-qa-icon" style="background:var(--purple-dim)">
+                            <i class="ti ti-edit" style="font-size:15px;color:var(--purple)" aria-hidden="true"></i>
                         </div>
                         Edit Contact
                     </a>
@@ -490,7 +490,7 @@
                         <span class="cs-dl-key">Linked Lead</span>
                         <span class="cs-dl-val">
                             <a href="{{ route('tenant.leads.show', ['tenant'=>$tenantSlug,'id'=>$contact->lead->id]) }}"
-                               style="color:var(--accent,#185FA5);text-decoration:none;font-size:12.5px">
+                               style="color:var(--accent);text-decoration:none;font-size:12.5px">
                                 {{ \Illuminate\Support\Str::limit($contact->lead->name, 18) }}
                                 <i class="ti ti-external-link" style="font-size:11px" aria-hidden="true"></i>
                             </a>
@@ -541,7 +541,7 @@
 </div>
 
 {{-- Copy toast --}}
-<div id="copyToast" style="position:fixed;bottom:20px;right:20px;background:#185FA5;color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:500;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9999;display:flex;align-items:center;gap:7px">
+<div id="copyToast" style="position:fixed;bottom:20px;right:20px;background:var(--accent);color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:500;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9999;display:flex;align-items:center;gap:7px">
     <i class="ti ti-check" style="font-size:14px" aria-hidden="true"></i>
     Copied to clipboard!
 </div>

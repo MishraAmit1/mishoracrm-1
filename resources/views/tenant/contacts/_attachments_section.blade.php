@@ -3,8 +3,8 @@
 @endphp
 <div class="cf-section">
     <div class="cf-section-header">
-        <div class="cf-section-icon" style="background:#FAEEDA">
-            <i class="ti ti-paperclip" style="font-size:16px;color:#BA7517" aria-hidden="true"></i>
+        <div class="cf-section-icon" style="background:var(--amber-dim)">
+            <i class="ti ti-paperclip" style="font-size:16px;color:var(--amber)" aria-hidden="true"></i>
         </div>
         <div>
             <div class="cf-section-title">Visiting Card / Documents</div>

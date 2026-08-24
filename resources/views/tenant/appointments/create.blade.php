@@ -65,6 +65,22 @@
 
         <div class="fg2">
             <div class="field">
+                <label class="fl">Technician <span style="font-weight:400;text-transform:none;color:var(--text-400)">(optional)</span></label>
+                <select name="assigned_to" class="fi">
+                    <option value="">— Unassigned —</option>
+                    @foreach($staffList as $u)
+                    <option value="{{ $u->id }}">{{ $u->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="field">
+                <label class="fl">Service Address <span style="font-weight:400;text-transform:none;color:var(--text-400)">(optional)</span></label>
+                <input type="text" name="service_address" class="fi" placeholder="Job site address"/>
+            </div>
+        </div>
+
+        <div class="fg2">
+            <div class="field">
                 <label class="fl">Date <span style="color:var(--red)">*</span></label>
                 <input type="date" name="date" id="dateInput" class="fi" min="{{ now()->toDateString() }}" value="{{ now()->toDateString() }}" required onchange="loadSlots()"/>
             </div>

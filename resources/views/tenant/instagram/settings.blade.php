@@ -12,14 +12,14 @@
 
 /* QR Connect */
 .qr-setup-card { border:2px dashed var(--border-default); border-radius:var(--r-lg); padding:28px 24px; text-align:center; background:var(--bg-subtle); margin-bottom:24px; }
-.qr-setup-card.connected { border-color:#22c55e; background:#f0fdf4; }
+.qr-setup-card.connected { border-color:#22c55e; background:rgba(240,253,244,0.14); }
 .qr-wrap { display:inline-block; background:#fff; border-radius:12px; padding:16px; box-shadow:0 2px 12px rgba(0,0,0,.08); margin:16px 0; }
 .qr-steps { display:flex; gap:16px; justify-content:center; flex-wrap:wrap; margin:12px 0 0; }
 .qr-step { display:flex; align-items:flex-start; gap:8px; text-align:left; max-width:160px; }
-.qr-step-num { width:22px; height:22px; border-radius:50%; background:var(--accent,#6366f1); color:#fff; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
+.qr-step-num { width:22px; height:22px; border-radius:50%; background:var(--accent); color:#fff; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
 .qr-step-text { font-size:12px; color:var(--text-300); line-height:1.4; }
 .qr-timer { font-size:12px; color:var(--text-300); margin-top:6px; }
-.qr-success-icon { width:56px; height:56px; border-radius:50%; background:#dcfce7; display:flex; align-items:center; justify-content:center; margin:0 auto 12px; }
+.qr-success-icon { width:56px; height:56px; border-radius:50%; background:rgba(220,252,231,0.14); display:flex; align-items:center; justify-content:center; margin:0 auto 12px; }
 </style>
 @endpush
 
@@ -49,7 +49,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
             </svg>
         </div>
-        <div style="font-weight:700;font-size:16px;color:#16a34a;">
+        <div style="font-weight:700;font-size:16px;color:#6FEC9D;">
             Instagram Connected
             @if($accountInfo['username'] ?? null)
                 — {{ '@' . $accountInfo['username'] }}
@@ -67,7 +67,7 @@
         <button type="button" class="btn btn-sm" style="margin-top:14px;" onclick="startQrFlow()">Reconnect / Change Account</button>
     @else
         <div style="font-size:22px;margin-bottom:8px;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:40px;height:40px;color:var(--accent,#6366f1);margin:0 auto;display:block;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:40px;height:40px;color:var(--accent);margin:0 auto;display:block;">
                 <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
                 <path stroke-linecap="round" d="M14 14h2m3 0h2M14 17v2m3-2v5m3-5v2"/>
             </svg>
@@ -100,7 +100,7 @@
         </div>
 
         <div id="qrDone" style="display:none;margin-top:14px;">
-            <div style="font-size:15px;font-weight:600;color:#16a34a;">Connected successfully! Reloading…</div>
+            <div style="font-size:15px;font-weight:600;color:#6FEC9D;">Connected successfully! Reloading…</div>
         </div>
 
         {{-- Buttons --}}
@@ -196,7 +196,7 @@ function copyText(id) {
     const text = document.getElementById(id).textContent.trim();
     navigator.clipboard.writeText(text).then(() => {
         const el = document.getElementById(id);
-        el.style.background = 'var(--bg-success, #dcfce7)';
+        el.style.background = 'var(--bg-success)';
         setTimeout(() => el.style.background = '', 1200);
     });
 }

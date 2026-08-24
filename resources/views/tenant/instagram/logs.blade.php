@@ -10,20 +10,20 @@
 .log-table th { font-weight:600; color:var(--text-300); font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; background:var(--bg-subtle); }
 .log-table tr:hover td { background:var(--bg-hover); }
 .ev-badge { display:inline-flex; align-items:center; padding:2px 8px; border-radius:99px; font-size:11px; font-weight:600; }
-.ev-comment { background:#fef3c7; color:#92400e; }
-.ev-dm_received { background:#dbeafe; color:#1e40af; }
-.ev-dm_sent { background:#d1fae5; color:#065f46; }
-.ev-automation_triggered { background:#ede9fe; color:#5b21b6; }
-.ev-chatbot_triggered { background:#fce7f3; color:#831843; }
-.ev-oauth_connect { background:#e0e7ff; color:#3730a3; }
-.st-success { color:#16a34a; font-weight:600; }
+.ev-comment { background:rgba(254,243,199,0.14); color:#F19D6A; }
+.ev-dm_received { background:rgba(219,234,254,0.14); color:#748FE7; }
+.ev-dm_sent { background:rgba(209,250,229,0.14); color:#65F5CD; }
+.ev-automation_triggered { background:rgba(237,233,254,0.14); color:#A175E6; }
+.ev-chatbot_triggered { background:rgba(252,231,243,0.14); color:#E675A2; }
+.ev-oauth_connect { background:rgba(224,231,255,0.14); color:#827CDE; }
+.st-success { color:#6FEC9D; font-weight:600; }
 .st-failed { color:#dc2626; font-weight:600; }
 .st-skipped { color:#9ca3af; font-weight:600; }
 .msg-cell { max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.detail-btn { cursor:pointer; background:none; border:none; color:var(--accent,#6366f1); font-size:11px; text-decoration:underline; padding:0; margin-left:6px; }
+.detail-btn { cursor:pointer; background:none; border:none; color:var(--accent); font-size:11px; text-decoration:underline; padding:0; margin-left:6px; }
 .log-modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1000; align-items:center; justify-content:center; padding:20px; }
 .log-modal-backdrop.open { display:flex; }
-.log-modal { background:var(--bg-surface,#fff); border-radius:12px; max-width:640px; width:100%; max-height:80vh; display:flex; flex-direction:column; }
+.log-modal { background:var(--bg-surface); border-radius:12px; max-width:640px; width:100%; max-height:80vh; display:flex; flex-direction:column; }
 .log-modal-header { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid var(--border-subtle); }
 .log-modal-header h3 { font-size:15px; margin:0; }
 .log-modal-body { padding:16px 18px; overflow:auto; }

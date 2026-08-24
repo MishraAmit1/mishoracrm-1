@@ -101,7 +101,7 @@
     $selPriority = old('priority', $lead->priority);
     $selSource   = old('source',   $lead->source);
 
-    $avColors = [['#E6F1FB','#185FA5'],['#E1F5EE','#0F6E56'],['#FAEEDA','#854F0B'],['#EEEDFE','#3C3489']];
+    $avColors = [['var(--accent-dim)','var(--accent)'],['var(--green-dim)','var(--green)'],['var(--amber-dim)','var(--amber)'],['var(--purple-dim)','var(--purple)']];
     [$avBg,$avTx] = $avColors[abs(crc32($lead->name)) % 4];
 @endphp
 
@@ -173,7 +173,7 @@
                            value="{{ old('phone', $lead->phone) }}"
                            placeholder="+91 98765 43210" required/>
                     @error('phone') <span class="field-error">{{ $message }}</span> @enderror
-                    <div id="dupWarning" style="display:none;align-items:center;gap:6px;font-size:12px;color:#BA7517;background:#FAEEDA;border:1px solid #F0D9A8;border-radius:6px;padding:6px 10px;margin-top:6px"></div>
+                    <div id="dupWarning" style="display:none;align-items:center;gap:6px;font-size:12px;color:var(--amber);background:var(--amber-dim);border:1px solid #F0D9A8;border-radius:6px;padding:6px 10px;margin-top:6px"></div>
                 </div>
 
                 <div class="field">
@@ -367,7 +367,7 @@ document.querySelector('form').addEventListener('submit', function (e) {
             const res = await crmPost("{{ route('tenant.leads.check-duplicate') }}", { phone, email, except_id: exceptId });
             if (res.duplicate) {
                 dupBox.innerHTML = `This phone/email already belongs to <strong>${res.match.name}</strong>.
-                    <a href="/leads/${res.match.id}" target="_blank" style="margin-left:auto;color:#185FA5;font-weight:600;text-decoration:none">View Lead &rarr;</a>`;
+                    <a href="/leads/${res.match.id}" target="_blank" style="margin-left:auto;color:var(--accent);font-weight:600;text-decoration:none">View Lead &rarr;</a>`;
                 dupBox.style.display = 'flex';
             } else {
                 dupBox.style.display = 'none';

@@ -12,7 +12,7 @@
 .badge-active   { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11.5px; font-weight:600; background:var(--green-dim); color:var(--green); }
 .badge-inactive { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11.5px; font-weight:600; background:var(--bg-elevated); color:var(--text-400); }
 .badge-type-fg  { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11.5px; font-weight:600; background:var(--accent-dim); color:var(--accent); }
-.badge-type-rm  { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11.5px; font-weight:600; background:#EEEDFE; color:#534AB7; }
+.badge-type-rm  { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11.5px; font-weight:600; background:var(--purple-dim); color:var(--purple); }
 .badge-low-stock { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11.5px; font-weight:600; background:var(--red-dim); color:var(--red); margin-left:6px; }
 .mono { font-family:var(--mono); }
 .status-tabs { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:16px; }

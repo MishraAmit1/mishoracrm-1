@@ -23,16 +23,16 @@
 .flow-box-title { font-size:12px; font-weight:700; color:var(--text-100); }
 .flow-box-sub   { font-size:11px; color:var(--text-300); margin-top:3px; }
 .flow-arrow  { font-size:20px; color:var(--text-300); padding:0 10px; flex-shrink:0; }
-.flow-box.accent-box { background:#ede9fe; border-color:#a78bfa; }
-.flow-box.accent-box .flow-box-title { color:#5b21b6; }
-.flow-box.green-box { background:#d1fae5; border-color:#6ee7b7; }
-.flow-box.green-box .flow-box-title { color:#065f46; }
-.flow-box.orange-box { background:#fff7ed; border-color:#fdba74; }
-.flow-box.orange-box .flow-box-title { color:#c2410c; }
-.flow-box.pink-box   { background:#fce7f3; border-color:#f9a8d4; }
-.flow-box.pink-box .flow-box-title  { color:#831843; }
-.flow-box.blue-box   { background:#dbeafe; border-color:#93c5fd; }
-.flow-box.blue-box .flow-box-title  { color:#1e40af; }
+.flow-box.accent-box { background:rgba(237,233,254,0.14); border-color:var(--purple); }
+.flow-box.accent-box .flow-box-title { color:#A175E6; }
+.flow-box.green-box { background:rgba(209,250,229,0.14); border-color:#6ee7b7; }
+.flow-box.green-box .flow-box-title { color:#65F5CD; }
+.flow-box.orange-box { background:rgba(255,247,237,0.14); border-color:#fdba74; }
+.flow-box.orange-box .flow-box-title { color:#F58F65; }
+.flow-box.pink-box   { background:rgba(252,231,243,0.14); border-color:#f9a8d4; }
+.flow-box.pink-box .flow-box-title  { color:#E675A2; }
+.flow-box.blue-box   { background:rgba(219,234,254,0.14); border-color:#93c5fd; }
+.flow-box.blue-box .flow-box-title  { color:#748FE7; }
 .flow-or   { padding:4px 10px; font-size:11px; font-weight:700; color:var(--text-300); background:var(--bg-subtle); border-radius:99px; margin:0 4px; }
 
 /* ── Branch flows ────────────────────────────────────────── */
@@ -42,12 +42,12 @@
 .branch-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-300); margin-bottom:6px; }
 .branch-title { font-size:13px; font-weight:700; color:var(--text-100); margin-bottom:4px; }
 .branch-desc  { font-size:12px; color:var(--text-300); line-height:1.5; }
-.branch-card.purple { border-color:#a78bfa; background:#faf5ff; }
-.branch-card.purple .branch-title { color:#5b21b6; }
-.branch-card.green  { border-color:#6ee7b7; background:#f0fdf4; }
-.branch-card.green .branch-title  { color:#065f46; }
-.branch-card.sky    { border-color:#7dd3fc; background:#f0f9ff; }
-.branch-card.sky .branch-title    { color:#0369a1; }
+.branch-card.purple { border-color:var(--purple); background:rgba(250,245,255,0.14); }
+.branch-card.purple .branch-title { color:#A175E6; }
+.branch-card.green  { border-color:#6ee7b7; background:rgba(240,253,244,0.14); }
+.branch-card.green .branch-title  { color:#65F5CD; }
+.branch-card.sky    { border-color:#7dd3fc; background:rgba(240,249,255,0.14); }
+.branch-card.sky .branch-title    { color:#64C3F7; }
 
 /* ── Steps ───────────────────────────────────────────────── */
 .steps-list  { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:12px; }
@@ -63,29 +63,29 @@
 .payload-box .key   { color:#89b4fa; }
 .payload-box .str   { color:#a6e3a1; }
 .payload-box .num   { color:#fab387; }
-.payload-box .comment { color:#6c7086; font-style:italic; }
+.payload-box .comment { color:#7C8CDE; font-style:italic; }
 
 /* ── Info / tip boxes ────────────────────────────────────── */
 .tip-box  { display:flex; gap:12px; padding:14px 16px; border-radius:var(--r-md); margin:12px 0; font-size:13px; line-height:1.6; }
-.tip-box.info { background:#eff6ff; border:1px solid #bfdbfe; color:#1e40af; }
-.tip-box.warn { background:#fff7ed; border:1px solid #fed7aa; color:#c2410c; }
-.tip-box.ok   { background:#f0fdf4; border:1px solid #bbf7d0; color:#15803d; }
+.tip-box.info { background:rgba(239,246,255,0.14); border:1px solid #bfdbfe; color:#748FE7; }
+.tip-box.warn { background:rgba(255,247,237,0.14); border:1px solid #fed7aa; color:#F58F65; }
+.tip-box.ok   { background:rgba(240,253,244,0.14); border:1px solid #bbf7d0; color:#73E89F; }
 .tip-box svg  { flex-shrink:0; margin-top:1px; }
 
 /* ── Pill badge ──────────────────────────────────────────── */
 .pill { display:inline-block; padding:2px 10px; border-radius:99px; font-size:11px; font-weight:600; }
-.pill-purple { background:#ede9fe; color:#5b21b6; }
-.pill-green  { background:#d1fae5; color:#065f46; }
-.pill-orange { background:#fff7ed; color:#c2410c; }
-.pill-blue   { background:#dbeafe; color:#1e40af; }
-.pill-pink   { background:#fce7f3; color:#831843; }
+.pill-purple { background:rgba(237,233,254,0.14); color:#A175E6; }
+.pill-green  { background:rgba(209,250,229,0.14); color:#65F5CD; }
+.pill-orange { background:rgba(255,247,237,0.14); color:#F58F65; }
+.pill-blue   { background:rgba(219,234,254,0.14); color:#748FE7; }
+.pill-pink   { background:rgba(252,231,243,0.14); color:#E675A2; }
 
 /* ── Method table ────────────────────────────────────────── */
 .method-table { width:100%; border-collapse:collapse; font-size:13px; }
 .method-table th { padding:10px 12px; text-align:left; background:var(--bg-subtle); font-size:11.5px; font-weight:700; color:var(--text-300); text-transform:uppercase; letter-spacing:.04em; border-bottom:2px solid var(--border-default); }
 .method-table td { padding:10px 12px; border-bottom:1px solid var(--border-subtle); vertical-align:top; }
 .method-table tr:hover td { background:var(--bg-hover); }
-.method-name { font-family:var(--mono); font-size:12px; font-weight:700; color:#5b21b6; background:#ede9fe; padding:2px 8px; border-radius:4px; }
+.method-name { font-family:var(--mono); font-size:12px; font-weight:700; color:#A175E6; background:rgba(237,233,254,0.14); padding:2px 8px; border-radius:4px; }
 .method-file { font-family:var(--mono); font-size:11px; color:var(--text-300); }
 </style>
 @endpush
@@ -279,17 +279,17 @@
 
     <div style="font-size:13px;font-weight:700;color:var(--text-200);margin:16px 0 10px;">Trigger Types:</div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
-        <div style="padding:12px;border:1px solid #fde68a;background:#fefce8;border-radius:var(--r-md);">
-            <div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:4px;">any_post_comment</div>
-            <div style="font-size:12px;color:#78350f;">Aapke kisi bhi post pe comment aaye aur keyword match ho → trigger</div>
+        <div style="padding:12px;border:1px solid #fde68a;background:rgba(254,252,232,0.14);border-radius:var(--r-md);">
+            <div style="font-size:12px;font-weight:700;color:#F19D6A;margin-bottom:4px;">any_post_comment</div>
+            <div style="font-size:12px;color:#ED9C6E;">Aapke kisi bhi post pe comment aaye aur keyword match ho → trigger</div>
         </div>
-        <div style="padding:12px;border:1px solid #bfdbfe;background:#eff6ff;border-radius:var(--r-md);">
-            <div style="font-size:12px;font-weight:700;color:#1e40af;margin-bottom:4px;">specific_post_comment</div>
-            <div style="font-size:12px;color:#1e3a8a;">Ek specific post ID pe comment aaye aur keyword match ho → trigger</div>
+        <div style="padding:12px;border:1px solid #bfdbfe;background:rgba(239,246,255,0.14);border-radius:var(--r-md);">
+            <div style="font-size:12px;font-weight:700;color:#748FE7;margin-bottom:4px;">specific_post_comment</div>
+            <div style="font-size:12px;color:#7994E2;">Ek specific post ID pe comment aaye aur keyword match ho → trigger</div>
         </div>
-        <div style="padding:12px;border:1px solid #bbf7d0;background:#f0fdf4;border-radius:var(--r-md);">
-            <div style="font-size:12px;font-weight:700;color:#065f46;margin-bottom:4px;">dm_keyword</div>
-            <div style="font-size:12px;color:#064e3b;">Koi DM kare aur message mein keyword ho → trigger (automation ke through)</div>
+        <div style="padding:12px;border:1px solid #bbf7d0;background:rgba(240,253,244,0.14);border-radius:var(--r-md);">
+            <div style="font-size:12px;font-weight:700;color:#65F5CD;margin-bottom:4px;">dm_keyword</div>
+            <div style="font-size:12px;color:#67F3CE;">Koi DM kare aur message mein keyword ho → trigger (automation ke through)</div>
         </div>
     </div>
 

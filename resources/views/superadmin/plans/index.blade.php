@@ -144,7 +144,7 @@
                                 @endif
                             </div>
                             @if($plan->hasDiscount())
-                                <div class="p-yearly" style="color:#16a34a">
+                                <div class="p-yearly" style="color:#6FEC9D">
                                     → ₹{{ number_format($plan->discountedMonthlyPrice()) }}/mo
                                 </div>
                             @endif
@@ -157,7 +157,7 @@
                         @else
                             <div class="p-main">₹{{ number_format($plan->yearly_price) }}</div>
                             @if($plan->hasDiscount())
-                                <div class="p-yearly" style="color:#16a34a">
+                                <div class="p-yearly" style="color:#6FEC9D">
                                     → ₹{{ number_format($plan->discountedYearlyPrice()) }}/yr
                                 </div>
                             @endif

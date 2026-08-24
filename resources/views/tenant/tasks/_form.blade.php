@@ -58,23 +58,23 @@ $activeStatus = old(
 $secColors = [
 
     'blue' => [
-        'bg' => '#E6F1FB',
-        'ic' => '#185FA5',
+        'bg' => 'var(--accent-dim)',
+        'ic' => 'var(--accent)',
     ],
 
     'purple' => [
-        'bg' => '#EEEDFE',
-        'ic' => '#534AB7',
+        'bg' => 'var(--purple-dim)',
+        'ic' => 'var(--purple)',
     ],
 
     'teal' => [
-        'bg' => '#E1F5EE',
-        'ic' => '#0F6E56',
+        'bg' => 'var(--green-dim)',
+        'ic' => 'var(--green)',
     ],
 
     'amber' => [
-        'bg' => '#FAEEDA',
-        'ic' => '#BA7517',
+        'bg' => 'var(--amber-dim)',
+        'ic' => 'var(--amber)',
     ],
 
 ];

@@ -63,9 +63,9 @@
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
 }
-.icon-blue   { background: #E6F1FB; }
-.icon-teal   { background: #E1F5EE; }
-.icon-amber  { background: #FAEEDA; }
+.icon-blue   { background: var(--accent-dim); }
+.icon-teal   { background: var(--green-dim); }
+.icon-amber  { background: var(--amber-dim); }
 
 .lf-section-meta { flex: 1; }
 .lf-section-title {
@@ -136,11 +136,11 @@
 
 .dup-warning {
     display: flex; align-items: center; gap: 6px;
-    font-size: 12px; color: #BA7517; background: #FAEEDA;
+    font-size: 12px; color: var(--amber); background: var(--amber-dim);
     border: 1px solid #F0D9A8; border-radius: 6px;
     padding: 6px 10px; margin-top: 2px;
 }
-.dup-warning a { color: #185FA5; font-weight: 600; text-decoration: none; margin-left: auto; white-space: nowrap; }
+.dup-warning a { color: var(--accent); font-weight: 600; text-decoration: none; margin-left: auto; white-space: nowrap; }
 .dup-warning a:hover { text-decoration: underline; }
 
 .char-count {
@@ -182,7 +182,7 @@
 }
 .source-pill:hover { border-color: var(--accent); color: var(--text-100); }
 .source-pill.active {
-    background: #E6F1FB; border-color: #378ADD; color: #185FA5;
+    background: var(--accent-dim); border-color: var(--accent); color: var(--accent);
     font-weight: 600;
 }
 
@@ -200,26 +200,26 @@
     display: flex; align-items: center; justify-content: center; gap: 5px;
 }
 .priority-pill:hover { border-color: var(--border-hover, var(--accent)); color: var(--text-100); }
-.priority-pill.active-low    { background: #EAF3DE; border-color: #97C459; color: #3B6D11; }
-.priority-pill.active-medium { background: #FAEEDA; border-color: #EF9F27; color: #854F0B; }
-.priority-pill.active-high   { background: #FCEBEB; border-color: #E24B4A; color: #A32D2D; }
+.priority-pill.active-low    { background: var(--green-dim); border-color: #97C459; color: var(--green); }
+.priority-pill.active-medium { background: var(--amber-dim); border-color: var(--amber); color: var(--amber); }
+.priority-pill.active-high   { background: var(--red-dim); border-color: var(--red); color: var(--red); }
 
 /* ── Lead Score Card ── */
 .lead-score-card {
-    background: linear-gradient(135deg, #E6F1FB 0%, #EEEDFE 100%);
-    border: 1px solid #B5D4F4;
+    background: linear-gradient(135deg, var(--accent-dim) 0%, var(--purple-dim) 100%);
+    border: 1px solid var(--accent);
     border-radius: 12px;
     padding: 18px;
     text-align: center;
 }
 .score-number {
     font-size: 40px; font-weight: 600;
-    color: #185FA5; line-height: 1;
+    color: var(--accent); line-height: 1;
     font-family: 'DM Mono', monospace;
     transition: all 0.3s;
 }
 .score-label {
-    font-size: 11px; color: #378ADD;
+    font-size: 11px; color: var(--accent);
     text-transform: uppercase; letter-spacing: 0.6px;
     font-weight: 600; margin-top: 4px;
 }
@@ -228,7 +228,7 @@
     border-radius: 4px; margin-top: 14px; overflow: hidden;
 }
 .score-bar {
-    height: 100%; background: #378ADD; border-radius: 4px;
+    height: 100%; background: var(--accent); border-radius: 4px;
     transition: width 0.45s cubic-bezier(.4,0,.2,1);
 }
 
@@ -258,7 +258,7 @@
 }
 .tip-dot {
     width: 5px; height: 5px; border-radius: 50%;
-    background: var(--accent, #378ADD); margin-top: 5px; flex-shrink: 0;
+    background: var(--accent); margin-top: 5px; flex-shrink: 0;
 }
 
 /* ── Footer ── */
@@ -316,7 +316,7 @@
                 <div class="lf-section">
                     <div class="lf-section-header">
                         <div class="lf-section-icon icon-blue">
-                            <svg width="16" height="16" fill="none" stroke="#378ADD" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                            <svg width="16" height="16" fill="none" stroke="var(--accent)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                         </div>
                         <div class="lf-section-meta">
                             <div class="lf-section-title">Basic Information</div>
@@ -398,7 +398,7 @@
                 <div class="lf-section">
                     <div class="lf-section-header">
                         <div class="lf-section-icon icon-teal">
-                            <svg width="16" height="16" fill="none" stroke="#1D9E75" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                            <svg width="16" height="16" fill="none" stroke="var(--green)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                         </div>
                         <div class="lf-section-meta">
                             <div class="lf-section-title">Lead Details</div>
@@ -435,7 +435,7 @@
                             <label class="lf-label">Status</label>
                             <div class="status-select-wrap">
                                 <span class="status-dot-indicator">
-                                    <span class="status-dot" id="statusDot" style="background:#378ADD"></span>
+                                    <span class="status-dot" id="statusDot" style="background:var(--accent)"></span>
                                 </span>
                                 <select name="status" class="lf-input lf-select" id="statusSelect">
                                     @foreach($statuses as $val => $label)
@@ -502,7 +502,7 @@
                 <div class="lf-section">
                     <div class="lf-section-header">
                         <div class="lf-section-icon icon-amber">
-                            <svg width="16" height="16" fill="none" stroke="#BA7517" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            <svg width="16" height="16" fill="none" stroke="var(--amber)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                         </div>
                         <div class="lf-section-meta">
                             <div class="lf-section-title">Notes</div>
@@ -550,10 +550,10 @@
                     <div id="assignAvatarList">
                         @php
                         $avatarColors = [
-                            ['bg'=>'#E6F1FB','text'=>'#185FA5'],
-                            ['bg'=>'#E1F5EE','text'=>'#0F6E56'],
-                            ['bg'=>'#FAEEDA','text'=>'#854F0B'],
-                            ['bg'=>'#EEEDFE','text'=>'#3C3489'],
+                            ['bg'=>'var(--accent-dim)','text'=>'var(--accent)'],
+                            ['bg'=>'var(--green-dim)','text'=>'var(--green)'],
+                            ['bg'=>'var(--amber-dim)','text'=>'var(--amber)'],
+                            ['bg'=>'var(--purple-dim)','text'=>'var(--purple)'],
                         ];
                         @endphp
                         @foreach($staffList->take(4) as $i => $staff)
@@ -615,18 +615,18 @@
 (function () {
     // ── Status dot color map ──
     const statusColors = {
-        new: '#378ADD', contacted: '#1D9E75', qualified: '#639922',
-        proposal: '#BA7517', negotiation: '#EF9F27', won: '#1D9E75', lost: '#E24B4A'
+        new: 'var(--accent)', contacted: 'var(--green)', qualified: '#639922',
+        proposal: 'var(--amber)', negotiation: 'var(--amber)', won: 'var(--green)', lost: 'var(--red)'
     };
 
     const statusSelect = document.getElementById('statusSelect');
     const statusDot    = document.getElementById('statusDot');
     if (statusSelect) {
         statusSelect.addEventListener('change', function () {
-            statusDot.style.background = statusColors[this.value] || '#378ADD';
+            statusDot.style.background = statusColors[this.value] || 'var(--accent)';
         });
         // Init dot on page load (handles old() value)
-        statusDot.style.background = statusColors[statusSelect.value] || '#378ADD';
+        statusDot.style.background = statusColors[statusSelect.value] || 'var(--accent)';
     }
 
     // ── Source pills ──

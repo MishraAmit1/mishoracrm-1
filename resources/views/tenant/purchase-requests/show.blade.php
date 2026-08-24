@@ -36,10 +36,10 @@
 @section('content')
 @php
     $statusMeta = [
-        'pending'   => ['bg' => '#FAEEDA', 'color' => '#BA7517', 'text' => '#854F0B', 'icon' => 'ti-clock'],
-        'approved'  => ['bg' => '#E1F5EE', 'color' => '#1D9E75', 'text' => '#0F6E56', 'icon' => 'ti-circle-check'],
-        'rejected'  => ['bg' => '#FCEBEB', 'color' => '#E24B4A', 'text' => '#A32D2D', 'icon' => 'ti-circle-x'],
-        'converted' => ['bg' => '#E6F1FB', 'color' => '#185FA5', 'text' => '#185FA5', 'icon' => 'ti-arrow-right'],
+        'pending'   => ['bg' => 'var(--amber-dim)', 'color' => 'var(--amber)', 'text' => 'var(--amber)', 'icon' => 'ti-clock'],
+        'approved'  => ['bg' => 'var(--green-dim)', 'color' => 'var(--green)', 'text' => 'var(--green)', 'icon' => 'ti-circle-check'],
+        'rejected'  => ['bg' => 'var(--red-dim)', 'color' => 'var(--red)', 'text' => 'var(--red)', 'icon' => 'ti-circle-x'],
+        'converted' => ['bg' => 'var(--accent-dim)', 'color' => 'var(--accent)', 'text' => 'var(--accent)', 'icon' => 'ti-arrow-right'],
     ];
     $st = $statusMeta[$purchaseRequest->status] ?? $statusMeta['pending'];
     $items = $purchaseRequest->items ?? [];
@@ -67,7 +67,7 @@
 
     @foreach(['success','error'] as $type)
     @if(session($type))
-    <div style="display:flex;align-items:center;gap:10px;padding:11px 15px;background:{{ $type==='success'?'#E1F5EE':'#FCEBEB' }};border:1px solid {{ $type==='success'?'#9FE1CB':'#F09595' }};border-radius:8px;margin-bottom:14px;font-size:13px;color:{{ $type==='success'?'#0F6E56':'#A32D2D' }};font-weight:500">
+    <div style="display:flex;align-items:center;gap:10px;padding:11px 15px;background:{{ $type==='success'?'var(--green-dim)':'var(--red-dim)' }};border:1px solid {{ $type==='success'?'var(--green)':'var(--red)' }};border-radius:8px;margin-bottom:14px;font-size:13px;color:{{ $type==='success'?'var(--green)':'var(--red)' }};font-weight:500">
         {{ session($type) }}
     </div>
     @endif
@@ -141,7 +141,7 @@
             @if($purchaseRequest->status === 'rejected' && $purchaseRequest->rejection_reason)
             <div class="ps-card">
                 <div class="ps-card-head">
-                    <div class="ps-card-title" style="color:#A32D2D"><i class="ti ti-circle-x" style="font-size:13px;margin-right:5px"></i> Rejection Reason</div>
+                    <div class="ps-card-title" style="color:var(--red)"><i class="ti ti-circle-x" style="font-size:13px;margin-right:5px"></i> Rejection Reason</div>
                 </div>
                 <div style="padding:16px 20px;font-size:13px;color:var(--text-200)">{{ $purchaseRequest->rejection_reason }}</div>
             </div>
@@ -172,8 +172,8 @@
                 <form method="POST" action="{{ route('tenant.purchase-requests.approve',$purchaseRequest->id) }}"
                       onsubmit="return confirm('Approve this request? A draft Purchase Order will be created automatically.')">
                     @csrf
-                    <button type="submit" class="qs-action-btn" style="background:#E1F5EE;border-color:#9FE1CB;color:#0F6E56">
-                        <div class="qs-act-icon" style="background:#E1F5EE"><i class="ti ti-circle-check" style="font-size:15px;color:#0F6E56"></i></div>
+                    <button type="submit" class="qs-action-btn" style="background:var(--green-dim);border-color:var(--green);color:var(--green)">
+                        <div class="qs-act-icon" style="background:var(--green-dim)"><i class="ti ti-circle-check" style="font-size:15px;color:var(--green)"></i></div>
                         Approve Request
                     </button>
                 </form>
@@ -181,9 +181,9 @@
                     @csrf
                     <textarea name="rejection_reason" class="pf-input" rows="2" placeholder="Rejection reason (optional)"
                               style="width:100%;padding:8px 10px;border:1.5px solid var(--border-default);border-radius:7px;background:var(--bg-input);color:var(--text-100);font-family:'DM Sans',var(--font),sans-serif;font-size:12.5px;margin-bottom:8px"></textarea>
-                    <button type="submit" class="qs-action-btn" style="background:#FCEBEB;border-color:#F09595;color:#A32D2D"
+                    <button type="submit" class="qs-action-btn" style="background:var(--red-dim);border-color:var(--red);color:var(--red)"
                             onclick="return confirm('Reject this request?')">
-                        <div class="qs-act-icon" style="background:#FCEBEB"><i class="ti ti-circle-x" style="font-size:15px;color:#A32D2D"></i></div>
+                        <div class="qs-act-icon" style="background:var(--red-dim)"><i class="ti ti-circle-x" style="font-size:15px;color:var(--red)"></i></div>
                         Reject Request
                     </button>
                 </form>
@@ -205,12 +205,12 @@
             </div>
 
             @can('delete', $purchaseRequest)
-            <div class="ps-sc" style="border-color:#F09595">
-                <div class="ps-sc-title" style="color:#A32D2D">Danger Zone</div>
+            <div class="ps-sc" style="border-color:var(--red)">
+                <div class="ps-sc-title" style="color:var(--red)">Danger Zone</div>
                 <form method="POST" action="{{ route('tenant.purchase-requests.destroy',$purchaseRequest->id) }}"
                       onsubmit="return confirm('Delete purchase request {{ $purchaseRequest->number }}?')">
                     @csrf @method('DELETE')
-                    <button type="submit" class="btn" style="width:100%;justify-content:center;background:#FCEBEB;border-color:#F09595;color:#A32D2D;font-size:12.5px">
+                    <button type="submit" class="btn" style="width:100%;justify-content:center;background:var(--red-dim);border-color:var(--red);color:var(--red);font-size:12.5px">
                         <i class="ti ti-trash" style="font-size:14px"></i> Delete Request
                     </button>
                 </form>

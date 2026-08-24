@@ -29,7 +29,7 @@
 .qs-totals-table tr td { padding:5px 0; font-size:13px; color:var(--text-200); }
 .qs-totals-table tr td:last-child { text-align:right; font-family:'DM Mono',monospace; font-weight:500; color:var(--text-100); }
 .qs-totals-table .grand td { padding-top:10px; font-size:15px; font-weight:600; color:var(--text-100); border-top:1px solid var(--border-default); }
-.qs-totals-table .grand td:last-child { color:#185FA5; font-size:17px; }
+.qs-totals-table .grand td:last-child { color:var(--accent); font-size:17px; }
 .qs-action-btn { display:flex; align-items:center; gap:9px; padding:10px 13px; border-radius:9px; border:1px solid var(--border-default); background:var(--bg-elevated); font-family:'DM Sans',var(--font),sans-serif; font-size:13px; font-weight:500; cursor:pointer; transition:all .15s; width:100%; text-align:left; text-decoration:none; color:var(--text-100); }
 .qs-action-btn:hover { background:var(--bg-surface); border-color:var(--border-strong); }
 .qs-action-btn + .qs-action-btn { margin-top:7px; }
@@ -50,10 +50,10 @@
 @php
     $statusMeta = [
         'draft'               => ['bg' => '#F3F4F6', 'color' => '#374151', 'text' => '#374151', 'icon' => 'ti-file'],
-        'sent'                => ['bg' => '#FAEEDA', 'color' => '#BA7517', 'text' => '#854F0B', 'icon' => 'ti-send'],
-        'partially_received'  => ['bg' => '#E6F1FB', 'color' => '#185FA5', 'text' => '#185FA5', 'icon' => 'ti-package'],
-        'received'            => ['bg' => '#E1F5EE', 'color' => '#1D9E75', 'text' => '#0F6E56', 'icon' => 'ti-circle-check'],
-        'cancelled'           => ['bg' => '#FCEBEB', 'color' => '#E24B4A', 'text' => '#A32D2D', 'icon' => 'ti-circle-x'],
+        'sent'                => ['bg' => 'var(--amber-dim)', 'color' => 'var(--amber)', 'text' => 'var(--amber)', 'icon' => 'ti-send'],
+        'partially_received'  => ['bg' => 'var(--accent-dim)', 'color' => 'var(--accent)', 'text' => 'var(--accent)', 'icon' => 'ti-package'],
+        'received'            => ['bg' => 'var(--green-dim)', 'color' => 'var(--green)', 'text' => 'var(--green)', 'icon' => 'ti-circle-check'],
+        'cancelled'           => ['bg' => 'var(--red-dim)', 'color' => 'var(--red)', 'text' => 'var(--red)', 'icon' => 'ti-circle-x'],
     ];
     $st = $statusMeta[$purchaseOrder->status] ?? $statusMeta['draft'];
     $items = $purchaseOrder->items ?? [];
@@ -88,7 +88,7 @@
 
     @foreach(['success','error'] as $type)
     @if(session($type))
-    <div style="display:flex;align-items:center;gap:10px;padding:11px 15px;background:{{ $type==='success'?'#E1F5EE':'#FCEBEB' }};border:1px solid {{ $type==='success'?'#9FE1CB':'#F09595' }};border-radius:8px;margin-bottom:14px;font-size:13px;color:{{ $type==='success'?'#0F6E56':'#A32D2D' }};font-weight:500">
+    <div style="display:flex;align-items:center;gap:10px;padding:11px 15px;background:{{ $type==='success'?'var(--green-dim)':'var(--red-dim)' }};border:1px solid {{ $type==='success'?'var(--green)':'var(--red)' }};border-radius:8px;margin-bottom:14px;font-size:13px;color:{{ $type==='success'?'var(--green)':'var(--red)' }};font-weight:500">
         {{ session($type) }}
     </div>
     @endif
@@ -140,7 +140,7 @@
                 </div>
             </div>
             @else
-            <div style="display:flex;align-items:center;gap:9px;padding:11px 15px;background:#FAEEDA;border:1px solid #F0D9A8;border-radius:8px;font-size:13px;color:#854F0B;font-weight:500">
+            <div style="display:flex;align-items:center;gap:9px;padding:11px 15px;background:var(--amber-dim);border:1px solid #F0D9A8;border-radius:8px;font-size:13px;color:var(--amber);font-weight:500">
                 <i class="ti ti-alert-triangle" style="font-size:15px"></i>
                 No vendor selected yet — required before this order can be marked Sent.
             </div>
@@ -165,7 +165,7 @@
                             @endif
                         </div>
                         <div style="display:flex;gap:8px;align-items:center">
-                            <span style="font-size:16px;font-weight:600;color:#185FA5;font-family:'DM Mono',monospace">₹{{ number_format($quote->total, 2) }}</span>
+                            <span style="font-size:16px;font-weight:600;color:var(--accent);font-family:'DM Mono',monospace">₹{{ number_format($quote->total, 2) }}</span>
                             <form method="POST" action="{{ route('tenant.purchase-orders.vendor-quotes.select', [$purchaseOrder->id, $quote->id]) }}"
                                   onsubmit="return confirm('Select {{ addslashes($quote->vendor->name) }}? Their rates will be applied to this Purchase Order.')">
                                 @csrf
@@ -187,7 +187,7 @@
                     <form method="POST" action="{{ route('tenant.purchase-orders.vendor-quotes.store', $purchaseOrder->id) }}" style="margin-top:14px">
                         @csrf
                         <div style="max-width:320px;margin-bottom:12px">
-                            <label style="font-size:11.5px;font-weight:600;color:var(--text-200);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">Vendor <span style="color:#E24B4A">*</span></label>
+                            <label style="font-size:11.5px;font-weight:600;color:var(--text-200);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">Vendor <span style="color:var(--red)">*</span></label>
                             <select name="vendor_id" required style="width:100%;padding:9px 12px;background:var(--bg-input);border:1.5px solid var(--border-default);border-radius:8px;color:var(--text-100);font-size:13.5px">
                                 <option value="">— Select vendor —</option>
                                 @foreach($vendors as $v)
@@ -270,7 +270,7 @@
                                 <td class="td-right">{{ number_format($item['rate'] ?? 0, 2) }}</td>
                                 <td class="td-right">{{ number_format($item['tax_percent'] ?? 0, 1) }}%</td>
                                 <td class="td-right" style="font-weight:600">{{ number_format($item['amount'] ?? 0, 2) }}</td>
-                                <td class="td-right" style="{{ $recv >= $qty && $qty > 0 ? 'color:#1D9E75' : ($recv > 0 ? 'color:#BA7517' : '') }}">{{ number_format($recv, 2) }} / {{ number_format($qty, 2) }}</td>
+                                <td class="td-right" style="{{ $recv >= $qty && $qty > 0 ? 'color:var(--green)' : ($recv > 0 ? 'color:var(--amber)' : '') }}">{{ number_format($recv, 2) }} / {{ number_format($qty, 2) }}</td>
                             </tr>
                             @endforeach
                         </tbody>
@@ -280,9 +280,9 @@
                     <table class="qs-totals-table">
                         <tr><td>Subtotal</td><td>₹{{ number_format($purchaseOrder->subtotal ?? 0, 2) }}</td></tr>
                         @if(($purchaseOrder->discount ?? 0) > 0)
-                        <tr><td>Discount</td><td style="color:#E24B4A">-₹{{ number_format($purchaseOrder->discount, 2) }}</td></tr>
+                        <tr><td>Discount</td><td style="color:var(--red)">-₹{{ number_format($purchaseOrder->discount, 2) }}</td></tr>
                         @endif
-                        <tr><td>Tax ({{ number_format($purchaseOrder->tax_percent ?? 0, 1) }}%)</td><td style="color:#1D9E75">+₹{{ number_format($purchaseOrder->tax_amount ?? 0, 2) }}</td></tr>
+                        <tr><td>Tax ({{ number_format($purchaseOrder->tax_percent ?? 0, 1) }}%)</td><td style="color:var(--green)">+₹{{ number_format($purchaseOrder->tax_amount ?? 0, 2) }}</td></tr>
                         <tr class="grand"><td><strong>Total</strong></td><td><strong>₹{{ number_format($purchaseOrder->total ?? 0, 2) }}</strong></td></tr>
                     </table>
                 </div>
@@ -371,7 +371,7 @@
 
             <div class="qs-sc" style="text-align:center">
                 <div style="font-size:13px;color:var(--text-300);font-family:'DM Mono',monospace;margin-bottom:4px">{{ $purchaseOrder->number }}</div>
-                <div style="font-size:34px;font-weight:600;color:#185FA5;font-family:'DM Mono',monospace">₹{{ number_format($purchaseOrder->total ?? 0, 2) }}</div>
+                <div style="font-size:34px;font-weight:600;color:var(--accent);font-family:'DM Mono',monospace">₹{{ number_format($purchaseOrder->total ?? 0, 2) }}</div>
                 <div style="margin-top:10px">
                     <span class="qs-status-badge" style="background:{{ $st['bg'] }};color:{{ $st['text'] }};border:1px solid {{ $st['color'] }}40;font-size:12px">
                         <i class="ti {{ $st['icon'] }}" style="font-size:13px"></i> {{ ucfirst(str_replace('_',' ',$purchaseOrder->status)) }}
@@ -392,7 +392,7 @@
                 <form method="POST" action="{{ route('tenant.purchase-orders.update_status',$purchaseOrder->id) }}" style="margin-top:6px"
                       onsubmit="return confirm('Cancel this purchase order?')">
                     @csrf <input type="hidden" name="status" value="cancelled">
-                    <button type="button" class="qs-status-opt" style="color:#A32D2D" onclick="this.closest('form').submit()">Cancel Order</button>
+                    <button type="button" class="qs-status-opt" style="color:var(--red)" onclick="this.closest('form').submit()">Cancel Order</button>
                 </form>
                 @endif
             </div>
@@ -401,7 +401,7 @@
             <div class="qs-sc">
                 <div class="qs-sc-title">Actions</div>
                 <a href="{{ route('tenant.purchase-orders.pdf',$purchaseOrder->id) }}" target="_blank" class="qs-action-btn">
-                    <div class="qs-act-icon" style="background:#FAEEDA"><i class="ti ti-file-download" style="font-size:15px;color:#BA7517"></i></div>
+                    <div class="qs-act-icon" style="background:var(--amber-dim)"><i class="ti ti-file-download" style="font-size:15px;color:var(--amber)"></i></div>
                     Download PDF
                 </a>
                 @if($purchaseOrder->vendor?->email)
@@ -409,7 +409,7 @@
                       onsubmit="return confirm('Send this purchase order to {{ addslashes($purchaseOrder->vendor->email) }}?')">
                     @csrf
                     <button type="submit" class="qs-action-btn" style="margin-top:7px">
-                        <div class="qs-act-icon" style="background:#E6F1FB"><i class="ti ti-send" style="font-size:15px;color:#185FA5"></i></div>
+                        <div class="qs-act-icon" style="background:var(--accent-dim)"><i class="ti ti-send" style="font-size:15px;color:var(--accent)"></i></div>
                         Send to {{ $purchaseOrder->vendor->email }}
                     </button>
                 </form>
@@ -417,7 +417,7 @@
                 @can('modify', $purchaseOrder)
                 @if($canEdit)
                 <a href="{{ route('tenant.purchase-orders.edit',$purchaseOrder->id) }}" class="qs-action-btn" style="margin-top:7px">
-                    <div class="qs-act-icon" style="background:#EEEDFE"><i class="ti ti-edit" style="font-size:15px;color:#534AB7"></i></div>
+                    <div class="qs-act-icon" style="background:var(--purple-dim)"><i class="ti ti-edit" style="font-size:15px;color:var(--purple)"></i></div>
                     Edit Purchase Order
                 </a>
                 @endif
@@ -436,12 +436,12 @@
 
             @if($purchaseOrder->status === 'draft')
             @can('delete', $purchaseOrder)
-            <div class="qs-sc" style="border-color:#F09595">
-                <div class="qs-sc-title" style="color:#A32D2D">Danger Zone</div>
+            <div class="qs-sc" style="border-color:var(--red)">
+                <div class="qs-sc-title" style="color:var(--red)">Danger Zone</div>
                 <form method="POST" action="{{ route('tenant.purchase-orders.destroy',$purchaseOrder->id) }}"
                       onsubmit="return confirm('Delete purchase order {{ $purchaseOrder->number }}?')">
                     @csrf @method('DELETE')
-                    <button type="submit" class="btn" style="width:100%;justify-content:center;background:#FCEBEB;border-color:#F09595;color:#A32D2D;font-size:12.5px">
+                    <button type="submit" class="btn" style="width:100%;justify-content:center;background:var(--red-dim);border-color:var(--red);color:var(--red);font-size:12.5px">
                         <i class="ti ti-trash" style="font-size:14px"></i> Delete Purchase Order
                     </button>
                 </form>

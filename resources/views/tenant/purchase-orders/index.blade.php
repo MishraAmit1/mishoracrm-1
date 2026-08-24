@@ -117,10 +117,10 @@
                 @php
                     $badgeColors = [
                         'draft'              => ['bg' => '#F3F4F6', 'color' => '#374151'],
-                        'sent'               => ['bg' => '#FAEEDA', 'color' => '#854F0B'],
-                        'partially_received' => ['bg' => '#E6F1FB', 'color' => '#185FA5'],
-                        'received'           => ['bg' => '#E1F5EE', 'color' => '#0F6E56'],
-                        'cancelled'          => ['bg' => '#FCEBEB', 'color' => '#A32D2D'],
+                        'sent'               => ['bg' => 'var(--amber-dim)', 'color' => 'var(--amber)'],
+                        'partially_received' => ['bg' => 'var(--accent-dim)', 'color' => 'var(--accent)'],
+                        'received'           => ['bg' => 'var(--green-dim)', 'color' => 'var(--green)'],
+                        'cancelled'          => ['bg' => 'var(--red-dim)', 'color' => 'var(--red)'],
                     ];
                     $bc = $badgeColors[$po->status] ?? $badgeColors['draft'];
                 @endphp

@@ -21,9 +21,9 @@
 @media(max-width:640px){ .qf-grid { grid-template-columns:1fr; } .qf-grid .span-full { grid-column:1; } }
 .qf-field { display:flex; flex-direction:column; gap:5px; }
 .qf-label { font-size:11.5px; font-weight:600; color:var(--text-200); text-transform:uppercase; letter-spacing:.5px; }
-.qf-req { color:var(--red,#E24B4A); margin-left:2px; }
+.qf-req { color:var(--red); margin-left:2px; }
 .qf-hint { font-size:12px; color:var(--text-400); }
-.qf-err { font-size:12px; color:var(--red,#E24B4A); font-weight:500; }
+.qf-err { font-size:12px; color:var(--red); font-weight:500; }
 .qf-input {
     width:100%; padding:9px 12px; background:var(--bg-input); border:1.5px solid var(--border-default);
     border-radius:8px; color:var(--text-100); font-family:'DM Sans',var(--font),sans-serif; font-size:13.5px; outline:none;
@@ -42,7 +42,7 @@
 .item-input:focus { border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-dim); }
 .item-amount-input { font-family:'DM Mono',monospace; font-weight:600; background:var(--bg-elevated); color:var(--text-100); border-color:var(--border-subtle); cursor:default; }
 .del-row-btn { width:28px; height:28px; border-radius:6px; background:transparent; border:1px solid var(--border-subtle); cursor:pointer; color:var(--text-400); display:flex; align-items:center; justify-content:center; margin:2px auto 0; }
-.del-row-btn:hover { background:#FCEBEB; border-color:#F09595; color:#A32D2D; }
+.del-row-btn:hover { background:var(--red-dim); border-color:var(--red); color:var(--red); }
 .add-item-btn { display:flex; align-items:center; gap:6px; padding:9px 16px; margin:12px 0 0; background:transparent; border:1.5px dashed var(--border-default); border-radius:8px; font-size:13px; color:var(--text-300); cursor:pointer; font-family:'DM Sans',var(--font),sans-serif; }
 .add-item-btn:hover { border-color:var(--accent); color:var(--accent); }
 
@@ -51,7 +51,7 @@
 .totals-table tr td { padding:5px 0; font-size:13px; color:var(--text-200); }
 .totals-table tr td:last-child { text-align:right; font-family:'DM Mono',monospace; font-weight:500; color:var(--text-100); }
 .totals-table .grand-total td { padding-top:10px; font-size:15px; font-weight:600; color:var(--text-100); border-top:1px solid var(--border-default); }
-.totals-table .grand-total td:last-child { color:#185FA5; font-size:16px; }
+.totals-table .grand-total td:last-child { color:var(--accent); font-size:16px; }
 
 .qf-footer { display:flex; align-items:center; justify-content:space-between; padding:15px 22px; background:var(--bg-elevated); border-top:1px solid var(--border-subtle); }
 .qf-footer-note { font-size:12px; color:var(--text-300); }
@@ -59,7 +59,7 @@
 .qf-sc { background:var(--bg-surface); border:1px solid var(--border-default); border-radius:14px; padding:17px; }
 .qf-sc-title { font-size:11px; font-weight:600; color:var(--text-300); text-transform:uppercase; letter-spacing:.6px; margin-bottom:13px; }
 .qp-number { font-size:18px; font-weight:600; color:var(--text-100); font-family:'DM Mono',monospace; }
-.qp-total { font-size:28px; font-weight:600; color:#185FA5; font-family:'DM Mono',monospace; margin-top:8px; }
+.qp-total { font-size:28px; font-weight:600; color:var(--accent); font-family:'DM Mono',monospace; margin-top:8px; }
 </style>
 @endpush
 
@@ -83,7 +83,7 @@
     </div>
 
     @if($purchaseOrder->purchaseRequest)
-    <div style="display:flex;align-items:center;gap:9px;padding:10px 14px;background:#E1F5EE;border:1px solid #9FE1CB;border-radius:8px;margin-bottom:14px;font-size:12.5px;color:#0F6E56;font-weight:500">
+    <div style="display:flex;align-items:center;gap:9px;padding:10px 14px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;margin-bottom:14px;font-size:12.5px;color:var(--green);font-weight:500">
         <i class="ti ti-clipboard-list" style="font-size:15px"></i>
         Created from Purchase Request <strong>{{ $purchaseOrder->purchaseRequest->number }}</strong>
     </div>
@@ -97,8 +97,8 @@
                 <div class="qf-card" style="margin-bottom:14px">
                     <div class="qf-section">
                         <div class="qf-sec-head">
-                            <div class="qf-sec-icon" style="background:#E6F1FB">
-                                <i class="ti ti-file-invoice" style="font-size:15px;color:#185FA5"></i>
+                            <div class="qf-sec-icon" style="background:var(--accent-dim)">
+                                <i class="ti ti-file-invoice" style="font-size:15px;color:var(--accent)"></i>
                             </div>
                             <div>
                                 <div class="qf-sec-title">Purchase Order Details</div>
@@ -129,8 +129,8 @@
 
                     <div class="qf-section">
                         <div class="qf-sec-head">
-                            <div class="qf-sec-icon" style="background:#EEEDFE">
-                                <i class="ti ti-building-warehouse" style="font-size:15px;color:#534AB7"></i>
+                            <div class="qf-sec-icon" style="background:var(--purple-dim)">
+                                <i class="ti ti-building-warehouse" style="font-size:15px;color:var(--purple)"></i>
                             </div>
                             <div>
                                 <div class="qf-sec-title">Vendor</div>
@@ -157,8 +157,8 @@
                 <div class="qf-card" style="margin-bottom:14px">
                     <div class="qf-section" style="border-bottom:none;padding-bottom:0">
                         <div class="qf-sec-head">
-                            <div class="qf-sec-icon" style="background:#E1F5EE">
-                                <i class="ti ti-list-details" style="font-size:15px;color:#0F6E56"></i>
+                            <div class="qf-sec-icon" style="background:var(--green-dim)">
+                                <i class="ti ti-list-details" style="font-size:15px;color:var(--green)"></i>
                             </div>
                             <div>
                                 <div class="qf-sec-title">Line Items <span class="qf-req">*</span></div>
@@ -199,14 +199,14 @@
                                            class="qf-input" style="width:80px;display:inline-block;margin-left:6px;padding:4px 8px;height:28px;font-size:12.5px"
                                            placeholder="0" min="0" value="{{ old('discount', $purchaseOrder->discount ?? 0) }}" oninput="recalcTotals()"/>
                                 </td>
-                                <td id="displayDiscount" style="color:#E24B4A">-₹{{ number_format($purchaseOrder->discount ?? 0, 2) }}</td>
+                                <td id="displayDiscount" style="color:var(--red)">-₹{{ number_format($purchaseOrder->discount ?? 0, 2) }}</td>
                             </tr>
                             <tr>
                                 <td>
                                     Tax (<span id="dispTaxPct">{{ number_format($purchaseOrder->tax_percent ?? 0, 1) }}</span>%)
                                     <input type="hidden" name="tax_percent" id="taxPercentHidden" value="{{ old('tax_percent', $purchaseOrder->tax_percent ?? 0) }}">
                                 </td>
-                                <td id="displayTax" style="color:#1D9E75">+₹{{ number_format($purchaseOrder->tax_amount ?? 0, 2) }}</td>
+                                <td id="displayTax" style="color:var(--green)">+₹{{ number_format($purchaseOrder->tax_amount ?? 0, 2) }}</td>
                             </tr>
                             <tr class="grand-total">
                                 <td><strong>Total</strong></td>
@@ -223,8 +223,8 @@
                 <div class="qf-card">
                     <div class="qf-section">
                         <div class="qf-sec-head">
-                            <div class="qf-sec-icon" style="background:#FAEEDA">
-                                <i class="ti ti-notes" style="font-size:15px;color:#BA7517"></i>
+                            <div class="qf-sec-icon" style="background:var(--amber-dim)">
+                                <i class="ti ti-notes" style="font-size:15px;color:var(--amber)"></i>
                             </div>
                             <div>
                                 <div class="qf-sec-title">Notes & Terms</div>

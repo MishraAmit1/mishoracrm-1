@@ -37,16 +37,16 @@ class ActivityTimelineService
     private static function taskEntries(Collection $tasks): Collection
     {
         $statusMap = [
-            'pending'     => ['bg' => '#E6F1FB', 'color' => '#185FA5', 'label' => 'Pending'],
-            'in_progress' => ['bg' => '#FAEEDA', 'color' => '#854F0B', 'label' => 'In Progress'],
-            'completed'   => ['bg' => '#E1F5EE', 'color' => '#0F6E56', 'label' => 'Completed'],
-            'cancelled'   => ['bg' => '#FCEBEB', 'color' => '#A32D2D', 'label' => 'Cancelled'],
+            'pending'     => ['bg' => 'var(--accent-dim)', 'color' => 'var(--accent)', 'label' => 'Pending'],
+            'in_progress' => ['bg' => 'var(--amber-dim)', 'color' => 'var(--amber)', 'label' => 'In Progress'],
+            'completed'   => ['bg' => 'var(--green-dim)', 'color' => 'var(--green)', 'label' => 'Completed'],
+            'cancelled'   => ['bg' => 'var(--red-dim)', 'color' => 'var(--red)', 'label' => 'Cancelled'],
         ];
 
         return $tasks->map(fn($task) => [
             'icon_type'   => 'task',
             'title'       => $task->title,
-            'badge'       => $statusMap[$task->status] ?? ['bg' => '#F1EFE8', 'color' => '#5F5E5A', 'label' => ucfirst($task->status)],
+            'badge'       => $statusMap[$task->status] ?? ['bg' => 'var(--bg-hover)', 'color' => 'var(--text-300)', 'label' => ucfirst($task->status)],
             'description' => $task->description,
             'meta'        => ucfirst($task->priority) . ' priority',
             'time'        => $task->due_at ?? $task->created_at,
@@ -58,14 +58,14 @@ class ActivityTimelineService
     private static function followupEntries(Collection $followups): Collection
     {
         $statusMap = [
-            'scheduled'   => ['bg' => '#E6F1FB', 'color' => '#185FA5', 'label' => 'Scheduled'],
-            'done'        => ['bg' => '#E1F5EE', 'color' => '#0F6E56', 'label' => 'Done'],
-            'missed'      => ['bg' => '#FCEBEB', 'color' => '#A32D2D', 'label' => 'Missed'],
-            'rescheduled' => ['bg' => '#FAEEDA', 'color' => '#854F0B', 'label' => 'Rescheduled'],
+            'scheduled'   => ['bg' => 'var(--accent-dim)', 'color' => 'var(--accent)', 'label' => 'Scheduled'],
+            'done'        => ['bg' => 'var(--green-dim)', 'color' => 'var(--green)', 'label' => 'Done'],
+            'missed'      => ['bg' => 'var(--red-dim)', 'color' => 'var(--red)', 'label' => 'Missed'],
+            'rescheduled' => ['bg' => 'var(--amber-dim)', 'color' => 'var(--amber)', 'label' => 'Rescheduled'],
         ];
 
         return $followups->map(function ($fu) use ($statusMap) {
-            $badge = $statusMap[$fu->status] ?? ['bg' => '#F1EFE8', 'color' => '#5F5E5A', 'label' => ucfirst($fu->status)];
+            $badge = $statusMap[$fu->status] ?? ['bg' => 'var(--bg-hover)', 'color' => 'var(--text-300)', 'label' => ucfirst($fu->status)];
 
             return [
                 'icon_type'   => $fu->type === 'other' ? 'note' : $fu->type,
@@ -90,7 +90,7 @@ class ActivityTimelineService
             'icon_type'   => $log->type,
             'title'       => LeadCallLog::types()[$log->type] ?? ucfirst($log->type),
             'badge'       => ($log->type === 'call' && $log->call_outcome)
-                ? ['bg' => '#F1EFE8', 'color' => '#5F5E5A', 'label' => $outcomeLabels[$log->call_outcome] ?? $log->call_outcome]
+                ? ['bg' => 'var(--bg-hover)', 'color' => 'var(--text-300)', 'label' => $outcomeLabels[$log->call_outcome] ?? $log->call_outcome]
                 : null,
             'description' => $log->description,
             'meta'        => ($log->type === 'call' && $log->call_duration) ? $log->call_duration . 'm' : null,
@@ -105,7 +105,7 @@ class ActivityTimelineService
         return $logs->map(fn($log) => [
             'icon_type'   => 'email',
             'title'       => 'Email Sent',
-            'badge'       => $log->status === 'failed' ? ['bg' => '#FCEBEB', 'color' => '#A32D2D', 'label' => 'Failed'] : null,
+            'badge'       => $log->status === 'failed' ? ['bg' => 'var(--red-dim)', 'color' => 'var(--red)', 'label' => 'Failed'] : null,
             'description' => $log->subject ? Str::limit($log->subject, 140) : 'To: ' . $log->to_email,
             'meta'        => null,
             'time'        => $log->sent_at ?? $log->created_at,

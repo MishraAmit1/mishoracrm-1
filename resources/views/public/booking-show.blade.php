@@ -9,15 +9,15 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="{{ asset('css/app.css') }}"/>
 <style>
-body { background: var(--bg-app,#0b0d12); min-height:100vh; padding:24px 16px; }
+body { background: var(--bg-app); min-height:100vh; padding:24px 16px; }
 .bk-wrap { max-width:560px; margin:0 auto; display:flex; flex-direction:column; gap:16px; }
 .bk-brand { text-align:center; padding:8px 0 4px; font-size:13px; color:var(--text-300); }
 .bk-title { text-align:center; font-size:20px; font-weight:700; color:var(--text-100); margin-bottom:4px; }
 .bk-card { background:var(--bg-surface); border:1px solid var(--border-default); border-radius:14px; overflow:hidden; padding:22px; }
 .bk-flash { padding:12px 16px; border-radius:10px; font-size:13.5px; font-weight:500; }
-.bk-flash.success { background:#E1F5EE; color:#0F6E56; border:1px solid #9FE1CB; }
-.bk-flash.error   { background:#FCEBEB; color:#A32D2D; border:1px solid #F09595; }
-.bk-flash.info    { background:#E6F1FB; color:#185FA5; border:1px solid #B5D4F4; }
+.bk-flash.success { background:var(--green-dim); color:var(--green); border:1px solid var(--green); }
+.bk-flash.error   { background:var(--red-dim); color:var(--red); border:1px solid var(--red); }
+.bk-flash.info    { background:var(--accent-dim); color:var(--accent); border:1px solid var(--accent); }
 .bk-field    { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
 .bk-field label { font-size:11.5px; font-weight:600; color:var(--text-200); text-transform:uppercase; letter-spacing:.5px; }
 .bk-input { width:100%; padding:10px 12px; background:var(--bg-input); border:1.5px solid var(--border-default); border-radius:8px; color:var(--text-100); font-family:var(--font); font-size:13.5px; outline:none; }

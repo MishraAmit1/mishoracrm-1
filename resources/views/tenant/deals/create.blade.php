@@ -54,9 +54,9 @@
     font-size: 11.5px; font-weight: 600; color: var(--text-200);
     text-transform: uppercase; letter-spacing: .5px;
 }
-.df-req  { color: var(--red, #E24B4A); margin-left: 2px; }
+.df-req  { color: var(--red); margin-left: 2px; }
 .df-hint { font-size: 12px; color: var(--text-400); }
-.df-err  { font-size: 12px; color: var(--red, #E24B4A); font-weight: 500; }
+.df-err  { font-size: 12px; color: var(--red); font-weight: 500; }
 
 /* ── Inputs ── */
 .df-input {
@@ -71,7 +71,7 @@
 }
 .df-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); background: var(--bg-surface); }
 .df-input::placeholder { color: var(--text-400); font-size: 13px; }
-.df-input.is-err { border-color: var(--red, #E24B4A); }
+.df-input.is-err { border-color: var(--red); }
 .df-sel  { cursor: pointer; }
 .df-area { resize: vertical; min-height: 82px; line-height: 1.55; }
 
@@ -106,10 +106,10 @@
 }
 .df-range {
     flex: 1; height: 4px; border-radius: 2px; cursor: pointer;
-    outline: none; accent-color: #185FA5;
+    outline: none; accent-color: var(--accent);
 }
 .prob-bar-bg  { height: 4px; border-radius: 2px; background: var(--border-subtle); margin-top: 5px; overflow: hidden; }
-.prob-bar-fill { height: 100%; border-radius: 2px; background: #185FA5; transition: width .2s; }
+.prob-bar-fill { height: 100%; border-radius: 2px; background: var(--accent); transition: width .2s; }
 
 /* ── Footer ── */
 .df-footer {
@@ -148,13 +148,13 @@
 /* Required Checklist */
 .req-list { display: flex; flex-direction: column; gap: 8px; }
 .req-item { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-200); }
-.req-dot  { width: 6px; height: 6px; border-radius: 50%; background: #E24B4A; flex-shrink: 0; transition: background .2s; }
-.req-dot.ok { background: #1D9E75; }
+.req-dot  { width: 6px; height: 6px; border-radius: 50%; background: var(--red); flex-shrink: 0; transition: background .2s; }
+.req-dot.ok { background: var(--green); }
 
 /* Tips */
 .tip-list { display: flex; flex-direction: column; gap: 9px; }
 .tip-item { display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: var(--text-300); line-height: 1.45; }
-.tip-dot  { width: 5px; height: 5px; border-radius: 50%; background: var(--accent,#378ADD); margin-top: 5px; flex-shrink: 0; }
+.tip-dot  { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
 
 @keyframes df-spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 </style>
@@ -197,7 +197,7 @@
 
     {{-- Prefill notice if coming from contact/lead page --}}
     @if($prefillContact || $prefillLead)
-    <div style="display:flex;align-items:center;gap:10px;padding:11px 15px;background:#E6F1FB;border:1px solid #9FE1CB;border-radius:8px;margin-bottom:14px;font-size:13px;color:#185FA5;font-weight:500">
+    <div style="display:flex;align-items:center;gap:10px;padding:11px 15px;background:var(--accent-dim);border:1px solid var(--green);border-radius:8px;margin-bottom:14px;font-size:13px;color:var(--accent);font-weight:500">
         <i class="ti ti-bolt" style="font-size:16px"></i>
         @if($prefillContact)
         Contact <strong>{{ $prefillContact->name }}</strong> pre-linked hai is deal mein

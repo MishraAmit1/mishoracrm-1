@@ -36,12 +36,12 @@
     display:flex; align-items:center; justify-content:center;
     flex-shrink:0; z-index:1; position:relative;
 }
-.step-num.green  { background:#dcfce7; border-color:#22c55e; color:#16a34a; }
-.step-num.blue   { background:#dbeafe; border-color:#3b82f6; color:#1d4ed8; }
-.step-num.purple { background:#ede9fe; border-color:#8b5cf6; color:#6d28d9; }
-.step-num.orange { background:#fff7ed; border-color:#f97316; color:#c2410c; }
-.step-num.pink   { background:#fce7f3; border-color:#ec4899; color:#be185d; }
-.step-num.teal   { background:#ccfbf1; border-color:#14b8a6; color:#0f766e; }
+.step-num.green  { background:rgba(220,252,231,0.14); border-color:#22c55e; color:#6FEC9D; }
+.step-num.blue   { background:rgba(219,234,254,0.14); border-color:#3b82f6; color:#6F90EC; }
+.step-num.purple { background:rgba(237,233,254,0.14); border-color:#8b5cf6; color:#6d28d9; }
+.step-num.orange { background:rgba(255,247,237,0.14); border-color:#f97316; color:#F58F65; }
+.step-num.pink   { background:rgba(252,231,243,0.14); border-color:#ec4899; color:#ED6EA3; }
+.step-num.teal   { background:rgba(204,251,241,0.14); border-color:#14b8a6; color:#6EEDE3; }
 
 .step-body  { flex:1; padding:0 0 28px 16px; }
 .step-title { font-weight:700; font-size:14px; color:var(--text-100); margin-bottom:6px; line-height:1.3; }
@@ -65,16 +65,16 @@
 /* ── Note / Warning ───────────────────────────────────────────── */
 .step-note {
     display:flex; gap:8px; align-items:flex-start;
-    background:#fffbeb; border:1px solid #fde68a;
+    background:rgba(255,251,235,0.14); border:1px solid #fde68a;
     border-radius:var(--r-md); padding:10px 12px;
-    font-size:12px; color:#92400e; line-height:1.5;
+    font-size:12px; color:#F19D6A; line-height:1.5;
     margin-top:8px;
 }
 .step-note.info {
-    background:#eff6ff; border-color:#bfdbfe; color:#1e40af;
+    background:rgba(239,246,255,0.14); border-color:rgba(191,219,254,0.35); color:#748FE7;
 }
 .step-note.success {
-    background:#f0fdf4; border-color:#bbf7d0; color:#15803d;
+    background:rgba(240,253,244,0.14); border-color:rgba(187,247,208,0.35); color:#73E89F;
 }
 
 /* ── Tag badge ────────────────────────────────────────────────── */
@@ -82,9 +82,9 @@
     display:inline-block; padding:2px 8px; border-radius:20px;
     font-size:11px; font-weight:600; vertical-align:middle;
 }
-.tag-wa  { background:#dcfce7; color:#15803d; }
-.tag-ig  { background:#fce7f3; color:#be185d; }
-.tag-both { background:#ede9fe; color:#6d28d9; }
+.tag-wa  { background:rgba(220,252,231,0.14); color:#73E89F; }
+.tag-ig  { background:rgba(252,231,243,0.14); color:#ED6EA3; }
+.tag-both { background:rgba(237,233,254,0.14); color:#6d28d9; }
 
 /* ── Section divider ──────────────────────────────────────────── */
 .section-label {
@@ -96,7 +96,7 @@
 /* ── Sub-steps ────────────────────────────────────────────────── */
 .sub-steps { list-style:none; padding:0; margin:8px 0 0; display:flex; flex-direction:column; gap:6px; }
 .sub-steps li { display:flex; gap:8px; align-items:flex-start; font-size:13px; color:var(--text-300); line-height:1.45; }
-.sub-steps li::before { content:'›'; color:var(--accent,#6366f1); font-weight:700; flex-shrink:0; margin-top:1px; }
+.sub-steps li::before { content:'›'; color:var(--accent); font-weight:700; flex-shrink:0; margin-top:1px; }
 .sub-steps li strong { color:var(--text-200); }
 
 /* ── Permission chips ─────────────────────────────────────────── */
@@ -150,7 +150,7 @@
                         <input type="password" name="app_secret" class="form-input"
                             placeholder="{{ $app_secret ? '••••••• (saved — leave blank to keep)' : 'Paste App Secret here' }}">
                         @if($app_secret)
-                            <span class="form-hint" style="color:#16a34a;">
+                            <span class="form-hint" style="color:#6FEC9D;">
                                 <svg viewBox="0 0 16 16" fill="currentColor" style="width:12px;height:12px;display:inline;margin-right:3px;"><path d="M13.854 3.646a.5.5 0 010 .708l-7 7a.5.5 0 01-.708 0l-3.5-3.5a.5.5 0 11.708-.708L6.5 10.293l6.646-6.647a.5.5 0 01.708 0z"/></svg>
                                 Secret saved — leave blank to keep current.
                             </span>
@@ -315,11 +315,11 @@
                             </div>
 
                             {{-- Coexistence callout --}}
-                            <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:8px;padding:12px 14px;margin-bottom:14px;">
-                                <div style="font-weight:700;font-size:13px;color:#15803d;margin-bottom:6px;">
+                            <div style="background:rgba(240,253,244,0.14);border:1.5px solid #86efac;border-radius:8px;padding:12px 14px;margin-bottom:14px;">
+                                <div style="font-weight:700;font-size:13px;color:#73E89F;margin-bottom:6px;">
                                     What is Coexistence?
                                 </div>
-                                <div style="font-size:12px;color:#166534;line-height:1.6;">
+                                <div style="font-size:12px;color:#79E2A1;line-height:1.6;">
                                     By default, migrating a number to WhatsApp Cloud API <strong>removes</strong> it from the WhatsApp Business App.
                                     With <strong>Coexistence mode</strong>, the number stays on the phone app AND also works via the API:
                                     <ul style="margin:6px 0 0 16px;padding:0;">
@@ -460,7 +460,7 @@
                             <div class="step-num green" style="background:#25d366;border-color:#25d366;color:#fff;">7</div>
                         </div>
                         <div class="step-body" style="padding-bottom:8px;">
-                            <div class="step-title">Copy &amp; Save App ID + Secret ← <span style="color:#16a34a;">Do this now</span></div>
+                            <div class="step-title">Copy &amp; Save App ID + Secret ← <span style="color:#6FEC9D;">Do this now</span></div>
                             <div class="step-desc">
                                 Go to <strong>App → Settings → Basic</strong>.
                             </div>

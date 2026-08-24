@@ -43,8 +43,8 @@
     border-radius:var(--r-sm); overflow:hidden;
     background:#fff; min-height:200px;
 }
-.email-preview-header { background:#f8fafc; padding:10px 14px; border-bottom:1px solid #e2e8f0; font-size:12px; color:#4b5563; }
-.email-preview-body   { padding:16px; font-size:13.5px; color:#1a1a1a; line-height:1.7; }
+.email-preview-header { background:rgba(248,250,252,0.14); padding:10px 14px; border-bottom:1px solid #e2e8f0; font-size:12px; color:#7CA5DE; }
+.email-preview-body   { padding:16px; font-size:13.5px; color:#DE7C7C; line-height:1.7; }
 
 .form-actions { padding:16px 20px; background:var(--bg-elevated); border-top:1px solid var(--border-subtle); display:flex; justify-content:flex-end; gap:10px; }
 </style>

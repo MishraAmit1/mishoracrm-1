@@ -7,7 +7,7 @@
     <div class="vf-section">
         <div class="vf-section-header">
             <div class="vf-section-icon">
-                <i class="ti ti-building-warehouse" style="font-size:16px;color:#185FA5"></i>
+                <i class="ti ti-building-warehouse" style="font-size:16px;color:var(--accent)"></i>
             </div>
             <div>
                 <div class="vf-section-title">Vendor Details</div>
@@ -55,8 +55,8 @@
 
     <div class="vf-section">
         <div class="vf-section-header">
-            <div class="vf-section-icon" style="background:#E1F5EE">
-                <i class="ti ti-map-pin" style="font-size:16px;color:#0F6E56"></i>
+            <div class="vf-section-icon" style="background:var(--green-dim)">
+                <i class="ti ti-map-pin" style="font-size:16px;color:var(--green)"></i>
             </div>
             <div>
                 <div class="vf-section-title">Address</div>
@@ -97,8 +97,8 @@
 
     <div class="vf-section">
         <div class="vf-section-header">
-            <div class="vf-section-icon" style="background:#FAEEDA">
-                <i class="ti ti-notes" style="font-size:16px;color:#BA7517"></i>
+            <div class="vf-section-icon" style="background:var(--amber-dim)">
+                <i class="ti ti-notes" style="font-size:16px;color:var(--amber)"></i>
             </div>
             <div>
                 <div class="vf-section-title">Notes</div>

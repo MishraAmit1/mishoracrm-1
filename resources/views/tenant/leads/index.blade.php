@@ -200,27 +200,27 @@
 /* Drop status toast */
 #drop-toast{
     position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);
-    background:var(--ink,#1c1c22);color:#fff;
+    background:var(--ink);color:#fff;
     padding:11px 22px;border-radius:var(--r-md);font-size:13px;font-weight:600;
     box-shadow:0 8px 28px rgba(0,0,0,.22);
     opacity:0;transition:opacity .22s,transform .22s;pointer-events:none;z-index:9999;white-space:nowrap;
 }
 #drop-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-#drop-toast.success{background:var(--green,#1D9E75)}
-#drop-toast.error{background:var(--red,#E05252)}
+#drop-toast.success{background:var(--green)}
+#drop-toast.error{background:var(--red)}
 </style>
 @endpush
 
 @section('content')
 @php
 $statusCfg=[
-    'new'        =>['label'=>'New',        'color'=>'var(--accent)', 'bg'=>'var(--accent-dim)', 'dot'=>'#378ADD'],
-    'contacted'  =>['label'=>'Contacted',  'color'=>'var(--amber)',  'bg'=>'var(--amber-dim)',  'dot'=>'#EF9F27'],
-    'qualified'  =>['label'=>'Qualified',  'color'=>'var(--purple)', 'bg'=>'var(--purple-dim)', 'dot'=>'#534AB7'],
-    'converted'  =>['label'=>'Converted',  'color'=>'var(--green)',  'bg'=>'var(--green-dim)',  'dot'=>'#1D9E75'],
+    'new'        =>['label'=>'New',        'color'=>'var(--accent)', 'bg'=>'var(--accent-dim)', 'dot'=>'var(--accent)'],
+    'contacted'  =>['label'=>'Contacted',  'color'=>'var(--amber)',  'bg'=>'var(--amber-dim)',  'dot'=>'var(--amber)'],
+    'qualified'  =>['label'=>'Qualified',  'color'=>'var(--purple)', 'bg'=>'var(--purple-dim)', 'dot'=>'var(--purple)'],
+    'converted'  =>['label'=>'Converted',  'color'=>'var(--green)',  'bg'=>'var(--green-dim)',  'dot'=>'var(--green)'],
     'lost'       =>['label'=>'Lost',       'color'=>'var(--red)',    'bg'=>'var(--red-dim)',    'dot'=>'#E05252'],
 ];
-$AVC=['#378ADD','#534AB7','#1D9E75','#EF9F27','#E05252','#185FA5','#3B6D11'];
+$AVC=['var(--accent)','var(--purple)','var(--green)','var(--amber)','#E05252','var(--accent)','var(--green)'];
 if (!function_exists('avc')) {
     function avc(string $n,array $c):string{return $c[ord($n[0]??'A')%count($c)];}
 }
@@ -559,7 +559,7 @@ $sc=$statusCfg[$colStatus];
         @php
             $av=avc($lead->name,$AVC);
             $in=ini($lead->name);
-            $priC=$lead->priority==='high'?'#E05252':($lead->priority==='medium'?'#EF9F27':'#1D9E75');
+            $priC=$lead->priority==='high'?'#E05252':($lead->priority==='medium'?'var(--amber)':'var(--green)');
             $src=$sources[$lead->source]??null;
             $srcL=is_array($src)?($src['label']??ucfirst($lead->source)):($src??ucfirst($lead->source));
         @endphp

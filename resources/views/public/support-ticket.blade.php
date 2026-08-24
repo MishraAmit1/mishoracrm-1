@@ -9,13 +9,13 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="{{ asset('css/app.css') }}"/>
 <style>
-body { background: var(--bg-app,#0b0d12); min-height:100vh; padding:24px 16px; }
+body { background: var(--bg-app); min-height:100vh; padding:24px 16px; }
 .bk-wrap { max-width:620px; margin:0 auto; display:flex; flex-direction:column; gap:16px; }
 .bk-card { background:var(--bg-surface); border:1px solid var(--border-default); border-radius:14px; padding:22px; }
 .bk-flash { padding:12px 16px; border-radius:10px; font-size:13.5px; font-weight:500; }
-.bk-flash.success { background:#E1F5EE; color:#0F6E56; border:1px solid #9FE1CB; }
-.bk-flash.error   { background:#FCEBEB; color:#A32D2D; border:1px solid #F09595; }
-.bk-flash.info    { background:#E6F1FB; color:#185FA5; border:1px solid #B5D4F4; }
+.bk-flash.success { background:var(--green-dim); color:var(--green); border:1px solid var(--green); }
+.bk-flash.error   { background:var(--red-dim); color:var(--red); border:1px solid var(--red); }
+.bk-flash.info    { background:var(--accent-dim); color:var(--accent); border:1px solid var(--accent); }
 .bk-badge { display:inline-flex; padding:5px 14px; border-radius:20px; font-size:12.5px; font-weight:600; }
 .bk-badge.open, .bk-badge.in_progress { background:var(--accent-dim); color:var(--accent); }
 .bk-badge.resolved { background:var(--green-dim); color:var(--green); }

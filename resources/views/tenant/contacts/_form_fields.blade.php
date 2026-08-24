@@ -10,12 +10,12 @@
 
     // Section icon color map
     $sectionIconBg = [
-        'blue'   => ['bg'=>'#E6F1FB','stroke'=>'#185FA5'],
-        'purple' => ['bg'=>'#EEEDFE','stroke'=>'#534AB7'],
-        'teal'   => ['bg'=>'#E1F5EE','stroke'=>'#0F6E56'],
-        'amber'  => ['bg'=>'#FAEEDA','stroke'=>'#BA7517'],
-        'red'    => ['bg'=>'#FCEBEB','stroke'=>'#A32D2D'],
-        'green'  => ['bg'=>'#EAF3DE','stroke'=>'#3B6D11'],
+        'blue'   => ['bg'=>'var(--accent-dim)','stroke'=>'var(--accent)'],
+        'purple' => ['bg'=>'var(--purple-dim)','stroke'=>'var(--purple)'],
+        'teal'   => ['bg'=>'var(--green-dim)','stroke'=>'var(--green)'],
+        'amber'  => ['bg'=>'var(--amber-dim)','stroke'=>'var(--amber)'],
+        'red'    => ['bg'=>'var(--red-dim)','stroke'=>'var(--red)'],
+        'green'  => ['bg'=>'var(--green-dim)','stroke'=>'var(--green)'],
     ];
 @endphp
 
@@ -109,7 +109,7 @@
             <span class="cf-field-hint">{{ $field['hint'] }}</span>
             @endif
             @if($field['key'] === 'phone')
-            <div id="dupWarning" style="display:none;align-items:center;gap:6px;font-size:12px;color:#BA7517;background:#FAEEDA;border:1px solid #F0D9A8;border-radius:6px;padding:6px 10px;margin-top:6px"></div>
+            <div id="dupWarning" style="display:none;align-items:center;gap:6px;font-size:12px;color:var(--amber);background:var(--amber-dim);border:1px solid #F0D9A8;border-radius:6px;padding:6px 10px;margin-top:6px"></div>
             @endif
         </div>
         @endforeach

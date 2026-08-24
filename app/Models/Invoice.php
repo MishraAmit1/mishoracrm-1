@@ -17,6 +17,7 @@ class Invoice extends Model
         'tenant_id',
         'contact_id',
         'quotation_id',
+        'appointment_id',
         'number',
         'date',
         'due_date',

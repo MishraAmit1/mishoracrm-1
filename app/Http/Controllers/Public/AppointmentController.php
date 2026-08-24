@@ -7,6 +7,7 @@ use App\Models\Appointment;
 use App\Models\Contact;
 use App\Models\Service;
 use App\Models\Tenant;
+use App\Services\AppointmentJobService;
 use App\Services\EmailService;
 use App\Services\WhatsappChatbotService;
 use App\Models\WhatsappSetting;
@@ -141,7 +142,7 @@ class AppointmentController extends Controller
     public function showAppointment(string $token): View
     {
         $appointment = $this->findAppointment($token);
-        $appointment->load(['contact', 'service', 'tenant']);
+        $appointment->load(['contact', 'service', 'tenant', 'assignedTo', 'attachments']);
 
         return view('public.booking-confirmed', compact('appointment'));
     }
@@ -157,6 +158,29 @@ class AppointmentController extends Controller
         $appointment->update(['status' => 'cancelled']);
 
         return back()->with('success', 'Your booking has been cancelled.');
+    }
+
+    // ── Customer sign-off on a completed job ──────────────────────────
+    public function signOff(Request $request, string $token): RedirectResponse
+    {
+        $appointment = $this->findAppointment($token);
+
+        if ($appointment->status !== 'completed') {
+            return back()->with('error', 'This job is not yet marked completed.');
+        }
+
+        if ($appointment->customer_signed_at) {
+            return back()->with('info', 'This job has already been signed off.');
+        }
+
+        $data = $request->validate([
+            'signed_name'    => ['required', 'string', 'max:150'],
+            'signature_data' => ['required', 'string'],
+        ]);
+
+        AppointmentJobService::signOff($appointment, $data['signature_data'], $data['signed_name']);
+
+        return back()->with('success', 'Thank you — your sign-off has been recorded.');
     }
 
     // ── Confirmation message — always sent on a successful booking

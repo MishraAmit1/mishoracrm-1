@@ -94,11 +94,11 @@
     padding: 3px 9px; border-radius: 20px;
     font-size: 11px; font-weight: 600;
 }
-.sd-badge-new       { background:#E6F1FB; color:#185FA5; }
-.sd-badge-contacted { background:#E1F5EE; color:#0F6E56; }
-.sd-badge-qualified { background:#EAF3DE; color:#3B6D11; }
-.sd-badge-converted { background:#E1F5EE; color:#085041; }
-.sd-badge-lost      { background:#FCEBEB; color:#A32D2D; }
+.sd-badge-new       { background:var(--accent-dim); color:var(--accent); }
+.sd-badge-contacted { background:var(--green-dim); color:var(--green); }
+.sd-badge-qualified { background:var(--green-dim); color:var(--green); }
+.sd-badge-converted { background:var(--green-dim); color:var(--green); }
+.sd-badge-lost      { background:var(--red-dim); color:var(--red); }
 
 /* ── Tasks ── */
 .sd-task-list { display: flex; flex-direction: column; }
@@ -116,11 +116,11 @@
     transition: all .15s;
 }
 .sd-task-check.done {
-    background: #1D9E75; border-color: #1D9E75;
+    background: var(--green); border-color: var(--green);
 }
 .sd-task-prio { width: 4px; height: 4px; border-radius: 50%; flex-shrink: 0; }
-.sd-task-prio.high   { background: #E24B4A; }
-.sd-task-prio.medium { background: #EF9F27; }
+.sd-task-prio.high   { background: var(--red); }
+.sd-task-prio.medium { background: var(--amber); }
 .sd-task-prio.low    { background: #97C459; }
 .sd-task-text { flex: 1; font-size: 13px; color: var(--text-100); }
 .sd-task-text.done { text-decoration: line-through; color: var(--text-400); }
@@ -184,11 +184,11 @@
     $firstName = collect(explode(' ', $user->name))->filter()->first();
 
     $dealDotColors = [
-        'new'         => '#378ADD',
-        'proposal'    => '#EF9F27',
-        'negotiation' => '#534AB7',
-        'won'         => '#1D9E75',
-        'lost'        => '#E24B4A',
+        'new'         => 'var(--accent)',
+        'proposal'    => 'var(--amber)',
+        'negotiation' => 'var(--purple)',
+        'won'         => 'var(--green)',
+        'lost'        => 'var(--red)',
     ];
 @endphp
 
@@ -214,9 +214,9 @@
 
         {{-- My Leads --}}
         <div class="sd-stat">
-            <div class="sd-stat-glow" style="background:#378ADD"></div>
-            <div class="sd-stat-icon" style="background:#E6F1FB">
-                <svg width="18" height="18" fill="none" stroke="#185FA5" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.75 3.75 0 11-6.75 0 3.75 3.75 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
+            <div class="sd-stat-glow" style="background:var(--accent)"></div>
+            <div class="sd-stat-icon" style="background:var(--accent-dim)">
+                <svg width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.75 3.75 0 11-6.75 0 3.75 3.75 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
             </div>
             <div class="sd-stat-num">{{ $stats['my_leads_total'] }}</div>
             <div class="sd-stat-label">My Total Leads</div>
@@ -225,9 +225,9 @@
 
         {{-- My Active Deals --}}
         <div class="sd-stat">
-            <div class="sd-stat-glow" style="background:#1D9E75"></div>
-            <div class="sd-stat-icon" style="background:#E1F5EE">
-                <svg width="18" height="18" fill="none" stroke="#0F6E56" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75"/></svg>
+            <div class="sd-stat-glow" style="background:var(--green)"></div>
+            <div class="sd-stat-icon" style="background:var(--green-dim)">
+                <svg width="18" height="18" fill="none" stroke="var(--green)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75"/></svg>
             </div>
             <div class="sd-stat-num">{{ $stats['my_deals_active'] }}</div>
             <div class="sd-stat-label">Active Deals</div>
@@ -236,22 +236,22 @@
 
         {{-- Tasks Pending --}}
         <div class="sd-stat">
-            <div class="sd-stat-glow" style="background:#EF9F27"></div>
-            <div class="sd-stat-icon" style="background:#FAEEDA">
-                <svg width="18" height="18" fill="none" stroke="#BA7517" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <div class="sd-stat-glow" style="background:var(--amber)"></div>
+            <div class="sd-stat-icon" style="background:var(--amber-dim)">
+                <svg width="18" height="18" fill="none" stroke="var(--amber)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
             <div class="sd-stat-num">{{ $stats['tasks_pending'] }}</div>
             <div class="sd-stat-label">Pending Tasks</div>
-            <div class="sd-stat-sub" style="{{ $stats['tasks_overdue'] > 0 ? 'color:#E24B4A' : '' }}">
+            <div class="sd-stat-sub" style="{{ $stats['tasks_overdue'] > 0 ? 'color:var(--red)' : '' }}">
                 {{ $stats['tasks_overdue'] > 0 ? $stats['tasks_overdue'] . ' overdue' : 'All on track' }}
             </div>
         </div>
 
         {{-- Won This Month --}}
         <div class="sd-stat">
-            <div class="sd-stat-glow" style="background:#534AB7"></div>
-            <div class="sd-stat-icon" style="background:#EEEDFE">
-                <svg width="18" height="18" fill="none" stroke="#534AB7" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 007.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M7.73 9.728a6.726 6.726 0 002.748 1.35m8.272-6.842V4.5c0 2.108-.966 3.99-2.48 5.228m2.48-5.492a46.32 46.32 0 012.916.52 6.003 6.003 0 01-5.395 4.972m0 0a6.726 6.726 0 01-2.749 1.35m0 0a6.772 6.772 0 01-3.044 0"/></svg>
+            <div class="sd-stat-glow" style="background:var(--purple)"></div>
+            <div class="sd-stat-icon" style="background:var(--purple-dim)">
+                <svg width="18" height="18" fill="none" stroke="var(--purple)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 007.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M7.73 9.728a6.726 6.726 0 002.748 1.35m8.272-6.842V4.5c0 2.108-.966 3.99-2.48 5.228m2.48-5.492a46.32 46.32 0 012.916.52 6.003 6.003 0 01-5.395 4.972m0 0a6.726 6.726 0 01-2.749 1.35m0 0a6.772 6.772 0 01-3.044 0"/></svg>
             </div>
             <div class="sd-stat-num">{{ $stats['my_deals_won_month'] }}</div>
             <div class="sd-stat-label">Deals Won This Month</div>
@@ -357,26 +357,26 @@
                 </div>
                 <div class="sd-qa-grid">
                     <a href="{{ route('tenant.leads.create') }}" class="sd-qa-btn">
-                        <div class="sd-qa-icon" style="background:#E6F1FB">
-                            <svg width="13" height="13" fill="none" stroke="#185FA5" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                        <div class="sd-qa-icon" style="background:var(--accent-dim)">
+                            <svg width="13" height="13" fill="none" stroke="var(--accent)" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                         </div>
                         Add Lead
                     </a>
                     <a href="{{ route('tenant.deals.create') }}" class="sd-qa-btn">
-                        <div class="sd-qa-icon" style="background:#E1F5EE">
-                            <svg width="13" height="13" fill="none" stroke="#0F6E56" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                        <div class="sd-qa-icon" style="background:var(--green-dim)">
+                            <svg width="13" height="13" fill="none" stroke="var(--green)" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                         </div>
                         New Deal
                     </a>
                     <a href="{{ route('tenant.tasks.create') }}" class="sd-qa-btn">
-                        <div class="sd-qa-icon" style="background:#FAEEDA">
-                            <svg width="13" height="13" fill="none" stroke="#BA7517" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <div class="sd-qa-icon" style="background:var(--amber-dim)">
+                            <svg width="13" height="13" fill="none" stroke="var(--amber)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         </div>
                         Add Task
                     </a>
                     <a href="{{ route('tenant.leads.index') }}" class="sd-qa-btn">
-                        <div class="sd-qa-icon" style="background:#EEEDFE">
-                            <svg width="13" height="13" fill="none" stroke="#534AB7" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z"/></svg>
+                        <div class="sd-qa-icon" style="background:var(--purple-dim)">
+                            <svg width="13" height="13" fill="none" stroke="var(--purple)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z"/></svg>
                         </div>
                         All Leads
                     </a>
@@ -420,11 +420,11 @@
                     </div>
                     <div class="sd-perf-row">
                         <span class="sd-perf-key">Leads Converted</span>
-                        <span class="sd-perf-val" style="color:#1D9E75">{{ $stats['my_leads_converted'] }}</span>
+                        <span class="sd-perf-val" style="color:var(--green)">{{ $stats['my_leads_converted'] }}</span>
                     </div>
                     <div class="sd-perf-row">
                         <span class="sd-perf-key">Deals Won</span>
-                        <span class="sd-perf-val" style="color:#534AB7">{{ $stats['my_deals_won_month'] }}</span>
+                        <span class="sd-perf-val" style="color:var(--purple)">{{ $stats['my_deals_won_month'] }}</span>
                     </div>
                     <div class="sd-perf-row">
                         <span class="sd-perf-key">Revenue Closed</span>
@@ -432,7 +432,7 @@
                     </div>
                     <div class="sd-perf-row">
                         <span class="sd-perf-key">Tasks Pending</span>
-                        <span class="sd-perf-val" style="{{ $stats['tasks_overdue'] > 0 ? 'color:#E24B4A' : '' }}">
+                        <span class="sd-perf-val" style="{{ $stats['tasks_overdue'] > 0 ? 'color:var(--red)' : '' }}">
                             {{ $stats['tasks_pending'] }}
                         </span>
                     </div>

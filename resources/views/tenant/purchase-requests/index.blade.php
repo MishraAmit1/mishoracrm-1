@@ -114,8 +114,8 @@
                     <td data-label="Items">{{ count($pr->items ?? []) }}</td>
                     <td data-label="Status">
                         <span class="badge" style="padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:600;
-                            background:{{ $pr->status==='pending'?'#FAEEDA':($pr->status==='approved'?'#E1F5EE':($pr->status==='rejected'?'#FCEBEB':'#E6F1FB')) }};
-                            color:{{ $pr->status==='pending'?'#854F0B':($pr->status==='approved'?'#0F6E56':($pr->status==='rejected'?'#A32D2D':'#185FA5')) }}">
+                            background:{{ $pr->status==='pending'?'var(--amber-dim)':($pr->status==='approved'?'var(--green-dim)':($pr->status==='rejected'?'var(--red-dim)':'var(--accent-dim)')) }};
+                            color:{{ $pr->status==='pending'?'var(--amber)':($pr->status==='approved'?'var(--green)':($pr->status==='rejected'?'var(--red)':'var(--accent)')) }}">
                             {{ ucfirst($pr->status) }}
                         </span>
                     </td>

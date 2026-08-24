@@ -6,7 +6,7 @@
 .imp-steps{display:flex;gap:18px;margin-bottom:22px}
 .imp-step{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-300);font-weight:600}
 .imp-step .imp-dot{width:22px;height:22px;border-radius:50%;background:var(--bg-elevated);border:1.5px solid var(--border-default);display:flex;align-items:center;justify-content:center;font-size:11px}
-.imp-step.done .imp-dot{background:var(--green,#1D9E75);border-color:var(--green,#1D9E75);color:#fff}
+.imp-step.done .imp-dot{background:var(--green);border-color:var(--green);color:#fff}
 .imp-step.done{color:var(--text-100)}
 .res-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
 .res-tile{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:14px;padding:18px;text-align:center}
@@ -36,15 +36,15 @@
 
 <div class="res-grid">
     <div class="res-tile">
-        <div class="res-num" style="color:var(--green,#1D9E75)">{{ $created }}</div>
+        <div class="res-num" style="color:var(--green)">{{ $created }}</div>
         <div class="res-lbl">Created</div>
     </div>
     <div class="res-tile">
-        <div class="res-num" style="color:var(--amber,#EF9F27)">{{ $skipped }}</div>
+        <div class="res-num" style="color:var(--amber)">{{ $skipped }}</div>
         <div class="res-lbl">Skipped (Duplicate)</div>
     </div>
     <div class="res-tile">
-        <div class="res-num" style="color:var(--red,#E05252)">{{ count($errors) }}</div>
+        <div class="res-num" style="color:var(--red)">{{ count($errors) }}</div>
         <div class="res-lbl">Errors</div>
     </div>
 </div>

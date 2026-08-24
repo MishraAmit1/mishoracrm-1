@@ -9,7 +9,7 @@
 .ls-table tr:last-child td { border-bottom:none; }
 .mono { font-family:var(--mono); }
 .badge-type-fg  { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11.5px; font-weight:600; background:var(--accent-dim); color:var(--accent); }
-.badge-type-rm  { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11.5px; font-weight:600; background:#EEEDFE; color:#534AB7; }
+.badge-type-rm  { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11.5px; font-weight:600; background:var(--purple-dim); color:var(--purple); }
 .badge-low-stock { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11.5px; font-weight:600; background:var(--red-dim); color:var(--red); }
 .suggest-box { margin-top:8px; padding:9px 11px; background:var(--bg-elevated); border-radius:8px; font-size:12px; }
 .suggest-row { display:flex; justify-content:space-between; gap:10px; padding:3px 0; color:var(--text-300); }

@@ -21,7 +21,7 @@
 @media(max-width:640px){ .cf-grid { grid-template-columns:1fr; } .cf-grid .span-full { grid-column:1; } }
 .cf-field { display:flex; flex-direction:column; gap:5px; }
 .cf-label { font-size:11.5px; font-weight:600; color:var(--text-200); text-transform:uppercase; letter-spacing:0.5px; display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
-.cf-req { color:var(--red,#E24B4A); margin-left:2px; }
+.cf-req { color:var(--red); margin-left:2px; }
 
 .cf-input {
     width:100%; padding:9px 12px;
@@ -33,25 +33,25 @@
 }
 .cf-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-dim); background:var(--bg-surface); }
 .cf-input::placeholder { color:var(--text-400); font-size:13px; }
-.cf-input.is-error { border-color:var(--red,#E24B4A); }
+.cf-input.is-error { border-color:var(--red); }
 
 /* ── Prefilled state ── */
 .cf-input.prefilled {
-    border-color:#1D9E75 !important;
-    background:#F0FBF7 !important;
+    border-color:var(--green) !important;
+    background:var(--green-dim) !important;
     box-shadow:0 0 0 3px rgba(29,158,117,.12) !important;
     transition:border-color .3s, background .3s, box-shadow .3s;
 }
 .cf-select { cursor:pointer; }
 .cf-textarea { resize:vertical; min-height:80px; line-height:1.5; }
-.cf-field-error { font-size:12px; color:var(--red,#E24B4A); font-weight:500; }
+.cf-field-error { font-size:12px; color:var(--red); font-weight:500; }
 .cf-field-hint  { font-size:12px; color:var(--text-400); }
 
 /* "From Lead" label badge */
 .pf-tag {
     display:none; align-items:center; gap:3px;
     padding:1px 7px; border-radius:10px;
-    background:#E1F5EE; color:#0F6E56;
+    background:var(--green-dim); color:var(--green);
     font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.3px;
 }
 .pf-tag.show { display:inline-flex; }
@@ -68,11 +68,11 @@
 .pf-banner {
     display:none; align-items:center; gap:10px;
     padding:11px 16px; margin-bottom:14px;
-    background:#E1F5EE; border:1px solid #9FE1CB; border-radius:8px;
-    font-size:13px; color:#0F6E56; font-weight:500;
+    background:var(--green-dim); border:1px solid var(--green); border-radius:8px;
+    font-size:13px; color:var(--green); font-weight:500;
 }
 .pf-banner.show { display:flex; }
-.pf-banner-clear { margin-left:auto; background:transparent; border:none; cursor:pointer; font-size:12px; color:#0F6E56; font-weight:500; text-decoration:underline; font-family:'DM Sans',sans-serif; }
+.pf-banner-clear { margin-left:auto; background:transparent; border:none; cursor:pointer; font-size:12px; color:var(--green); font-weight:500; text-decoration:underline; font-family:'DM Sans',sans-serif; }
 
 .cf-footer { display:flex; align-items:center; justify-content:space-between; padding:16px 24px; background:var(--bg-elevated); border-top:1px solid var(--border-subtle); }
 .cf-footer-note { font-size:12px; color:var(--text-300); }
@@ -82,11 +82,11 @@
 .cf-side-title { font-size:11px; font-weight:600; color:var(--text-300); text-transform:uppercase; letter-spacing:.6px; margin-bottom:14px; }
 .req-list { display:flex; flex-direction:column; gap:8px; }
 .req-item { display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--text-200); }
-.req-dot { width:6px; height:6px; border-radius:50%; background:#E24B4A; flex-shrink:0; transition:background .2s; }
-.req-dot.ok { background:#1D9E75; }
+.req-dot { width:6px; height:6px; border-radius:50%; background:var(--red); flex-shrink:0; transition:background .2s; }
+.req-dot.ok { background:var(--green); }
 .tip-list { display:flex; flex-direction:column; gap:9px; }
 .tip-item { display:flex; align-items:flex-start; gap:8px; font-size:12px; color:var(--text-300); line-height:1.45; }
-.tip-dot { width:5px; height:5px; border-radius:50%; background:var(--accent,#378ADD); margin-top:5px; flex-shrink:0; }
+.tip-dot { width:5px; height:5px; border-radius:50%; background:var(--accent); margin-top:5px; flex-shrink:0; }
 
 @keyframes cf-spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 </style>
@@ -111,12 +111,12 @@
     ];
 
     $sectionIconBg = [
-        'blue'   => ['bg'=>'#E6F1FB','stroke'=>'#185FA5'],
-        'purple' => ['bg'=>'#EEEDFE','stroke'=>'#534AB7'],
-        'teal'   => ['bg'=>'#E1F5EE','stroke'=>'#0F6E56'],
-        'amber'  => ['bg'=>'#FAEEDA','stroke'=>'#BA7517'],
-        'red'    => ['bg'=>'#FCEBEB','stroke'=>'#A32D2D'],
-        'green'  => ['bg'=>'#EAF3DE','stroke'=>'#3B6D11'],
+        'blue'   => ['bg'=>'var(--accent-dim)','stroke'=>'var(--accent)'],
+        'purple' => ['bg'=>'var(--purple-dim)','stroke'=>'var(--purple)'],
+        'teal'   => ['bg'=>'var(--green-dim)','stroke'=>'var(--green)'],
+        'amber'  => ['bg'=>'var(--amber-dim)','stroke'=>'var(--amber)'],
+        'red'    => ['bg'=>'var(--red-dim)','stroke'=>'var(--red)'],
+        'green'  => ['bg'=>'var(--green-dim)','stroke'=>'var(--green)'],
     ];
 
     $sections = $contactFields['sections'];
@@ -224,7 +224,7 @@
                                         @endforeach
                                     </select>
                                     <span class="lead-spinner" id="leadSpinner">
-                                        <svg style="animation:cf-spin .6s linear infinite;width:14px;height:14px" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2">
+                                        <svg style="animation:cf-spin .6s linear infinite;width:14px;height:14px" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2">
                                             <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
                                         </svg>
                                     </span>
@@ -267,7 +267,7 @@
                                 @endif
                             @endif
                             @if($field['key'] === 'phone')
-                            <div id="dupWarning" style="display:none;align-items:center;gap:6px;font-size:12px;color:#BA7517;background:#FAEEDA;border:1px solid #F0D9A8;border-radius:6px;padding:6px 10px;margin-top:6px"></div>
+                            <div id="dupWarning" style="display:none;align-items:center;gap:6px;font-size:12px;color:var(--amber);background:var(--amber-dim);border:1px solid #F0D9A8;border-radius:6px;padding:6px 10px;margin-top:6px"></div>
                             @endif
                         </div>
                         @endforeach
@@ -297,14 +297,14 @@
 
                 {{-- Lead Preview Card (hidden initially) --}}
                 <div class="cf-side-card" id="leadPreviewCard"
-                     style="display:none;border-color:#9FE1CB;background:#F0FBF7">
-                    <div class="cf-side-title" style="color:#0F6E56">
-                        <i class="ti ti-bolt" style="font-size:13px;margin-right:4px;color:#1D9E75" aria-hidden="true"></i>
+                     style="display:none;border-color:var(--green);background:var(--green-dim)">
+                    <div class="cf-side-title" style="color:var(--green)">
+                        <i class="ti ti-bolt" style="font-size:13px;margin-right:4px;color:var(--green)" aria-hidden="true"></i>
                         Prefill Active
                     </div>
                     <div id="leadPreviewBody" style="display:flex;flex-direction:column;gap:9px"></div>
                     <button type="button" onclick="clearPrefill()"
-                        style="margin-top:13px;width:100%;padding:7px;background:transparent;border:1px solid #9FE1CB;border-radius:7px;color:#0F6E56;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500;display:flex;align-items:center;justify-content:center;gap:5px">
+                        style="margin-top:13px;width:100%;padding:7px;background:transparent;border:1px solid var(--green);border-radius:7px;color:var(--green);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500;display:flex;align-items:center;justify-content:center;gap:5px">
                         <i class="ti ti-x" style="font-size:12px" aria-hidden="true"></i>
                         Clear & Fill Manually
                     </button>
@@ -328,7 +328,7 @@
                     <div class="cf-side-title">Tips</div>
                     <div class="tip-list">
                         <div class="tip-item">
-                            <div class="tip-dot" style="background:#1D9E75"></div>
+                            <div class="tip-dot" style="background:var(--green)"></div>
                             <span>
                                 <strong style="color:var(--text-100)">"Linked Lead" select karo</strong>
                                 — name, phone, email, company automatically fill ho jayenge
@@ -353,7 +353,7 @@
                             <div style="font-size:10px;color:var(--text-300);text-transform:uppercase;letter-spacing:.4px;margin-top:1px">Fields</div>
                         </div>
                         <div style="padding:10px">
-                            <div style="font-size:20px;font-weight:600;color:#1D9E75;font-family:'DM Mono',monospace">{{ $pfCount }}</div>
+                            <div style="font-size:20px;font-weight:600;color:var(--green);font-family:'DM Mono',monospace">{{ $pfCount }}</div>
                             <div style="font-size:10px;color:var(--text-300);text-transform:uppercase;letter-spacing:.4px;margin-top:1px">Auto-fill</div>
                         </div>
                     </div>
@@ -479,11 +479,11 @@
             .map(r => `
                 <div style="display:flex;align-items:center;gap:9px">
                     <div style="width:26px;height:26px;border-radius:6px;background:#C7EDD9;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                        <i class="ti ${r.icon}" style="font-size:13px;color:#0F6E56" aria-hidden="true"></i>
+                        <i class="ti ${r.icon}" style="font-size:13px;color:var(--green)" aria-hidden="true"></i>
                     </div>
                     <div>
-                        <div style="font-size:10px;color:#1D9E75;font-weight:600;text-transform:uppercase;letter-spacing:.4px">${r.label}</div>
-                        <div style="font-size:12.5px;color:#085041;font-weight:500;margin-top:1px">${data[r.k]}</div>
+                        <div style="font-size:10px;color:var(--green);font-weight:600;text-transform:uppercase;letter-spacing:.4px">${r.label}</div>
+                        <div style="font-size:12.5px;color:var(--green);font-weight:500;margin-top:1px">${data[r.k]}</div>
                     </div>
                 </div>
             `).join('');
@@ -541,7 +541,7 @@
 
     // ── Toast ─────────────────────────────────────────────────────
     function toast(msg, type='success'){
-        const bg = type === 'error' ? '#A32D2D' : '#185FA5';
+        const bg = type === 'error' ? 'var(--red)' : 'var(--accent)';
         const ic = type === 'error' ? 'ti-alert-circle' : 'ti-circle-check';
         const el = document.createElement('div');
         el.style.cssText = `position:fixed;bottom:20px;right:20px;background:${bg};color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:500;z-index:9999;display:flex;align-items:center;gap:8px;box-shadow:0 4px 16px rgba(0,0,0,.15)`;
@@ -578,7 +578,7 @@
             if (!dupBox) return;
             if (res.duplicate) {
                 dupBox.innerHTML = `This phone/email already belongs to <strong>${res.match.name}</strong>.
-                    <a href="/contacts/${res.match.id}" target="_blank" style="margin-left:auto;color:#185FA5;font-weight:600;text-decoration:none">View Contact &rarr;</a>`;
+                    <a href="/contacts/${res.match.id}" target="_blank" style="margin-left:auto;color:var(--accent);font-weight:600;text-decoration:none">View Contact &rarr;</a>`;
                 dupBox.style.display = 'flex';
             } else {
                 dupBox.style.display = 'none';

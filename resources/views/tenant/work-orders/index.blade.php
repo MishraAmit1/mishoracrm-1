@@ -105,11 +105,11 @@
                 @foreach($workOrders as $wo)
                 @php
                     $badge = [
-                        'pending'     => ['bg' => '#FAEEDA', 'text' => '#854F0B'],
-                        'in_progress' => ['bg' => '#E6F1FB', 'text' => '#185FA5'],
-                        'completed'   => ['bg' => '#E1F5EE', 'text' => '#0F6E56'],
-                        'cancelled'   => ['bg' => '#FCEBEB', 'text' => '#A32D2D'],
-                    ][$wo->status] ?? ['bg' => '#FAEEDA', 'text' => '#854F0B'];
+                        'pending'     => ['bg' => 'var(--amber-dim)', 'text' => 'var(--amber)'],
+                        'in_progress' => ['bg' => 'var(--accent-dim)', 'text' => 'var(--accent)'],
+                        'completed'   => ['bg' => 'var(--green-dim)', 'text' => 'var(--green)'],
+                        'cancelled'   => ['bg' => 'var(--red-dim)', 'text' => 'var(--red)'],
+                    ][$wo->status] ?? ['bg' => 'var(--amber-dim)', 'text' => 'var(--amber)'];
                 @endphp
                 <tr>
                     <td data-label="Number">

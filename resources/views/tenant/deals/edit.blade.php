@@ -22,13 +22,13 @@
 @media(max-width:640px){ .df-grid { grid-template-columns:1fr; } .df-grid .span-full { grid-column:1; } }
 .df-field { display:flex; flex-direction:column; gap:5px; }
 .df-label { font-size:11.5px; font-weight:600; color:var(--text-200); text-transform:uppercase; letter-spacing:.5px; }
-.df-req  { color:var(--red,#E24B4A); margin-left:2px; }
+.df-req  { color:var(--red); margin-left:2px; }
 .df-hint { font-size:12px; color:var(--text-400); }
-.df-err  { font-size:12px; color:var(--red,#E24B4A); font-weight:500; }
+.df-err  { font-size:12px; color:var(--red); font-weight:500; }
 .df-input { width:100%; padding:9px 12px; background:var(--bg-input); border:1.5px solid var(--border-default); border-radius:8px; color:var(--text-100); font-family:'DM Sans',var(--font),sans-serif; font-size:13.5px; outline:none; transition:border-color .15s,box-shadow .15s,background .15s; -webkit-appearance:none; }
 .df-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-dim); background:var(--bg-surface); }
 .df-input::placeholder { color:var(--text-400); font-size:13px; }
-.df-input.is-err { border-color:var(--red,#E24B4A); }
+.df-input.is-err { border-color:var(--red); }
 .df-sel  { cursor:pointer; }
 .df-area { resize:vertical; min-height:82px; line-height:1.55; }
 .input-prefix-wrap { position:relative; }
@@ -40,9 +40,9 @@
 .sp-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
 .prob-slider-wrap { display:flex; align-items:center; gap:10px; }
 .prob-display { font-size:15px; font-weight:600; color:var(--text-100); font-family:'DM Mono',monospace; min-width:40px; flex-shrink:0; }
-.df-range { flex:1; height:4px; border-radius:2px; cursor:pointer; outline:none; accent-color:#185FA5; }
+.df-range { flex:1; height:4px; border-radius:2px; cursor:pointer; outline:none; accent-color:var(--accent); }
 .prob-bar-bg   { height:4px; border-radius:2px; background:var(--border-subtle); margin-top:5px; overflow:hidden; }
-.prob-bar-fill { height:100%; border-radius:2px; background:#185FA5; transition:width .2s; }
+.prob-bar-fill { height:100%; border-radius:2px; background:var(--accent); transition:width .2s; }
 .df-footer { display:flex; align-items:center; justify-content:space-between; padding:15px 22px; background:var(--bg-elevated); border-top:1px solid var(--border-subtle); }
 .df-footer-note { font-size:12px; color:var(--text-300); }
 .df-footer-note strong { color:var(--text-200); }
@@ -54,13 +54,13 @@
 .dp-stage-badge { display:inline-flex; align-items:center; gap:5px; margin-top:10px; padding:4px 11px; border-radius:20px; font-size:12px; font-weight:600; transition:background .2s,color .2s; }
 .tip-list { display:flex; flex-direction:column; gap:9px; }
 .tip-item { display:flex; align-items:flex-start; gap:8px; font-size:12px; color:var(--text-300); line-height:1.45; }
-.tip-dot  { width:5px; height:5px; border-radius:50%; background:var(--accent,#378ADD); margin-top:5px; flex-shrink:0; }
+.tip-dot  { width:5px; height:5px; border-radius:50%; background:var(--accent); margin-top:5px; flex-shrink:0; }
 
 /* ── Edit-specific ── */
 .changed-badge {
     display:none; align-items:center; gap:5px;
     padding:3px 9px; border-radius:20px;
-    background:#FAEEDA; color:#854F0B;
+    background:var(--amber-dim); color:var(--amber);
     font-size:11px; font-weight:600; margin-left:8px;
 }
 .changed-badge.show { display:inline-flex; }
@@ -76,8 +76,8 @@
 .stage-changed-notice {
     display:none; align-items:center; gap:7px;
     padding:8px 12px; border-radius:8px;
-    background:#FAEEDA; border:1px solid #EF9F27;
-    font-size:12px; color:#854F0B; font-weight:500;
+    background:var(--amber-dim); border:1px solid var(--amber);
+    font-size:12px; color:var(--amber); font-weight:500;
     margin-top:8px;
 }
 .stage-changed-notice.show { display:flex; }
@@ -207,7 +207,7 @@
                     <div class="df-sc-title">Deal Info</div>
                     <div style="display:flex;flex-direction:column;gap:9px">
                         <div style="display:flex;align-items:center;gap:10px">
-                            <div style="width:38px;height:38px;border-radius:50%;background:#E6F1FB;color:#185FA5;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0">
+                            <div style="width:38px;height:38px;border-radius:50%;background:var(--accent-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0">
                                 {{ strtoupper(substr($deal->title,0,2)) }}
                             </div>
                             <div>
@@ -224,7 +224,7 @@
                             <div>Created: <strong style="color:var(--text-200)">{{ $deal->created_at->format('M d, Y') }}</strong></div>
                             <div>Updated: <strong style="color:var(--text-200)">{{ $deal->updated_at->diffForHumans() }}</strong></div>
                             @if($deal->actual_close_date)
-                            <div>Closed: <strong style="color:#1D9E75">{{ \Carbon\Carbon::parse($deal->actual_close_date)->format('M d, Y') }}</strong></div>
+                            <div>Closed: <strong style="color:var(--green)">{{ \Carbon\Carbon::parse($deal->actual_close_date)->format('M d, Y') }}</strong></div>
                             @endif
                         </div>
                     </div>
@@ -237,7 +237,7 @@
                         @if($deal->stage !== 'won')
                         <form method="POST" action="{{ route('tenant.deals.mark_won', $deal->id) }}">
                             @csrf
-                            <button type="submit" class="btn" style="width:100%;justify-content:center;background:#E1F5EE;border-color:#9FE1CB;color:#0F6E56;font-size:12.5px">
+                            <button type="submit" class="btn" style="width:100%;justify-content:center;background:var(--green-dim);border-color:var(--green);color:var(--green);font-size:12.5px">
                                 <i class="ti ti-trophy" style="font-size:14px"></i>
                                 Mark as Won 🎉
                             </button>
@@ -245,7 +245,7 @@
                         @endif
                         @if($deal->stage !== 'lost')
                         <button type="button" onclick="document.getElementById('lostModal').showModal()"
-                                class="btn" style="width:100%;justify-content:center;background:#FCEBEB;border-color:#F09595;color:#A32D2D;font-size:12.5px">
+                                class="btn" style="width:100%;justify-content:center;background:var(--red-dim);border-color:var(--red);color:var(--red);font-size:12.5px">
                             <i class="ti ti-x" style="font-size:14px"></i>
                             Mark as Lost
                         </button>
@@ -266,8 +266,8 @@
         </div>
     </form>
 
-    <div class="df-sc" style="border-color:#F09595;margin-top:14px">
-        <div class="df-sc-title" style="color:#A32D2D">Danger Zone</div>
+    <div class="df-sc" style="border-color:var(--red);margin-top:14px">
+        <div class="df-sc-title" style="color:var(--red)">Danger Zone</div>
         <div style="font-size:12px;color:var(--text-300);margin-bottom:12px;line-height:1.5">
             Deal delete karne ke baad permanently remove ho jayega.
         </div>
@@ -275,7 +275,7 @@
               onsubmit="return confirm('Delete deal \'{{ addslashes($deal->title) }}\'?')">
             @csrf @method('DELETE')
             <button type="submit" class="btn"
-                    style="width:100%;justify-content:center;background:#FCEBEB;border-color:#F09595;color:#A32D2D;font-size:12.5px">
+                    style="width:100%;justify-content:center;background:var(--red-dim);border-color:var(--red);color:var(--red);font-size:12.5px">
                 <i class="ti ti-trash" style="font-size:14px"></i>
                 Delete Deal
             </button>
@@ -303,7 +303,7 @@
             <button type="button" onclick="document.getElementById('lostModal').close()"
                     class="btn btn-secondary">Cancel</button>
             <button type="submit"
-                    class="btn" style="background:#FCEBEB;border-color:#F09595;color:#A32D2D">
+                    class="btn" style="background:var(--red-dim);border-color:var(--red);color:var(--red)">
                 <i class="ti ti-x" style="font-size:14px"></i>
                 Confirm Lost
             </button>

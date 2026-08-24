@@ -297,7 +297,7 @@
 
 .priority.low{
     background:#1d9e7515;
-    color:#1D9E75;
+    color:var(--green);
 }
 
 .priority.medium{
@@ -399,7 +399,7 @@
 }
 
 .chk-del:hover{
-    color:#E24B4A;
+    color:var(--red);
 }
 
 .cm-item{
@@ -725,7 +725,7 @@
                                     Actual {{ rtrim(rtrim(number_format($task->actual_hours, 2), '0'), '.') }}h
                                     @if($task->estimated_hours)
                                         @php $variance = $task->actual_hours - $task->estimated_hours; @endphp
-                                        <span style="color:{{ $variance > 0 ? 'var(--red)' : 'var(--green, #1D9E75)' }};font-size:11px;font-weight:700">
+                                        <span style="color:{{ $variance > 0 ? 'var(--red)' : 'var(--green)' }};font-size:11px;font-weight:700">
                                             ({{ $variance > 0 ? '+' : '' }}{{ rtrim(rtrim(number_format($variance, 2), '0'), '.') }}h)
                                         </span>
                                     @endif

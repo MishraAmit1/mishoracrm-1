@@ -80,8 +80,8 @@
 
 @php
     $avatarColors = [
-        ['#E6F1FB','#185FA5'], ['#E1F5EE','#0F6E56'],
-        ['#FAEEDA','#854F0B'], ['#EEEDFE','#3C3489'],
+        ['var(--accent-dim)','var(--accent)'], ['var(--green-dim)','var(--green)'],
+        ['var(--amber-dim)','var(--amber)'], ['var(--purple-dim)','var(--purple)'],
         ['#FEE2E2','#991B1B'], ['#FEF3C7','#92400E'],
     ];
 @endphp

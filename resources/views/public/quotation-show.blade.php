@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="{{ asset('css/app.css') }}"/>
 <style>
-body { background: var(--bg-app,#0b0d12); min-height:100vh; padding:24px 16px; }
+body { background: var(--bg-app); min-height:100vh; padding:24px 16px; }
 .pq-wrap { max-width:820px; margin:0 auto; display:flex; flex-direction:column; gap:16px; }
 .pq-brand { text-align:center; padding:8px 0 4px; font-size:13px; color:var(--text-300); }
 .pq-card { background:var(--bg-surface); border:1px solid var(--border-default); border-radius:14px; overflow:hidden; }
@@ -30,9 +30,9 @@ body { background: var(--bg-app,#0b0d12); min-height:100vh; padding:24px 16px; }
 .pq-text { font-size:13px; color:var(--text-200); line-height:1.6; white-space:pre-wrap; }
 .pq-actions { padding:20px 24px; display:flex; gap:10px; flex-wrap:wrap; }
 .pq-flash { padding:12px 16px; border-radius:10px; font-size:13.5px; font-weight:500; }
-.pq-flash.success { background:#E1F5EE; color:#0F6E56; border:1px solid #9FE1CB; }
-.pq-flash.error   { background:#FCEBEB; color:#A32D2D; border:1px solid #F09595; }
-.pq-flash.info    { background:#E6F1FB; color:#185FA5; border:1px solid #B5D4F4; }
+.pq-flash.success { background:var(--green-dim); color:var(--green); border:1px solid var(--green); }
+.pq-flash.error   { background:var(--red-dim); color:var(--red); border:1px solid var(--red); }
+.pq-flash.info    { background:var(--accent-dim); color:var(--accent); border:1px solid var(--accent); }
 .pq-panel { display:none; padding:18px 24px; border-top:1px solid var(--border-subtle); background:var(--bg-elevated); }
 .pq-panel.show { display:block; }
 .pq-field { display:flex; flex-direction:column; gap:5px; margin-bottom:12px; }
@@ -154,7 +154,7 @@ body { background: var(--bg-app,#0b0d12); min-height:100vh; padding:24px 16px; }
                 <form method="POST" action="{{ route('public.quotations.accept', $quotation->public_token) }}" id="acceptForm">
                     @csrf
                     <div class="pq-field">
-                        <label>Your Full Name <span style="color:#E24B4A">*</span></label>
+                        <label>Your Full Name <span style="color:var(--red)">*</span></label>
                         <input type="text" name="signed_name" class="pq-input" required maxlength="150" placeholder="Type your full name to sign"/>
                     </div>
                     <div class="pq-field">
@@ -184,7 +184,7 @@ body { background: var(--bg-app,#0b0d12); min-height:100vh; padding:24px 16px; }
                     </div>
                     <div style="display:flex;gap:8px">
                         <button type="button" class="btn btn-secondary" onclick="hidePanels()">Cancel</button>
-                        <button type="submit" class="btn btn-primary" style="background:#E24B4A;border-color:#E24B4A">Confirm Rejection</button>
+                        <button type="submit" class="btn btn-primary" style="background:var(--red);border-color:var(--red)">Confirm Rejection</button>
                     </div>
                 </form>
             </div>

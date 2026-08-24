@@ -213,10 +213,10 @@
     $sortDir = request('dir', 'desc');
 
     $avColors = [
-        ['#E6F1FB','#185FA5'],
-        ['#E1F5EE','#0F6E56'],
-        ['#FAEEDA','#854F0B'],
-        ['#EEEDFE','#3C3489'],
+        ['var(--accent-dim)','var(--accent)'],
+        ['var(--green-dim)','var(--green)'],
+        ['var(--amber-dim)','var(--amber)'],
+        ['var(--purple-dim)','var(--purple)'],
     ];
 
     $initials = fn(string $name): string =>

@@ -187,8 +187,8 @@
 @php
     $activeTab = session('active_tab', 'profile');
     $avatarColors = [
-        ['#E6F1FB','#185FA5'],['#E1F5EE','#0F6E56'],
-        ['#FAEEDA','#854F0B'],['#EEEDFE','#3C3489'],
+        ['var(--accent-dim)','var(--accent)'],['var(--green-dim)','var(--green)'],
+        ['var(--amber-dim)','var(--amber)'],['var(--purple-dim)','var(--purple)'],
     ];
     [$avBg, $avTx] = $avatarColors[abs(crc32($user->name ?? '')) % 4];
     $userRole = $user->roles->first()?->name ?? 'staff';

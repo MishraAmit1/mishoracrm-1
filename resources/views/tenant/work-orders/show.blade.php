@@ -30,8 +30,8 @@
 .qs-action-btn:hover { background:var(--bg-surface); border-color:var(--border-strong); }
 .qs-action-btn + .qs-action-btn { margin-top:7px; }
 .qs-act-icon { width:28px; height:28px; border-radius:7px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-.bom-ok { color:#0F6E56; font-weight:600; }
-.bom-short { color:#A32D2D; font-weight:600; }
+.bom-ok { color:var(--green); font-weight:600; }
+.bom-short { color:var(--red); font-weight:600; }
 .pf-label { font-size:11.5px; font-weight:600; color:var(--text-200); text-transform:uppercase; letter-spacing:.5px; }
 .pf-input {
     width:100%; padding:9px 12px; background:var(--bg-input); border:1.5px solid var(--border-default);
@@ -44,10 +44,10 @@
 @section('content')
 @php
     $statusMeta = [
-        'pending'     => ['bg' => '#FAEEDA', 'color' => '#BA7517', 'text' => '#854F0B', 'icon' => 'ti-clock'],
-        'in_progress' => ['bg' => '#E6F1FB', 'color' => '#185FA5', 'text' => '#185FA5', 'icon' => 'ti-player-play'],
-        'completed'   => ['bg' => '#E1F5EE', 'color' => '#1D9E75', 'text' => '#0F6E56', 'icon' => 'ti-circle-check'],
-        'cancelled'   => ['bg' => '#FCEBEB', 'color' => '#E24B4A', 'text' => '#A32D2D', 'icon' => 'ti-circle-x'],
+        'pending'     => ['bg' => 'var(--amber-dim)', 'color' => 'var(--amber)', 'text' => 'var(--amber)', 'icon' => 'ti-clock'],
+        'in_progress' => ['bg' => 'var(--accent-dim)', 'color' => 'var(--accent)', 'text' => 'var(--accent)', 'icon' => 'ti-player-play'],
+        'completed'   => ['bg' => 'var(--green-dim)', 'color' => 'var(--green)', 'text' => 'var(--green)', 'icon' => 'ti-circle-check'],
+        'cancelled'   => ['bg' => 'var(--red-dim)', 'color' => 'var(--red)', 'text' => 'var(--red)', 'icon' => 'ti-circle-x'],
     ];
     $st = $statusMeta[$workOrder->status] ?? $statusMeta['pending'];
     $bom = $workOrder->product->billOfMaterials ?? collect();
@@ -75,7 +75,7 @@
 
     @foreach(['success','error'] as $type)
     @if(session($type))
-    <div style="display:flex;align-items:center;gap:10px;padding:11px 15px;background:{{ $type==='success'?'#E1F5EE':'#FCEBEB' }};border:1px solid {{ $type==='success'?'#9FE1CB':'#F09595' }};border-radius:8px;margin-bottom:14px;font-size:13px;color:{{ $type==='success'?'#0F6E56':'#A32D2D' }};font-weight:500">
+    <div style="display:flex;align-items:center;gap:10px;padding:11px 15px;background:{{ $type==='success'?'var(--green-dim)':'var(--red-dim)' }};border:1px solid {{ $type==='success'?'var(--green)':'var(--red)' }};border-radius:8px;margin-bottom:14px;font-size:13px;color:{{ $type==='success'?'var(--green)':'var(--red)' }};font-weight:500">
         {{ session($type) }}
     </div>
     @endif
@@ -204,7 +204,7 @@
                     <div class="dl-row"><span class="dl-key">Selling Value <span style="opacity:.6">(at current rate × qty)</span></span><span class="dl-val" style="font-family:'DM Mono',monospace">₹{{ number_format($workOrder->selling_value, 2) }}</span></div>
                     <div class="dl-row">
                         <span class="dl-key">Margin</span>
-                        <span class="dl-val" style="font-family:'DM Mono',monospace;font-weight:700;color:{{ $workOrder->margin >= 0 ? '#0F6E56' : '#A32D2D' }}">
+                        <span class="dl-val" style="font-family:'DM Mono',monospace;font-weight:700;color:{{ $workOrder->margin >= 0 ? 'var(--green)' : 'var(--red)' }}">
                             ₹{{ number_format($workOrder->margin, 2) }} ({{ $workOrder->margin_percent }}%)
                         </span>
                     </div>
@@ -225,8 +225,8 @@
                 <form method="POST" action="{{ route('tenant.work-orders.start',$workOrder->id) }}"
                       onsubmit="return confirm('Start production on this work order?')">
                     @csrf
-                    <button type="submit" class="qs-action-btn" style="background:#E6F1FB;border-color:#B7D6F3;color:#185FA5">
-                        <div class="qs-act-icon" style="background:#E6F1FB"><i class="ti ti-player-play" style="font-size:15px;color:#185FA5"></i></div>
+                    <button type="submit" class="qs-action-btn" style="background:var(--accent-dim);border-color:#B7D6F3;color:var(--accent)">
+                        <div class="qs-act-icon" style="background:var(--accent-dim)"><i class="ti ti-player-play" style="font-size:15px;color:var(--accent)"></i></div>
                         Start Production
                     </button>
                 </form>
@@ -238,8 +238,8 @@
                     @csrf
                     <label class="pf-label" for="wo_fg_expiry" style="display:block;margin-bottom:5px">Finished Good Expiry (optional)</label>
                     <input type="date" name="expiry_date" id="wo_fg_expiry" class="pf-input" style="margin-bottom:8px"/>
-                    <button type="submit" class="qs-action-btn" style="background:#E1F5EE;border-color:#9FE1CB;color:#0F6E56">
-                        <div class="qs-act-icon" style="background:#E1F5EE"><i class="ti ti-circle-check" style="font-size:15px;color:#0F6E56"></i></div>
+                    <button type="submit" class="qs-action-btn" style="background:var(--green-dim);border-color:var(--green);color:var(--green)">
+                        <div class="qs-act-icon" style="background:var(--green-dim)"><i class="ti ti-circle-check" style="font-size:15px;color:var(--green)"></i></div>
                         Mark Completed
                     </button>
                 </form>
@@ -248,8 +248,8 @@
                 <form method="POST" action="{{ route('tenant.work-orders.cancel',$workOrder->id) }}" style="margin-top:7px"
                       onsubmit="return confirm('Cancel this work order?')">
                     @csrf
-                    <button type="submit" class="qs-action-btn" style="background:#FCEBEB;border-color:#F09595;color:#A32D2D">
-                        <div class="qs-act-icon" style="background:#FCEBEB"><i class="ti ti-circle-x" style="font-size:15px;color:#A32D2D"></i></div>
+                    <button type="submit" class="qs-action-btn" style="background:var(--red-dim);border-color:var(--red);color:var(--red)">
+                        <div class="qs-act-icon" style="background:var(--red-dim)"><i class="ti ti-circle-x" style="font-size:15px;color:var(--red)"></i></div>
                         Cancel Work Order
                     </button>
                 </form>
@@ -267,12 +267,12 @@
             </div>
 
             @can('delete', $workOrder)
-            <div class="ps-sc" style="border-color:#F09595">
-                <div class="ps-sc-title" style="color:#A32D2D">Danger Zone</div>
+            <div class="ps-sc" style="border-color:var(--red)">
+                <div class="ps-sc-title" style="color:var(--red)">Danger Zone</div>
                 <form method="POST" action="{{ route('tenant.work-orders.destroy',$workOrder->id) }}"
                       onsubmit="return confirm('Delete work order {{ $workOrder->number }}?')">
                     @csrf @method('DELETE')
-                    <button type="submit" class="btn" style="width:100%;justify-content:center;background:#FCEBEB;border-color:#F09595;color:#A32D2D;font-size:12.5px">
+                    <button type="submit" class="btn" style="width:100%;justify-content:center;background:var(--red-dim);border-color:var(--red);color:var(--red);font-size:12.5px">
                         <i class="ti ti-trash" style="font-size:14px"></i> Delete Work Order
                     </button>
                 </form>

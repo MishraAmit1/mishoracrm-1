@@ -47,7 +47,7 @@
     width: 56px; height: 56px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     font-size: 18px; font-weight: 600; flex-shrink: 0;
-    background: #E6F1FB; color: #185FA5;
+    background: var(--accent-dim); color: var(--accent);
 }
 .ds-title   { font-size: 20px; font-weight: 600; color: var(--text-100); letter-spacing: -.3px; margin-bottom: 6px; line-height: 1.2; }
 .ds-value   { font-size: 24px; font-weight: 600; color: var(--text-100); font-family: 'DM Mono', monospace; letter-spacing: -1px; line-height: 1; }
@@ -79,17 +79,17 @@
     display: flex; align-items: center; justify-content: center;
     margin: 0 auto 5px; font-size: 11px; font-weight: 600;
 }
-.ds-pip-done    .ds-pip-dot { background: #E1F5EE; color: #0F6E56; border: 2px solid #1D9E75; }
-.ds-pip-active  .ds-pip-dot { background: #185FA5; color: #fff;    border: 2px solid #185FA5; }
+.ds-pip-done    .ds-pip-dot { background: var(--green-dim); color: var(--green); border: 2px solid var(--green); }
+.ds-pip-active  .ds-pip-dot { background: var(--accent); color: #fff;    border: 2px solid var(--accent); }
 .ds-pip-pending .ds-pip-dot { background: var(--bg-input); color: var(--text-300); border: 1px solid var(--border-default); }
-.ds-pip-won     .ds-pip-dot { background: #E1F5EE; color: #0F6E56; border: 2px solid #1D9E75; }
-.ds-pip-lost    .ds-pip-dot { background: #FCEBEB; color: #A32D2D; border: 2px solid #E24B4A; }
+.ds-pip-won     .ds-pip-dot { background: var(--green-dim); color: var(--green); border: 2px solid var(--green); }
+.ds-pip-lost    .ds-pip-dot { background: var(--red-dim); color: var(--red); border: 2px solid var(--red); }
 .ds-pip-lbl { font-size: 10.5px; font-weight: 500; color: var(--text-300); }
-.ds-pip-active  .ds-pip-lbl { color: #185FA5; font-weight: 600; }
-.ds-pip-won     .ds-pip-lbl { color: #0F6E56; font-weight: 600; }
-.ds-pip-lost    .ds-pip-lbl { color: #A32D2D; font-weight: 600; }
+.ds-pip-active  .ds-pip-lbl { color: var(--accent); font-weight: 600; }
+.ds-pip-won     .ds-pip-lbl { color: var(--green); font-weight: 600; }
+.ds-pip-lost    .ds-pip-lbl { color: var(--red); font-weight: 600; }
 .ds-pip-line       { flex: 1; height: 2px; background: var(--border-subtle); margin-bottom: 20px; }
-.ds-pip-line.done  { background: #1D9E75; }
+.ds-pip-line.done  { background: var(--green); }
 
 /* ── Info Grid ── */
 .ds-info-grid { display: grid; grid-template-columns: 1fr 1fr; }
@@ -168,12 +168,12 @@
 .ds-lost-box {
     margin: 14px 22px;
     padding: 12px 14px;
-    background: #FCEBEB;
-    border: 1px solid #F09595;
+    background: var(--red-dim);
+    border: 1px solid var(--red);
     border-radius: 10px;
 }
-.ds-lost-label { font-size: 11px; font-weight: 600; color: #A32D2D; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
-.ds-lost-text  { font-size: 13px; color: #A32D2D; line-height: 1.5; }
+.ds-lost-label { font-size: 11px; font-weight: 600; color: var(--red); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+.ds-lost-text  { font-size: 13px; color: var(--red); line-height: 1.5; }
 
 @keyframes ds-spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 </style>
@@ -190,7 +190,7 @@ $initials = substr(
 
 $stg           = $cfgStages[$deal->stage] ?? $cfgStages['new'];
 $prob          = (int) ($deal->probability ?? $stg['probability']);
-$probColor     = $prob >= 60 ? '#1D9E75' : ($prob >= 30 ? '#EF9F27' : '#378ADD');
+$probColor     = $prob >= 60 ? 'var(--green)' : ($prob >= 30 ? 'var(--amber)' : 'var(--accent)');
 $daysOpen      = (int) $deal->created_at->diffInDays(now());
 $isWon         = $deal->stage === 'won';
 $isLost        = $deal->stage === 'lost';
@@ -203,17 +203,17 @@ $pipeIcons  = ['ti-sparkles', 'ti-file-description', 'ti-messages'];
 $currentIdx = array_search($deal->stage, $pipeStages);
 
 $fuTypeIcons = [
-    'call'     => ['ti-phone',      '#E6F1FB', '#185FA5'],
-    'email'    => ['ti-mail',       '#EEEDFE', '#534AB7'],
-    'whatsapp' => ['ti-brand-whatsapp', '#E1F5EE', '#0F6E56'],
-    'meeting'  => ['ti-users',      '#FAEEDA', '#854F0B'],
-    'other'    => ['ti-dots',       '#F1EFE8', '#5F5E5A'],
+    'call'     => ['ti-phone',      'var(--accent-dim)', 'var(--accent)'],
+    'email'    => ['ti-mail',       'var(--purple-dim)', 'var(--purple)'],
+    'whatsapp' => ['ti-brand-whatsapp', 'var(--green-dim)', 'var(--green)'],
+    'meeting'  => ['ti-users',      'var(--amber-dim)', 'var(--amber)'],
+    'other'    => ['ti-dots',       'var(--bg-hover)', 'var(--text-300)'],
 ];
 $fuStatusColors = [
-    'scheduled'   => ['#E6F1FB', '#185FA5'],
-    'done'        => ['#E1F5EE', '#0F6E56'],
-    'missed'      => ['#FCEBEB', '#A32D2D'],
-    'rescheduled' => ['#FAEEDA', '#854F0B'],
+    'scheduled'   => ['var(--accent-dim)', 'var(--accent)'],
+    'done'        => ['var(--green-dim)', 'var(--green)'],
+    'missed'      => ['var(--red-dim)', 'var(--red)'],
+    'rescheduled' => ['var(--amber-dim)', 'var(--amber)'],
 ];
 
 $tkStatusColors = config('task_fields.stages');
@@ -244,7 +244,7 @@ $assignInit = $deal->assignedTo
               onsubmit="return confirm('Delete deal \'{{ addslashes($deal->title) }}\'?')">
             @csrf @method('DELETE')
             <button type="submit" class="btn btn-secondary"
-                    style="border-color:#F09595;color:#A32D2D">
+                    style="border-color:var(--red);color:var(--red)">
                 <i class="ti ti-trash" style="font-size:14px"></i> Delete
             </button>
         </form>
@@ -252,7 +252,7 @@ $assignInit = $deal->assignedTo
 </div>
 
 @if(session('success'))
-<div style="display:flex;align-items:center;gap:10px;padding:11px 15px;background:#E1F5EE;border:1px solid #9FE1CB;border-radius:8px;margin-bottom:14px;font-size:13px;color:#0F6E56;font-weight:500">
+<div style="display:flex;align-items:center;gap:10px;padding:11px 15px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;margin-bottom:14px;font-size:13px;color:var(--green);font-weight:500">
     <i class="ti ti-circle-check" style="font-size:16px"></i> {{ session('success') }}
 </div>
 @endif
@@ -288,21 +288,21 @@ $assignInit = $deal->assignedTo
                 @if($isWon || $isLost)
                 <div style="display:flex;align-items:center;gap:10px;padding:12px 0 4px">
                     @if($isWon)
-                    <div style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:#E1F5EE;border:1px solid #9FE1CB;border-radius:10px;font-size:13px;font-weight:600;color:#0F6E56;width:100%">
+                    <div style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--green-dim);border:1px solid var(--green);border-radius:10px;font-size:13px;font-weight:600;color:var(--green);width:100%">
                         <i class="ti ti-trophy" style="font-size:18px"></i>
                         Deal Won!
                         @if($deal->actual_close_date)
-                        <span style="font-weight:400;font-size:12px;margin-left:auto;color:#0F6E56">
+                        <span style="font-weight:400;font-size:12px;margin-left:auto;color:var(--green)">
                             Closed {{ \Carbon\Carbon::parse($deal->actual_close_date)->format('M d, Y') }}
                         </span>
                         @endif
                     </div>
                     @else
-                    <div style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:#FCEBEB;border:1px solid #F09595;border-radius:10px;font-size:13px;font-weight:600;color:#A32D2D;width:100%">
+                    <div style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--red-dim);border:1px solid var(--red);border-radius:10px;font-size:13px;font-weight:600;color:var(--red);width:100%">
                         <i class="ti ti-x" style="font-size:18px"></i>
                         Deal Lost
                         @if($deal->actual_close_date)
-                        <span style="font-weight:400;font-size:12px;margin-left:auto;color:#A32D2D">
+                        <span style="font-weight:400;font-size:12px;margin-left:auto;color:var(--red)">
                             {{ \Carbon\Carbon::parse($deal->actual_close_date)->format('M d, Y') }}
                         </span>
                         @endif
@@ -416,7 +416,7 @@ $assignInit = $deal->assignedTo
                     <div class="ds-info-val">
                         @if($deal->assignedTo)
                         <div style="display:flex;align-items:center;gap:7px">
-                            <div style="width:22px;height:22px;border-radius:50%;background:#E6F1FB;color:#185FA5;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700">{{ $assignInit }}</div>
+                            <div style="width:22px;height:22px;border-radius:50%;background:var(--accent-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700">{{ $assignInit }}</div>
                             {{ $deal->assignedTo->name }}
                         </div>
                         @else <span class="muted">Unassigned</span>
@@ -434,7 +434,7 @@ $assignInit = $deal->assignedTo
                     <div class="ds-info-val">
                         @if($deal->expected_close_date)
                         @php $cd = \Carbon\Carbon::parse($deal->expected_close_date); $ov = $cd->isPast() && $isOpen; @endphp
-                        <span style="color:{{ $ov ? '#E24B4A' : 'inherit' }}">
+                        <span style="color:{{ $ov ? 'var(--red)' : 'inherit' }}">
                             @if($ov)<i class="ti ti-alert-triangle" style="font-size:12px"></i> @endif
                             {{ $cd->format('M d, Y') }}
                             <span style="font-size:11.5px;color:var(--text-400)">
@@ -449,7 +449,7 @@ $assignInit = $deal->assignedTo
                     <div class="ds-info-lbl">Actual Close</div>
                     <div class="ds-info-val">
                         @if($deal->actual_close_date)
-                        <span style="color:#1D9E75">{{ \Carbon\Carbon::parse($deal->actual_close_date)->format('M d, Y') }}</span>
+                        <span style="color:var(--green)">{{ \Carbon\Carbon::parse($deal->actual_close_date)->format('M d, Y') }}</span>
                         @else <span class="muted">—</span>
                         @endif
                     </div>
@@ -468,10 +468,10 @@ $assignInit = $deal->assignedTo
         {{-- Quotations --}}
         @php
             $qStatusColors = [
-                'draft'    => ['#F1EFE8', '#5F5E5A'],
-                'sent'     => ['#E6F1FB', '#185FA5'],
-                'accepted' => ['#E1F5EE', '#0F6E56'],
-                'rejected' => ['#FCEBEB', '#A32D2D'],
+                'draft'    => ['var(--bg-hover)', 'var(--text-300)'],
+                'sent'     => ['var(--accent-dim)', 'var(--accent)'],
+                'accepted' => ['var(--green-dim)', 'var(--green)'],
+                'rejected' => ['var(--red-dim)', 'var(--red)'],
             ];
         @endphp
         <div class="ds-card">
@@ -496,7 +496,7 @@ $assignInit = $deal->assignedTo
             </div>
             @else
             @foreach($deal->quotations as $q)
-            @php [$qBg, $qTx] = $qStatusColors[$q->status] ?? ['#F1EFE8','#5F5E5A']; @endphp
+            @php [$qBg, $qTx] = $qStatusColors[$q->status] ?? ['var(--bg-hover)','var(--text-300)']; @endphp
             <a href="{{ route('tenant.quotations.show', $q->id) }}" class="ds-fu-item" style="text-decoration:none;align-items:center">
                 <div class="ds-fu-icon" style="background:{{ $qBg }}">
                     <i class="ti ti-file-invoice" style="font-size:14px;color:{{ $qTx }}"></i>
@@ -549,7 +549,7 @@ $assignInit = $deal->assignedTo
             @foreach($deal->followups as $fu)
             @php
                 [$fuIco, $fuBg, $fuTx] = $fuTypeIcons[$fu->type] ?? $fuTypeIcons['other'];
-                [$fsBg, $fsTx] = $fuStatusColors[$fu->status] ?? ['#F1EFE8','#5F5E5A'];
+                [$fsBg, $fsTx] = $fuStatusColors[$fu->status] ?? ['var(--bg-hover)','var(--text-300)'];
                 $fuInit = $fu->assignedTo
                     ? substr(collect(explode(' ', $fu->assignedTo->name))->map(fn($p)=>strtoupper($p[0]??''))->join(''),0,2)
                     : '';
@@ -608,7 +608,7 @@ $assignInit = $deal->assignedTo
             @else
             @foreach($deal->tasks as $task)
             @php
-                $tkStatus = $tkStatusColors[$task->status] ?? ['label' => ucfirst($task->status), 'color' => '#5F5E5A', 'bg' => '#F1EFE8', 'text_color' => '#5F5E5A'];
+                $tkStatus = $tkStatusColors[$task->status] ?? ['label' => ucfirst($task->status), 'color' => 'var(--text-300)', 'bg' => 'var(--bg-hover)', 'text_color' => 'var(--text-300)'];
                 $tkPriority = $tkPriorityColors[$task->priority] ?? null;
             @endphp
             <div class="ds-fu-item">
@@ -653,20 +653,20 @@ $assignInit = $deal->assignedTo
             <div class="ds-sc-title">Quick Actions</div>
 
             <a href="{{ route('tenant.deals.edit', $deal->id) }}" class="ds-qa-btn">
-                <div class="ds-qa-icon" style="background:#E6F1FB"><i class="ti ti-edit" style="font-size:14px;color:#185FA5"></i></div>
+                <div class="ds-qa-icon" style="background:var(--accent-dim)"><i class="ti ti-edit" style="font-size:14px;color:var(--accent)"></i></div>
                 Edit Deal
             </a>
 
             <a href="{{ route('tenant.quotations.create', ['deal_id' => $deal->id]) }}" class="ds-qa-btn">
-                <div class="ds-qa-icon" style="background:#EEEDFE"><i class="ti ti-file-invoice" style="font-size:14px;color:#534AB7"></i></div>
+                <div class="ds-qa-icon" style="background:var(--purple-dim)"><i class="ti ti-file-invoice" style="font-size:14px;color:var(--purple)"></i></div>
                 Create Quotation
             </a>
 
             @if($isOpen || $isLost)
             <form method="POST" action="{{ route('tenant.deals.mark_won', $deal->id) }}">
                 @csrf
-                <button type="submit" class="ds-qa-btn" style="background:#E1F5EE;border-color:#9FE1CB;color:#0F6E56">
-                    <div class="ds-qa-icon" style="background:#C4EDDF"><i class="ti ti-trophy" style="font-size:14px;color:#0F6E56"></i></div>
+                <button type="submit" class="ds-qa-btn" style="background:var(--green-dim);border-color:var(--green);color:var(--green)">
+                    <div class="ds-qa-icon" style="background:#C4EDDF"><i class="ti ti-trophy" style="font-size:14px;color:var(--green)"></i></div>
                     Mark as Won 🎉
                 </button>
             </form>
@@ -674,8 +674,8 @@ $assignInit = $deal->assignedTo
 
             @if($isOpen || $isWon)
             <button type="button" onclick="document.getElementById('lostModal').showModal()"
-                    class="ds-qa-btn" style="background:#FCEBEB;border-color:#F09595;color:#A32D2D">
-                <div class="ds-qa-icon" style="background:#F8D0D0"><i class="ti ti-x" style="font-size:14px;color:#A32D2D"></i></div>
+                    class="ds-qa-btn" style="background:var(--red-dim);border-color:var(--red);color:var(--red)">
+                <div class="ds-qa-icon" style="background:#F8D0D0"><i class="ti ti-x" style="font-size:14px;color:var(--red)"></i></div>
                 Mark as Lost
             </button>
             @endif
@@ -686,7 +686,7 @@ $assignInit = $deal->assignedTo
                 <input type="hidden" name="stage" value="new">
                 <button type="submit" class="ds-qa-btn"
                         onclick="return confirm('Reopen this deal?')">
-                    <div class="ds-qa-icon" style="background:#E6F1FB"><i class="ti ti-refresh" style="font-size:14px;color:#185FA5"></i></div>
+                    <div class="ds-qa-icon" style="background:var(--accent-dim)"><i class="ti ti-refresh" style="font-size:14px;color:var(--accent)"></i></div>
                     Reopen Deal
                 </button>
             </form>
@@ -742,8 +742,8 @@ $assignInit = $deal->assignedTo
         </div>
 
         {{-- Danger Zone --}}
-        <div class="ds-sc" style="border-color:#F09595">
-            <div class="ds-sc-title" style="color:#A32D2D">Danger Zone</div>
+        <div class="ds-sc" style="border-color:var(--red)">
+            <div class="ds-sc-title" style="color:var(--red)">Danger Zone</div>
             <div style="font-size:12px;color:var(--text-300);margin-bottom:12px;line-height:1.5">
                 Deal permanently remove ho jayega.
             </div>
@@ -751,7 +751,7 @@ $assignInit = $deal->assignedTo
                   onsubmit="return confirm('Delete deal \'{{ addslashes($deal->title) }}\'? This cannot be undone.')">
                 @csrf @method('DELETE')
                 <button type="submit" class="btn"
-                        style="width:100%;justify-content:center;background:#FCEBEB;border-color:#F09595;color:#A32D2D;font-size:12.5px">
+                        style="width:100%;justify-content:center;background:var(--red-dim);border-color:var(--red);color:var(--red);font-size:12.5px">
                     <i class="ti ti-trash" style="font-size:14px"></i>
                     Delete Deal
                 </button>
@@ -779,7 +779,7 @@ $assignInit = $deal->assignedTo
         <div style="display:flex;gap:8px;justify-content:flex-end">
             <button type="button" onclick="document.getElementById('lostModal').close()"
                     class="btn btn-secondary">Cancel</button>
-            <button type="submit" class="btn" style="background:#FCEBEB;border-color:#F09595;color:#A32D2D">
+            <button type="submit" class="btn" style="background:var(--red-dim);border-color:var(--red);color:var(--red)">
                 <i class="ti ti-x" style="font-size:14px"></i>
                 Confirm Lost
             </button>

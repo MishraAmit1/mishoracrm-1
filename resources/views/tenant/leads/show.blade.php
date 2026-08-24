@@ -40,7 +40,7 @@
     width: 56px; height: 56px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     font-size: 18px; font-weight: 600; flex-shrink: 0;
-    background: #E6F1FB; color: #185FA5;
+    background: var(--accent-dim); color: var(--accent);
 }
 
 .ls-lead-name  { font-size: 19px; font-weight: 600; color: var(--text-100); letter-spacing: -0.3px; margin-bottom: 3px; }
@@ -78,18 +78,18 @@
     display: flex; align-items: center; justify-content: center;
     margin: 0 auto 5px; font-size: 11px; font-weight: 600;
 }
-.ls-pip-done    .ls-pip-dot { background: #E1F5EE; color: #0F6E56; border: 2px solid #1D9E75; }
-.ls-pip-active  .ls-pip-dot { background: #185FA5; color: #fff;    border: 2px solid #185FA5; }
+.ls-pip-done    .ls-pip-dot { background: var(--green-dim); color: var(--green); border: 2px solid var(--green); }
+.ls-pip-active  .ls-pip-dot { background: var(--accent); color: #fff;    border: 2px solid var(--accent); }
 .ls-pip-pending .ls-pip-dot {
     background: var(--bg-input); color: var(--text-300);
     border: 1px solid var(--border-default);
 }
 .ls-pip-lbl { font-size: 10.5px; font-weight: 500; color: var(--text-300); }
-.ls-pip-active .ls-pip-lbl { color: #185FA5; font-weight: 600; }
+.ls-pip-active .ls-pip-lbl { color: var(--accent); font-weight: 600; }
 .ls-pip-line       { flex: 1; height: 2px; background: var(--border-subtle); margin-bottom: 20px; }
-.ls-pip-line.done  { background: #1D9E75; }
-.ls-pip-lost  .ls-pip-dot { background: #FCEBEB; color: #A32D2D; border: 2px solid #E24B4A; }
-.ls-pip-lost  .ls-pip-lbl { color: #A32D2D; font-weight: 600; }
+.ls-pip-line.done  { background: var(--green); }
+.ls-pip-lost  .ls-pip-dot { background: var(--red-dim); color: var(--red); border: 2px solid var(--red); }
+.ls-pip-lost  .ls-pip-lbl { color: var(--red); font-weight: 600; }
 .ls-deal-link {
     display: inline-flex; align-items: center; gap: 6px;
     font-size: 12px; font-weight: 500; color: var(--accent);
@@ -139,7 +139,7 @@
 .ls-tl-desc   { font-size: 12.5px; color: var(--text-300); line-height: 1.5; }
 .ls-tl-tag    {
     display: inline-block; padding: 2px 8px; border-radius: 4px;
-    font-size: 11px; font-weight: 600; background: #E6F1FB; color: #185FA5;
+    font-size: 11px; font-weight: 600; background: var(--accent-dim); color: var(--accent);
 }
 
 /* ── Note Box ── */
@@ -167,7 +167,7 @@
 .ls-score-num {
     position: absolute; inset: 0;
     display: flex; align-items: center; justify-content: center;
-    font-size: 16px; font-weight: 600; color: #185FA5;
+    font-size: 16px; font-weight: 600; color: var(--accent);
     font-family: 'DM Mono', monospace;
 }
 .ls-score-title { font-size: 14px; font-weight: 600; color: var(--text-100); margin-bottom: 4px; }
@@ -210,21 +210,21 @@
 .ls-dl-val { font-size: 12.5px; font-weight: 500; color: var(--text-100); }
 
 /* ── Status Badge Colors ── */
-.status-new         { background: #E6F1FB; color: #185FA5; }
-.status-contacted   { background: #E1F5EE; color: #0F6E56; }
-.status-qualified   { background: #EAF3DE; color: #3B6D11; }
-.status-proposal    { background: #FAEEDA; color: #854F0B; }
-.status-negotiation { background: #EEEDFE; color: #3C3489; }
-.status-won         { background: #E1F5EE; color: #085041; }
-.status-lost        { background: #FCEBEB; color: #A32D2D; }
-.priority-low       { background: #EAF3DE; color: #3B6D11; }
-.priority-medium    { background: #FAEEDA; color: #854F0B; }
-.priority-high      { background: #FCEBEB; color: #A32D2D; }
-.source-referral    { background: #E1F5EE; color: #0F6E56; }
-.source-website     { background: #E6F1FB; color: #185FA5; }
-.source-social      { background: #EEEDFE; color: #534AB7; }
-.source-cold_call   { background: #FAEEDA; color: #854F0B; }
-.source-other       { background: #F1EFE8; color: #5F5E5A; }
+.status-new         { background: var(--accent-dim); color: var(--accent); }
+.status-contacted   { background: var(--green-dim); color: var(--green); }
+.status-qualified   { background: var(--green-dim); color: var(--green); }
+.status-proposal    { background: var(--amber-dim); color: var(--amber); }
+.status-negotiation { background: var(--purple-dim); color: var(--purple); }
+.status-won         { background: var(--green-dim); color: var(--green); }
+.status-lost        { background: var(--red-dim); color: var(--red); }
+.priority-low       { background: var(--green-dim); color: var(--green); }
+.priority-medium    { background: var(--amber-dim); color: var(--amber); }
+.priority-high      { background: var(--red-dim); color: var(--red); }
+.source-referral    { background: var(--green-dim); color: var(--green); }
+.source-website     { background: var(--accent-dim); color: var(--accent); }
+.source-social      { background: var(--purple-dim); color: var(--purple); }
+.source-cold_call   { background: var(--amber-dim); color: var(--amber); }
+.source-other       { background: var(--bg-hover); color: var(--text-300); }
 
 @keyframes ls-spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 
@@ -311,7 +311,7 @@ if ($lead->assignedTo) {
             <form method="POST" action="{{ route('tenant.leads.destroy', $lead) }}"
                   onsubmit="return confirm('Are you sure you want to delete this lead?')" style="display:inline">
                 @csrf @method('DELETE')
-                <button type="submit" class="btn" style="background:#FCEBEB;border-color:#F09595;color:#A32D2D">
+                <button type="submit" class="btn" style="background:var(--red-dim);border-color:var(--red);color:var(--red)">
                     <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                 </button>
             </form>
@@ -371,11 +371,11 @@ if ($lead->assignedTo) {
                         <div class="ls-stat-lbl">Touchpoints</div>
                     </div>
                     <div>
-                        <div class="ls-stat-val" style="color:#1D9E75">{{ $score }}</div>
+                        <div class="ls-stat-val" style="color:var(--green)">{{ $score }}</div>
                         <div class="ls-stat-lbl">Lead Score</div>
                     </div>
                     <div>
-                        <div class="ls-stat-val" style="color:#BA7517">
+                        <div class="ls-stat-val" style="color:var(--amber)">
                             {{ $lead->expected_close_date ? \Carbon\Carbon::parse($lead->expected_close_date)->format('d M') : '—' }}
                         </div>
                         <div class="ls-stat-lbl">Close Date</div>
@@ -426,13 +426,13 @@ if ($lead->assignedTo) {
                         <div class="ls-card-title">Deal Stage</div>
                         @php
                             $dealStageBadgeMap = [
-                                'new'         => ['bg'=>'#E6F1FB','color'=>'#185FA5'],
-                                'proposal'    => ['bg'=>'#FAEEDA','color'=>'#854F0B'],
-                                'negotiation' => ['bg'=>'#EEEDFE','color'=>'#3C3489'],
-                                'won'         => ['bg'=>'#E1F5EE','color'=>'#085041'],
-                                'lost'        => ['bg'=>'#FCEBEB','color'=>'#A32D2D'],
+                                'new'         => ['bg'=>'var(--accent-dim)','color'=>'var(--accent)'],
+                                'proposal'    => ['bg'=>'var(--amber-dim)','color'=>'var(--amber)'],
+                                'negotiation' => ['bg'=>'var(--purple-dim)','color'=>'var(--purple)'],
+                                'won'         => ['bg'=>'var(--green-dim)','color'=>'var(--green)'],
+                                'lost'        => ['bg'=>'var(--red-dim)','color'=>'var(--red)'],
                             ];
-                            $dsb = $dealStageBadgeMap[$deal->stage] ?? ['bg'=>'#F1EFE8','color'=>'#5F5E5A'];
+                            $dsb = $dealStageBadgeMap[$deal->stage] ?? ['bg'=>'var(--bg-hover)','color'=>'var(--text-300)'];
                         @endphp
                         <span style="font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:20px;background:{{ $dsb['bg'] }};color:{{ $dsb['color'] }}">
                             {{ \App\Models\Deal::stages()[$deal->stage] ?? ucfirst($deal->stage) }}
@@ -557,8 +557,8 @@ if ($lead->assignedTo) {
                 <div style="padding:0 22px 18px">
                     {{-- Lead Created entry --}}
                     <div class="at-tl-item" style="display:flex;gap:12px">
-                        <div class="at-tl-icon" style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#EAF3DE">
-                            <svg width="14" height="14" fill="none" stroke="#3B6D11" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                        <div class="at-tl-icon" style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--green-dim)">
+                            <svg width="14" height="14" fill="none" stroke="var(--green)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                         </div>
                         <div style="flex:1;padding-top:4px">
                             <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
@@ -608,8 +608,8 @@ if ($lead->assignedTo) {
                 <div class="ls-score-wrap">
                     <div class="ls-score-ring">
                         <svg width="64" height="64" viewBox="0 0 64 64">
-                            <circle cx="32" cy="32" r="26" fill="none" stroke="#E6F1FB" stroke-width="6"/>
-                            <circle cx="32" cy="32" r="26" fill="none" stroke="#185FA5" stroke-width="6"
+                            <circle cx="32" cy="32" r="26" fill="none" stroke="var(--accent-dim)" stroke-width="6"/>
+                            <circle cx="32" cy="32" r="26" fill="none" stroke="var(--accent)" stroke-width="6"
                                     stroke-dasharray="163.4"
                                     stroke-dashoffset="{{ round($ringOffset, 1) }}"
                                     stroke-linecap="round"/>
@@ -633,7 +633,7 @@ if ($lead->assignedTo) {
                 <div class="ls-card-title" style="margin-bottom:14px">Assigned To</div>
                 @if($lead->assignee)
                 <div class="ls-assignee-row">
-                    <div class="ls-sm-avatar" style="background:#E6F1FB;color:#185FA5">
+                    <div class="ls-sm-avatar" style="background:var(--accent-dim);color:var(--accent)">
                         {{ $assigneeInitials }}
                     </div>
                     <div>
@@ -662,44 +662,44 @@ if ($lead->assignedTo) {
                 <div class="ls-qa-list">
                     @if($lead->email)
                     <a href="mailto:{{ $lead->email }}" class="ls-qa-btn">
-                        <div class="ls-qa-icon" style="background:#E6F1FB">
-                            <svg width="14" height="14" fill="none" stroke="#185FA5" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                        <div class="ls-qa-icon" style="background:var(--accent-dim)">
+                            <svg width="14" height="14" fill="none" stroke="var(--accent)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                         </div>
                         Send Email
                     </a>
                     @endif
                     @if($lead->phone)
                     <a href="https://wa.me/91{{ preg_replace('/\D/','',$lead->phone) }}" target="_blank" class="ls-qa-btn">
-                        <div class="ls-qa-icon" style="background:#E1F5EE">
-                            <svg width="14" height="14" fill="none" stroke="#0F6E56" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                        <div class="ls-qa-icon" style="background:var(--green-dim)">
+                            <svg width="14" height="14" fill="none" stroke="var(--green)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
                         </div>
                         Send WhatsApp
                     </a>
                     @endif
                     <button class="ls-qa-btn" onclick="document.getElementById('proposalModal').classList.add('open')">
-                        <div class="ls-qa-icon" style="background:#FAEEDA">
-                            <svg width="14" height="14" fill="none" stroke="#BA7517" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <div class="ls-qa-icon" style="background:var(--amber-dim)">
+                            <svg width="14" height="14" fill="none" stroke="var(--amber)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                         </div>
                         Create Proposal
                     </button>
                     <a href="{{ route('tenant.followups.create', ['lead_id' => $lead->id]) }}" class="ls-qa-btn">
-                        <div class="ls-qa-icon" style="background:#EEEDFE">
-                            <svg width="14" height="14" fill="none" stroke="#534AB7" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        <div class="ls-qa-icon" style="background:var(--purple-dim)">
+                            <svg width="14" height="14" fill="none" stroke="var(--purple)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                         </div>
                         Schedule Follow-up
                     </a>
                     <a href="{{ route('tenant.tasks.create', ['lead_id' => $lead->id]) }}" class="ls-qa-btn">
-                        <div class="ls-qa-icon" style="background:#E6F1FB">
-                            <svg width="14" height="14" fill="none" stroke="#185FA5" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+                        <div class="ls-qa-icon" style="background:var(--accent-dim)">
+                            <svg width="14" height="14" fill="none" stroke="var(--accent)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
                         </div>
                         Add Task
                     </a>
                     @if(!$lead->isConverted())
                     <form method="POST" action="{{ route('tenant.leads.convert', $lead) }}">
                         @csrf
-                        <button type="submit" class="ls-qa-btn" style="color:#1D9E75;border-color:#9FE1CB;background:#E1F5EE;width:100%">
-                            <div class="ls-qa-icon" style="background:#E1F5EE">
-                                <svg width="14" height="14" fill="none" stroke="#1D9E75" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <button type="submit" class="ls-qa-btn" style="color:var(--green);border-color:var(--green);background:var(--green-dim);width:100%">
+                            <div class="ls-qa-icon" style="background:var(--green-dim)">
+                                <svg width="14" height="14" fill="none" stroke="var(--green)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             </div>
                             Mark as Won
                         </button>
@@ -728,7 +728,7 @@ if ($lead->assignedTo) {
                     </div>
                     <div class="ls-dl-row">
                         <span class="ls-dl-key">Close Date</span>
-                        <span class="ls-dl-val" style="{{ $lead->expected_close_date ? 'color:#BA7517' : '' }}">
+                        <span class="ls-dl-val" style="{{ $lead->expected_close_date ? 'color:var(--amber)' : '' }}">
                             {{ $lead->expected_close_date ? \Carbon\Carbon::parse($lead->expected_close_date)->format('M d, Y') : '—' }}
                         </span>
                     </div>

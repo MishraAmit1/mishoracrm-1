@@ -247,9 +247,9 @@
 use Illuminate\Support\Str;
 $cfgStages   = config('deal_fields.stages');
 $avColors    = [
-    ['#E6F1FB','#185FA5'],['#E1F5EE','#0F6E56'],
-    ['#FAEEDA','#854F0B'],['#EEEDFE','#3C3489'],
-    ['#FCEBEB','#A32D2D'],
+    ['var(--accent-dim)','var(--accent)'],['var(--green-dim)','var(--green)'],
+    ['var(--amber-dim)','var(--amber)'],['var(--purple-dim)','var(--purple)'],
+    ['var(--red-dim)','var(--red)'],
 ];
 $initials = fn(string $n): string =>
     substr(collect(explode(' ',$n))->map(fn($p)=>strtoupper($p[0]??''))->join(''),0,2);
@@ -289,40 +289,40 @@ $wlMax = $winLossData->max(fn($r) => max($r['won'], $r['lost'])) ?: 1;
 
     {{-- Total Pipeline --}}
     <div class="pa-kpi">
-        <div class="pa-kpi-icon" style="background:#E6F1FB;color:#185FA5">
+        <div class="pa-kpi-icon" style="background:var(--accent-dim);color:var(--accent)">
             <i class="ti ti-chart-bar"></i>
         </div>
         <div class="pa-kpi-val">₹{{ number_format($totalPipeline/100000,1) }}L</div>
         <div class="pa-kpi-lbl">Total Pipeline</div>
         <div class="pa-kpi-sub">{{ $funnelData->sum('count') }} open deals</div>
-        <div class="pa-kpi-bar" style="width:100%;background:#378ADD"></div>
+        <div class="pa-kpi-bar" style="width:100%;background:var(--accent)"></div>
     </div>
 
     {{-- Weighted Forecast --}}
     <div class="pa-kpi">
-        <div class="pa-kpi-icon" style="background:#E1F5EE;color:#0F6E56">
+        <div class="pa-kpi-icon" style="background:var(--green-dim);color:var(--green)">
             <i class="ti ti-target"></i>
         </div>
         <div class="pa-kpi-val">₹{{ number_format($weightedForecast/100000,1) }}L</div>
         <div class="pa-kpi-lbl">Weighted Forecast</div>
         <div class="pa-kpi-sub">Probability se weighted</div>
-        <div class="pa-kpi-bar" style="width:100%;background:#1D9E75"></div>
+        <div class="pa-kpi-bar" style="width:100%;background:var(--green)"></div>
     </div>
 
     {{-- Win Rate --}}
     <div class="pa-kpi">
-        <div class="pa-kpi-icon" style="background:#EEEDFE;color:#3C3489">
+        <div class="pa-kpi-icon" style="background:var(--purple-dim);color:var(--purple)">
             <i class="ti ti-trophy"></i>
         </div>
         <div class="pa-kpi-val">{{ $winRate }}%</div>
         <div class="pa-kpi-lbl">Win Rate</div>
         <div class="pa-kpi-sub">{{ $wonCount }} won · {{ $lostCount }} lost (this year)</div>
-        <div class="pa-kpi-bar" style="width:{{ $winRate }}%;background:#534AB7"></div>
+        <div class="pa-kpi-bar" style="width:{{ $winRate }}%;background:var(--purple)"></div>
     </div>
 
     {{-- Avg Deal Size --}}
     <div class="pa-kpi">
-        <div class="pa-kpi-icon" style="background:#FAEEDA;color:#854F0B">
+        <div class="pa-kpi-icon" style="background:var(--amber-dim);color:var(--amber)">
             <i class="ti ti-currency-rupee"></i>
         </div>
         <div class="pa-kpi-val">₹{{ number_format($avgDealSize/1000,0) }}K</div>
@@ -332,7 +332,7 @@ $wlMax = $winLossData->max(fn($r) => max($r['won'], $r['lost'])) ?: 1;
             Avg close: {{ round($avgDaysToClose) }} days
             @else No closed deals yet @endif
         </div>
-        <div class="pa-kpi-bar" style="width:100%;background:#EF9F27"></div>
+        <div class="pa-kpi-bar" style="width:100%;background:var(--amber)"></div>
     </div>
 
 </div>
@@ -344,7 +344,7 @@ $wlMax = $winLossData->max(fn($r) => max($r['won'], $r['lost'])) ?: 1;
     <div class="pa-card">
         <div class="pa-card-hd">
             <div class="pa-card-title">
-                <i class="ti ti-filter" style="font-size:14px;color:#378ADD"></i>
+                <i class="ti ti-filter" style="font-size:14px;color:var(--accent)"></i>
                 Pipeline Funnel
             </div>
             <span style="font-size:11.5px;color:var(--text-400)">Open stages</span>
@@ -353,7 +353,7 @@ $wlMax = $winLossData->max(fn($r) => max($r['won'], $r['lost'])) ?: 1;
             @forelse($funnelData as $i => $row)
             @php
                 $stage  = $cfgStages[$row['stage']] ?? [];
-                $color  = $stage['color'] ?? '#378ADD';
+                $color  = $stage['color'] ?? 'var(--accent)';
                 $label  = $stage['label'] ?? $row['stage'];
                 $pct    = $funnelMax > 0 ? round(($row['count'] / $funnelMax) * 100) : 0;
                 $nextRow = $funnelData[$i+1] ?? null;
@@ -392,16 +392,16 @@ $wlMax = $winLossData->max(fn($r) => max($r['won'], $r['lost'])) ?: 1;
             <div style="margin-top:8px;padding-top:12px;border-top:1px solid var(--border-subtle);display:flex;gap:16px">
                 @php $wonRow=$cfgStages['won']??[]; $lostRow=$cfgStages['lost']??[]; @endphp
                 <div style="display:flex;align-items:center;gap:7px">
-                    <div style="width:10px;height:10px;border-radius:3px;background:{{ $wonRow['color']??'#1D9E75' }}"></div>
+                    <div style="width:10px;height:10px;border-radius:3px;background:{{ $wonRow['color']??'var(--green)' }}"></div>
                     <span style="font-size:12px;color:var(--text-300)">
-                        Won: <strong style="color:{{ $wonRow['text_color']??'#0F6E56' }}">{{ $stageData->get('won')?->count ?? 0 }}</strong>
+                        Won: <strong style="color:{{ $wonRow['text_color']??'var(--green)' }}">{{ $stageData->get('won')?->count ?? 0 }}</strong>
                         · ₹{{ number_format(($stageData->get('won')?->total ?? 0)/100000,1) }}L
                     </span>
                 </div>
                 <div style="display:flex;align-items:center;gap:7px">
-                    <div style="width:10px;height:10px;border-radius:3px;background:{{ $lostRow['color']??'#E24B4A' }}"></div>
+                    <div style="width:10px;height:10px;border-radius:3px;background:{{ $lostRow['color']??'var(--red)' }}"></div>
                     <span style="font-size:12px;color:var(--text-300)">
-                        Lost: <strong style="color:{{ $lostRow['text_color']??'#A32D2D' }}">{{ $stageData->get('lost')?->count ?? 0 }}</strong>
+                        Lost: <strong style="color:{{ $lostRow['text_color']??'var(--red)' }}">{{ $stageData->get('lost')?->count ?? 0 }}</strong>
                     </span>
                 </div>
             </div>
@@ -412,7 +412,7 @@ $wlMax = $winLossData->max(fn($r) => max($r['won'], $r['lost'])) ?: 1;
     <div class="pa-card">
         <div class="pa-card-hd">
             <div class="pa-card-title">
-                <i class="ti ti-chart-area" style="font-size:14px;color:#1D9E75"></i>
+                <i class="ti ti-chart-area" style="font-size:14px;color:var(--green)"></i>
                 Monthly Closed Revenue
             </div>
             <span style="font-size:11.5px;color:var(--text-400)">Last 6 months</span>
@@ -430,7 +430,7 @@ $wlMax = $winLossData->max(fn($r) => max($r['won'], $r['lost'])) ?: 1;
                         @if($m['value'] > 0)₹{{ number_format($m['value']/1000,0) }}K@else —@endif
                     </div>
                     <div class="bar-col-bar"
-                         style="height:{{ $h }}px;background:{{ $m['value']>0?'#1D9E75':'var(--border-subtle)' }}"
+                         style="height:{{ $h }}px;background:{{ $m['value']>0?'var(--green)':'var(--border-subtle)' }}"
                          data-tip="{{ $tip }}">
                     </div>
                     <span class="bar-col-lbl">{{ $m['short'] }}</span>
@@ -456,7 +456,7 @@ $wlMax = $winLossData->max(fn($r) => max($r['won'], $r['lost'])) ?: 1;
     <div class="pa-card">
         <div class="pa-card-hd">
             <div class="pa-card-title">
-                <i class="ti ti-calendar-due" style="font-size:14px;color:#EF9F27"></i>
+                <i class="ti ti-calendar-due" style="font-size:14px;color:var(--amber)"></i>
                 Closing This Month
             </div>
             <span style="font-size:11.5px;color:var(--text-400)">
@@ -489,12 +489,12 @@ $wlMax = $winLossData->max(fn($r) => max($r['won'], $r['lost'])) ?: 1;
                     <div class="closing-title">{{ $deal->title }}</div>
                     <div class="closing-sub">
                         @if($deal->contact){{ $deal->contact->name }} · @endif
-                        <span class="s-badge" style="background:{{ $stage['bg']??'#E6F1FB' }};color:{{ $stage['text_color']??'#185FA5' }}">{{ $stage['label']??$deal->stage }}</span>
+                        <span class="s-badge" style="background:{{ $stage['bg']??'var(--accent-dim)' }};color:{{ $stage['text_color']??'var(--accent)' }}">{{ $stage['label']??$deal->stage }}</span>
                     </div>
                 </div>
                 <div class="closing-right">
                     <div class="closing-val">₹{{ number_format($deal->value) }}</div>
-                    <div class="closing-date" style="color:{{ $isLate?'#E24B4A':'var(--text-400)' }}">
+                    <div class="closing-date" style="color:{{ $isLate?'var(--red)':'var(--text-400)' }}">
                         {{ $cd->format('d M') }}
                         <span style="font-size:10px">({{ $daysLeft }})</span>
                     </div>
@@ -509,7 +509,7 @@ $wlMax = $winLossData->max(fn($r) => max($r['won'], $r['lost'])) ?: 1;
     <div class="pa-card">
         <div class="pa-card-hd">
             <div class="pa-card-title">
-                <i class="ti ti-star" style="font-size:14px;color:#EF9F27"></i>
+                <i class="ti ti-star" style="font-size:14px;color:var(--amber)"></i>
                 Top Deals
             </div>
         </div>
@@ -522,13 +522,13 @@ $wlMax = $winLossData->max(fn($r) => max($r['won'], $r['lost'])) ?: 1;
         @foreach($topDeals as $i => $deal)
         @php $stage=$cfgStages[$deal->stage]??[]; @endphp
         <a href="{{ route('tenant.deals.show', $deal->id) }}" class="top-deal-row">
-            <div class="top-rank" style="{{ $i===0?'background:#FAEEDA;color:#854F0B;border-color:#EF9F27':'' }}">
+            <div class="top-rank" style="{{ $i===0?'background:var(--amber-dim);color:var(--amber);border-color:var(--amber)':'' }}">
                 {{ $i+1 }}
             </div>
             <div class="top-deal-info">
                 <div class="top-deal-title">{{ Str::limit($deal->title, 24) }}</div>
                 <div class="top-deal-sub">
-                    <span class="s-badge" style="background:{{ $stage['bg']??'#E6F1FB' }};color:{{ $stage['text_color']??'#185FA5' }}">{{ $stage['label']??$deal->stage }}</span>
+                    <span class="s-badge" style="background:{{ $stage['bg']??'var(--accent-dim)' }};color:{{ $stage['text_color']??'var(--accent)' }}">{{ $stage['label']??$deal->stage }}</span>
                     @if($deal->assignedTo)
                     · {{ Str::limit($deal->assignedTo->name,12) }}
                     @endif
@@ -549,7 +549,7 @@ $wlMax = $winLossData->max(fn($r) => max($r['won'], $r['lost'])) ?: 1;
     <div class="pa-card">
         <div class="pa-card-hd">
             <div class="pa-card-title">
-                <i class="ti ti-chart-bar" style="font-size:14px;color:#534AB7"></i>
+                <i class="ti ti-chart-bar" style="font-size:14px;color:var(--purple)"></i>
                 Win vs Loss
             </div>
             <span style="font-size:11.5px;color:var(--text-400)">Last 6 months</span>
@@ -563,9 +563,9 @@ $wlMax = $winLossData->max(fn($r) => max($r['won'], $r['lost'])) ?: 1;
                 @endphp
                 <div class="wl-col">
                     <div class="wl-bars">
-                        <div class="wl-bar" style="height:{{ max($wh,3) }}px;background:#1D9E75"
+                        <div class="wl-bar" style="height:{{ max($wh,3) }}px;background:var(--green)"
                              data-tip="{{ $m['won'] }} Won — {{ $m['month'] }}"></div>
-                        <div class="wl-bar" style="height:{{ max($lh,3) }}px;background:#E24B4A"
+                        <div class="wl-bar" style="height:{{ max($lh,3) }}px;background:var(--red)"
                              data-tip="{{ $m['lost'] }} Lost — {{ $m['month'] }}"></div>
                     </div>
                     <span class="wl-col-lbl">{{ $m['month'] }}</span>
@@ -574,10 +574,10 @@ $wlMax = $winLossData->max(fn($r) => max($r['won'], $r['lost'])) ?: 1;
             </div>
             <div class="chart-legend">
                 <div class="legend-item">
-                    <div class="legend-dot" style="background:#1D9E75"></div> Won
+                    <div class="legend-dot" style="background:var(--green)"></div> Won
                 </div>
                 <div class="legend-item">
-                    <div class="legend-dot" style="background:#E24B4A"></div> Lost
+                    <div class="legend-dot" style="background:var(--red)"></div> Lost
                 </div>
             </div>
         </div>
@@ -587,7 +587,7 @@ $wlMax = $winLossData->max(fn($r) => max($r['won'], $r['lost'])) ?: 1;
     <div class="pa-card">
         <div class="pa-card-hd">
             <div class="pa-card-title">
-                <i class="ti ti-git-branch" style="font-size:14px;color:#378ADD"></i>
+                <i class="ti ti-git-branch" style="font-size:14px;color:var(--accent)"></i>
                 Stage Breakdown
             </div>
         </div>

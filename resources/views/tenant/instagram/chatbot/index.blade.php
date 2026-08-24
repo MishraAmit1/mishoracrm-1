@@ -7,7 +7,7 @@
 @media(max-width:900px){ .chatbot-layout { grid-template-columns:1fr; } }
 .flow-card { background:var(--bg-surface); border:1px solid var(--border-default); border-radius:var(--r-lg); padding:16px 18px; margin-bottom:10px; display:flex; align-items:flex-start; gap:14px; }
 .flow-card.inactive { opacity:.6; }
-.flow-icon { width:36px; height:36px; border-radius:var(--r-md); background:#fce7f3; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+.flow-icon { width:36px; height:36px; border-radius:var(--r-md); background:rgba(252,231,243,0.14); display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
 .flow-info { flex:1; min-width:0; }
 .flow-name { font-weight:700; font-size:14px; color:var(--text-100); }
 .flow-kw { font-size:12px; color:var(--text-300); margin-top:2px; }
@@ -15,12 +15,12 @@
 .flow-actions { display:flex; gap:6px; align-items:center; flex-shrink:0; }
 .toggle-switch { position:relative; display:inline-block; width:36px; height:20px; }
 .toggle-switch input { opacity:0; width:0; height:0; }
-.toggle-slider { position:absolute; cursor:pointer; inset:0; background:#d1d5db; border-radius:99px; transition:.2s; }
+.toggle-slider { position:absolute; cursor:pointer; inset:0; background:rgba(209,213,219,0.14); border-radius:99px; transition:.2s; }
 .toggle-slider:before { content:''; position:absolute; width:14px; height:14px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.2s; }
 input:checked + .toggle-slider { background:var(--accent); }
 input:checked + .toggle-slider:before { transform:translateX(16px); }
 .kw-tag { display:inline-block; background:var(--bg-subtle); border:1px solid var(--border-subtle); border-radius:99px; padding:1px 8px; font-size:11px; color:var(--text-200); margin:1px; }
-.default-badge { background:#fef3c7; color:#92400e; border-radius:99px; padding:1px 8px; font-size:11px; font-weight:600; }
+.default-badge { background:rgba(254,243,199,0.14); color:#F19D6A; border-radius:99px; padding:1px 8px; font-size:11px; font-weight:600; }
 </style>
 @endpush
 

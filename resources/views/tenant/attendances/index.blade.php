@@ -47,7 +47,7 @@
 .badge-red    { background:var(--red-dim);    color:var(--red);    }
 .badge-amber  { background:var(--amber-dim);  color:var(--amber);  }
 .badge-purple { background:var(--purple-dim); color:var(--purple); }
-.badge-blue   { background:var(--blue-dim,rgba(59,130,246,.12)); color:var(--blue,#3b82f6); }
+.badge-blue   { background:var(--blue-dim,rgba(59,130,246,.12)); color:var(--blue); }
 
 /* Pagination */
 .pagination-wrap { display:flex; align-items:center; justify-content:space-between; padding:14px 20px; border-top:1px solid var(--border-subtle); font-size:13px; color:var(--text-300); }
