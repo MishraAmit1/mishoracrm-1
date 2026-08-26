@@ -32,6 +32,13 @@ class AppServiceProvider extends ServiceProvider
         // is styled to match the app's design system in app.css.
         Paginator::useBootstrapFive();
 
+        // Laravel's own bootstrap-5 view renders every page number with no
+        // ellipsis whenever the paginator has fewer than ~14 pages, which
+        // looks broken (e.g. 1..12 all as buttons). Use the same markup/CSS
+        // classes but always window to current page ± 2 with first/last
+        // jump links, matching the pagination style used elsewhere in the app.
+        Paginator::defaultView('vendor.pagination.app');
+
         // The framework's default RedirectIfAuthenticated (used by the
         // 'guest' middleware on /login etc.) redirects already-logged-in
         // users to a route named "dashboard", falling back to "home" (the

@@ -653,6 +653,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
         Route::prefix('/work-orders')->name('work-orders.')->middleware('module:manufacturing')->group(function () {
             Route::controller(Tenant\WorkOrderController::class)->group(function () {
                 Route::get('/', 'index')->name('index');
+                Route::post('/auto-pr-setting', 'updateAutoPrSetting')->name('auto-pr-setting');
                 Route::get('/create', 'create')->name('create');
                 Route::post('/', 'store')->name('store');
                 Route::get('/{id}', 'show')->name('show');
@@ -885,6 +886,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
             Route::put('password', [Tenant\SettingsController::class, 'updatePassword'])->name('password');
             Route::post('avatar',  [Tenant\SettingsController::class, 'uploadAvatar'])->name('avatar');
             Route::put('company',  [Tenant\SettingsController::class, 'updateCompany'])->name('company');
+            Route::post('theme',   [Tenant\SettingsController::class, 'updateTheme'])->name('theme');
         });
 
         // My Profile

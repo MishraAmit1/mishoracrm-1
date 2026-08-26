@@ -1,19 +1,11 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="{{ Auth::user()?->tenant?->settings['theme'] ?? 'dark' }}">
+<html lang="en" data-theme="{{ Auth::user()?->theme ?? 'dark' }}">
 
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="csrf-token" content="{{ csrf_token() }}" />
     <title>@yield('title', 'Dashboard') — {{ Auth::user()?->tenant?->name ?? 'CrmPro' }}</title>
-
-    <script>
-        // Apply saved theme before first paint to avoid a dark/light flash on reload
-        (function () {
-            var saved = localStorage.getItem('crm_theme');
-            if (saved) document.documentElement.dataset.theme = saved;
-        })();
-    </script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
@@ -172,6 +164,16 @@
             const sun = document.getElementById('ico-sun');
             if (moon) moon.style.display = isDark ? 'none' : '';
             if (sun) sun.style.display = isDark ? '' : 'none';
+
+            // Persist the preference to the user's account so it follows them to any device/browser.
+            fetch('{{ route('tenant.settings.theme') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                },
+                body: JSON.stringify({ theme: next }),
+            }).catch(() => {});
         }
         (function () {
             // Theme itself is already applied in <head> to avoid a flash; just sync the icon.
@@ -369,16 +371,30 @@
         }
 
         /* ──────────────────────────────────────────────
-           Select2 — auto-applied to every real <select> app-wide so
-           dropdowns are searchable, without needing per-page markup.
+           Select2 — auto-applied to real <select> elements app-wide so
+           long/dynamic dropdowns (staff, sources, customers, etc.) are
+           searchable, without needing per-page markup.
+
+           Short, fixed dropdowns (status filters, yes/no, priority, ...)
+           are skipped and left as plain native <select> — select2 slightly
+           changes their look and adds no value when there's only a
+           handful of options to scan.
+
            Opt out with class="no-select2" or data-no-select2.
+           Opt in anyway (force select2 despite few options) with
+           class="force-select2" or data-force-select2.
         ────────────────────────────────────────────── */
+        const SELECT2_MIN_OPTIONS = 6;
+
         function initSelect2(scope) {
             $(scope || document).find('select').each(function () {
                 const $el = $(this);
                 if ($el.hasClass('select2-hidden-accessible')) return;
                 if ($el.hasClass('no-select2') || $el.is('[data-no-select2]')) return;
                 if ($el.is(':disabled')) return;
+
+                const forceOn = $el.hasClass('force-select2') || $el.is('[data-force-select2]');
+                if (!forceOn && $el.find('option').length < SELECT2_MIN_OPTIONS) return;
 
                 const $modal = $el.closest('.modal-box');
                 const hasBlankOption = $el.find('option[value=""]').length > 0;

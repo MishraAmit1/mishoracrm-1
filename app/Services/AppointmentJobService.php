@@ -5,10 +5,61 @@ namespace App\Services;
 use App\Models\Appointment;
 use App\Models\Invoice;
 use App\Models\Product;
+use App\Models\WhatsappSetting;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 
 class AppointmentJobService
 {
+    // ── Booking confirmation — Email + WhatsApp to the Contact only.
+    // Fired on every booking regardless of who created it (staff via the
+    // tenant UI, or the customer via the public self-booking link) — same
+    // best-effort send/skip pattern as SubscriptionReminderService. ──────
+    public static function sendBookingConfirmation(Appointment $appointment): void
+    {
+        $appointment->loadMissing(['tenant', 'contact', 'service']);
+        $tenant  = $appointment->tenant;
+        $contact = $appointment->contact;
+
+        if (!$tenant || !$contact || !$tenant->wantsAppointmentNotifications()) {
+            return;
+        }
+
+        $when        = $appointment->starts_at->format('d M Y, h:i A');
+        $serviceName = $appointment->service?->name ?? 'your appointment';
+
+        if ($contact->email) {
+            $subject = "Booking confirmed — {$serviceName}";
+            $html    = "<p>Dear {$contact->name},</p>"
+                . "<p>Your booking for <strong>{$serviceName}</strong> with {$tenant->name} is confirmed for <strong>{$when}</strong>.</p>"
+                . "<p><a href=\"{$appointment->publicUrl()}\">View or cancel your booking</a></p>"
+                . "<p>Thank you,<br>{$tenant->name}</p>";
+
+            try {
+                $sent = EmailService::send($tenant->id, $contact->email, $contact->name, $subject, $html);
+                if (!$sent) {
+                    Mail::send([], [], function ($mail) use ($contact, $subject, $html) {
+                        $mail->to($contact->email, $contact->name)->subject($subject)->html($html);
+                    });
+                }
+            } catch (\Throwable $e) {
+                // best-effort — booking itself already succeeded
+            }
+        }
+
+        $settings = WhatsappSetting::forTenant($tenant->id);
+        if ($contact->phone && $settings->exists && $settings->is_connected) {
+            $message = "Hi {$contact->name}, your booking for {$serviceName} with {$tenant->name} is confirmed for {$when}. "
+                . "Manage your booking: {$appointment->publicUrl()}";
+            try {
+                $waId = preg_replace('/[^0-9]/', '', $contact->phone);
+                WhatsappChatbotService::forTenant($tenant->id)->sendMessage($waId, $message);
+            } catch (\Throwable $e) {
+                // best-effort
+            }
+        }
+    }
+
     // ── Start — booked/confirmed → in_progress ─────────────────────
     // Geolocation is a best-effort one-time snapshot (see the Start Work
     // button's JS) — never required, never blocks the action if absent.

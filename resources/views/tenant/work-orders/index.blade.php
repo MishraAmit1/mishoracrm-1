@@ -28,6 +28,15 @@
 .empty-icon { font-size:40px; margin-bottom:12px; }
 .empty-title { font-size:15px; font-weight:700; color:var(--text-100); margin-bottom:6px; }
 .empty-sub { font-size:13px; color:var(--text-300); margin-bottom:20px; }
+.auto-pr-row { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 18px; margin-bottom:16px; }
+.auto-pr-label { font-size:13.5px; font-weight:600; color:var(--text-100); }
+.auto-pr-desc { font-size:12px; color:var(--text-300); margin-top:2px; }
+.switch { position:relative; display:inline-block; width:42px; height:23px; flex-shrink:0; }
+.switch input { opacity:0; width:0; height:0; }
+.slider { position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:var(--border-default); border-radius:23px; transition:.2s; }
+.slider:before { position:absolute; content:""; height:17px; width:17px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.2s; box-shadow:0 1px 3px rgba(0,0,0,.2); }
+.switch input:checked + .slider { background:var(--accent); }
+.switch input:checked + .slider:before { transform:translateX(19px); }
 </style>
 @endpush
 
@@ -50,6 +59,20 @@
         @endcan
     </div>
 </div>
+
+@if(auth()->user()->user_type === 'tenant_admin')
+<form method="POST" action="{{ route('tenant.work-orders.auto-pr-setting') }}" class="card auto-pr-row" onchange="this.submit()">
+    @csrf
+    <div>
+        <div class="auto-pr-label">Auto-create Purchase Request on material shortage</div>
+        <div class="auto-pr-desc">When ON, a Work Order that can't complete due to insufficient raw material automatically creates a Purchase Request instead of just showing an error.</div>
+    </div>
+    <label class="switch">
+        <input type="checkbox" name="auto_create_pr" value="1" {{ auth()->user()->tenant->wantsAutoCreatePurchaseRequestOnShortfall() ? 'checked' : '' }}>
+        <span class="slider"></span>
+    </label>
+</form>
+@endif
 
 <div class="status-tabs">
     <a href="{{ route('tenant.work-orders.index') }}" class="status-tab {{ $curStatus === '' ? 'active' : '' }}">
@@ -97,6 +120,7 @@
                     <th>Product</th>
                     <th>Quantity</th>
                     <th>Created By</th>
+                    <th>Assigned To</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
@@ -118,6 +142,7 @@
                     <td data-label="Product">{{ $wo->product?->name ?? '—' }}</td>
                     <td data-label="Quantity">{{ number_format($wo->quantity, 2) }}</td>
                     <td data-label="Created By">{{ $wo->createdBy?->name ?? '—' }}</td>
+                    <td data-label="Assigned To">{{ $wo->assignedTo?->name ?? '—' }}</td>
                     <td data-label="Status">
                         <span class="badge" style="padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:600;background:{{ $badge['bg'] }};color:{{ $badge['text'] }}">
                             {{ \App\Models\WorkOrder::statuses()[$wo->status] ?? ucfirst($wo->status) }}

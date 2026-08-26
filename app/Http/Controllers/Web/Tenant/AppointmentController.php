@@ -126,6 +126,8 @@ class AppointmentController extends Controller
             'created_by' => auth()->id(),
         ]);
 
+        AppointmentJobService::sendBookingConfirmation($appointment);
+
         return redirect()->route('tenant.appointments.show', $appointment->id)
             ->with('success', 'Appointment booked.');
     }
@@ -324,15 +326,17 @@ class AppointmentController extends Controller
     {
         $tenant = auth()->user()->tenant;
         $settings = $tenant->bookingSettings();
+        $notifyCustomers = $tenant->wantsAppointmentNotifications();
         $bookableServices = Service::where('tenant_id', $this->tenantId())->active()->orderBy('name')->get(['id', 'name', 'is_bookable']);
 
-        return view('tenant.appointments.settings', compact('tenant', 'settings', 'bookableServices'));
+        return view('tenant.appointments.settings', compact('tenant', 'settings', 'bookableServices', 'notifyCustomers'));
     }
 
     public function updateSettings(Request $request): RedirectResponse
     {
         $data = $request->validate([
             'enabled'               => ['nullable', 'boolean'],
+            'notify_customers'      => ['nullable', 'boolean'],
             'slot_duration_minutes' => ['required', 'integer', 'min:5', 'max:480'],
             'capacity_per_slot'     => ['required', 'integer', 'min:1', 'max:100'],
             'advance_booking_days'  => ['required', 'integer', 'min:1', 'max:365'],
@@ -360,6 +364,9 @@ class AppointmentController extends Controller
             'advance_booking_days'  => (int) $data['advance_booking_days'],
             'hours'                 => $hours,
         ];
+
+        $settings['preferences'] ??= [];
+        $settings['preferences']['appointment_notifications'] = $request->boolean('notify_customers');
 
         $tenant->update(['settings' => $settings]);
 

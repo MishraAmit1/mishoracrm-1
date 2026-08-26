@@ -8,14 +8,10 @@ use App\Models\Contact;
 use App\Models\Service;
 use App\Models\Tenant;
 use App\Services\AppointmentJobService;
-use App\Services\EmailService;
-use App\Services\WhatsappChatbotService;
-use App\Models\WhatsappSetting;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\View\View;
 
 // Unauthenticated, tenant-agnostic controller for the customer-facing
@@ -133,7 +129,7 @@ class AppointmentController extends Controller
             'notes'      => $data['notes'] ?? null,
         ]);
 
-        $this->sendConfirmation($tenant, $contact, $appointment, $service);
+        AppointmentJobService::sendBookingConfirmation($appointment);
 
         return redirect()->route('public.booking.appointment', $appointment->ensurePublicToken());
     }
@@ -181,45 +177,5 @@ class AppointmentController extends Controller
         AppointmentJobService::signOff($appointment, $data['signature_data'], $data['signed_name']);
 
         return back()->with('success', 'Thank you — your sign-off has been recorded.');
-    }
-
-    // ── Confirmation message — always sent on a successful booking
-    // (transactional, not gated by the subscription-reminder opt-in
-    // toggles), mirroring the Email/WhatsApp calls already proven in
-    // SubscriptionReminderService. ───────────────────────────────────
-    private function sendConfirmation(Tenant $tenant, Contact $contact, Appointment $appointment, Service $service): void
-    {
-        $when = $appointment->starts_at->format('d M Y, h:i A');
-
-        if ($contact->email) {
-            $subject = "Booking confirmed — {$service->name}";
-            $html    = "<p>Dear {$contact->name},</p>"
-                . "<p>Your booking for <strong>{$service->name}</strong> with {$tenant->name} is confirmed for <strong>{$when}</strong>.</p>"
-                . "<p><a href=\"{$appointment->publicUrl()}\">View or cancel your booking</a></p>"
-                . "<p>Thank you,<br>{$tenant->name}</p>";
-
-            try {
-                $sent = EmailService::send($tenant->id, $contact->email, $contact->name, $subject, $html);
-                if (!$sent) {
-                    Mail::send([], [], function ($mail) use ($contact, $subject, $html) {
-                        $mail->to($contact->email, $contact->name)->subject($subject)->html($html);
-                    });
-                }
-            } catch (\Throwable $e) {
-                // best-effort — booking itself already succeeded
-            }
-        }
-
-        $settings = WhatsappSetting::forTenant($tenant->id);
-        if ($contact->phone && $settings->exists && $settings->is_connected) {
-            $message = "Hi {$contact->name}, your booking for {$service->name} with {$tenant->name} is confirmed for {$when}. "
-                . "Manage your booking: {$appointment->publicUrl()}";
-            try {
-                $waId = preg_replace('/[^0-9]/', '', $contact->phone);
-                WhatsappChatbotService::forTenant($tenant->id)->sendMessage($waId, $message);
-            } catch (\Throwable $e) {
-                // best-effort
-            }
-        }
     }
 }

@@ -231,6 +231,14 @@ return [
             'channels' => ['in_app', 'email'],
             'message'  => '{{contact_name}}\'s {{service_name}} subscription expires on {{expiry_date}}',
         ],
+        'subscription.auto_renewed' => [
+            'label'    => 'Subscription Auto-Renewed',
+            'icon'     => 'refresh',
+            'color'    => 'green',
+            'group'    => 'Services',
+            'channels' => ['in_app', 'email'],
+            'message'  => '{{contact_name}}\'s {{service_name}} subscription was auto-renewed (new expiry {{expiry_date}}) — draft invoice {{invoice}} created',
+        ],
 
         // ── Tickets ───────────────────────────────────────────────
         'ticket.created' => [

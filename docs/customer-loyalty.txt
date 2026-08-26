@@ -1,0 +1,233 @@
+CUSTOMER LOYALTY PROGRAM — PLANNING NOTES
+Discussed: 2026-08-26. Status: PLANNING ONLY — no code written yet.
+Yeh file poori discussion cover karti hai jo loyalty feature pe hui. Jab
+implement karna ho, yeh file share kar dena — sab context isi mein hai.
+
+============================================================
+1. CORE CONCEPT
+============================================================
+- Customer Loyalty Points system — regular/repeat customers ko points
+  milte hain, jo discount mein convert ho sakte hain.
+- Owner khud discount ka range set karega — minimum se maximum kitna
+  discount points ke hisab se diya jaye (hardcoded nahi, tenant-configurable).
+- System automatically bhi discount de sakta hai points ke basis pe, bina
+  owner ke har baar manually decide kiye.
+
+ROLLOUT STRATEGY — PER-TENANT OPT-IN GATING (IMPORTANT):
+  Yeh module HAR tenant ke liye by-default OFF/hidden rahega. CRM mein
+  already existing modules (jaise Service, Manufacturing) `module:xxx`
+  middleware se gate hote hain — super admin decide karta hai kis tenant
+  ko kaunsa module milta hai. Loyalty module bhi isi pattern se banega:
+  sirf jab tenant owner khud maange "haan mujhe yeh chahiye," tabhi super
+  admin unke liye enable karega. Sabke liye automatically visible/on
+  NAHI hoga.
+
+============================================================
+2. PROBLEM #1 — CUSTOMER CAPTURE (real-world friction)
+============================================================
+Mobile shop: aasan hai — customer mobile number deta hi hai
+(invoice/warranty ke liye), toh naturally Contact mein add ho jaata hai.
+
+Restaurant/Cafe: mushkil hai — 10 mein se 7 customer number nahi dete,
+payment karke chale jaate hain. Loyalty program yahi pe fail hota hai
+kyunki customer identify hi nahi ho paata.
+
+Solutions discuss kiye gaye (priority order):
+  a) QR code bill/table pe — "Scan karo, is bill pe turant 5% off paao."
+     QR ek WhatsApp (wa.me) link ho — customer WhatsApp pe click karega,
+     chat shuru hote hi uska number khud capture ho jaata hai (koi form
+     fill nahi karna), aur bot turant welcome discount/points bhej de.
+     Yeh CRM ka EXISTING WhatsApp automation module reuse karta hai.
+  b) Cashier ka conditional ask — "number de dein, is bill pe abhi 5%
+     off ho jayega" — cold ask nahi, immediate value ke saath ask.
+  c) UPI payment gateway se partial identifier (Razorpay/UPI VPA jaise
+     9876543210@upi kabhi payment response mein aata hai) — backup/
+     technical option, gateway-dependent, guaranteed nahi.
+  d) Accept karo ki sabko capture nahi kar paoge — 30% capture rate bhi
+     kaafi hota hai loyalty program chalane ke liye, kyunki wahi 30%
+     asli repeat-revenue customers hote hain.
+
+============================================================
+3. PROBLEM #2 — CUSTOMER APNA OFFER/DISCOUNT KAISE CHECK KARE
+============================================================
+Teen channel discuss kiye, combine karna best hai:
+
+  a) CASHIER LOOKUP (primary, zero customer effort) — billing counter pe
+     cashier phone number daale, system dikha de: "340 points, Gold
+     tier, is bill pe 10% off eligible." Chhoti restaurant/cafe ke liye
+     sabse practical.
+  b) WHATSAPP SELF-CHECK — customer business ke WhatsApp pe "points" ya
+     "balance" keyword bheje, chatbot turant reply kare current
+     points+tier+discount ke saath. Existing WhatsApp chatbot flow
+     infra reuse hota hai.
+  c) PROACTIVE NOTIFICATION (best — customer ko check hi nahi karna
+     padta) — har visit ke baad auto WhatsApp/SMS: "Aapko 20 points
+     mile, total 340 — agle visit pe ₹34 off available."
+
+RECOMMENDATION: (c) ko primary rakho, (a) ko backup/manual verify,
+(b) ko optional self-service.
+
+============================================================
+4. OWNER-DRIVEN LOOKUP FORM (user's idea) — website/API embed
+============================================================
+Idea: Tenant owner ek form apni website pe ya API se add kare jisme
+customer ka email/phone daala jaaye, aur customer ko khud dikh jaaye:
+"Aap 20% ke eligible hain, jaao aur claim karo."
+
+Feedback:
+  - Existing architecture se fit baithta hai — CRM mein already Public
+    controllers hain (booking-show, support-show jaisi unauthenticated
+    pages, shareable link se access hoti hain) — isi pattern se ek
+    "check my rewards" public page ban sakti hai.
+  - API route ke liye — CRM mein already ApiKey model hai (per-tenant
+    API keys), usi se secure kiya ja sakta hai. Tenant apni custom UI
+    mein embed kar sake.
+  - GAP — Identity verification missing hai: sirf email/phone daalne se
+    agar direct discount dikh jaaye, toh koi bhi kisi aur ka data dekh
+    sakta hai (privacy leak). OTP verification step chahiye hoga
+    (SMS/WhatsApp/email) discount reveal karne se pehle.
+  - IMPORTANT: yeh form sirf "check" karta hai, "capture" nahi karta.
+    Sirf un customers ke liye kaam karega jinka email/phone already
+    tenant ke paas hai. Restaurant wale walk-in capture problem (Section
+    2) alag se solve karna padega — dono complementary hain, replacement
+    nahi ek dusre ke.
+
+============================================================
+5. TARGETED/SEGMENTED MANUAL OFFERS & COUPONS (owner-driven campaigns)
+============================================================
+Idea: Owner khud kisi customer segment ko offer/redeem-code de — jaise
+"category spend waley ko yeh offer do."
+
+Existing foundation: CRM mein already ek `Coupon` model hai (code, type,
+discount_value, max_discount, applicable_to, max_uses, used_count,
+expires_at) — is layer ka base ban sakta hai.
+
+Segmentation criteria (options discuss hui):
+  - Spend-bracket wise (e.g. total spend > ₹5000 → 20% coupon)
+  - Product/service-category wise (e.g. beverages pe zyada spend karne
+    waalon ko free pastry) — YEH ABHI POSSIBLE NAHI HAI as-is: Product
+    model mein sirf `type` (raw_material/finished_good) hai, koi
+    `category` field nahi. Agar yeh route chahiye toh Products/Services
+    pe category tagging pehle add karni hogi.
+  - Visit-frequency wise (e.g. 5+ visits last 3 months)
+  - Inactive/win-back segment (e.g. 60+ din se nahi aaya)
+  - Manual hand-pick — owner khud specific contacts choose kare
+
+OPEN QUESTION (clarify before implementation): "category spend waley" se
+matlab SPEND-AMOUNT bracket hai (tier jaisa) ya PRODUCT/SERVICE category
+hai? Dono ka data-requirement alag hai — bracket wala abhi possible hai,
+category wala naya field maangta hai.
+
+Offer types: % discount, flat ₹ off, free item, unique redeem code
+(per-customer alag code ya ek shared code poore segment ke liye).
+
+Delivery: WhatsApp/SMS auto-send jab segment match ho, ya "check my
+rewards" public page (Section 4) pe dikhe.
+
+Guardrails: expiry date, one-time-use per customer, min-max discount
+range (Section 1 se), total redemption cap (budget control).
+
+============================================================
+6. AUTOMATIC TIER TAGGING — Gold / Silver / Bronze
+============================================================
+Confirmed POSSIBLE. Design approach:
+  - Code = fixed calculator/mechanism. RULES tenant-level configurable
+    settings mein store hongi (CRM mein already yeh pattern use hota hai
+    — e.g. subscription reminder days tenant khud set karta hai, code
+    sirf follow karta hai).
+  - Owner khud yeh settings badal sakega bina developer help ke:
+      * Points earning rule — har ₹ spend pe kitne points (e.g. 1
+        point/₹100, changeable)
+      * Tier thresholds — Bronze/Silver/Gold ke point ranges
+        (owner-defined brackets, hardcoded nahi)
+      * Redemption rate — kitne points = ₹1 discount
+      * Min/max discount cap per bill
+  - Auto-tagging mechanism: har invoice/transaction pe (ya periodic
+    recalculation), customer ke total points ko tenant ke configured
+    thresholds se compare karke system khud uska tier update kar dega —
+    na customer ko, na owner ko manually kuch karna padega.
+
+============================================================
+7. ADDITIONAL REAL-WORLD FEATURES (prioritized)
+============================================================
+RETENTION/ENGAGEMENT DRIVERS:
+  1. Birthday/Anniversary auto-offer — customer ke birthday pe
+     automatic WhatsApp discount/free item. High ROI, low effort.
+     (NOTE: Contact model mein abhi birthday field NAHI hai — add karni
+     hogi agar yeh feature chahiye.)
+  2. Referral program — "Dost ko bhejo, dono ko 100 points." Strong
+     word-of-mouth acquisition engine, especially local food/retail ke
+     liye.
+  3. Points expiry nudge — "Aapke 200 points 7 din mein expire ho rahe
+     hain" — urgency create karta hai, revisit drive karta hai.
+
+OWNER-SIDE BUSINESS INTELLIGENCE:
+  4. Win-back alert (owner ko) — jo regular customer 30+ din se nahi
+     aaya, uski list owner ko dikhao — proactively win-back coupon bhej
+     sake. Churn permanent hone se pehle catch karta hai.
+  5. Top customers dashboard — is mahine ke top spenders — owner
+     personally recognize/special treatment de sake.
+
+REDEMPTION/REWARD DESIGN:
+  6. Free-item reward option (na sirf %discount) — e.g. "500 points = 1
+     free coffee" — chhoti business ke liye psychologically zyada
+     attractive hota hai flat % se.
+  7. Flash/double-points days — owner announce kare "Sunday = 2x
+     points" — slow din pe footfall badhane ka lever.
+
+OPERATIONAL:
+  8. Cashier-side one-click redemption at billing — friction kam karta
+     hai; bahut loyalty programs isi wajah se fail hote hain ki staff ko
+     redeem karna jhanjhat lagta hai.
+
+GUARDRAIL (zaroori):
+  9. Anti-abuse cap — max points per bill/din, warna koi bada bill
+     chhote transactions mein split karke points farm kar sakta hai.
+
+TOP 3 HIGHEST-IMPACT (agar sab nahi karna ho toh yeh teen pehle):
+  Birthday offer, Referral program, Owner win-back alert — yeh directly
+  revenue/repeat-visit badhate hain, baaki supporting/guardrail hain.
+
+============================================================
+8. EXISTING FOUNDATION IN CODEBASE (already there, reuse karna hai)
+============================================================
+  - Contact model — customer record already exists (name, phone, email,
+    company, etc.) — koi birthday/points/tier field nahi hai abhi.
+  - Coupon model — code, discount type/value, max_discount,
+    applicable_to, max_uses, used_count, expires_at, is_active — coupon/
+    redeem-code layer ka base.
+  - WhatsApp automation module (WhatsappChatbotService, chatbot flows,
+    WhatsappSetting) — capture aur self-check dono ke liye reuse hoga.
+  - ApiKey model — per-tenant API keys, public API lookup ke liye
+    secure karne ka existing mechanism.
+  - Public controllers pattern (booking-show, support-show jaisी
+    unauthenticated shareable-link pages) — "check my rewards" page ke
+    liye reuse hoga.
+  - Tenant settings JSON column pattern (subscription reminder days,
+    auto_create_pr_on_shortfall jaisi cheezein) — owner-configurable
+    loyalty rules isi pattern se store hongi.
+
+============================================================
+9. NEW ADDITIONS NEEDED (gaps — abhi CRM mein nahi hai)
+============================================================
+  - Contact pe loyalty points / current tier / total spend fields
+  - Contact pe birthday/anniversary field (agar Section 7 item #1 chahiye)
+  - Product/Service pe "category" tag (agar Section 5 ka category-based
+    segmentation chahiye)
+  - Points-earning rule engine (tenant-configurable, per Section 6)
+  - Tier auto-assignment logic (per Section 6)
+  - Segment/campaign engine jo Coupon ko filtered contacts pe assign kare
+    (per Section 5)
+  - OTP verification flow for public lookup form (per Section 4 gap)
+  - "Check my rewards" public page + optional API endpoint
+
+============================================================
+10. OPEN QUESTIONS (clarify before implementation)
+============================================================
+  - "Category spend waley" — spend-amount bracket ya product/service
+    category? (Section 5)
+  - Konsa channel pehle chahiye — WhatsApp-based capture/check, ya
+    web/API lookup form, ya dono ek saath?
+  - Points expiry duration kitni honi chahiye default?
+  - Tier thresholds ka default kya rakhna hai (owner change kar sakega,
+    lekin ek sensible default chahiye)?

@@ -102,6 +102,18 @@ class SettingsController extends Controller
             ->with('active_tab', 'profile');
     }
 
+    // ── Update theme preference ─────────────────────────────────────
+    public function updateTheme(Request $request)
+    {
+        $request->validate([
+            'theme' => ['required', 'in:light,dark'],
+        ]);
+
+        auth()->user()->update(['theme' => $request->theme]);
+
+        return response()->json(['success' => true]);
+    }
+
     // ── Update company settings ───────────────────────────────────
     public function updateCompany(Request $request): RedirectResponse
     {

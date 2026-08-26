@@ -8,6 +8,7 @@ use App\Models\Invoice;
 use App\Models\Service;
 use App\Models\ServiceSubscription;
 use App\Models\WhatsappSetting;
+use App\Services\ServiceSubscriptionService;
 use App\Services\SubscriptionReminderService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -144,11 +145,13 @@ class ServiceSubscriptionController extends Controller
             'expires_at'     => ['nullable', 'date', 'after_or_equal:starts_at'],
             'duration_value' => ['nullable', 'integer', 'min:1'],
             'duration_unit'  => ['nullable', 'in:days,months'],
+            'auto_renew'     => ['nullable', 'boolean'],
             'notes'          => ['nullable', 'string'],
         ]);
 
-        $data['tenant_id'] = $this->tenantId();
-        $data['status']    = 'active';
+        $data['tenant_id']  = $this->tenantId();
+        $data['status']     = 'active';
+        $data['auto_renew'] = $request->boolean('auto_renew');
         // Snapshot the quantity limit from the catalog at creation time —
         // later edits to the Service don't retroactively change it.
         $data['total_quantity'] = Service::where('tenant_id', $this->tenantId())->find($data['service_id'])?->total_quantity;
@@ -183,8 +186,11 @@ class ServiceSubscriptionController extends Controller
             'expires_at'     => ['nullable', 'date', 'after_or_equal:starts_at'],
             'duration_value' => ['nullable', 'integer', 'min:1'],
             'duration_unit'  => ['nullable', 'in:days,months'],
+            'auto_renew'     => ['nullable', 'boolean'],
             'notes'          => ['nullable', 'string'],
         ]);
+
+        $data['auto_renew'] = $request->boolean('auto_renew');
 
         $subscription->update($data);
 
@@ -282,64 +288,11 @@ class ServiceSubscriptionController extends Controller
         return back()->with('success', "{$count} subscription(s) cancelled.");
     }
 
-    // Extends expiry by the subscription's own snapshotted duration
-    // (starting from today or the old expiry, whichever is later),
-    // reactivates it, resets the reminder guard so the next cycle can
-    // alert again, resets used_quantity for quantity-tracked services,
-    // and auto-creates a draft renewal Invoice prefilled with the
-    // subscribed service. Returns the created Invoice, or null if the
-    // subscription has no linked Service to bill.
+    // Delegates to ServiceSubscriptionService::renew() — shared with the
+    // automatic subscriptions:auto-renew command so both stay in sync.
     private function renewOne(ServiceSubscription $subscription): ?Invoice
     {
-        $service = $subscription->service;
-
-        $base = $subscription->expires_at && $subscription->expires_at->gt(now())
-            ? $subscription->expires_at
-            : now();
-
-        $newExpiry = ServiceSubscription::computeExpiry(
-            $base,
-            $subscription->duration_value,
-            $subscription->duration_unit,
-            $service?->billing_cycle
-        );
-
-        $invoice = null;
-
-        if ($service) {
-            $items = [[
-                'service_id'  => $service->id,
-                'description' => $service->name,
-                'quantity'    => 1,
-                'rate'        => (float) $service->rate,
-                'tax_percent' => (float) $service->tax_percent,
-            ]];
-
-            $totals = Invoice::calculateTotals($items, 0, (float) $service->tax_percent);
-
-            $invoice = Invoice::create(array_merge($totals, [
-                'tenant_id'   => $this->tenantId(),
-                'contact_id'  => $subscription->contact_id,
-                'number'      => Invoice::generateNumber(),
-                'date'        => now()->format('Y-m-d'),
-                'due_date'    => now()->addDays(7)->format('Y-m-d'),
-                'items'       => $items,
-                'notes'       => "Renewal invoice for {$service->name}",
-                'status'      => 'draft',
-                'paid_amount' => 0,
-                'created_by'  => auth()->id(),
-            ]));
-        }
-
-        $subscription->update([
-            'status'             => 'active',
-            'expires_at'         => $newExpiry ?? $subscription->expires_at,
-            'expiry_notified_at' => null,
-            'invoice_id'         => $invoice?->id ?? $subscription->invoice_id,
-            'used_quantity'      => $subscription->hasQuantityTracking() ? 0 : $subscription->used_quantity,
-        ]);
-
-        return $invoice;
+        return ServiceSubscriptionService::renew($subscription, auth()->id());
     }
 
     // ── JSON — a contact's invoices, for the optional "link invoice" dropdown ──

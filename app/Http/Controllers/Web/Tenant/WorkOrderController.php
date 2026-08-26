@@ -6,9 +6,11 @@ use App\Helpers\ViewScope;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\WorkOrderRequest;
 use App\Models\Product;
+use App\Models\PurchaseRequest;
 use App\Models\User;
 use App\Models\WorkOrder;
 use App\Services\NotificationService;
+use App\Services\PurchaseRequestService;
 use App\Services\WorkOrderService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,6 +25,14 @@ class WorkOrderController extends Controller
         return WorkOrder::where('id', $id)
             ->where('tenant_id', auth()->user()->tenant_id)
             ->firstOrFail();
+    }
+
+    private function staffList()
+    {
+        return User::where('tenant_id', auth()->user()->tenant_id)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name']);
     }
 
     // ── Shared filtered query (index page reuses this) ──────────────
@@ -46,7 +56,7 @@ class WorkOrderController extends Controller
     public function index(Request $request): View
     {
         $query = self::filteredQuery(auth()->user()->tenant_id, $request->all(), auth()->user())
-            ->with(['product', 'createdBy'])
+            ->with(['product', 'createdBy', 'assignedTo'])
             ->latest();
 
         $workOrders = $query->paginate(15)->withQueryString();
@@ -82,8 +92,9 @@ class WorkOrderController extends Controller
             ->get(['id', 'name', 'product_code', 'current_stock']);
 
         $number = WorkOrder::generateNumber();
+        $staff  = $this->staffList();
 
-        return view('tenant.work-orders.create', compact('products', 'number'));
+        return view('tenant.work-orders.create', compact('products', 'number', 'staff'));
     }
 
     // ── Store ─────────────────────────────────────────────────────
@@ -103,7 +114,7 @@ class WorkOrderController extends Controller
     {
         $workOrder = $this->findWorkOrder($id);
         $this->authorize('view', $workOrder);
-        $workOrder->load(['product.billOfMaterials.material', 'createdBy']);
+        $workOrder->load(['product.billOfMaterials.material', 'createdBy', 'assignedTo']);
 
         $shortfall = in_array($workOrder->status, ['pending', 'in_progress'], true)
             ? WorkOrderService::previewShortfall($workOrder->product, (float) $workOrder->quantity)
@@ -123,8 +134,9 @@ class WorkOrderController extends Controller
             ->finishedGood()
             ->orderBy('name')
             ->get(['id', 'name', 'product_code', 'current_stock']);
+        $staff = $this->staffList();
 
-        return view('tenant.work-orders.edit', compact('workOrder', 'products'));
+        return view('tenant.work-orders.edit', compact('workOrder', 'products', 'staff'));
     }
 
     // ── Update ────────────────────────────────────────────────────
@@ -182,6 +194,14 @@ class WorkOrderController extends Controller
 
         $request->validate(['expiry_date' => ['nullable', 'date']]);
 
+        $shortfall = WorkOrderService::previewShortfall($workOrder->product, (float) $workOrder->quantity);
+
+        if (!empty($shortfall) && $workOrder->tenant->wantsAutoCreatePurchaseRequestOnShortfall()) {
+            $purchaseRequest = $this->createShortfallPurchaseRequest($workOrder, $shortfall);
+
+            return back()->with('error', "Cannot complete — insufficient raw material stock. Purchase Request {$purchaseRequest->number} was auto-created for the shortage.");
+        }
+
         try {
             WorkOrderService::complete($workOrder, $request->input('expiry_date'));
         } catch (ValidationException $e) {
@@ -193,6 +213,67 @@ class WorkOrderController extends Controller
         return redirect()
             ->route('tenant.work-orders.show', $workOrder->id)
             ->with('success', "Work Order {$workOrder->number} completed — stock updated.");
+    }
+
+    // ── Auto-create a Purchase Request for a Work Order's raw material
+    // shortfall (only reached when the tenant has opted into the
+    // auto-PR-on-shortfall setting) and notify whoever can approve it. ──
+    private function createShortfallPurchaseRequest(WorkOrder $workOrder, array $shortfall): PurchaseRequest
+    {
+        $items = collect($shortfall)->map(fn ($row) => [
+            'product_id'  => $row['material_id'],
+            'name'        => $row['name'],
+            'description' => null,
+            'quantity'    => $row['shortfall'],
+            'reason'      => "Shortfall for Work Order {$workOrder->number}",
+        ])->toArray();
+
+        $purchaseRequest = PurchaseRequestService::store([
+            'department_id' => null,
+            'date'           => now()->toDateString(),
+            'items'          => $items,
+            'reason'         => "Auto-created — Work Order {$workOrder->number} ({$workOrder->product?->name}) could not be completed due to insufficient raw material stock.",
+        ], $workOrder->tenant_id, auth()->id());
+
+        $this->notifyPurchaseRequestApprovers($purchaseRequest);
+
+        return $purchaseRequest;
+    }
+
+    // ── Notify everyone who can approve requests — same recipients/type
+    // as a manually submitted Purchase Request. ─────────────────────
+    private function notifyPurchaseRequestApprovers(PurchaseRequest $purchaseRequest): void
+    {
+        $approvers = User::withoutGlobalScopes()
+            ->where('tenant_id', $purchaseRequest->tenant_id)
+            ->where('is_active', true)
+            ->where('id', '!=', auth()->id())
+            ->get()
+            ->filter(fn (User $user) => $user->user_type === 'tenant_admin' || $user->can('purchase_requests.approve'));
+
+        app(NotificationService::class)->sendToMany(
+            'purchase_request.submitted',
+            $approvers->all(),
+            ['number' => $purchaseRequest->number, 'requester' => auth()->user()->name],
+            auth()->user(),
+            route('tenant.purchase-requests.show', $purchaseRequest->id),
+            $purchaseRequest
+        );
+    }
+
+    // ── Toggle: auto-create a Purchase Request when a Work Order can't
+    // complete due to raw material shortage. Tenant-owner-controlled. ──
+    public function updateAutoPrSetting(Request $request): RedirectResponse
+    {
+        abort_unless(auth()->user()->user_type === 'tenant_admin', 403);
+
+        $tenant = auth()->user()->tenant;
+        $settings = $tenant->settings ?? [];
+        $settings['preferences'] ??= [];
+        $settings['preferences']['auto_create_pr_on_shortfall'] = $request->boolean('auto_create_pr');
+        $tenant->update(['settings' => $settings]);
+
+        return back()->with('success', 'Setting updated.');
     }
 
     // ── Notify tenant_admins / work_orders.view_all holders that a

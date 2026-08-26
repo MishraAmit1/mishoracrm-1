@@ -100,6 +100,10 @@
                             <div style="font-size:10.5px;font-weight:600;color:var(--text-300);text-transform:uppercase;letter-spacing:.5px">Created By</div>
                             <div style="font-size:13px;font-weight:500;color:var(--text-100)">{{ $workOrder->createdBy?->name ?? '—' }}</div>
                         </div>
+                        <div>
+                            <div style="font-size:10.5px;font-weight:600;color:var(--text-300);text-transform:uppercase;letter-spacing:.5px">Assigned To</div>
+                            <div style="font-size:13px;font-weight:500;color:var(--text-100)">{{ $workOrder->assignedTo?->name ?? '— Unassigned —' }}</div>
+                        </div>
                         @if($workOrder->started_at)
                         <div>
                             <div style="font-size:10.5px;font-weight:600;color:var(--text-300);text-transform:uppercase;letter-spacing:.5px">Started</div>

@@ -15,6 +15,7 @@ class WorkOrder extends Model
     protected $fillable = [
         'tenant_id',
         'product_id',
+        'assigned_to',
         'number',
         'quantity',
         'status',
@@ -51,6 +52,11 @@ class WorkOrder extends Model
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function assignedTo(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
     }
 
     // ── Scopes ────────────────────────────────────────────────────

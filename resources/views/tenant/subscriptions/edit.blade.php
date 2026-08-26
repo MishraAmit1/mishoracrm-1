@@ -105,6 +105,13 @@
         </div>
 
         <div class="field">
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-200);cursor:pointer">
+                <input type="checkbox" name="auto_renew" value="1" {{ old('auto_renew', $subscription->auto_renew) ? 'checked' : '' }} style="width:15px;height:15px;cursor:pointer"/>
+                Auto-renew — extend the term and create a draft renewal invoice automatically on expiry
+            </label>
+        </div>
+
+        <div class="field">
             <label class="fl">Notes</label>
             <textarea name="notes" class="fi" rows="3" style="resize:vertical" placeholder="Optional notes">{{ old('notes', $subscription->notes) }}</textarea>
         </div>

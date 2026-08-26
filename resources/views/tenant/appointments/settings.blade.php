@@ -51,6 +51,11 @@
         </div>
         @endif
 
+        <div class="field" style="flex-direction:row;align-items:center;gap:10px;padding:10px 12px;background:var(--bg-elevated);border-radius:var(--r-sm)">
+            <input type="checkbox" name="notify_customers" value="1" id="notify_customers" {{ $notifyCustomers ? 'checked' : '' }} style="width:16px;height:16px;cursor:pointer"/>
+            <label for="notify_customers" style="font-size:13.5px;color:var(--text-200);cursor:pointer">Send customers Email/WhatsApp notifications — booking confirmation, a reminder before the appointment, and a same-day reminder</label>
+        </div>
+
         <div class="fg3">
             <div class="field">
                 <label class="fl">Slot Duration (min)</label>

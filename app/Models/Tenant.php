@@ -161,6 +161,25 @@ class Tenant extends Model
         return is_string($value) && trim($value) !== '' ? $value : null;
     }
 
+    // Appointment notifications (booking confirmation + reminders) to the
+    // Contact — opt-in, off by default, same convention as
+    // wantsSubscriptionReminder(). Explicitly requested as "only send once
+    // the tenant turns it on", unlike the ticket-confirmation default-on
+    // exception above.
+    public function wantsAppointmentNotifications(): bool
+    {
+        return (bool) ($this->settings['preferences']['appointment_notifications'] ?? false);
+    }
+
+    // Manufacturing — when ON, a Work Order that can't complete due to a
+    // raw material shortfall auto-creates a Purchase Request for the
+    // shortage instead of just blocking with an error. Off by default so
+    // behavior is unchanged until the tenant owner opts in.
+    public function wantsAutoCreatePurchaseRequestOnShortfall(): bool
+    {
+        return (bool) ($this->settings['preferences']['auto_create_pr_on_shortfall'] ?? false);
+    }
+
     // ── Public booking link — same settings['...'] token convention as
     // getWebhookToken() above, so no new tenants column is needed. ──────
     public function ensureBookingToken(): string

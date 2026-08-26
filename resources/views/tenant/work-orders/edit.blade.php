@@ -93,6 +93,16 @@
                             </select>
                             @error('product_id')<span class="pf-err">{{ $message }}</span>@enderror
                         </div>
+                        <div class="pf-field span-full">
+                            <label class="pf-label" for="wo_assigned_to">Assigned Worker/Technician</label>
+                            <select name="assigned_to" id="wo_assigned_to" class="pf-input">
+                                <option value="">— Unassigned —</option>
+                                @foreach($staff as $u)
+                                <option value="{{ $u->id }}" {{ old('assigned_to', $workOrder->assigned_to) == $u->id ? 'selected':'' }}>{{ $u->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('assigned_to')<span class="pf-err">{{ $message }}</span>@enderror
+                        </div>
                     </div>
                 </div>
                 <div class="pf-section">

@@ -6,6 +6,32 @@
 /* Layout */
 .show-grid { display:grid; grid-template-columns:340px 1fr; gap:16px; align-items:start; margin-bottom:16px; }
 @media(max-width:1100px){ .show-grid{ grid-template-columns:1fr; } }
+.stack-card { margin-bottom:16px; }
+
+/* Card polish */
+.card { transition:box-shadow 0.2s ease, border-color 0.2s ease; }
+.card:hover { box-shadow:var(--shadow-md); border-color:var(--border-strong); }
+.card-icon {
+    width:30px; height:30px; border-radius:9px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+}
+.card-icon svg { width:15px; height:15px; }
+.card-header-flex { display:flex; align-items:center; gap:10px; }
+
+/* Plan feature chips */
+.feat-chip {
+    display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:600;
+    padding:3px 10px; border-radius:20px; border:1px solid var(--border-default);
+}
+.feat-chip.on  { background:var(--green-dim); color:var(--green); border-color:transparent; }
+.feat-chip.off { background:var(--bg-input); color:var(--text-300); }
+.feat-chip.num { background:var(--accent-dim); color:var(--accent); border-color:transparent; }
+.feat-chip .fc-label { color:inherit; font-weight:500; }
+
+/* Legibility overrides for this page's smaller/muted text */
+.card-subtitle { font-size:12px; color:var(--text-300); }
+.stat-sub { color:var(--text-300); }
+.data-table th { color:var(--text-300); }
 
 /* Hero */
 .hero-card {
@@ -39,7 +65,7 @@
 /* Info card */
 .info-row   { display:flex; justify-content:space-between; align-items:flex-start; padding:10px 0; border-bottom:1px solid var(--border-subtle); font-size:13px; }
 .info-row:last-child { border-bottom:none; }
-.info-label { color:var(--text-300); flex-shrink:0; margin-right:12px; }
+.info-label { color:var(--text-200); flex-shrink:0; margin-right:12px; }
 .info-val   { color:var(--text-100); font-weight:500; text-align:right; word-break:break-word; }
 
 /* Status badges */
@@ -91,18 +117,19 @@
 @media(max-width:560px){ .module-grid{ grid-template-columns:minmax(0,1fr); } }
 .module-card {
     background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:12px;
-    padding:16px; display:flex; flex-direction:column; gap:10px; transition:border-color 0.15s;
-    min-width:0; overflow:hidden;
+    padding:16px; display:flex; flex-direction:column; gap:10px;
+    transition:border-color 0.18s ease, box-shadow 0.18s ease;
+    min-width:0;
 }
-.module-card:hover { border-color:var(--border-default); }
+.module-card:hover { border-color:var(--border-default); box-shadow:var(--shadow-sm); }
 .module-top { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; min-width:0; }
 .module-heading { display:flex; align-items:flex-start; gap:10px; min-width:0; flex:1; }
 .module-icon { width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 .module-icon svg { width:17px; height:17px; }
 .module-name { font-size:13px; font-weight:700; color:var(--text-100); min-width:0; }
-.module-desc { font-size:11px; color:var(--text-400); margin-top:2px; line-height:1.4; min-width:0; }
-.module-note { font-size:11px; color:var(--text-400); line-height:1.5; }
-.module-note strong { color:var(--text-200); }
+.module-desc { font-size:11px; color:var(--text-300); margin-top:2px; line-height:1.4; min-width:0; }
+.module-note { font-size:11px; color:var(--text-300); line-height:1.5; }
+.module-note strong { color:var(--text-100); }
 .module-actions { display:flex; gap:6px; flex-wrap:wrap; margin-top:auto; padding-top:2px; }
 </style>
 @endpush
@@ -121,6 +148,7 @@
         'calendar'   => 'M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5',
         'clock'      => 'M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z',
         'chat'       => 'M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z',
+        'building'   => 'M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21',
     ];
 
     $initials = strtoupper(substr($tenant->name, 0, 2));
@@ -318,12 +346,15 @@
 
 <div class="show-grid">
 
-    {{-- Left: Info + Subscription --}}
-    <div>
-        {{-- Tenant info card --}}
-        <div class="card" style="margin-bottom:16px;">
+    {{-- Tenant info card --}}
+    <div class="card">
             <div class="card-header">
-                <div class="card-title">Tenant Info</div>
+                <div class="card-header-flex">
+                    <div class="card-icon" style="background:var(--accent-dim);color:var(--accent);">
+                        <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $icons['building'] }}"/></svg>
+                    </div>
+                    <div class="card-title">Tenant Info</div>
+                </div>
             </div>
             <div class="card-body">
                 <div class="info-row">
@@ -360,7 +391,12 @@
         {{-- Current subscription card --}}
         <div class="card">
             <div class="card-header">
-                <div class="card-title">Current Subscription</div>
+                <div class="card-header-flex">
+                    <div class="card-icon" style="background:var(--purple-dim);color:var(--purple);">
+                        <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $icons['card'] }}"/></svg>
+                    </div>
+                    <div class="card-title">Current Subscription</div>
+                </div>
                 @if($sub)
                     <span class="sub-pill sub-{{ $sub->status }}">{{ ucfirst($sub->status) }}</span>
                 @endif
@@ -416,7 +452,7 @@
                     <div class="quota-wrap">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
                             <span style="font-size:12.5px;font-weight:600;color:var(--text-200)">Users</span>
-                            <span style="font-size:11px;color:var(--text-300);font-family:var(--mono)">
+                            <span style="font-size:11px;color:var(--text-200);font-family:var(--mono)">
                                 {{ $userCount }} / {{ $maxUsers > 0 ? $maxUsers : '∞' }} seats used
                             </span>
                         </div>
@@ -438,11 +474,11 @@
 
                     {{-- Plan features summary --}}
                     <div style="margin-top:8px;padding-top:12px;border-top:1px solid var(--border-subtle);">
-                        <div style="font-size:11px;font-weight:700;color:var(--text-300);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;">Plan Features</div>
+                        <div style="font-size:11px;font-weight:700;color:var(--text-200);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;">Plan Features</div>
                         <div style="display:flex;flex-wrap:wrap;gap:6px;">
                             @foreach($plan->features as $feat => $val)
-                            <span style="font-size:11px;padding:2px 8px;background:var(--bg-input);border:1px solid var(--border-default);border-radius:12px;color:var(--text-200);">
-                                {{ ucfirst(str_replace('_',' ',$feat)) }}:
+                            <span class="feat-chip {{ is_bool($val) ? ($val ? 'on' : 'off') : 'num' }}">
+                                <span class="fc-label">{{ ucfirst(str_replace('_',' ',$feat)) }}</span>
                                 @if(is_bool($val))
                                     {{ $val ? '✓' : '✗' }}
                                 @else
@@ -458,17 +494,20 @@
                 @endif
             </div>
         </div>
-    </div>
 
-    {{-- Right: Users + Payment history --}}
-    <div>
+</div>
 
-        {{-- Users list --}}
-        <div class="card" style="margin-bottom:16px;">
+{{-- Users list --}}
+<div class="card stack-card">
             <div class="card-header">
-                <div>
-                    <div class="card-title">Users</div>
-                    <div class="card-subtitle">{{ $userCount }} user{{ $userCount !== 1 ? 's' : '' }}{{ $planUserLimit ? ' of '.$planUserLimit.' allowed' : '' }}</div>
+                <div class="card-header-flex">
+                    <div class="card-icon" style="background:var(--accent-dim);color:var(--accent);">
+                        <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $icons['users'] }}"/></svg>
+                    </div>
+                    <div>
+                        <div class="card-title">Users</div>
+                        <div class="card-subtitle">{{ $userCount }} user{{ $userCount !== 1 ? 's' : '' }}{{ $planUserLimit ? ' of '.$planUserLimit.' allowed' : '' }}</div>
+                    </div>
                 </div>
             </div>
             <div style="overflow-x:auto;">
@@ -487,7 +526,7 @@
                         <tr>
                             <td data-label="Name">
                                 <div class="td-name">{{ $user->name }}</div>
-                                <div style="font-size:11.5px;color:var(--text-400)">{{ $user->email }}</div>
+                                <div style="font-size:11.5px;color:var(--text-300)">{{ $user->email }}</div>
                             </td>
                             <td data-label="Type">
                                 <span class="user-type-badge {{ $user->user_type === 'tenant_admin' ? 'ut-admin' : 'ut-staff' }}">
@@ -519,14 +558,19 @@
                     </tbody>
                 </table>
             </div>
-        </div>
+</div>
 
-        {{-- Payment history --}}
-        <div class="card">
+{{-- Payment history --}}
+<div class="card stack-card">
             <div class="card-header">
-                <div>
-                    <div class="card-title">Payment History</div>
-                    <div class="card-subtitle">{{ $paymentHistory->count() }} subscription record{{ $paymentHistory->count() !== 1 ? 's' : '' }}</div>
+                <div class="card-header-flex">
+                    <div class="card-icon" style="background:var(--amber-dim);color:var(--amber);">
+                        <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $icons['cash'] }}"/></svg>
+                    </div>
+                    <div>
+                        <div class="card-title">Payment History</div>
+                        <div class="card-subtitle">{{ $paymentHistory->count() }} subscription record{{ $paymentHistory->count() !== 1 ? 's' : '' }}</div>
+                    </div>
                 </div>
             </div>
 
@@ -585,9 +629,6 @@
             @empty
             <div style="text-align:center;padding:32px;color:var(--text-400);font-size:13px;">No payment records found.</div>
             @endforelse
-        </div>
-
-    </div>
 </div>
 
 {{-- Module access — superadmin per-tenant feature toggle --}}

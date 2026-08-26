@@ -218,6 +218,9 @@ updatePreview();
                 @else
                     <span class="badge-status badge-active">Active</span>
                 @endif
+                @if($s->auto_renew)
+                <span class="badge-status" style="background:var(--accent-dim);color:var(--accent);margin-left:4px" title="Auto-renews on expiry">⟳ Auto</span>
+                @endif
             </td>
             <td style="display:flex;gap:6px;flex-wrap:wrap">
                 @if($s->status === 'active')

@@ -27,11 +27,19 @@ Schedule::command('tasks:remind')->dailyAt('09:00');
 // ── Product batch expiry alerts — daily ────────────────────────────
 Schedule::command('products:check-batch-expiry')->dailyAt('08:00');
 
+// ── Auto-renew subscriptions opted into auto-renew, before the expiry
+// alert runs so a genuinely-expiring one only fires for non-auto-renew
+// subscriptions ───────────────────────────────────────────────────
+Schedule::command('subscriptions:auto-renew')->dailyAt('06:00');
+
 // ── Service subscription expiry alerts — daily ─────────────────────
 Schedule::command('subscriptions:remind-expiry')->dailyAt('08:30');
 
 // ── Upcoming appointment reminders — hourly (24h-ahead window) ─────
 Schedule::command('appointments:remind-upcoming')->hourly();
+
+// ── Same-day appointment reminders — once every morning ─────────────
+Schedule::command('appointments:remind-today')->dailyAt('07:00');
 
 // ── Auto-mark past appointments as no-show if staff never updated
 // their status — hourly ─────────────────────────────────────────────

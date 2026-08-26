@@ -14,9 +14,10 @@ class WorkOrderRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'product_id' => ['required', 'integer', 'exists:products,id'],
-            'quantity'   => ['required', 'numeric', 'min:0.01'],
-            'notes'      => ['nullable', 'string', 'max:2000'],
+            'product_id'  => ['required', 'integer', 'exists:products,id'],
+            'quantity'    => ['required', 'numeric', 'min:0.01'],
+            'assigned_to' => ['nullable', 'integer', 'exists:users,id'],
+            'notes'       => ['nullable', 'string', 'max:2000'],
         ];
     }
 

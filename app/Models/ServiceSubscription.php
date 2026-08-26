@@ -22,6 +22,7 @@ class ServiceSubscription extends Model
         'total_quantity',
         'used_quantity',
         'status',
+        'auto_renew',
         'expiry_notified_at',
         'notes',
     ];
@@ -32,6 +33,7 @@ class ServiceSubscription extends Model
         'duration_value'     => 'integer',
         'total_quantity'     => 'integer',
         'used_quantity'      => 'integer',
+        'auto_renew'         => 'boolean',
         'expiry_notified_at' => 'datetime',
     ];
 
@@ -88,6 +90,16 @@ class ServiceSubscription extends Model
             ->whereNotNull('expires_at')
             ->whereDate('expires_at', '>=', now()->toDateString())
             ->whereDate('expires_at', '<=', now()->addDays($days)->toDateString());
+    }
+
+    // Active, marked auto-renew, and reached (or passed) its expiry date —
+    // what AutoRenewServiceSubscriptions processes each run.
+    public function scopeDueForAutoRenewal($query)
+    {
+        return $query->active()
+            ->where('auto_renew', true)
+            ->whereNotNull('expires_at')
+            ->whereDate('expires_at', '<=', now()->toDateString());
     }
 
     // ── Helpers ───────────────────────────────────────────────────
