@@ -84,13 +84,17 @@ class RegisterController extends Controller
                          ?? Plan::where('slug', 'free')->first();
  
                 if ($plan) {
+                    $isFree = (float) $plan->monthly_price === 0.0;
+
                     $tenant->subscriptions()->create([
                         'plan_id'        => $plan->id,
-                        'status'         => 'trial',
+                        // Free plan starts as a permanent active subscription
+                        // (no expiry, no lockout). Paid plans get a 14-day trial.
+                        'status'         => $isFree ? 'active' : 'trial',
                         'billing_cycle'  => 'monthly',
-                        'trial_ends_at'  => now()->addDays(14),
+                        'trial_ends_at'  => $isFree ? null : now()->addDays(14),
                         'started_at'     => now(),
-                        'ends_at'        => now()->addDays(14),
+                        'ends_at'        => $isFree ? null : now()->addDays(14),
                     ]);
                 }
  

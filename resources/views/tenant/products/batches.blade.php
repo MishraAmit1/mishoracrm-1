@@ -31,6 +31,7 @@
             <th>Received</th>
             <th>Expiry</th>
             <th>Remaining / Initial</th>
+            <th style="text-align:right">Unit Cost</th>
             <th>Source</th>
         </tr>
     </thead>
@@ -45,6 +46,7 @@
                 @if($expiringSoon)<span class="badge-expiring" style="margin-left:6px">Expiring Soon</span>@endif
             </td>
             <td class="mono">{{ number_format($batch->quantity, 2) }} / {{ number_format($batch->initial_quantity, 2) }} {{ $product->unit }}</td>
+            <td class="mono" style="text-align:right">{{ $batch->unit_cost !== null ? '₹'.number_format($batch->unit_cost, 2) : '—' }}</td>
             <td>
                 @if($batch->purchase_order_id)
                     <a href="{{ route('tenant.purchase-orders.show', $batch->purchase_order_id) }}" class="badge-source" style="text-decoration:none">PO #{{ $batch->purchase_order_id }}</a>
@@ -57,7 +59,7 @@
         </tr>
         @empty
         <tr>
-            <td colspan="5" style="text-align:center;padding:40px;color:var(--text-400)">
+            <td colspan="6" style="text-align:center;padding:40px;color:var(--text-400)">
                 No batches recorded yet — batches are created when stock is received via a Purchase Order or a Work Order completes.
             </td>
         </tr>

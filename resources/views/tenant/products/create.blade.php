@@ -86,6 +86,14 @@
             </div>
         </div>
 
+        <div class="field">
+            <label class="fl">Purchase Cost / Unit (₹)</label>
+            <input type="number" name="cost_price" class="fi" min="0" step="0.01"
+                   value="{{ old('cost_price') }}" placeholder="Defaults to Rate if left blank"/>
+            <span style="font-size:11.5px;color:var(--text-400)">Cost basis for production &amp; inventory valuation. Auto-updates (weighted average) each time stock is received via a Purchase Order.</span>
+            @error('cost_price') <span class="fe">{{ $message }}</span> @enderror
+        </div>
+
         <div class="fg2">
             <div class="field">
                 <label class="fl">HSN / SAC Code</label>

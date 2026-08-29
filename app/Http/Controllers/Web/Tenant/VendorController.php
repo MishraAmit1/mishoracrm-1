@@ -60,9 +60,14 @@ class VendorController extends Controller
     {
         $vendor = $this->findVendor($id);
         $this->authorize('view', $vendor);
-        $vendor->load(['purchaseOrders' => fn ($q) => $q->latest()->limit(20)]);
+        $vendor->load([
+            'purchaseOrders' => fn ($q) => $q->latest()->limit(20),
+            'bills'          => fn ($q) => $q->latest()->limit(20),
+        ]);
 
-        return view('tenant.vendors.show', compact('vendor'));
+        $outstanding = $vendor->outstandingAmount();
+
+        return view('tenant.vendors.show', compact('vendor', 'outstanding'));
     }
 
     // ── Edit ──────────────────────────────────────────────────────

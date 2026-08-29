@@ -6,6 +6,7 @@ use App\BelongsToTenant;
 use App\HasAuditLog;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class WorkOrder extends Model
@@ -18,8 +19,12 @@ class WorkOrder extends Model
         'assigned_to',
         'number',
         'quantity',
+        'produced_quantity',
+        'scrap_quantity',
+        'scrap_reason',
         'status',
         'started_at',
+        'materials_issued_at',
         'completed_at',
         'notes',
         'created_by',
@@ -29,9 +34,12 @@ class WorkOrder extends Model
     ];
 
     protected $casts = [
-        'quantity'     => 'decimal:2',
-        'started_at'   => 'datetime',
-        'completed_at' => 'datetime',
+        'quantity'            => 'decimal:2',
+        'produced_quantity'   => 'decimal:2',
+        'scrap_quantity'      => 'decimal:2',
+        'started_at'          => 'datetime',
+        'materials_issued_at' => 'datetime',
+        'completed_at'        => 'datetime',
         'labor_cost'   => 'decimal:2',
         'machine_cost' => 'decimal:2',
         'material_cost_snapshot' => 'decimal:2',
@@ -59,6 +67,11 @@ class WorkOrder extends Model
         return $this->belongsTo(User::class, 'assigned_to');
     }
 
+    public function stages(): HasMany
+    {
+        return $this->hasMany(WorkOrderStage::class)->orderBy('sequence');
+    }
+
     // ── Scopes ────────────────────────────────────────────────────
 
     public function scopeStatus($query, string $status)
@@ -76,6 +89,26 @@ class WorkOrder extends Model
     public function isInProgress(): bool
     {
         return $this->status === 'in_progress';
+    }
+
+    // Raw materials have physically left stock into WIP.
+    public function materialsIssued(): bool
+    {
+        return $this->materials_issued_at !== null;
+    }
+
+    public function hasStages(): bool
+    {
+        return $this->stages()->exists();
+    }
+
+    // Every routing stage is done or skipped (true also when there are no
+    // stages at all).
+    public function allStagesFinished(): bool
+    {
+        return !$this->stages()
+            ->whereIn('status', ['pending', 'in_progress'])
+            ->exists();
     }
 
     // Editable/deletable only before production has actually started.
@@ -115,7 +148,7 @@ class WorkOrder extends Model
         $this->loadMissing('product.billOfMaterials.material');
 
         return (float) $this->product?->billOfMaterials
-            ?->sum(fn ($bomItem) => (float) $bomItem->quantity_per_unit * (float) $this->quantity * (float) ($bomItem->material->rate ?? 0));
+            ?->sum(fn ($bomItem) => (float) $bomItem->quantity_per_unit * (float) $this->quantity * (float) ($bomItem->material?->costBasis() ?? 0));
     }
 
     public function getTotalCostAttribute(): float
@@ -123,9 +156,20 @@ class WorkOrder extends Model
         return $this->material_cost + (float) $this->labor_cost + (float) $this->machine_cost;
     }
 
+    // Good units produced — falls back to the planned quantity until the
+    // Work Order is completed with an explicit figure.
+    public function yieldQuantity(): float
+    {
+        return $this->produced_quantity !== null
+            ? (float) $this->produced_quantity
+            : (float) $this->quantity;
+    }
+
+    // Total run cost is absorbed by the good output, so scrap pushes
+    // cost/unit up.
     public function getCostPerUnitAttribute(): float
     {
-        return (float) $this->quantity > 0 ? $this->total_cost / (float) $this->quantity : 0.0;
+        return $this->yieldQuantity() > 0 ? $this->total_cost / $this->yieldQuantity() : 0.0;
     }
 
     // ── Margin ────────────────────────────────────────────────────
@@ -134,7 +178,7 @@ class WorkOrder extends Model
     // (it uses today's Product.rate, not the rate at time of sale).
     public function getSellingValueAttribute(): float
     {
-        return (float) ($this->product?->rate ?? 0) * (float) $this->quantity;
+        return (float) ($this->product?->rate ?? 0) * $this->yieldQuantity();
     }
 
     public function getMarginAttribute(): float

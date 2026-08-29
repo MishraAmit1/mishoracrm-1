@@ -132,6 +132,7 @@ Route::prefix('superadmin')
             Route::get('/',                       'index')->name('index');
             Route::get('/{tenant}',               'show')->name('show');
             Route::post('/{tenant}/toggle-status', 'toggleStatus')->name('toggle-status');
+            Route::post('/{tenant}/subscription',  'updateSubscription')->name('update-subscription');
             Route::post('/{tenant}/toggle-manufacturing', 'toggleManufacturing')->name('toggle-manufacturing');
             Route::post('/{tenant}/clear-manufacturing-override', 'clearManufacturingOverride')->name('clear-manufacturing-override');
             Route::post('/{tenant}/toggle-service', 'toggleService')->name('toggle-service');
@@ -177,10 +178,14 @@ Route::prefix('superadmin')
             Route::post('/{coupon}/toggle', 'toggle')->name('toggle');
         });
 
-        // Tenant Admin role permissions (only Super Admin can change this — it's one shared role across all tenants)
+        // Shared default role permissions (only Super Admin — these roles are shared across all tenants)
         Route::prefix('roles')->name('roles.')->controller(SuperAdmin\RoleController::class)->group(function () {
+            // Back-compat named routes
             Route::get('/tenant-admin/edit', 'editTenantAdmin')->name('tenant-admin.edit');
             Route::put('/tenant-admin',      'updateTenantAdmin')->name('tenant-admin.update');
+            // Generic (tenant_admin | staff)
+            Route::get('/{role}/edit', 'edit')->name('edit')->whereIn('role', ['tenant_admin', 'staff']);
+            Route::put('/{role}',      'update')->name('update')->whereIn('role', ['tenant_admin', 'staff']);
         });
 
         // Permissions master list (no seeder edits needed for new modules)
@@ -249,10 +254,15 @@ Route::middleware(['tenant', 'auth'])
         Route::get('/subscription/plans',   [SubscriptionController::class, 'plans'])->name('subscription.plans');
         Route::get('/subscription/current', [SubscriptionController::class, 'current'])->name('subscription.current');
         Route::get('/subscription/success', [SubscriptionController::class, 'success'])->name('subscription.success');
-        Route::get('/subscription/checkout/{plan}/{cycle}', [SubscriptionController::class, 'checkout'])->name('subscription.checkout');
-        Route::post('/subscription/verify',       [SubscriptionController::class, 'verify'])->name('subscription.verify');
-        Route::post('/subscription/cancel',       [SubscriptionController::class, 'cancel'])->name('subscription.cancel');
-        Route::post('/subscription/apply-coupon', [SubscriptionController::class, 'applyCoupon'])->name('subscription.apply-coupon');
+
+        // Billing actions (purchase / pay / cancel) — workspace admins only.
+        // A regular staff user must never be able to buy or cancel the plan.
+        Route::middleware('tenant.admin')->group(function () {
+            Route::get('/subscription/checkout/{plan}/{cycle}', [SubscriptionController::class, 'checkout'])->name('subscription.checkout');
+            Route::post('/subscription/verify',       [SubscriptionController::class, 'verify'])->name('subscription.verify');
+            Route::post('/subscription/cancel',       [SubscriptionController::class, 'cancel'])->name('subscription.cancel');
+            Route::post('/subscription/apply-coupon', [SubscriptionController::class, 'applyCoupon'])->name('subscription.apply-coupon');
+        });
     });
 
 // Route::domain('{tenant}.' . config('app.base_domain', 'saas-crm.test'))
@@ -452,7 +462,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
         });
 
         // ── Invoice PDF Style (tenant_admin only) ───────────────────
-        Route::prefix('invoice-pdf-style')->name('invoice-pdf-style.')->middleware(['role:tenant_admin'])
+        Route::prefix('invoice-pdf-style')->name('invoice-pdf-style.')->middleware(['tenant.admin'])
             ->controller(Tenant\InvoicePdfSettingController::class)->group(function () {
                 Route::get('/',  'index')->name('index');
                 Route::post('/', 'store')->name('store');
@@ -638,6 +648,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
                 Route::delete('/{id}', 'destroy')->name('destroy');
                 Route::post('/{id}/status', 'updateStatus')->name('update_status');
                 Route::post('/{id}/receive', 'receive')->name('receive');
+                Route::get('/{id}/grns/{grnId}', 'showGrn')->name('grns.show');
                 Route::get('/{id}/pdf', 'pdf')->name('pdf');
                 Route::post('/{id}/send', 'send')->name('send');
             });
@@ -646,6 +657,21 @@ Route::middleware(['tenant', 'auth', 'subscription'])
                 Route::post('/', 'store')->name('store');
                 Route::post('/{quoteId}/select', 'select')->name('select');
                 Route::delete('/{quoteId}', 'destroy')->name('destroy');
+            });
+        });
+
+        // Vendor Bills (Accounts Payable) routes
+        Route::prefix('/vendor-bills')->name('vendor-bills.')->group(function () {
+            Route::controller(Tenant\VendorBillController::class)->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::get('/create', 'create')->name('create');
+                Route::post('/', 'store')->name('store');
+                Route::get('/{id}', 'show')->name('show');
+                Route::get('/{id}/edit', 'edit')->name('edit');
+                Route::put('/{id}', 'update')->name('update');
+                Route::delete('/{id}', 'destroy')->name('destroy');
+                Route::post('/{id}/cancel', 'cancel')->name('cancel');
+                Route::post('/{id}/payments', 'recordPayment')->name('payments.store');
             });
         });
 
@@ -664,6 +690,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
                 Route::post('/{id}/complete', 'complete')->name('complete');
                 Route::post('/{id}/cancel', 'cancel')->name('cancel');
                 Route::post('/{id}/costs', 'updateCosts')->name('update-costs');
+                Route::post('/{id}/stages/{stageId}', 'stageAction')->name('stages.action');
             });
         });
 
@@ -712,29 +739,40 @@ Route::middleware(['tenant', 'auth', 'subscription'])
             });
         });
 
-        Route::prefix('/staffs')->name('staffs.')->group(function () {
-            Route::controller(Tenant\StaffController::class)->group(function () {
+        Route::prefix('/staffs')->name('staffs.')->controller(Tenant\StaffController::class)->group(function () {
+            Route::middleware('permission:staff.view')->group(function () {
                 Route::get('/', 'index')->name('index');
+                Route::get('/{id}', 'show')->name('show')->whereNumber('id');
+            });
+            Route::middleware('permission:staff.create')->group(function () {
                 Route::get('/create', 'create')->name('create');
                 Route::post('/', 'store')->name('store');
-                Route::get('/{id}', 'show')->name('show');
-                Route::get('/{id}/edit', 'edit')->name('edit');
-                Route::put('/{id}', 'update')->name('update');
-                Route::delete('/{id}', 'destroy')->name('destroy');
-                Route::post('/{id}/activate', 'activate')->name('activate');
-                Route::post('/{id}/deactivate', 'deactivate')->name('deactivate');
+            });
+            Route::middleware('permission:staff.edit')->group(function () {
+                Route::post('/bulk-role', 'bulkAssignRole')->name('bulk-role');
+                Route::get('/{id}/edit', 'edit')->name('edit')->whereNumber('id');
+                Route::put('/{id}', 'update')->name('update')->whereNumber('id');
+            });
+            Route::delete('/{id}', 'destroy')->name('destroy')->whereNumber('id')
+                ->middleware('permission:staff.delete');
+            Route::middleware('permission:staff.activate_deactivate')->group(function () {
+                Route::post('/{id}/activate', 'activate')->name('activate')->whereNumber('id');
+                Route::post('/{id}/deactivate', 'deactivate')->name('deactivate')->whereNumber('id');
             });
         });
 
-        Route::prefix('/departments')->name('departments.')->group(function () {
-            Route::controller(Tenant\DepartmentController::class)->group(function () {
-                Route::get('/', 'index')->name('index');
+        Route::prefix('/departments')->name('departments.')->controller(Tenant\DepartmentController::class)->group(function () {
+            Route::get('/', 'index')->name('index')->middleware('permission:departments.view');
+            Route::middleware('permission:departments.create')->group(function () {
                 Route::get('/create', 'create')->name('create');
                 Route::post('/', 'store')->name('store');
-                Route::get('/{id}/edit', 'edit')->name('edit');
-                Route::put('/{id}', 'update')->name('update');
-                Route::delete('/{id}', 'destroy')->name('destroy');
             });
+            Route::middleware('permission:departments.edit')->group(function () {
+                Route::get('/{id}/edit', 'edit')->name('edit')->whereNumber('id');
+                Route::put('/{id}', 'update')->name('update')->whereNumber('id');
+            });
+            Route::delete('/{id}', 'destroy')->name('destroy')->whereNumber('id')
+                ->middleware('permission:departments.delete');
         });
 
         // Attendance routes
@@ -772,7 +810,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
         });
 
         // ── Instagram Automation (tenant_admin only) ──────────────
-        Route::prefix('instagram')->name('instagram.')->middleware(['role:tenant_admin'])->group(function () {
+        Route::prefix('instagram')->name('instagram.')->middleware(['tenant.admin'])->group(function () {
             Route::get('/',                                [Tenant\InstagramController::class, 'index'])->name('index');
             Route::get('/settings',                        [Tenant\InstagramController::class, 'settings'])->name('settings');
             Route::post('/settings',                       [Tenant\InstagramController::class, 'saveSettings'])->name('settings.save');
@@ -848,9 +886,9 @@ Route::middleware(['tenant', 'auth', 'subscription'])
             Route::post('preview-template',    [Tenant\EmailController::class, 'previewTemplate'])->name('preview');
 
             // SMTP connect settings (tenant_admin only)
-            Route::get('settings',             [Tenant\EmailController::class, 'settings'])->name('settings')->middleware(['role:tenant_admin']);
-            Route::post('settings',            [Tenant\EmailController::class, 'saveSettings'])->name('settings.save')->middleware(['role:tenant_admin']);
-            Route::post('settings/test',       [Tenant\EmailController::class, 'testConnection'])->name('settings.test')->middleware(['role:tenant_admin']);
+            Route::get('settings',             [Tenant\EmailController::class, 'settings'])->name('settings')->middleware(['tenant.admin']);
+            Route::post('settings',            [Tenant\EmailController::class, 'saveSettings'])->name('settings.save')->middleware(['tenant.admin']);
+            Route::post('settings/test',       [Tenant\EmailController::class, 'testConnection'])->name('settings.test')->middleware(['tenant.admin']);
         });
 
         // Reports
@@ -885,7 +923,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
             Route::put('profile',  [Tenant\SettingsController::class, 'updateProfile'])->name('profile');
             Route::put('password', [Tenant\SettingsController::class, 'updatePassword'])->name('password');
             Route::post('avatar',  [Tenant\SettingsController::class, 'uploadAvatar'])->name('avatar');
-            Route::put('company',  [Tenant\SettingsController::class, 'updateCompany'])->name('company');
+            Route::put('company',  [Tenant\SettingsController::class, 'updateCompany'])->name('company')->middleware('tenant.admin');
             Route::post('theme',   [Tenant\SettingsController::class, 'updateTheme'])->name('theme');
         });
 
@@ -908,7 +946,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
 
         // Tenant Field Manager — sirf tenant_admin
         Route::prefix('tenant-fields')->name('tenant-fields.')
-            ->middleware(['role:tenant_admin'])
+            ->middleware(['tenant.admin'])
             ->group(function () {
                 Route::get('/',                   [Tenant\TenantFieldController::class, 'index'])->name('index');
                 Route::get('/{module}',           [Tenant\TenantFieldController::class, 'module'])->name('module');
@@ -928,37 +966,35 @@ Route::middleware(['tenant', 'auth', 'subscription'])
             });
 
         // tenant staff roles and permission
-        Route::prefix('roles')->name('roles.')->controller(Tenant\RoleController::class)->middleware(['role:tenant_admin'])->group(function () {
+        Route::prefix('roles')->name('roles.')->controller(Tenant\RoleController::class)->middleware(['tenant.admin'])->group(function () {
 
             Route::get('/',              'index')->name('index');
             Route::get('/create',        'create')->name('create');
             Route::post('/',             'store')->name('store');
-            Route::get('/{id}',          'show')->name('show');
-            Route::get('/{id}/edit',     'edit')->name('edit');
-            Route::put('/{id}',          'update')->name('update');
-            Route::delete('/{id}',       'destroy')->name('destroy');
 
-            // Get role permissions (for copy-from AJAX)
-            Route::get('/{id}/permissions', function ($id) {
-                $role = \Spatie\Permission\Models\Role::findOrFail($id);
-                return response()->json([
-                    'permission_ids' => $role->permissions->pluck('id'),
-                ]);
-            })->name('permissions');
+            // Customise a shared system role (copy-on-write -> tenant_{id}_{base})
+            Route::post('/system/{base}/customise', 'customiseSystem')->name('system.customise')
+                ->whereIn('base', ['staff', 'admin']);
 
             // Assign role to specific user
             Route::post('/assign',  'assignToUser')->name('assign');
+
+            Route::get('/{id}',             'show')->name('show')->whereNumber('id');
+            Route::get('/{id}/edit',        'edit')->name('edit')->whereNumber('id');
+            Route::get('/{id}/permissions', 'permissions')->name('permissions')->whereNumber('id');
+            Route::put('/{id}',             'update')->name('update')->whereNumber('id');
+            Route::delete('/{id}',          'destroy')->name('destroy')->whereNumber('id');
         });
 
         // Add new permissions (tenant_admin can add for new modules — rename/delete stays Super Admin-only
         // since tenant_admin is one shared role across all tenants)
-        Route::prefix('permissions')->name('permissions.')->controller(Tenant\PermissionController::class)->middleware(['role:tenant_admin'])->group(function () {
+        Route::prefix('permissions')->name('permissions.')->controller(Tenant\PermissionController::class)->middleware(['tenant.admin'])->group(function () {
             Route::get('/create', 'create')->name('create');
             Route::post('/',      'store')->name('store');
         });
 
         // ── API Key Management (tenant_admin only) ────────────────
-        Route::prefix('api-keys')->name('api-keys.')->middleware(['role:tenant_admin'])
+        Route::prefix('api-keys')->name('api-keys.')->middleware(['tenant.admin'])
             ->controller(Tenant\ApiKeyController::class)->group(function () {
                 Route::get('/',              'index')->name('index');
                 Route::post('/',             'store')->name('store');
@@ -968,7 +1004,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
             });
 
         // ── Webhooks — n8n automation (tenant_admin only) ──────────
-        Route::prefix('webhooks')->name('webhooks.')->middleware(['role:tenant_admin'])
+        Route::prefix('webhooks')->name('webhooks.')->middleware(['tenant.admin'])
             ->controller(Tenant\WebhookController::class)->group(function () {
                 Route::get('/',                  'index')->name('index');
                 Route::post('/',                 'store')->name('store');
@@ -980,7 +1016,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
             });
 
         // ── Slack Notifications (tenant_admin only) ────────────────
-        Route::prefix('slack')->name('slack.')->middleware(['role:tenant_admin'])
+        Route::prefix('slack')->name('slack.')->middleware(['tenant.admin'])
             ->controller(Tenant\SlackController::class)->group(function () {
                 Route::get('/',           'index')->name('index');
                 Route::post('/',          'store')->name('store');

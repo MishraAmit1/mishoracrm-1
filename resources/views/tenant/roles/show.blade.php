@@ -102,12 +102,14 @@
         <div class="page-title">{{ $roleDisplayName }}</div>
     </div>
     <div style="display:flex;gap:8px">
+        @if($editable)
         <a href="{{ route('tenant.roles.edit', $role->id) }}" class="btn btn-primary">
             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125"/>
             </svg>
             Edit Permissions
         </a>
+        @endif
         <a href="{{ route('tenant.roles.index') }}" class="btn btn-secondary">← Back</a>
     </div>
 </div>
@@ -172,8 +174,10 @@
             @if($grouped->isEmpty())
             <div style="padding:24px;text-align:center;color:var(--text-400);font-size:13px">
                 No permissions assigned to this role yet.
+                @if($editable)
                 <br><br>
                 <a href="{{ route('tenant.roles.edit', $role->id) }}" class="btn btn-primary btn-sm">Add Permissions</a>
+                @endif
             </div>
             @else
             @foreach($grouped as $module => $perms)
@@ -224,7 +228,64 @@
             </div>
             @endforeach
             @endif
+
+            {{-- Assign a staff member to this role --}}
+            @if($addableStaff->isNotEmpty())
+            <form method="POST" action="{{ route('tenant.roles.assign') }}"
+                  style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+                @csrf
+                <input type="hidden" name="role" value="{{ $role->name }}"/>
+                <select name="user_id" required
+                        style="flex:1;min-width:200px;padding:8px 10px;background:var(--bg-input);border:1.5px solid var(--border-default);border-radius:var(--r-sm);color:var(--text-100);font-size:13px">
+                    <option value="">Add a staff member to this role…</option>
+                    @foreach($addableStaff as $u)
+                    <option value="{{ $u->id }}">{{ $u->name }} — {{ $u->email }}</option>
+                    @endforeach
+                </select>
+                <button type="submit" class="btn btn-secondary btn-sm">Assign</button>
+            </form>
+            <p style="font-size:11.5px;color:var(--text-400);margin-top:6px">
+                Moving someone here replaces their current role.
+            </p>
+            @endif
         </div>
+
+        {{-- Danger zone --}}
+        @if($editable)
+        <div class="show-sec" id="danger-zone">
+            <div class="sec-title" style="color:var(--red)">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:13px;height:13px">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>
+                </svg>
+                Delete this role
+            </div>
+            <form method="POST" action="{{ route('tenant.roles.destroy', $role->id) }}"
+                  onsubmit="return confirm('Delete \'{{ addslashes($roleDisplayName) }}\'? This cannot be undone.')">
+                @csrf @method('DELETE')
+                @if($users->isNotEmpty())
+                <div style="font-size:12.5px;color:var(--text-300);margin-bottom:10px">
+                    {{ $users->count() }} {{ Str::plural('member', $users->count()) }} on this role.
+                    @if(\App\Helpers\Roles::systemBase($role->name))
+                        On delete they revert to the default {{ $roleDisplayName }} permissions.
+                    @else
+                        Choose where to move them:
+                    @endif
+                </div>
+                @if(! \App\Helpers\Roles::systemBase($role->name))
+                <select name="reassign_to" required
+                        style="width:100%;max-width:340px;padding:8px 10px;background:var(--bg-input);border:1.5px solid var(--border-default);border-radius:var(--r-sm);color:var(--text-100);font-size:13px;margin-bottom:12px">
+                    <option value="">Move members to…</option>
+                    @foreach($otherRoles as $r)
+                    <option value="{{ $r['name'] }}">{{ $r['label'] }}</option>
+                    @endforeach
+                </select>
+                <br>
+                @endif
+                @endif
+                <button type="submit" class="btn btn-secondary" style="color:var(--red)">Delete Role</button>
+            </form>
+        </div>
+        @endif
 
     </div>{{-- /show-card --}}
 
@@ -258,16 +319,21 @@
         <div class="sidebar-card">
             <div class="sc-head">Actions</div>
             <div class="sc-body" style="display:flex;flex-direction:column;gap:8px">
+                @if($editable)
                 <a href="{{ route('tenant.roles.edit', $role->id) }}" class="btn btn-primary" style="width:100%;justify-content:center">
                     Edit Permissions
                 </a>
-                <form method="POST" action="{{ route('tenant.roles.destroy', $role->id) }}"
-                      onsubmit="return confirm('Delete role \'{{ addslashes($roleDisplayName) }}\'? This cannot be undone.')">
-                    @csrf @method('DELETE')
-                    <button type="submit" class="btn btn-secondary" style="width:100%;color:var(--red)">
-                        Delete Role
-                    </button>
-                </form>
+                <a href="#danger-zone" class="btn btn-secondary" style="width:100%;justify-content:center;color:var(--red)">
+                    Delete Role
+                </a>
+                @else
+                <div style="font-size:12.5px;color:var(--text-400);line-height:1.5">
+                    This is the shared platform default and is read-only here.
+                    @if(\App\Helpers\Roles::systemBase($role->name))
+                    To change it for your workspace, go back to Roles &amp; Permissions and click <strong>Customise</strong> on the {{ $roleDisplayName }} card.
+                    @endif
+                </div>
+                @endif
             </div>
         </div>
 

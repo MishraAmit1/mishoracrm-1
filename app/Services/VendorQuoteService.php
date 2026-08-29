@@ -54,6 +54,14 @@ class VendorQuoteService
 
         $totals = PurchaseOrder::calculateTotals($quote->items, 0, 0);
 
+        $vendor = \App\Models\Vendor::withoutGlobalScopes()->find($quote->vendor_id);
+        $tenant = \App\Models\Tenant::find($purchaseOrder->tenant_id);
+        $totals += \App\Services\GstService::documentColumns(
+            (float) $totals['tax_amount'],
+            \App\Services\GstService::partyState($vendor),
+            $tenant?->companyState(),
+        );
+
         $purchaseOrder->update(array_merge($totals, [
             'vendor_id' => $quote->vendor_id,
             'items'     => $quote->items,

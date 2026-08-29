@@ -35,6 +35,19 @@ class InvoiceController extends Controller
             ->firstOrFail();
     }
 
+    // GST split — the tenant's company is the supplier, the customer the
+    // recipient.
+    private function gstColumns($contactId, float $taxAmount): array
+    {
+        $contact = $contactId ? Contact::where('id', $contactId)->where('tenant_id', $this->tenantId())->first() : null;
+
+        return \App\Services\GstService::documentColumns(
+            $taxAmount,
+            auth()->user()->tenant?->companyState(),
+            \App\Services\GstService::partyState($contact),
+        );
+    }
+
     // Auto-creates a ServiceSubscription for any line item the staff
     // explicitly checked "Track as subscription" on — idempotent per
     // (invoice, service) pair so re-saving the same invoice never
@@ -176,6 +189,7 @@ class InvoiceController extends Controller
             $request->discount ?? 0,
             $request->tax_percent ?? 18
         );
+        $totals += $this->gstColumns($request->contact_id, (float) $totals['tax_amount']);
 
         $invoice = Invoice::create(array_merge($totals, [
             'tenant_id'    => $this->tenantId(),
@@ -282,6 +296,7 @@ class InvoiceController extends Controller
             $request->discount ?? 0,
             $request->tax_percent ?? $invoice->tax_percent
         );
+        $totals += $this->gstColumns($request->contact_id ?? $invoice->contact_id, (float) $totals['tax_amount']);
 
         // Undo the old item quantities' stock effect, then apply the new
         // ones — a correct net delta even if items/quantities changed.

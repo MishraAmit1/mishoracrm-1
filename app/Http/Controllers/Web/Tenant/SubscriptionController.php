@@ -199,10 +199,11 @@ class SubscriptionController extends Controller
 
             if ($sub) {
                 $sub->update([
-                    'status'              => 'active',
-                    'razorpay_payment_id' => $data['razorpay_payment_id'],
-                    'razorpay_signature'  => $data['razorpay_signature'],
-                    'started_at'          => now(),
+                    'status'                   => 'active',
+                    'razorpay_payment_id'      => $data['razorpay_payment_id'],
+                    'razorpay_signature'       => $data['razorpay_signature'],
+                    'started_at'               => now(),
+                    'renewal_reminder_sent_at' => null,
                 ]);
 
                 if ($sub->coupon_id) {

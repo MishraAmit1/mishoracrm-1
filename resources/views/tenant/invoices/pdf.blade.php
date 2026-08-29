@@ -573,21 +573,21 @@
                         </tr>
                         @endif
 
+                        @if($invoice->placeOfSupplyName())
+                        <tr>
+                            <td class="t-sub-label">Place of Supply</td>
+                            <td class="t-sub-value">{{ $invoice->placeOfSupplyName() }}</td>
+                        </tr>
+                        @endif
                         @if($showTaxSummary)
-                            @php
-                                $cgst = round($invoice->tax_amount / 2, 2);
-                                $sgst = round($invoice->tax_amount / 2, 2);
-                            @endphp
+                            @foreach($invoice->gstLines() as $line)
                             <tr>
-                                <td class="t-sub-label">CGST ({{ number_format($invoice->tax_percent / 2, 1) }}%)</td>
-                                <td class="t-sub-value">₹ {{ number_format($cgst, 2) }}</td>
+                                <td class="{{ $loop->last ? 't-label' : 't-sub-label' }}">{{ $line['label'] }}</td>
+                                <td class="{{ $loop->last ? 't-value' : 't-sub-value' }}">₹ {{ number_format($line['amount'], 2) }}</td>
                             </tr>
+                            @endforeach
                             <tr>
-                                <td class="t-sub-label">SGST ({{ number_format($invoice->tax_percent / 2, 1) }}%)</td>
-                                <td class="t-sub-value">₹ {{ number_format($sgst, 2) }}</td>
-                            </tr>
-                            <tr>
-                                <td class="t-label">Total GST ({{ number_format($invoice->tax_percent, 0) }}%)</td>
+                                <td class="t-label">Total GST</td>
                                 <td class="t-value">₹ {{ number_format($invoice->tax_amount, 2) }}</td>
                             </tr>
                         @else

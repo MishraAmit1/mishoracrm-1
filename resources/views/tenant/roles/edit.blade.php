@@ -115,8 +115,14 @@
 </div>
 @endif
 
+@if($isEdit && \App\Helpers\Roles::isSystem($role->name))
+<div style="padding:12px 16px;background:var(--purple-dim);border:1px solid rgba(124,92,255,.2);border-radius:var(--r-sm);margin-bottom:16px;font-size:13px;color:var(--text-200)">
+    This is your workspace's copy of the <strong>{{ $roleDisplayName }}</strong> role. Changes here apply only to your team — the platform default is untouched.
+</div>
+@endif
+
 <form method="POST"
-      action="{{ $isEdit ? route('tenant.roles.update', $role->id) : route('roles.store') }}"
+      action="{{ $isEdit ? route('tenant.roles.update', $role->id) : route('tenant.roles.store') }}"
       id="roleForm">
 @csrf
 @if($isEdit) @method('PUT') @endif

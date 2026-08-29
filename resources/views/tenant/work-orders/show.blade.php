@@ -89,7 +89,20 @@
                     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
                         <div>
                             <div class="ps-number">{{ $workOrder->number }}</div>
-                            <div style="font-size:13px;color:var(--text-300)">Building {{ number_format($workOrder->quantity, 2) }} × {{ $workOrder->product?->name }}</div>
+                            <div style="font-size:13px;color:var(--text-300)">
+                                @if($workOrder->status === 'completed' && $workOrder->produced_quantity !== null)
+                                    Produced {{ number_format((float) $workOrder->produced_quantity, 2) }} × {{ $workOrder->product?->name }}
+                                    @if((float) $workOrder->scrap_quantity > 0)
+                                        <span style="color:var(--red)"> · {{ number_format((float) $workOrder->scrap_quantity, 2) }} scrap</span>
+                                    @endif
+                                    <span style="opacity:.6"> (planned {{ number_format((float) $workOrder->quantity, 2) }})</span>
+                                @else
+                                    Building {{ number_format($workOrder->quantity, 2) }} × {{ $workOrder->product?->name }}
+                                @endif
+                            </div>
+                            @if($workOrder->scrap_reason)
+                            <div style="font-size:12px;color:var(--red);margin-top:3px">Scrap reason: {{ $workOrder->scrap_reason }}</div>
+                            @endif
                         </div>
                         <span class="ps-status-badge" style="background:{{ $st['bg'] }};color:{{ $st['text'] }};border:1px solid {{ $st['color'] }}40">
                             <i class="ti {{ $st['icon'] }}" style="font-size:14px"></i> {{ \App\Models\WorkOrder::statuses()[$workOrder->status] ?? ucfirst($workOrder->status) }}
@@ -110,6 +123,12 @@
                             <div style="font-size:13px;font-weight:500;color:var(--text-100);font-family:'DM Mono',monospace">{{ $workOrder->started_at->format('d M Y, h:i A') }}</div>
                         </div>
                         @endif
+                        @if($workOrder->materials_issued_at)
+                        <div>
+                            <div style="font-size:10.5px;font-weight:600;color:var(--text-300);text-transform:uppercase;letter-spacing:.5px">Materials Issued</div>
+                            <div style="font-size:13px;font-weight:500;color:var(--green);font-family:'DM Mono',monospace">{{ $workOrder->materials_issued_at->format('d M Y, h:i A') }}</div>
+                        </div>
+                        @endif
                         @if($workOrder->completed_at)
                         <div>
                             <div style="font-size:10.5px;font-weight:600;color:var(--text-300);text-transform:uppercase;letter-spacing:.5px">Completed</div>
@@ -127,11 +146,13 @@
                 <div style="overflow-x:auto">
                     <table class="ps-items-table">
                         <thead>
+                            @php $showStock = in_array($workOrder->status, ['pending','in_progress']) && !$workOrder->materialsIssued(); @endphp
                             <tr>
                                 <th>Material</th>
                                 <th style="text-align:right">Needed</th>
-                                @if(in_array($workOrder->status, ['pending','in_progress']))
+                                @if($showStock)
                                 <th style="text-align:right">In Stock</th>
+                                <th style="text-align:right">Available</th>
                                 <th style="text-align:right">Status</th>
                                 @endif
                             </tr>
@@ -146,13 +167,14 @@
                             <tr>
                                 <td style="font-weight:500">{{ $material?->name ?? '—' }}</td>
                                 <td style="text-align:right;font-family:'DM Mono',monospace">{{ number_format($needed, 2) }}</td>
-                                @if(in_array($workOrder->status, ['pending','in_progress']))
+                                @if($showStock)
                                 <td style="text-align:right;font-family:'DM Mono',monospace">{{ number_format($material?->current_stock ?? 0, 2) }}</td>
+                                <td style="text-align:right;font-family:'DM Mono',monospace">{{ number_format($material?->availableStock() ?? 0, 2) }}</td>
                                 <td style="text-align:right" class="{{ $short ? 'bom-short' : 'bom-ok' }}">{{ $short ? 'Short by '.$short['shortfall'] : 'OK' }}</td>
                                 @endif
                             </tr>
                             @empty
-                            <tr><td colspan="4" style="text-align:center;color:var(--text-300)">No BOM configured for this product.</td></tr>
+                            <tr><td colspan="5" style="text-align:center;color:var(--text-300)">No BOM configured for this product.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -164,6 +186,62 @@
                 </div>
                 @endif
             </div>
+
+            @if($workOrder->stages->isNotEmpty())
+            @php
+                $stageMeta = [
+                    'pending'     => ['bg' => 'var(--bg-elevated)', 'color' => 'var(--text-300)'],
+                    'in_progress' => ['bg' => 'var(--accent-dim)',  'color' => 'var(--accent)'],
+                    'done'        => ['bg' => 'var(--green-dim)',    'color' => 'var(--green)'],
+                    'skipped'     => ['bg' => 'var(--amber-dim)',    'color' => 'var(--amber)'],
+                ];
+            @endphp
+            <div class="ps-card">
+                <div class="ps-card-head">
+                    <div class="ps-card-title"><i class="ti ti-route" style="font-size:13px;margin-right:5px"></i> Production Stages</div>
+                </div>
+                <div style="overflow-x:auto">
+                    <table class="ps-items-table">
+                        <thead>
+                            <tr><th style="width:36px">#</th><th>Stage</th><th>Assigned</th><th>Status</th><th style="text-align:right">Actions</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach($workOrder->stages as $stage)
+                            @php $sm = $stageMeta[$stage->status] ?? $stageMeta['pending']; @endphp
+                            <tr>
+                                <td style="color:var(--text-400)">{{ $stage->sequence }}</td>
+                                <td style="font-weight:500">{{ $stage->name }}</td>
+                                <td style="color:var(--text-300)">{{ $stage->assignedTo?->name ?? '—' }}</td>
+                                <td><span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;background:{{ $sm['bg'] }};color:{{ $sm['color'] }}">{{ \App\Models\WorkOrderStage::statuses()[$stage->status] ?? $stage->status }}</span></td>
+                                <td style="text-align:right">
+                                    @can('manage', $workOrder)
+                                    @if($workOrder->isInProgress())
+                                    <form method="POST" action="{{ route('tenant.work-orders.stages.action', [$workOrder->id, $stage->id]) }}" style="display:inline">
+                                        @csrf
+                                        @if($stage->status === 'pending')
+                                        <button name="action" value="start" class="btn btn-secondary btn-sm">Start</button>
+                                        <button name="action" value="skip" class="btn btn-secondary btn-sm" style="color:var(--amber)">Skip</button>
+                                        @elseif($stage->status === 'in_progress')
+                                        <button name="action" value="complete" class="btn btn-secondary btn-sm" style="color:var(--green)">Complete</button>
+                                        @else
+                                        <button name="action" value="reopen" class="btn btn-secondary btn-sm">Reopen</button>
+                                        @endif
+                                    </form>
+                                    @endif
+                                    @endcan
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                @if($workOrder->isInProgress() && !$workOrder->allStagesFinished())
+                <div style="padding:12px 20px;font-size:12px;color:var(--amber);border-top:1px solid var(--border-subtle)">
+                    <i class="ti ti-alert-triangle" style="font-size:13px"></i> Work Order can't be completed until every stage is done or skipped.
+                </div>
+                @endif
+            </div>
+            @endif
 
             @can('editCosts', $workOrder)
             <div class="ps-card">
@@ -227,19 +305,31 @@
 
                 @if($workOrder->isPending())
                 <form method="POST" action="{{ route('tenant.work-orders.start',$workOrder->id) }}"
-                      onsubmit="return confirm('Start production on this work order?')">
+                      onsubmit="return confirm('Start production? Raw materials will be issued from stock now (WIP).')">
                     @csrf
                     <button type="submit" class="qs-action-btn" style="background:var(--accent-dim);border-color:#B7D6F3;color:var(--accent)">
                         <div class="qs-act-icon" style="background:var(--accent-dim)"><i class="ti ti-player-play" style="font-size:15px;color:var(--accent)"></i></div>
-                        Start Production
+                        Start &amp; Issue Materials
                     </button>
                 </form>
                 @endif
 
                 @if($workOrder->isInProgress())
                 <form method="POST" action="{{ route('tenant.work-orders.complete',$workOrder->id) }}"
-                      onsubmit="return confirm('Complete this work order? Raw materials will be consumed and finished-good stock credited.')">
+                      onsubmit="return confirm('{{ $workOrder->materialsIssued() ? 'Complete this work order? Finished-good stock will be credited.' : 'Complete this work order? Raw materials will be consumed and finished-good stock credited.' }}')">
                     @csrf
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+                        <div>
+                            <label class="pf-label" for="wo_produced" style="display:block;margin-bottom:4px">Produced (good)</label>
+                            <input type="number" name="produced_quantity" id="wo_produced" class="pf-input" min="0" step="0.01"
+                                   value="{{ number_format((float) $workOrder->quantity, 2, '.', '') }}"/>
+                        </div>
+                        <div>
+                            <label class="pf-label" for="wo_scrap" style="display:block;margin-bottom:4px">Scrap</label>
+                            <input type="number" name="scrap_quantity" id="wo_scrap" class="pf-input" min="0" step="0.01" value="0"/>
+                        </div>
+                    </div>
+                    <input type="text" name="scrap_reason" class="pf-input" placeholder="Scrap reason (if any)" style="margin-bottom:8px"/>
                     <label class="pf-label" for="wo_fg_expiry" style="display:block;margin-bottom:5px">Finished Good Expiry (optional)</label>
                     <input type="date" name="expiry_date" id="wo_fg_expiry" class="pf-input" style="margin-bottom:8px"/>
                     <button type="submit" class="qs-action-btn" style="background:var(--green-dim);border-color:var(--green);color:var(--green)">

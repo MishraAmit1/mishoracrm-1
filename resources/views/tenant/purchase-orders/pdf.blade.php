@@ -320,11 +320,13 @@ $symHtml  = '&#8377;';
                             <td class="v">&#8722;{!! $symHtml !!}{{ number_format($discount, 2) }}</td>
                         </tr>
                     @endif
-                    @if($taxPct > 0)
+                    @if($taxAmt > 0)
+                        @foreach($purchaseOrder->gstLines() as $line)
                         <tr class="tx">
-                            <td><span class="tl">Tax {{ $taxPct }}%</span></td>
-                            <td class="v">+{!! $symHtml !!}{{ number_format($taxAmt, 2) }}</td>
+                            <td><span class="tl">{{ $line['label'] }}</span></td>
+                            <td class="v">+{!! $symHtml !!}{{ number_format($line['amount'], 2) }}</td>
                         </tr>
+                        @endforeach
                     @else
                         <tr class="tn">
                             <td>Tax (0%)</td>

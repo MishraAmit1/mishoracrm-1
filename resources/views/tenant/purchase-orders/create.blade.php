@@ -295,7 +295,7 @@ window.fillRowFromProduct = function(i, p) {
     if (!row) return;
     row.querySelector(`[name="items[${i}][name]"]`).value        = p.name;
     row.querySelector(`[name="items[${i}][description]"]`).value = p.description || '';
-    row.querySelector(`[name="items[${i}][rate]"]`).value        = p.rate;
+    row.querySelector(`[name="items[${i}][rate]"]`).value        = (p.cost_price ?? p.rate);
     const productIdInput = row.querySelector(`[name="items[${i}][product_id]"]`);
     if (productIdInput) productIdInput.value = p.id;
     const taxInput = row.querySelector(`[name="items[${i}][tax_percent]"]`);

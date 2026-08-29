@@ -41,7 +41,13 @@ class ProductController extends Controller
 
         $products = $query->paginate(20)->withQueryString();
 
-        return view('tenant.products.index', compact('products'));
+        // Total on-hand stock value at cost (whole catalog, not just this
+        // page) — COALESCE(cost_price, rate) mirrors Product::costBasis().
+        $inventoryValue = (float) Product::where('tenant_id', $this->tenantId())
+            ->selectRaw('COALESCE(SUM(current_stock * COALESCE(cost_price, rate)), 0) as v')
+            ->value('v');
+
+        return view('tenant.products.index', compact('products', 'inventoryValue'));
     }
 
     // ── Create ────────────────────────────────────────────────────
@@ -58,6 +64,7 @@ class ProductController extends Controller
             'product_code'      => ['nullable', 'string', 'max:50'],
             'description'       => ['nullable', 'string'],
             'rate'              => ['required', 'numeric', 'min:0'],
+            'cost_price'        => ['nullable', 'numeric', 'min:0'],
             'tax_percent'       => ['required', 'numeric', 'min:0', 'max:100'],
             'hsn'               => ['nullable', 'string', 'max:50'],
             'unit'              => ['nullable', 'string', 'max:50'],
@@ -68,9 +75,12 @@ class ProductController extends Controller
             'reorder_quantity'  => ['nullable', 'numeric', 'min:0'],
         ]);
 
-        $data['tenant_id'] = $this->tenantId();
-        $data['is_active'] = $request->boolean('is_active', true);
-        $data['type']      = $data['type'] ?? 'finished_good';
+        $data['tenant_id']  = $this->tenantId();
+        $data['is_active']  = $request->boolean('is_active', true);
+        $data['type']       = $data['type'] ?? 'finished_good';
+        // Seed the cost basis from rate when not given, so the weighted
+        // average has a starting point before the first stock receipt.
+        $data['cost_price'] = $data['cost_price'] ?? $data['rate'];
 
         Product::create($data);
 
@@ -109,6 +119,7 @@ class ProductController extends Controller
             'product_code'      => ['nullable', 'string', 'max:50'],
             'description'       => ['nullable', 'string'],
             'rate'              => ['required', 'numeric', 'min:0'],
+            'cost_price'        => ['nullable', 'numeric', 'min:0'],
             'tax_percent'       => ['required', 'numeric', 'min:0', 'max:100'],
             'hsn'               => ['nullable', 'string', 'max:50'],
             'unit'              => ['nullable', 'string', 'max:50'],

@@ -495,6 +495,77 @@
             </div>
         </div>
 
+        {{-- Manage subscription (superadmin manual control) --}}
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header-flex">
+                    <div class="card-icon" style="background:var(--amber-dim);color:var(--amber);">
+                        <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $icons['renew'] ?? $icons['card'] }}"/></svg>
+                    </div>
+                    <div>
+                        <div class="card-title">Manage Subscription</div>
+                        <div class="card-subtitle">Change plan, fix term, comp access, or resolve a stuck payment</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ route('superadmin.tenants.update-subscription', $tenant) }}"
+                      style="display:flex;flex-direction:column;gap:14px;">
+                    @csrf
+
+                    <label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:600;color:var(--text-200);">
+                        Plan
+                        <select name="plan_id" required class="status-select" style="width:100%;">
+                            @foreach($allPlans as $p)
+                                <option value="{{ $p->id }}" {{ $sub && $sub->plan_id == $p->id ? 'selected' : '' }}>
+                                    {{ $p->name }} — ₹{{ number_format($p->monthly_price) }}/mo
+                                </option>
+                            @endforeach
+                        </select>
+                    </label>
+
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                        <label style="flex:1;min-width:120px;display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:600;color:var(--text-200);">
+                            Status
+                            <select name="status" required class="status-select" style="width:100%;">
+                                @foreach(['trial','active','cancelled','expired'] as $st)
+                                    <option value="{{ $st }}" {{ $sub && $sub->status === $st ? 'selected' : '' }}>{{ ucfirst($st) }}</option>
+                                @endforeach
+                            </select>
+                        </label>
+                        <label style="flex:1;min-width:120px;display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:600;color:var(--text-200);">
+                            Billing cycle
+                            <select name="billing_cycle" required class="status-select" style="width:100%;">
+                                <option value="monthly" {{ !$sub || $sub->billing_cycle === 'monthly' ? 'selected' : '' }}>Monthly</option>
+                                <option value="yearly"  {{ $sub && $sub->billing_cycle === 'yearly' ? 'selected' : '' }}>Yearly</option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                        <label style="flex:1;min-width:140px;display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:600;color:var(--text-200);">
+                            Expires on (blank = free / no expiry)
+                            <input type="date" name="ends_at" value="{{ $sub?->ends_at?->format('Y-m-d') }}" class="status-select" style="width:100%;">
+                        </label>
+                        <label style="flex:1;min-width:140px;display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:600;color:var(--text-200);">
+                            Trial ends on (blank if not on trial)
+                            <input type="date" name="trial_ends_at" value="{{ $sub?->trial_ends_at?->format('Y-m-d') }}" class="status-select" style="width:100%;">
+                        </label>
+                    </div>
+
+                    <label style="display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:600;color:var(--text-200);">
+                        Note (optional — saved to the audit log)
+                        <input type="text" name="note" maxlength="255" placeholder="e.g. Comped Pro for 3 months — partnership deal" class="status-select" style="width:100%;">
+                    </label>
+
+                    <button type="submit" class="btn btn-primary" style="align-self:flex-start;"
+                            onclick="return confirm('Update this tenant\'s subscription?')">
+                        Save Subscription
+                    </button>
+                </form>
+            </div>
+        </div>
+
 </div>
 
 {{-- Users list --}}

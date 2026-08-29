@@ -50,6 +50,22 @@
                        placeholder="vendor@example.com" value="{{ $val('email') }}"/>
                 @error('email')<span class="vf-field-error">{{ $message }}</span>@enderror
             </div>
+
+            <div class="vf-field">
+                <label class="vf-label" for="v_terms">Payment Terms (days)</label>
+                <input id="v_terms" type="number" name="payment_terms_days" min="0" max="365"
+                       class="vf-input {{ $errors->has('payment_terms_days') ? 'is-error' : '' }}"
+                       placeholder="e.g. 30" value="{{ $val('payment_terms_days') }}"/>
+                <span style="font-size:11.5px;color:var(--text-400)">Default credit period — a new bill's due date is bill date + this many days</span>
+                @error('payment_terms_days')<span class="vf-field-error">{{ $message }}</span>@enderror
+            </div>
+
+            <div class="vf-field span-full">
+                <label class="vf-label" for="v_bank">Bank / Payment Details</label>
+                <textarea id="v_bank" name="bank_details" class="vf-input vf-textarea {{ $errors->has('bank_details') ? 'is-error' : '' }}"
+                          placeholder="A/C name, number, IFSC, UPI…" rows="2">{{ $val('bank_details') }}</textarea>
+                @error('bank_details')<span class="vf-field-error">{{ $message }}</span>@enderror
+            </div>
         </div>
     </div>
 
@@ -81,8 +97,13 @@
 
             <div class="vf-field">
                 <label class="vf-label" for="v_state">State</label>
-                <input id="v_state" type="text" name="state" class="vf-input {{ $errors->has('state') ? 'is-error' : '' }}"
-                       value="{{ $val('state') }}"/>
+                <select id="v_state" name="state" class="vf-input {{ $errors->has('state') ? 'is-error' : '' }}">
+                    <option value="">— Select state —</option>
+                    @foreach(config('crm.states', []) as $code => $name)
+                    <option value="{{ $code }}" {{ $val('state') === $code ? 'selected' : '' }}>{{ $name }}</option>
+                    @endforeach
+                </select>
+                <span style="font-size:11.5px;color:var(--text-400)">Used for GST place-of-supply on purchase orders &amp; bills</span>
                 @error('state')<span class="vf-field-error">{{ $message }}</span>@enderror
             </div>
 

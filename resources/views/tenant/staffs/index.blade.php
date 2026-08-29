@@ -73,6 +73,22 @@
 .empty-sub   { font-size:13px; color:var(--text-300); margin-bottom:20px; }
 
 @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+
+/* Bulk role bar */
+.sc-check { position:absolute; top:14px; right:14px; width:16px; height:16px; accent-color:var(--accent); cursor:pointer; }
+.staff-card { position:relative; }
+.bulk-bar {
+    position:sticky; bottom:16px; z-index:20;
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    margin-top:16px; padding:12px 16px;
+    background:var(--bg-elevated); border:1.5px solid var(--accent);
+    border-radius:var(--r-md); box-shadow:0 6px 24px rgba(0,0,0,.12);
+}
+.bulk-bar.hidden { display:none; }
+.bulk-bar select {
+    padding:7px 10px; background:var(--bg-input); border:1.5px solid var(--border-default);
+    border-radius:var(--r-sm); color:var(--text-100); font-size:13px;
+}
 </style>
 @endpush
 
@@ -146,10 +162,18 @@
     </div>
 </div>
 @else
+@php $canBulk = $assignableRoles->isNotEmpty(); @endphp
+<form method="POST" action="{{ route('tenant.staffs.bulk-role') }}" id="bulkForm">
+@csrf
 <div class="staff-grid">
     @foreach($staff as $i => $member)
     @php [$avBg, $avTx] = $avatarColors[$i % 6]; @endphp
     <div class="staff-card">
+
+        @if($canBulk && $member->user && $member->user->id !== auth()->id())
+        <input type="checkbox" name="staff_ids[]" value="{{ $member->id }}" class="sc-check bulk-check"
+               title="Select for bulk role change"/>
+        @endif
 
         <div class="sc-top">
             <div class="sc-avatar" style="background:{{ $avBg }};color:{{ $avTx }}">
@@ -185,7 +209,7 @@
         <div class="sc-foot">
             <div style="display:flex;gap:6px;flex-wrap:wrap">
                 @foreach($member->user->roles as $role)
-                <span class="role-badge">{{ ucfirst(str_replace('_',' ',$role->name)) }}</span>
+                <span class="role-badge">{{ \App\Helpers\Roles::label($role->name) }}</span>
                 @endforeach
                 @if(!$member->user->is_active)
                 <span class="inactive-badge">Inactive</span>
@@ -200,6 +224,21 @@
     </div>
     @endforeach
 </div>
+
+@if($canBulk)
+<div class="bulk-bar hidden" id="bulkBar">
+    <strong style="font-size:13px;color:var(--text-100)"><span id="bulkCount">0</span> selected</strong>
+    <select name="role" id="bulkRole">
+        <option value="">Change role to…</option>
+        @foreach($assignableRoles as $r)
+        <option value="{{ $r['name'] }}">{{ $r['label'] }}</option>
+        @endforeach
+    </select>
+    <button type="submit" class="btn btn-primary btn-sm" id="bulkApply" disabled>Apply</button>
+    <button type="button" class="btn btn-secondary btn-sm" id="bulkClear">Clear</button>
+</div>
+@endif
+</form>
 
 {{-- Pagination --}}
 @if($staff->hasPages())
@@ -223,5 +262,31 @@
 document.querySelector('input[name="search"]')?.addEventListener('keydown', e => {
     if (e.key === 'Enter') document.getElementById('filterForm').submit();
 });
+
+(function () {
+    const bar   = document.getElementById('bulkBar');
+    if (!bar) return;
+    const checks = () => [...document.querySelectorAll('.bulk-check')];
+    const count = document.getElementById('bulkCount');
+    const role  = document.getElementById('bulkRole');
+    const apply = document.getElementById('bulkApply');
+
+    function refresh() {
+        const n = checks().filter(c => c.checked).length;
+        count.textContent = n;
+        bar.classList.toggle('hidden', n === 0);
+        apply.disabled = (n === 0 || !role.value);
+    }
+    checks().forEach(c => c.addEventListener('change', refresh));
+    role.addEventListener('change', refresh);
+    document.getElementById('bulkClear').addEventListener('click', () => {
+        checks().forEach(c => c.checked = false); refresh();
+    });
+    document.getElementById('bulkForm').addEventListener('submit', e => {
+        const n = checks().filter(c => c.checked).length;
+        if (n === 0 || !role.value) { e.preventDefault(); return; }
+        if (!confirm(`Change role to "${role.options[role.selectedIndex].text}" for ${n} staff member(s)?`)) e.preventDefault();
+    });
+})();
 </script>
 @endpush

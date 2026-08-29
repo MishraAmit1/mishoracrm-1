@@ -47,6 +47,19 @@ class Tenant extends Model
         return $this->status === 'active';
     }
 
+    // Company's registered state (code) and GSTIN, from company settings —
+    // used as the supplier side for GST place-of-supply on sales docs and
+    // the recipient side on purchase docs.
+    public function companyState(): ?string
+    {
+        return $this->settings['state'] ?? null;
+    }
+
+    public function gstin(): ?string
+    {
+        return $this->settings['gst'] ?? null;
+    }
+
     public function getWebhookToken(): string
     {
         $settings = $this->settings ?? [];

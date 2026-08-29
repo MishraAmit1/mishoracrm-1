@@ -2,13 +2,29 @@
 
 namespace App\Services;
 
+use App\Models\Contact;
 use App\Models\Deal;
 use App\Models\Invoice;
 use App\Models\Lead;
 use App\Models\Quotation;
+use App\Models\Tenant;
 
 class QuotationService
 {
+    // GST split — the tenant's company is the supplier, the customer
+    // (contact) is the recipient.
+    private static function gstColumns(int $tenantId, $contactId, float $taxAmount): array
+    {
+        $contact = $contactId ? Contact::withoutGlobalScopes()->find($contactId) : null;
+        $tenant  = Tenant::find($tenantId);
+
+        return GstService::documentColumns(
+            $taxAmount,
+            $tenant?->companyState(),
+            GstService::partyState($contact),
+        );
+    }
+
     // ── Create — totals calc + collision-safe number generation ────
     // number is a unique column generated from max(id)+1; two concurrent
     // submissions can race and compute the same number, so retry a few
@@ -20,6 +36,7 @@ class QuotationService
             $data['discount'] ?? 0,
             $data['tax_percent'] ?? 18
         );
+        $totals += static::gstColumns($tenantId, $data['contact_id'] ?? null, (float) $totals['tax_amount']);
 
         return retry(3, function () use ($data, $totals, $tenantId, $userId) {
             return Quotation::create(array_merge($data, $totals, [
@@ -38,6 +55,11 @@ class QuotationService
             $data['items'],
             $data['discount'] ?? 0,
             $data['tax_percent'] ?? 18
+        );
+        $totals += static::gstColumns(
+            $quotation->tenant_id,
+            $data['contact_id'] ?? $quotation->contact_id,
+            (float) $totals['tax_amount']
         );
 
         $quotation->update(array_merge($data, $totals));
@@ -71,6 +93,11 @@ class QuotationService
                 'discount'            => $quotation->discount,
                 'tax_percent'         => $quotation->tax_percent,
                 'tax_amount'          => $quotation->tax_amount,
+                'place_of_supply'     => $quotation->place_of_supply,
+                'is_inter_state'      => $quotation->is_inter_state,
+                'cgst_amount'         => $quotation->cgst_amount,
+                'sgst_amount'         => $quotation->sgst_amount,
+                'igst_amount'         => $quotation->igst_amount,
                 'total'               => $quotation->total,
                 'currency'            => $quotation->currency,
                 'notes'               => $quotation->notes,
@@ -123,6 +150,11 @@ class QuotationService
             'discount'     => $quotation->discount,
             'tax_percent'  => $quotation->tax_percent,
             'tax_amount'   => $quotation->tax_amount,
+            'place_of_supply' => $quotation->place_of_supply,
+            'is_inter_state'  => $quotation->is_inter_state,
+            'cgst_amount'  => $quotation->cgst_amount,
+            'sgst_amount'  => $quotation->sgst_amount,
+            'igst_amount'  => $quotation->igst_amount,
             'total'        => $quotation->total,
             'currency'     => $quotation->currency,
             'notes'        => $quotation->notes,

@@ -2,8 +2,9 @@
 
 namespace App\Services;
 
-use App\Models\Product;
 use App\Models\PurchaseOrder;
+use App\Models\Tenant;
+use App\Models\Vendor;
 
 class PurchaseOrderService
 {
@@ -16,6 +17,7 @@ class PurchaseOrderService
             $data['discount'] ?? 0,
             $data['tax_percent'] ?? 0
         );
+        $totals += static::gstColumns($tenantId, $data['vendor_id'] ?? null, (float) $totals['tax_amount']);
 
         return retry(3, function () use ($data, $items, $totals, $tenantId, $userId) {
             return PurchaseOrder::create(array_merge($data, $totals, [
@@ -50,6 +52,7 @@ class PurchaseOrderService
             $newQty              = (float) ($item['quantity'] ?? 0);
 
             $item['received_quantity'] = min($previouslyReceived, $newQty);
+            $item['rejected_quantity'] = (float) ($existing['rejected_quantity'] ?? 0);
 
             return $item;
         })->toArray();
@@ -59,95 +62,33 @@ class PurchaseOrderService
             $data['discount'] ?? 0,
             $data['tax_percent'] ?? 0
         );
+        $totals += static::gstColumns(
+            $purchaseOrder->tenant_id,
+            $data['vendor_id'] ?? $purchaseOrder->vendor_id,
+            (float) $totals['tax_amount']
+        );
 
         $purchaseOrder->update(array_merge($data, $totals, ['items' => $items]));
 
         return $purchaseOrder;
     }
 
-    // ── Receive — record received qty per line (clamped to ordered
-    // qty), re-derive status from the resulting item rows. Also bumps
-    // raw-material stock for any row linked to a product_id, by the
-    // delta (not the cumulative total) so repeated partial receives
-    // don't double-count. A positive delta (the normal "goods arrived"
-    // case) lands in a new batch (optionally numbered/dated from
-    // $batchInfoByRowIndex); a negative delta (correcting an
-    // over-received entry back down) just adjusts the aggregate —
-    // reattributing which batch to shrink isn't worth the complexity. ──
-    public static function receive(PurchaseOrder $purchaseOrder, array $receivedByRowIndex, array $batchInfoByRowIndex = []): PurchaseOrder
+    // Resolve CGST/SGST/IGST split — vendor is the supplier, the tenant's
+    // company is the recipient.
+    private static function gstColumns(int $tenantId, $vendorId, float $taxAmount): array
     {
-        $items = collect($purchaseOrder->items ?? [])->map(function ($item, $index) use ($receivedByRowIndex, $batchInfoByRowIndex, $purchaseOrder) {
-            if (array_key_exists($index, $receivedByRowIndex)) {
-                $qty         = (float) ($item['quantity'] ?? 0);
-                $oldReceived = (float) ($item['received_quantity'] ?? 0);
-                $newReceived = max(0, min($qty, (float) $receivedByRowIndex[$index]));
-                $delta       = $newReceived - $oldReceived;
+        $vendor = $vendorId ? Vendor::withoutGlobalScopes()->find($vendorId) : null;
+        $tenant = Tenant::find($tenantId);
 
-                $item['received_quantity'] = $newReceived;
-
-                if ($delta != 0 && !empty($item['product_id'])) {
-                    $product = Product::find($item['product_id']);
-
-                    if ($product && $delta > 0) {
-                        $batchInfo = $batchInfoByRowIndex[$index] ?? [];
-                        StockService::receiveBatch(
-                            $product,
-                            $delta,
-                            $batchInfo['batch_number'] ?? null,
-                            $batchInfo['expiry_date'] ?? null,
-                            $purchaseOrder->id
-                        );
-                    } elseif ($product) {
-                        $product->adjustStock($delta);
-                    }
-                }
-            }
-
-            return $item;
-        })->toArray();
-
-        $status = static::deriveReceivedStatus($items);
-
-        $purchaseOrder->update([
-            'items'  => $items,
-            'status' => $status,
-        ]);
-
-        return $purchaseOrder;
+        return \App\Services\GstService::documentColumns(
+            $taxAmount,
+            \App\Services\GstService::partyState($vendor),
+            $tenant?->companyState(),
+        );
     }
 
-    private static function deriveReceivedStatus(array $items): string
-    {
-        if (empty($items)) {
-            return 'sent';
-        }
-
-        $anyReceived = false;
-        $allReceived = true;
-
-        foreach ($items as $item) {
-            $qty      = (float) ($item['quantity'] ?? 0);
-            $received = (float) ($item['received_quantity'] ?? 0);
-
-            if ($received > 0) {
-                $anyReceived = true;
-            }
-
-            if ($received < $qty) {
-                $allReceived = false;
-            }
-        }
-
-        if ($allReceived) {
-            return 'received';
-        }
-
-        if ($anyReceived) {
-            return 'partially_received';
-        }
-
-        return 'sent';
-    }
+    // Receiving is handled by GoodsReceiptService (one GRN per delivery,
+    // with quality inspection accept/reject).
 
     // Ensures every row carries a received_quantity key (defaults to 0
     // for brand-new rows created via store/update from the item form).

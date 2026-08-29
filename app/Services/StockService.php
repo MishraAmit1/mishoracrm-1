@@ -213,10 +213,11 @@ class StockService
     // own stock as a new batch. Caller (WorkOrderService::complete) must
     // have already verified sufficient stock via productionShortfallFor
     // — this does not re-check. ──────────────────────────────────────
-    public static function consumeForProduction(Product $product, float $quantity, ?int $workOrderId = null, ?string $finishedGoodExpiryDate = null): void
+    public static function consumeForProduction(Product $product, float $quantity, ?int $workOrderId = null, ?string $finishedGoodExpiryDate = null, ?float $finishedUnitCost = null, ?float $producedQuantity = null): void
     {
         $product->loadMissing('billOfMaterials.material');
 
+        // Materials are consumed for the full planned run…
         foreach ($product->billOfMaterials as $bomItem) {
             $material = $bomItem->material;
             if (!$material) {
@@ -229,29 +230,136 @@ class StockService
             }
         }
 
-        static::receiveBatch($product, $quantity, null, $finishedGoodExpiryDate, null, $workOrderId);
+        // …but only the good output is credited to finished-good stock.
+        $credit = $producedQuantity ?? $quantity;
+        if ($credit > 0) {
+            static::receiveBatch($product, $credit, null, $finishedGoodExpiryDate, null, $workOrderId, $finishedUnitCost);
+        }
+    }
+
+    // ── Work Order material reservation (WIP) ──────────────────────────
+    // Earmark / release BOM raw materials for an open Work Order building
+    // $quantity units of $finishedGood. Reserving does not move physical
+    // stock — it only lowers available-to-promise so a second Work Order
+    // can't be planned against materials that are already committed.
+    public static function reserveForProduction(Product $finishedGood, float $quantity): void
+    {
+        static::eachBomMaterial($finishedGood, $quantity, fn ($material, $needed) => $material->reserve($needed));
+    }
+
+    public static function releaseProductionReservation(Product $finishedGood, float $quantity): void
+    {
+        static::eachBomMaterial($finishedGood, $quantity, fn ($material, $needed) => $material->releaseReservation($needed));
+    }
+
+    // ── Issue materials to the shop floor — the reservation converts into
+    // an actual FEFO consumption. Caller must have verified sufficient
+    // physical stock (productionShortfallFor). ────────────────────────
+    public static function issueForProduction(Product $finishedGood, float $quantity): void
+    {
+        static::eachBomMaterial($finishedGood, $quantity, function ($material, $needed) {
+            $material->releaseReservation($needed);
+            static::consumeBatchesFEFO($material, $needed);
+        });
+    }
+
+    // ── Return already-issued materials to stock — used when a WIP Work
+    // Order is cancelled and nothing was produced. Lands in a fresh
+    // no-expiry adjustment batch (same as invoice-restore). ───────────
+    public static function returnIssuedMaterials(Product $finishedGood, float $quantity): void
+    {
+        static::eachBomMaterial($finishedGood, $quantity, function ($material, $needed) {
+            static::receiveBatch($material, $needed, null, null);
+        });
+    }
+
+    private static function eachBomMaterial(Product $finishedGood, float $quantity, callable $fn): void
+    {
+        if ($quantity <= 0) {
+            return;
+        }
+
+        $finishedGood->loadMissing('billOfMaterials.material');
+
+        foreach ($finishedGood->billOfMaterials as $bomItem) {
+            $material = $bomItem->material;
+            if (!$material) {
+                continue;
+            }
+
+            $needed = (float) $bomItem->quantity_per_unit * $quantity;
+            if ($needed > 0) {
+                $fn($material, $needed);
+            }
+        }
     }
 
     // ── Receive $qty of a product into a new batch (auto-numbered if
     // $batchNumber is blank) and credit the product's aggregate stock.
-    // Used by PO receiving, Work Order completion, and invoice-restore. ──
-    public static function receiveBatch(Product $product, float $qty, ?string $batchNumber, ?string $expiryDate, ?int $purchaseOrderId = null, ?int $workOrderId = null): ProductBatch
+    // Used by PO receiving, Work Order completion, and invoice-restore.
+    //
+    // $unitCost is the per-unit acquisition cost for THIS receipt (PO line
+    // rate, or computed production cost). When a real, positive cost is
+    // known it (a) stamps the batch and (b) rolls the product's
+    // weighted-average cost_price forward. When it's null/zero — a manual
+    // adjustment or invoice restore where no new cost is established — the
+    // batch just inherits the product's current cost_price and the
+    // average is left untouched. ────────────────────────────────────────
+    public static function receiveBatch(Product $product, float $qty, ?string $batchNumber, ?string $expiryDate, ?int $purchaseOrderId = null, ?int $workOrderId = null, ?float $unitCost = null): ProductBatch
     {
+        $hasRealCost = $unitCost !== null && $unitCost > 0;
+
+        $batchUnitCost = $hasRealCost
+            ? round($unitCost, 2)
+            : ($product->cost_price !== null ? (float) $product->cost_price : null);
+
         $batch = ProductBatch::create([
             'tenant_id'         => $product->tenant_id,
             'product_id'        => $product->id,
             'batch_number'      => $batchNumber ?: static::generateBatchNumber($product),
             'quantity'          => $qty,
             'initial_quantity'  => $qty,
+            'unit_cost'         => $batchUnitCost,
             'expiry_date'       => $expiryDate,
             'received_at'       => now()->toDateString(),
             'purchase_order_id' => $purchaseOrderId,
             'work_order_id'     => $workOrderId,
         ]);
 
+        // Roll the weighted average forward off the pre-receipt stock level,
+        // before adjustStock() changes it.
+        if ($hasRealCost) {
+            static::applyWeightedAverageCost($product, $qty, (float) $unitCost);
+        }
+
         $product->adjustStock($qty);
 
         return $batch;
+    }
+
+    // ── Weighted moving average — blend $incomingQty units acquired at
+    // $incomingUnitCost into the product's existing on-hand stock/cost.
+    // Written as a scoped UPDATE (not save()) so it never disturbs
+    // current_stock, which adjustStock() owns. ──────────────────────────
+    private static function applyWeightedAverageCost(Product $product, float $incomingQty, float $incomingUnitCost): void
+    {
+        if ($incomingQty <= 0) {
+            return;
+        }
+
+        $oldStock = max(0.0, (float) $product->current_stock);
+        $oldCost  = (float) ($product->cost_price ?? $product->rate ?? 0);
+        $newQty   = $oldStock + $incomingQty;
+
+        $newCost = $newQty > 0
+            ? round((($oldStock * $oldCost) + ($incomingQty * $incomingUnitCost)) / $newQty, 2)
+            : round($incomingUnitCost, 2);
+
+        Product::withoutGlobalScopes()
+            ->where('id', $product->id)
+            ->update(['cost_price' => $newCost]);
+
+        $product->setAttribute('cost_price', $newCost);
     }
 
     // ── Consume $qty of a product FEFO across its batches (soonest

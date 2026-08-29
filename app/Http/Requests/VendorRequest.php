@@ -19,6 +19,8 @@ class VendorRequest extends FormRequest
             'phone'      => ['nullable', 'string', 'max:30'],
             'email'      => ['nullable', 'email', 'max:255'],
             'gst_number' => ['nullable', 'string', 'max:20'],
+            'payment_terms_days' => ['nullable', 'integer', 'min:0', 'max:365'],
+            'bank_details'       => ['nullable', 'string', 'max:2000'],
             'address'    => ['nullable', 'string', 'max:500'],
             'city'       => ['nullable', 'string', 'max:100'],
             'state'      => ['nullable', 'string', 'max:100'],

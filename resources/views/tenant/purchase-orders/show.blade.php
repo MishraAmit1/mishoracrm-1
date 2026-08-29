@@ -282,7 +282,9 @@
                         @if(($purchaseOrder->discount ?? 0) > 0)
                         <tr><td>Discount</td><td style="color:var(--red)">-₹{{ number_format($purchaseOrder->discount, 2) }}</td></tr>
                         @endif
-                        <tr><td>Tax ({{ number_format($purchaseOrder->tax_percent ?? 0, 1) }}%)</td><td style="color:var(--green)">+₹{{ number_format($purchaseOrder->tax_amount ?? 0, 2) }}</td></tr>
+                        @foreach($purchaseOrder->gstLines() as $line)
+                        <tr><td>{{ $line['label'] }}</td><td style="color:var(--green)">+₹{{ number_format($line['amount'], 2) }}</td></tr>
+                        @endforeach
                         <tr class="grand"><td><strong>Total</strong></td><td><strong>₹{{ number_format($purchaseOrder->total ?? 0, 2) }}</strong></td></tr>
                     </table>
                 </div>
@@ -303,35 +305,60 @@
             @can('receive', $purchaseOrder)
             @if($canReceive)
             <div class="qs-card">
-                <div class="qs-card-head"><div class="qs-card-title"><i class="ti ti-package-import" style="font-size:13px;margin-right:5px"></i> Receive Items</div></div>
+                <div class="qs-card-head"><div class="qs-card-title"><i class="ti ti-package-import" style="font-size:13px;margin-right:5px"></i> Goods Receipt (GRN)</div></div>
                 <form method="POST" action="{{ route('tenant.purchase-orders.receive',$purchaseOrder->id) }}">
                     @csrf
-                    <div style="overflow-x:auto">
+                    <div style="padding:12px 20px 0;display:flex;gap:14px;flex-wrap:wrap">
+                        <div>
+                            <label style="font-size:11px;color:var(--text-300);display:block">Received On</label>
+                            <input type="date" class="recv-input" name="received_date" value="{{ now()->format('Y-m-d') }}"/>
+                        </div>
+                        <div style="flex:1;min-width:180px">
+                            <label style="font-size:11px;color:var(--text-300);display:block">Note</label>
+                            <input type="text" class="recv-input" name="note" placeholder="Delivery challan no., remarks…" style="width:100%"/>
+                        </div>
+                    </div>
+                    <div style="overflow-x:auto;padding-top:10px">
                         <table class="qs-items-table">
                             <thead>
                                 <tr>
-                                    <th style="width:22%">Item</th>
-                                    <th style="width:12%;text-align:right">Ordered</th>
-                                    <th style="width:14%;text-align:right">Already Received</th>
-                                    <th style="width:16%;text-align:right">Received Now</th>
-                                    <th style="width:18%">Batch # <span style="font-weight:400;text-transform:none">(optional)</span></th>
-                                    <th style="width:18%">Expiry <span style="font-weight:400;text-transform:none">(optional)</span></th>
+                                    <th style="width:18%">Item</th>
+                                    <th style="width:8%;text-align:right">Ordered</th>
+                                    <th style="width:9%;text-align:right">Accepted&nbsp;so&nbsp;far</th>
+                                    <th style="width:10%;text-align:right">Unit Cost</th>
+                                    <th style="width:11%;text-align:right">Received Now</th>
+                                    <th style="width:11%;text-align:right">Accepted</th>
+                                    <th style="width:12%">Reject Reason</th>
+                                    <th style="width:11%">Batch #</th>
+                                    <th style="width:10%">Expiry</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($items as $idx => $item)
-                                @php $qty = (float)($item['quantity'] ?? 0); $recv = (float)($item['received_quantity'] ?? 0); @endphp
+                                @php
+                                    $qty = (float)($item['quantity'] ?? 0);
+                                    $acc = (float)($item['received_quantity'] ?? 0);
+                                    $remaining = max(0, $qty - $acc);
+                                @endphp
                                 <tr>
                                     <td style="font-weight:500">{{ $item['name'] ?? '—' }}</td>
                                     <td class="td-right">{{ number_format($qty,2) }}</td>
-                                    <td class="td-right">{{ number_format($recv,2) }}</td>
+                                    <td class="td-right">{{ number_format($acc,2) }}</td>
+                                    <td class="td-right">₹{{ number_format((float)($item['rate'] ?? 0),2) }}</td>
                                     <td class="td-right">
-                                        <input type="number" class="recv-input" name="items[{{ $idx }}][received_quantity]"
-                                               value="{{ $recv }}" min="0" max="{{ $qty }}" step="0.01"/>
+                                        <input type="number" class="recv-input grn-recv" data-idx="{{ $idx }}" name="items[{{ $idx }}][received_quantity]"
+                                               value="{{ $remaining }}" min="0" step="0.01"/>
+                                    </td>
+                                    <td class="td-right">
+                                        <input type="number" class="recv-input grn-acc" data-idx="{{ $idx }}" name="items[{{ $idx }}][accepted_quantity]"
+                                               value="{{ $remaining }}" min="0" step="0.01"/>
+                                    </td>
+                                    <td>
+                                        <input type="text" class="recv-input" name="items[{{ $idx }}][rejection_reason]" placeholder="Only if rejected"/>
                                     </td>
                                     <td>
                                         <input type="text" class="recv-input" name="items[{{ $idx }}][batch_number]"
-                                               placeholder="Auto if blank" @if(empty($item['product_id'])) disabled @endif/>
+                                               placeholder="Auto" @if(empty($item['product_id'])) disabled @endif/>
                                     </td>
                                     <td>
                                         <input type="date" class="recv-input" name="items[{{ $idx }}][expiry_date]"
@@ -342,15 +369,55 @@
                             </tbody>
                         </table>
                     </div>
+                    <div style="padding:10px 20px 0;font-size:11.5px;color:var(--text-400)">
+                        Only the <strong>Accepted</strong> quantity is added to stock and costed. Rejected units are logged on the GRN for the vendor follow-up.
+                    </div>
                     <div style="padding:14px 20px;display:flex;justify-content:flex-end">
                         <button type="submit" class="btn btn-primary">
-                            <i class="ti ti-check" style="font-size:14px"></i> Update Received Quantities
+                            <i class="ti ti-check" style="font-size:14px"></i> Record Goods Receipt
                         </button>
                     </div>
                 </form>
             </div>
+            <script>
+            (function(){
+                // Keep "Accepted" mirrored to "Received Now" until the user
+                // edits it themselves.
+                document.querySelectorAll('.grn-recv').forEach(function(recv){
+                    var acc = document.querySelector('.grn-acc[data-idx="' + recv.dataset.idx + '"]');
+                    if (!acc) return;
+                    recv.addEventListener('input', function(){
+                        if (!acc.dataset.touched) acc.value = recv.value;
+                    });
+                    acc.addEventListener('input', function(){ acc.dataset.touched = '1'; });
+                });
+            })();
+            </script>
             @endif
             @endcan
+
+            @if($purchaseOrder->goodsReceiptNotes->isNotEmpty())
+            <div class="qs-card">
+                <div class="qs-card-head"><div class="qs-card-title"><i class="ti ti-clipboard-check" style="font-size:13px;margin-right:5px"></i> Goods Receipts</div></div>
+                <div style="overflow-x:auto">
+                    <table class="qs-items-table">
+                        <thead><tr><th>GRN</th><th>Date</th><th style="text-align:right">Received</th><th style="text-align:right">Accepted</th><th style="text-align:right">Rejected</th><th></th></tr></thead>
+                        <tbody>
+                            @foreach($purchaseOrder->goodsReceiptNotes as $grn)
+                            <tr>
+                                <td style="font-family:'DM Mono',monospace;font-weight:600">{{ $grn->number }}</td>
+                                <td>{{ $grn->received_date?->format('d M Y') }}</td>
+                                <td style="text-align:right">{{ number_format($grn->totalReceived(), 2) }}</td>
+                                <td style="text-align:right;color:var(--green)">{{ number_format($grn->totalAccepted(), 2) }}</td>
+                                <td style="text-align:right;color:{{ $grn->hasRejections() ? 'var(--red)' : 'var(--text-300)' }}">{{ number_format($grn->totalRejected(), 2) }}</td>
+                                <td style="text-align:right"><a href="{{ route('tenant.purchase-orders.grns.show', [$purchaseOrder->id, $grn->id]) }}" class="btn btn-secondary btn-sm">View</a></td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            @endif
 
             @if($purchaseOrder->purchaseRequest)
             <div class="qs-card">
@@ -422,7 +489,28 @@
                 </a>
                 @endif
                 @endcan
+
+                @if($purchaseOrder->vendor_id && $purchaseOrder->status !== 'cancelled')
+                @can('create', \App\Models\VendorBill::class)
+                <a href="{{ route('tenant.vendor-bills.create', ['purchase_order_id' => $purchaseOrder->id]) }}" class="qs-action-btn" style="margin-top:7px">
+                    <div class="qs-act-icon" style="background:var(--green-dim)"><i class="ti ti-receipt" style="font-size:15px;color:var(--green)"></i></div>
+                    Create Vendor Bill
+                </a>
+                @endcan
+                @endif
             </div>
+
+            @if($purchaseOrder->vendorBills->isNotEmpty())
+            <div class="qs-sc">
+                <div class="qs-sc-title">Vendor Bills</div>
+                @foreach($purchaseOrder->vendorBills as $vb)
+                <a href="{{ route('tenant.vendor-bills.show', $vb->id) }}" class="qs-action-btn" style="margin-top:7px;justify-content:space-between">
+                    <span style="font-family:'DM Mono',monospace;font-size:12.5px">{{ $vb->number }}</span>
+                    <span style="font-size:12px;color:var(--text-300)">₹{{ number_format($vb->total, 2) }} · {{ \App\Models\VendorBill::statuses()[$vb->status] ?? $vb->status }}</span>
+                </a>
+                @endforeach
+            </div>
+            @endif
 
             <div class="qs-sc">
                 <div class="qs-sc-title">Details</div>

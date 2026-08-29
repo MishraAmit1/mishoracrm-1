@@ -65,10 +65,16 @@
 
 @php
     $cfg      = config('staff');
-    $roles    = $cfg['roles'];
     $types    = $cfg['employment_types'];
     $sections = $cfg['form_fields'];
-    $selRole  = old('role', $staff->user->roles->first()?->name ?? 'staff');
+
+    $roleKind = fn($k) => match($k) {
+        'admin' => ['color' => 'red',   'bg' => 'red-dim'],
+        'staff' => ['color' => 'green', 'bg' => 'green-dim'],
+        default => ['color' => 'accent','bg' => 'accent-dim'],
+    };
+    $currentRole = $staff->user->roles->first()?->name;
+    $selRole  = old('role', $currentRole ?? ($assignableRoles->firstWhere('kind','staff')['name'] ?? $assignableRoles->first()['name'] ?? ''));
 
     // Pre-fill values from existing staff
     $prefill = [
@@ -163,18 +169,26 @@
             <div class="fs-sub">Change access level for this staff member</div>
             <input type="hidden" name="role" id="roleInput" value="{{ $selRole }}"/>
             <div class="role-grid">
-                @foreach($roles as $key => $r)
-                <div class="role-card" id="rc-{{ $key }}" onclick="selectRole('{{ $key }}')"
-                     style="{{ $selRole === $key ? 'border-color:var(--'.$r['color'].');background:var(--'.$r['bg'].')' : '' }}">
-                    <input type="radio" value="{{ $key }}" {{ $selRole === $key ? 'checked':'' }}/>
-                    <div class="role-card-name"
-                         style="{{ $selRole === $key ? 'color:var(--'.$r['color'].')' : '' }}">
+                @foreach($assignableRoles as $r)
+                @php $rc = $roleKind($r['kind']); $active = $selRole === $r['name']; @endphp
+                <div class="role-card" data-role="{{ $r['name'] }}"
+                     data-color="{{ $rc['color'] }}" data-bg="{{ $rc['bg'] }}"
+                     onclick="selectRole('{{ $r['name'] }}')"
+                     style="{{ $active ? 'border-color:var(--'.$rc['color'].');background:var(--'.$rc['bg'].')' : '' }}">
+                    <input type="radio" value="{{ $r['name'] }}" {{ $active ? 'checked':'' }}/>
+                    <div class="role-card-name" style="{{ $active ? 'color:var(--'.$rc['color'].')' : '' }}">
                         {{ $r['label'] }}
                     </div>
-                    <div class="role-card-desc">{{ $r['desc'] }}</div>
+                    <div class="role-card-desc">{{ $r['description'] ?: 'Custom role' }}</div>
                 </div>
                 @endforeach
             </div>
+            @php $unknownRole = $currentRole && ! $assignableRoles->contains('name', $currentRole); @endphp
+            @if($unknownRole)
+            <p style="font-size:12px;color:var(--amber);margin-top:8px">
+                This member currently has the role <strong>{{ \App\Helpers\Roles::label($currentRole) }}</strong>, which is no longer available. Pick a new one to change it.
+            </p>
+            @endif
             @error('role')<p style="font-size:12px;color:var(--red);margin-top:8px">{{ $message }}</p>@enderror
         </div>
 
@@ -249,20 +263,18 @@
 
 @push('scripts')
 <script>
-const roleConfig = @json(config('staff.roles'));
-
 function selectRole(val) {
-    const r = roleConfig[val];
     document.querySelectorAll('.role-card').forEach(c => {
         c.style.borderColor = '';
         c.style.background  = '';
         c.querySelector('.role-card-name').style.color = 'var(--text-200)';
     });
-    const card = document.getElementById('rc-' + val);
-    if (card && r) {
-        card.style.borderColor = `var(--${r.color})`;
-        card.style.background  = `var(--${r.bg})`;
-        card.querySelector('.role-card-name').style.color = `var(--${r.color})`;
+    const card = document.querySelector(`.role-card[data-role="${CSS.escape(val)}"]`);
+    if (card) {
+        const color = card.dataset.color, bg = card.dataset.bg;
+        card.style.borderColor = `var(--${color})`;
+        card.style.background  = `var(--${bg})`;
+        card.querySelector('.role-card-name').style.color = `var(--${color})`;
     }
     document.getElementById('roleInput').value = val;
 }

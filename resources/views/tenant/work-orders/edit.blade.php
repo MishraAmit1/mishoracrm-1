@@ -61,7 +61,8 @@
     <form method="POST" action="{{ route('tenant.work-orders.update', $workOrder->id) }}" novalidate>
         @csrf @method('PUT')
         <div class="pf-layout">
-            <div class="pf-card">
+            <div>
+            <div class="pf-card" style="margin-bottom:14px">
                 <div class="pf-section">
                     <div class="pf-sec-head">
                         <div class="pf-sec-icon" style="background:var(--accent-dim)">
@@ -131,6 +132,9 @@
                         </button>
                     </div>
                 </div>
+            </div>
+
+            @include('tenant.work-orders._stages-editor')
             </div>
 
             <div class="pf-sidebar">

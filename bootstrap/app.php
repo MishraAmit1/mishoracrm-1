@@ -24,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             // Custom
             'tenant'       => \App\Http\Middleware\IdentifyTenant::class,
+            'tenant.admin' => \App\Http\Middleware\EnsureTenantAdmin::class,
             'subscription' => \App\Http\Middleware\CheckSubscription::class,
             'api.key'      => \App\Http\Middleware\AuthenticateWithApiKey::class,
             'module'       => \App\Http\Middleware\EnsureModuleEnabled::class,

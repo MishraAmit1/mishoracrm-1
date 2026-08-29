@@ -134,6 +134,8 @@
                     </div>
                 </div>
 
+                @include('tenant.work-orders._stages-editor')
+
                 <div class="pf-card">
                     <div class="pf-section">
                         <div class="pf-sec-head">

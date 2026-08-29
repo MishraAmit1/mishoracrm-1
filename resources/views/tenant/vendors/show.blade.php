@@ -104,7 +104,21 @@
                         <div class="vs-info-lbl">Address</div>
                         <div class="vs-info-val {{ $vendor->full_address ? '' : 'muted' }}">{{ $vendor->full_address ?: 'Not set' }}</div>
                     </div>
+                    <div class="vs-info-cell">
+                        <div class="vs-info-lbl">Payment Terms</div>
+                        <div class="vs-info-val {{ $vendor->payment_terms_days !== null ? '' : 'muted' }}">{{ $vendor->payment_terms_days !== null ? $vendor->payment_terms_days . ' days' : 'Not set' }}</div>
+                    </div>
+                    <div class="vs-info-cell">
+                        <div class="vs-info-lbl">Outstanding (Payable)</div>
+                        <div class="vs-info-val" style="font-family:'DM Mono',monospace;color:{{ $outstanding > 0 ? 'var(--red)' : 'var(--text-100)' }}">₹{{ number_format($outstanding, 2) }}</div>
+                    </div>
                 </div>
+                @if($vendor->bank_details)
+                <div style="padding:14px 20px;border-top:1px solid var(--border-subtle)">
+                    <div class="vs-info-lbl" style="margin-bottom:6px">Bank / Payment Details</div>
+                    <div style="font-size:13px;color:var(--text-200);line-height:1.6;white-space:pre-wrap">{{ $vendor->bank_details }}</div>
+                </div>
+                @endif
                 @if($vendor->notes)
                 <div style="padding:14px 20px;border-top:1px solid var(--border-subtle)">
                     <div class="vs-info-lbl" style="margin-bottom:6px">Notes</div>
@@ -142,6 +156,35 @@
                 @endif
             </div>
 
+            <div class="vs-card">
+                <div class="vs-card-head">
+                    <div class="vs-card-title">
+                        <i class="ti ti-receipt" style="font-size:13px;margin-right:5px"></i>
+                        Vendor Bills ({{ $vendor->bills->count() }})
+                    </div>
+                </div>
+                @if($vendor->bills->isEmpty())
+                <div style="padding:24px 20px;text-align:center;color:var(--text-400);font-size:13px">
+                    No bills recorded from this vendor yet.
+                </div>
+                @else
+                @foreach($vendor->bills as $b)
+                <div class="po-row">
+                    <div>
+                        <div style="font-size:13.5px;font-weight:600;color:var(--text-100)">{{ $b->number }}</div>
+                        <div style="font-size:11.5px;color:var(--text-400);margin-top:2px">
+                            {{ \App\Models\VendorBill::statuses()[$b->status] ?? $b->status }} · due {{ $b->due_date?->format('d M Y') ?? '—' }}
+                        </div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:10px">
+                        <span style="font-size:12.5px;color:var(--text-300);font-family:'DM Mono',monospace">bal ₹{{ number_format($b->due_amount, 2) }}</span>
+                        <a href="{{ route('tenant.vendor-bills.show', $b->id) }}" class="btn btn-secondary btn-sm">View</a>
+                    </div>
+                </div>
+                @endforeach
+                @endif
+            </div>
+
         </div>
 
         <div style="display:flex;flex-direction:column;gap:14px">
@@ -153,6 +196,14 @@
                         <i class="ti ti-file-invoice" style="font-size:15px;color:var(--accent)"></i>
                     </div>
                     New Purchase Order
+                </a>
+                @endcan
+                @can('create', \App\Models\VendorBill::class)
+                <a href="{{ route('tenant.vendor-bills.create') }}" class="vs-action-btn">
+                    <div class="vs-act-icon" style="background:var(--green-dim)">
+                        <i class="ti ti-receipt" style="font-size:15px;color:var(--green)"></i>
+                    </div>
+                    Record Vendor Bill
                 </a>
                 @endcan
             </div>

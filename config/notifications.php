@@ -240,6 +240,24 @@ return [
             'message'  => '{{contact_name}}\'s {{service_name}} subscription was auto-renewed (new expiry {{expiry_date}}) — draft invoice {{invoice}} created',
         ],
 
+        // ── Platform billing (this workspace's own CRM subscription) ──
+        'subscription.platform_expiring' => [
+            'label'    => 'Your CRM Plan Expires Soon',
+            'icon'     => 'clock',
+            'color'    => 'amber',
+            'group'    => 'Billing',
+            'channels' => ['in_app', 'email'],
+            'message'  => 'Your {{plan_name}} plan expires on {{expiry_date}} ({{days_left}} days left). Renew now to avoid losing access.',
+        ],
+        'subscription.platform_expired' => [
+            'label'    => 'Your CRM Plan Has Expired',
+            'icon'     => 'alert-triangle',
+            'color'    => 'red',
+            'group'    => 'Billing',
+            'channels' => ['in_app', 'email'],
+            'message'  => 'Your {{plan_name}} plan has expired. Renew now to restore access to your workspace.',
+        ],
+
         // ── Tickets ───────────────────────────────────────────────
         'ticket.created' => [
             'label'    => 'New Support Ticket',

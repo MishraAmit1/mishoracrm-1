@@ -142,6 +142,26 @@
     </div>
     @endif
 
+    @if($subscription->status === 'cancelled' && $subscription->ends_at && $subscription->ends_at->isFuture())
+    <div class="trial-bar" style="background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.2);">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>
+        </svg>
+        Subscription cancelled hai — <strong>{{ $subscription->ends_at->format('d M Y') }}</strong> tak access chalega, uske baad band ho jayega.
+        <a href="{{ route('tenant.subscription.plans') }}" style="margin-left:auto;color:var(--accent);font-weight:700;text-decoration:none;">Resume Plan →</a>
+    </div>
+    @endif
+
+    @if($subscription->isFree())
+    <div class="trial-bar" style="background:rgba(34,197,94,0.08);border-color:rgba(34,197,94,0.2);">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        Aap free plan par hain — koi expiry nahi. Zyada features ke liye upgrade karein.
+        <a href="{{ route('tenant.subscription.plans') }}" style="margin-left:auto;color:var(--accent);font-weight:700;text-decoration:none;">See Plans →</a>
+    </div>
+    @endif
+
     <div class="info-card">
         <h3>Plan Details</h3>
         <div class="info-row">
@@ -158,9 +178,9 @@
         </div>
         <div class="info-row">
             <span class="lbl">Valid Until</span>
-            <span class="val">{{ $subscription->ends_at?->format('d M Y') ?? '—' }}</span>
+            <span class="val">{{ $subscription->isFree() ? 'No expiry' : ($subscription->ends_at?->format('d M Y') ?? '—') }}</span>
         </div>
-        @if($subscription->isActive())
+        @if($subscription->isActive() && !$subscription->isFree())
         <div class="info-row">
             <span class="lbl">Days Remaining</span>
             <span class="val">{{ $subscription->daysLeft() }} days</span>
@@ -210,7 +230,7 @@
 
     <div class="action-bar">
         <a href="{{ route('tenant.subscription.plans') }}" class="btn-action primary">Upgrade Plan</a>
-        @if($subscription->isActive() && !$subscription->isTrial())
+        @if($subscription->isActive() && !$subscription->isTrial() && !$subscription->isFree())
         <form action="{{ route('tenant.subscription.cancel') }}" method="POST"
               onsubmit="return confirm('Are you sure you want to cancel? You can still use until {{ $subscription->ends_at?->format('d M Y') }}')">
             @csrf

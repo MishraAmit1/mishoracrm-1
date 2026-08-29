@@ -18,6 +18,9 @@ class WorkOrderRequest extends FormRequest
             'quantity'    => ['required', 'numeric', 'min:0.01'],
             'assigned_to' => ['nullable', 'integer', 'exists:users,id'],
             'notes'       => ['nullable', 'string', 'max:2000'],
+            'stages'                 => ['nullable', 'array'],
+            'stages.*.name'          => ['nullable', 'string', 'max:120'],
+            'stages.*.assigned_to'   => ['nullable', 'integer', 'exists:users,id'],
         ];
     }
 

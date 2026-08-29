@@ -84,6 +84,13 @@
     @endif
 </form>
 
+@isset($inventoryValue)
+<div style="display:inline-flex;align-items:center;gap:8px;padding:9px 14px;margin-bottom:14px;background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--r-sm)">
+    <span style="font-size:11px;font-weight:700;color:var(--text-400);text-transform:uppercase;letter-spacing:.4px">Stock Value (at cost)</span>
+    <span style="font-size:14px;font-weight:700;color:var(--text-100);font-family:var(--mono)">₹{{ number_format($inventoryValue, 2) }}</span>
+</div>
+@endisset
+
 <div class="products-table-wrap">
 <table class="prod-table">
     <thead>
@@ -94,6 +101,7 @@
             <th>Type</th>
             <th>HSN</th>
             <th>Rate (₹)</th>
+            <th>Cost (₹)</th>
             <th>GST %</th>
             <th>Unit</th>
             <th>Stock</th>
@@ -118,6 +126,7 @@
             </td>
             <td class="mono" style="font-size:12.5px" data-label="HSN">{{ $p->hsn ?: '—' }}</td>
             <td class="mono" data-label="Rate (₹)">₹{{ number_format($p->rate, 2) }}</td>
+            <td class="mono" data-label="Cost (₹)" style="color:var(--text-300)">₹{{ number_format($p->costBasis(), 2) }}</td>
             <td class="mono" data-label="GST %">{{ $p->tax_percent }}%</td>
             <td data-label="Unit">{{ $p->unit ?: '—' }}</td>
             <td class="mono" data-label="Stock">
@@ -148,7 +157,7 @@
         </tr>
         @empty
         <tr>
-            <td colspan="10" style="text-align:center;padding:40px;color:var(--text-400)">
+            <td colspan="12" style="text-align:center;padding:40px;color:var(--text-400)">
                 No products yet. <a href="{{ route('tenant.products.create') }}" style="color:var(--accent)">Add your first product</a>.
             </td>
         </tr>
@@ -186,6 +195,10 @@
         <div class="pr-info-item">
             <span class="pr-info-lbl">Rate</span>
             <span class="pr-info-val">₹{{ number_format($p->rate, 2) }}</span>
+        </div>
+        <div class="pr-info-item">
+            <span class="pr-info-lbl">Cost</span>
+            <span class="pr-info-val">₹{{ number_format($p->costBasis(), 2) }}</span>
         </div>
         <div class="pr-info-item">
             <span class="pr-info-lbl">GST</span>

@@ -347,10 +347,12 @@
                             <td style="color:var(--red)">-{{ $sym }}{{ number_format($quotation->discount, 2) }}</td>
                         </tr>
                         @endif
+                        @foreach($quotation->gstLines() as $line)
                         <tr>
-                            <td>GST ({{ $quotation->tax_percent ?? 0 }}%)</td>
-                            <td style="color:var(--green)">+{{ $sym }}{{ number_format($quotation->tax_amount ?? 0, 2) }}</td>
+                            <td>{{ $line['label'] }}</td>
+                            <td style="color:var(--green)">+{{ $sym }}{{ number_format($line['amount'], 2) }}</td>
                         </tr>
+                        @endforeach
                         <tr class="grand">
                             <td><strong>Total</strong></td>
                             <td><strong>{{ $sym }}{{ number_format($quotation->total ?? 0, 2) }}</strong></td>
@@ -640,10 +642,12 @@
                         <span class="dl-val" style="color:var(--red);font-family:'DM Mono',monospace">-{{ $sym }}{{ number_format($quotation->discount,2) }}</span>
                     </div>
                     @endif
+                    @foreach($quotation->gstLines() as $line)
                     <div class="dl-row">
-                        <span class="dl-key">Tax ({{ $quotation->tax_percent??0 }}%)</span>
-                        <span class="dl-val" style="font-family:'DM Mono',monospace">{{ $sym }}{{ number_format($quotation->tax_amount??0,2) }}</span>
+                        <span class="dl-key">{{ $line['label'] }}</span>
+                        <span class="dl-val" style="font-family:'DM Mono',monospace">{{ $sym }}{{ number_format($line['amount'],2) }}</span>
                     </div>
+                    @endforeach
                     <div class="dl-row">
                         <span class="dl-key">Created</span>
                         <span class="dl-val">{{ $quotation->created_at->format('M d, Y') }}</span>

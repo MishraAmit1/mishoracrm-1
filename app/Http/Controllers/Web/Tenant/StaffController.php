@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web\Tenant;
 
+use App\Helpers\Roles;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\Staff;
@@ -9,8 +10,8 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
-use Spatie\Permission\Models\Role;
 
 class StaffController extends Controller
 {
@@ -47,32 +48,77 @@ class StaffController extends Controller
             $query->where('employment_type', $request->employment_type);
         }
 
-        $staff       = $query->latest()->paginate(15)->withQueryString();
-        $departments = Department::where('tenant_id', $this->tenantId())->orderBy('name')->get();
-        $types       = Staff::employmentTypes();
+        $staff           = $query->latest()->paginate(15)->withQueryString();
+        $departments     = Department::where('tenant_id', $this->tenantId())->orderBy('name')->get();
+        $types           = Staff::employmentTypes();
+        $assignableRoles = auth()->user()->can('staff.edit')
+            ? Roles::assignableFor($this->tenantId())
+            : collect();
 
-        return view('tenant.staffs.index', compact('staff', 'departments', 'types'));
+        return view('tenant.staffs.index', compact('staff', 'departments', 'types', 'assignableRoles'));
+    }
+
+    // ── Bulk role change ─────────────────────────────────────────
+    public function bulkAssignRole(Request $request): RedirectResponse
+    {
+        $assignable = Roles::assignableFor($this->tenantId());
+
+        $data = $request->validate([
+            'staff_ids'   => ['required', 'array', 'min:1'],
+            'staff_ids.*' => ['integer'],
+            'role'        => ['required', Rule::in($assignable->pluck('name'))],
+        ]);
+
+        $members = Staff::with('user')
+            ->where('tenant_id', $this->tenantId())
+            ->whereIn('id', $data['staff_ids'])
+            ->get();
+
+        $changed = 0;
+        $skippedSelf = false;
+
+        foreach ($members as $member) {
+            if (! $member->user) {
+                continue;
+            }
+            if ($member->user->id === auth()->id()) {
+                $skippedSelf = true;
+                continue;
+            }
+            $member->user->syncRoles([$data['role']]);
+            $member->user->update(['user_type' => Roles::userTypeFor($data['role'])]);
+            $changed++;
+        }
+
+        $msg = "Role changed to '" . Roles::label($data['role']) . "' for {$changed} staff member(s).";
+        if ($skippedSelf) {
+            $msg .= ' Your own role was left unchanged — edit it from your profile.';
+        }
+
+        return back()->with($changed ? 'success' : 'error', $changed ? $msg : 'No staff members were updated.');
     }
 
     // ── Create ────────────────────────────────────────────────────
     public function create(): View
     {
-        $departments = Department::where('tenant_id', $this->tenantId())->orderBy('name')->get();
-        $roles       = Role::whereNotIn('name', ['superadmin'])->get();
-        $types       = Staff::employmentTypes();
+        $departments     = Department::where('tenant_id', $this->tenantId())->orderBy('name')->get();
+        $assignableRoles = Roles::assignableFor($this->tenantId());
+        $types           = Staff::employmentTypes();
 
-        return view('tenant.staffs.create', compact('departments', 'roles', 'types'));
+        return view('tenant.staffs.create', compact('departments', 'assignableRoles', 'types'));
     }
 
     // ── Store ─────────────────────────────────────────────────────
     public function store(Request $request): RedirectResponse
     {
+        $assignableRoles = Roles::assignableFor($this->tenantId());
+
         $request->validate([
             'name'             => ['required', 'string', 'max:255'],
             'email'            => ['required', 'email', 'unique:users,email'],
             'password'         => ['required', 'min:8', 'confirmed'],
             'phone'            => ['nullable', 'string', 'max:15'],
-            'role'             => ['required', 'exists:roles,name'],
+            'role'             => ['required', Rule::in($assignableRoles->pluck('name'))],
             'department_id'    => ['nullable', 'exists:departments,id'],
             'designation'      => ['nullable', 'string', 'max:255'],
             'employee_code'    => ['nullable', 'string', 'max:50'],
@@ -106,12 +152,12 @@ class StaffController extends Controller
             'email'      => $request->email,
             'password'   => Hash::make($request->password),
             'phone'      => $request->phone,
-            'user_type'  => 'staff',
+            'user_type'  => Roles::userTypeFor($request->role),
             'is_active'  => true,
         ]);
 
         // 2. Assign role
-        $user->assignRole($request->role);
+        $user->syncRoles([$request->role]);
 
         // 3. Create staff record
         Staff::create([
@@ -141,13 +187,13 @@ class StaffController extends Controller
     // ── Edit ──────────────────────────────────────────────────────
     public function edit(int $id): View
     {
-        $staff       = $this->findStaff($id);
+        $staff           = $this->findStaff($id);
         $staff->load(['user.roles', 'department']);
-        $departments = Department::where('tenant_id', $this->tenantId())->orderBy('name')->get();
-        $roles       = Role::whereNotIn('name', ['superadmin'])->get();
-        $types       = Staff::employmentTypes();
+        $departments     = Department::where('tenant_id', $this->tenantId())->orderBy('name')->get();
+        $assignableRoles = Roles::assignableFor($this->tenantId());
+        $types           = Staff::employmentTypes();
 
-        return view('tenant.staffs.edit', compact('staff', 'departments', 'roles', 'types'));
+        return view('tenant.staffs.edit', compact('staff', 'departments', 'assignableRoles', 'types'));
     }
 
     // ── Update ────────────────────────────────────────────────────
@@ -155,11 +201,13 @@ class StaffController extends Controller
     {
         $staff = $this->findStaff($id);
 
+        $assignableRoles = Roles::assignableFor($this->tenantId());
+
         $request->validate([
             'name'            => ['required', 'string', 'max:255'],
             'email'           => ['required', 'email', "unique:users,email,{$staff->user_id}"],
             'phone'           => ['nullable', 'string', 'max:15'],
-            'role'            => ['required', 'exists:roles,name'],
+            'role'            => ['required', Rule::in($assignableRoles->pluck('name'))],
             'department_id'   => ['nullable', 'exists:departments,id'],
             'designation'     => ['nullable', 'string', 'max:255'],
             'employee_code'   => ['nullable', 'string', 'max:50'],
@@ -180,8 +228,9 @@ class StaffController extends Controller
         }
         $staff->user->update($userData);
 
-        // Update role
+        // Update role (+ keep user_type in sync with the role)
         $staff->user->syncRoles([$request->role]);
+        $staff->user->update(['user_type' => Roles::userTypeFor($request->role)]);
 
         // Update staff record
         $staff->update([

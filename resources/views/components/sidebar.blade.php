@@ -352,7 +352,7 @@
         <div class="sb-section-label">Purchase</div>
 
         <button type="button"
-                class="sb-item {{ request()->routeIs('purchase-requests.*','purchase-orders.*','vendors.*','products.low-stock') ? 'sub-open' : '' }}"
+                class="sb-item {{ request()->routeIs('purchase-requests.*','purchase-orders.*','vendors.*','vendor-bills.*','products.low-stock') ? 'sub-open' : '' }}"
                 onclick="toggleSub('sub-purchase', this)">
             <span class="sb-icon">
                 <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
@@ -367,7 +367,7 @@
             </span>
         </button>
 
-        <div class="sb-sub {{ request()->routeIs('purchase-requests.*','purchase-orders.*','vendors.*','products.low-stock') ? 'open' : '' }}"
+        <div class="sb-sub {{ request()->routeIs('purchase-requests.*','purchase-orders.*','vendors.*','vendor-bills.*','products.low-stock') ? 'open' : '' }}"
              id="sub-purchase">
 
             <a href="{{ route('tenant.products.low-stock') }}"
@@ -405,6 +405,15 @@
                     </svg>
                 </span>
                 <span class="sb-label">Vendors</span>
+            </a>
+            <a href="{{ route('tenant.vendor-bills.index') }}"
+               class="sb-item {{ request()->routeIs('vendor-bills.*') ? 'active' : '' }}">
+                <span class="sb-icon">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75M3.75 4.5h16.5v15a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25v-15zM15 4.5V3a.75.75 0 00-.75-.75h-4.5A.75.75 0 009 3v1.5"/>
+                    </svg>
+                </span>
+                <span class="sb-label">Vendor Bills</span>
             </a>
             @if(auth()->user()->tenant?->hasModuleEnabled('manufacturing'))
             <a href="{{ route('tenant.work-orders.index') }}"
@@ -482,9 +491,12 @@
         </div>
 
         {{-- HR --}}
+        @canany(['departments.view', 'staff.view'])
         <div class="sb-section-label">HR</div>
+        @endcanany
 
         {{-- departments --}}
+        @can('departments.view')
          <a href="{{ route('tenant.departments.index') }}"
            class="sb-item {{ request()->routeIs('tenant.departments.*') ? 'active' : '' }}">
             <span class="sb-icon">
@@ -494,7 +506,9 @@
             </span>
             <span class="sb-label">Departments</span>
           </a>
+        @endcan
 
+        @can('staff.view')
         <a href="{{ route('tenant.staffs.index') }}"
            class="sb-item {{ request()->routeIs('tenant.staffs.*') ? 'active' : '' }}">
             <span class="sb-icon">
@@ -504,6 +518,7 @@
             </span>
             <span class="sb-label">Staff</span>
         </a>
+        @endcan
 
         <a href="{{ route('tenant.attendances.index') }}"  
            class="sb-item {{ request()->routeIs('tenant.attendances.*') ? 'active' : '' }}">

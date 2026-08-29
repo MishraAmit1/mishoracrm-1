@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\BelongsToTenant;
 use App\HasAuditLog;
+use App\HasGstBreakdown;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Quotation extends Model
 {
-    use SoftDeletes, BelongsToTenant, HasAuditLog, HasFactory;
+    use SoftDeletes, BelongsToTenant, HasAuditLog, HasFactory, HasGstBreakdown;
 
     protected $fillable = [
         'tenant_id',
@@ -28,6 +29,11 @@ class Quotation extends Model
         'discount',
         'tax_percent',
         'tax_amount',
+        'place_of_supply',
+        'is_inter_state',
+        'cgst_amount',
+        'sgst_amount',
+        'igst_amount',
         'total',
         'notes',
         'terms',
@@ -52,6 +58,10 @@ class Quotation extends Model
         'discount'               => 'decimal:2',
         'tax_percent'            => 'decimal:2',
         'tax_amount'             => 'decimal:2',
+        'is_inter_state'         => 'boolean',
+        'cgst_amount'            => 'decimal:2',
+        'sgst_amount'            => 'decimal:2',
+        'igst_amount'            => 'decimal:2',
         'total'                  => 'decimal:2',
         'customer_responded_at'  => 'datetime',
     ];

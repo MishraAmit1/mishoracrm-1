@@ -268,12 +268,12 @@
                         </strong>
                     </div>
 
+                    @foreach($invoice->gstLines() as $line)
                     <div class="summary-row">
-                        <span>Tax</span>
-                        <strong>
-                            ₹{{ number_format($invoice->tax_amount, 2) }}
-                        </strong>
+                        <span>{{ $line['label'] }}</span>
+                        <strong>₹{{ number_format($line['amount'], 2) }}</strong>
                     </div>
+                    @endforeach
 
                     <div class="summary-row">
                         <span>Discount</span>

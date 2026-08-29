@@ -1,0 +1,678 @@
+<title>Manufacturing System Guide</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap">
+
+<style>
+  :root{
+    --paper:#FFFFFF;
+    --ink:#22242A;
+    --muted:#54575E;
+    --faint:#83858C;
+    --rule:#D8D4C9;
+    --rule-soft:#EAE6DC;
+    --accent:#96551F;
+    --accent-soft:#F2EADE;
+    --panel:#F7F4ED;
+    --good:#2F6B44;
+  }
+
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:"Source Serif 4", Georgia, "Times New Roman", serif;
+    font-size:17px; line-height:1.66; font-weight:400;
+    -webkit-font-smoothing:antialiased;
+  }
+  .page{max-width:720px; margin:0 auto; padding:56px 28px 96px}
+
+  /* ---- Masthead ---- */
+  .eyebrow{
+    font-family:"Archivo", system-ui, sans-serif; font-weight:600;
+    font-size:.72rem; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--accent); margin:0;
+  }
+  h1{
+    font-family:"Archivo", system-ui, sans-serif; font-weight:700;
+    font-size:clamp(2rem, 6vw, 2.7rem); line-height:1.08;
+    letter-spacing:-.02em; margin:.55rem 0 0; text-wrap:balance;
+  }
+  .lede{
+    font-size:1.16rem; color:var(--muted); line-height:1.55;
+    margin:1rem 0 0; max-width:36em;
+  }
+  .byline{
+    margin-top:22px; padding-top:14px; border-top:1px solid var(--rule);
+    font-family:"Archivo", system-ui, sans-serif; font-size:.8rem;
+    color:var(--faint); display:flex; flex-wrap:wrap; gap:6px 22px;
+  }
+
+  /* ---- Section headings ---- */
+  h2{
+    font-family:"Archivo", system-ui, sans-serif; font-weight:700;
+    font-size:1.55rem; letter-spacing:-.015em; line-height:1.18;
+    margin:64px 0 6px; padding-top:22px; border-top:2px solid var(--ink);
+    text-wrap:balance;
+  }
+  h2 .num{
+    display:inline-block; color:var(--accent); font-weight:600;
+    margin-right:.5em; font-variant-numeric:tabular-nums;
+  }
+  .intro{color:var(--muted); font-size:1.03rem; margin:.4rem 0 0; max-width:60ch}
+
+  .band{
+    font-family:"Archivo", system-ui, sans-serif; font-weight:600;
+    font-size:.74rem; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent); margin:40px 0 0; display:flex; align-items:center; gap:12px;
+  }
+  .band::after{content:""; flex:1; height:1px; background:var(--rule)}
+
+  h3{
+    font-family:"Archivo", system-ui, sans-serif; font-weight:600;
+    font-size:1.16rem; letter-spacing:-.005em; margin:28px 0 2px;
+  }
+  .mod{margin:0 0 6px}
+
+  p{margin:.85rem 0; max-width:64ch}
+  strong{font-weight:600}
+  .q{color:var(--faint); font-family:"Archivo", system-ui, sans-serif; font-weight:600; font-size:.82rem; letter-spacing:.02em}
+
+  /* labelled lines */
+  .rows{margin:14px 0 4px; border-top:1px solid var(--rule-soft)}
+  .rows > div{
+    display:grid; grid-template-columns:104px 1fr; gap:16px;
+    padding:9px 0; border-bottom:1px solid var(--rule-soft); align-items:start;
+  }
+  .rows dt{
+    font-family:"Archivo", system-ui, sans-serif; font-weight:600;
+    font-size:.68rem; letter-spacing:.09em; text-transform:uppercase;
+    color:var(--faint); padding-top:3px; margin:0;
+  }
+  .rows dd{margin:0; font-size:1rem; line-height:1.55}
+  @media (max-width:540px){
+    .rows > div{grid-template-columns:1fr; gap:2px}
+    .rows dt{padding-top:0}
+  }
+
+  /* example box */
+  .eg{
+    margin:14px 0; padding:14px 16px; border-radius:8px;
+    background:var(--panel); border:1px solid var(--rule-soft);
+    border-left:3px solid var(--accent);
+  }
+  .eg .t{
+    font-family:"Archivo", system-ui, sans-serif; font-weight:600;
+    font-size:.66rem; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--accent); margin:0 0 6px;
+  }
+  .eg p{margin:.35rem 0; font-size:.96rem; line-height:1.55}
+
+  /* diagram */
+  figure{
+    margin:24px 0; padding:18px 14px 8px; border-radius:8px;
+    background:var(--panel); border:1px solid var(--rule-soft);
+    overflow-x:auto;
+  }
+  figure svg{display:block; margin:0 auto; max-width:100%; height:auto; color:var(--ink)}
+  figcaption{
+    margin-top:12px; padding-top:8px; border-top:1px dashed var(--rule);
+    font-family:"Archivo", system-ui, sans-serif; font-size:.74rem;
+    color:var(--faint); text-align:center; line-height:1.5;
+  }
+  .dg-box{fill:var(--paper); stroke:var(--faint); stroke-width:1.25}
+  .dg-accent{fill:var(--accent-soft); stroke:var(--accent); stroke-width:1.5}
+  .dg-t{fill:var(--ink); font-family:"Archivo", system-ui, sans-serif; font-size:12.5px}
+  .dg-t.sm{font-size:11px; fill:var(--muted)}
+  .dg-lbl{fill:var(--faint); font-family:"Archivo", system-ui, sans-serif; font-size:10.5px}
+  .dg-line{stroke:var(--muted); stroke-width:1.4; fill:none}
+
+  /* tables */
+  .tw{overflow-x:auto; margin:18px 0; border:1px solid var(--rule); border-radius:8px}
+  table{border-collapse:collapse; width:100%; font-size:.92rem}
+  th,td{text-align:left; padding:9px 13px; border-bottom:1px solid var(--rule-soft); vertical-align:top; line-height:1.45}
+  th{
+    font-family:"Archivo", system-ui, sans-serif; font-weight:600;
+    font-size:.66rem; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--faint); background:var(--panel); white-space:nowrap;
+  }
+  tr:last-child td{border-bottom:none}
+  .yes{color:var(--good); font-weight:600}
+  .no{color:var(--faint)}
+
+  /* roadmap */
+  .road{
+    margin:22px 0; padding:16px 18px; border-radius:8px;
+    background:var(--paper); border:1px solid var(--rule); border-left:3px solid var(--accent);
+  }
+  .road h3{margin-top:0}
+  .road .rank{font-family:"Archivo", system-ui, sans-serif; color:var(--accent); font-weight:700; margin-right:.4em}
+  .need{
+    margin-top:12px; font-family:"Archivo", system-ui, sans-serif; font-size:.82rem;
+    color:var(--muted);
+  }
+  .need b{color:var(--ink)}
+
+  .foot{margin-top:76px; padding-top:20px; border-top:2px solid var(--ink); color:var(--muted); font-size:.95rem}
+  .foot strong{color:var(--ink)}
+
+  a{color:var(--accent)}
+  ::selection{background:var(--accent-soft)}
+
+  @page{ size:A4; margin:18mm 16mm 20mm; }
+  @media print{
+    body{font-size:10.7pt; line-height:1.5}
+    .page{padding:0; max-width:none}
+    h1{font-size:24pt}
+    h2{font-size:15pt; margin-top:26pt}
+    h3{font-size:11.5pt}
+    figure, .road, .eg, .tw, .rows{break-inside:avoid}
+    h2, h3, .band{break-after:avoid}
+    figure svg{max-height:150mm}
+  }
+</style>
+
+<div class="page">
+
+  <header>
+    <p class="eyebrow">Manufacturing &amp; Purchase System &nbsp;&middot;&nbsp; Plain-language guide</p>
+    <h1>Aapki Factory ka System &mdash; Kya, Kyun, Kaise</h1>
+    <p class="lede">Ye guide bina technical jargon ke samjhaati hai ki system ka har hissa kya karta hai, aapke business ko kyun chahiye, aur roz ke kaam mein kahan lagta hai. Saath mein aage kya add hona baaki hai.</p>
+    <div class="byline">
+      <span>Taiyaar: 29 Aug 2026</span>
+      <span>Chhoti se mid manufacturing company ke liye</span>
+    </div>
+  </header>
+
+  <!-- ============ THE WHOLE PICTURE ============ -->
+  <h2><span class="num">1</span>Poori Kahani Ek Nazar Mein</h2>
+  <p class="intro">System aapki factory ke "material ki poori zindagi" ko sambhaalta hai &mdash; material maangne se le kar, kharidne, quality check ke saath receiving, sahi lagat ke saath stock, phir production, finished maal, aur bechne tak. Saath mein vendor ko paisa aur GST.</p>
+
+  <figure>
+    <svg viewBox="0 0 680 470" role="img" aria-label="Material ki poori journey: maang se order, receiving aur quality check, stock, production, finished goods, aur invoice tak; saath mein vendor payment aur GST.">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/>
+        </marker>
+      </defs>
+
+      <!-- column x centers: main 200, side 500 -->
+      <rect class="dg-box" x="120" y="14" width="160" height="42" rx="6"/>
+      <text class="dg-t" x="200" y="40" text-anchor="middle">Material ki Maang</text>
+
+      <line class="dg-line" x1="200" y1="56" x2="200" y2="82" marker-end="url(#ar)"/>
+      <text class="dg-lbl" x="210" y="73">manzoori</text>
+
+      <rect class="dg-box" x="120" y="82" width="160" height="42" rx="6"/>
+      <text class="dg-t" x="200" y="108" text-anchor="middle">Kharid ka Order</text>
+
+      <line class="dg-line" x1="200" y1="124" x2="200" y2="150" marker-end="url(#ar)"/>
+      <text class="dg-lbl" x="210" y="141">bhejo</text>
+
+      <rect class="dg-box" x="120" y="150" width="160" height="42" rx="6"/>
+      <text class="dg-t" x="200" y="176" text-anchor="middle">Receiving + Quality</text>
+
+      <line class="dg-line" x1="200" y1="192" x2="200" y2="218" marker-end="url(#ar)"/>
+      <text class="dg-lbl" x="210" y="209">jo pass</text>
+
+      <rect class="dg-accent" x="120" y="218" width="160" height="42" rx="6"/>
+      <text class="dg-t" x="200" y="239" text-anchor="middle">Stock</text>
+      <text class="dg-t sm" x="200" y="253" text-anchor="middle">(batch + sahi lagat)</text>
+
+      <line class="dg-line" x1="200" y1="260" x2="200" y2="286" marker-end="url(#ar)"/>
+      <text class="dg-lbl" x="210" y="277">recipe</text>
+
+      <rect class="dg-box" x="120" y="286" width="160" height="42" rx="6"/>
+      <text class="dg-t" x="200" y="312" text-anchor="middle">Production ka Kaam</text>
+
+      <line class="dg-line" x1="200" y1="328" x2="200" y2="354" marker-end="url(#ar)"/>
+      <text class="dg-lbl" x="210" y="345">steps + scrap</text>
+
+      <rect class="dg-accent" x="120" y="354" width="160" height="42" rx="6"/>
+      <text class="dg-t" x="200" y="380" text-anchor="middle">Finished Maal</text>
+
+      <line class="dg-line" x1="200" y1="396" x2="200" y2="422" marker-end="url(#ar)"/>
+
+      <rect class="dg-box" x="120" y="422" width="160" height="42" rx="6"/>
+      <text class="dg-t" x="200" y="448" text-anchor="middle">Invoice &rarr; Customer</text>
+
+      <!-- side: money + tax -->
+      <line class="dg-line" x1="280" y1="103" x2="418" y2="140" marker-end="url(#ar)" stroke-dasharray="4 3"/>
+      <rect class="dg-box" x="418" y="140" width="150" height="40" rx="6"/>
+      <text class="dg-t" x="493" y="165" text-anchor="middle">Vendor ka Bill</text>
+
+      <line class="dg-line" x1="493" y1="180" x2="493" y2="206" marker-end="url(#ar)" stroke-dasharray="4 3"/>
+      <rect class="dg-box" x="418" y="206" width="150" height="40" rx="6"/>
+      <text class="dg-t" x="493" y="231" text-anchor="middle">Payments</text>
+
+      <line class="dg-line" x1="418" y1="443" x2="285" y2="443" marker-end="url(#ar)" stroke-dasharray="4 3"/>
+      <rect class="dg-box" x="418" y="422" width="150" height="40" rx="6"/>
+      <text class="dg-t" x="493" y="447" text-anchor="middle">GST split</text>
+      <line class="dg-line" x1="493" y1="246" x2="493" y2="422" stroke-dasharray="4 3"/>
+    </svg>
+    <figcaption>Seedhi line = material aur document ka main raasta. Tooti line = paisa aur tax wala hissa.</figcaption>
+  </figure>
+
+  <!-- ============ PURCHASE ============ -->
+  <h2><span class="num">2</span>Kharid ka Hissa</h2>
+
+  <p class="band">Material Maangna &rarr; Order &rarr; Receiving</p>
+
+  <figure>
+    <svg viewBox="0 0 680 210" role="img" aria-label="Purchase flow: material ki maang, manager ki manzoori, vendor ko order, phir delivery aur quality check, jo pass wo stock mein.">
+      <defs>
+        <marker id="ar2" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/>
+        </marker>
+      </defs>
+      <rect class="dg-box" x="16" y="34" width="132" height="44" rx="6"/>
+      <text class="dg-t" x="82" y="52" text-anchor="middle">Material ki</text>
+      <text class="dg-t" x="82" y="67" text-anchor="middle">Maang</text>
+
+      <line class="dg-line" x1="148" y1="56" x2="190" y2="56" marker-end="url(#ar2)"/>
+      <text class="dg-lbl" x="169" y="47" text-anchor="middle">manzoori</text>
+
+      <rect class="dg-box" x="190" y="34" width="132" height="44" rx="6"/>
+      <text class="dg-t" x="256" y="52" text-anchor="middle">Kharid ka</text>
+      <text class="dg-t" x="256" y="67" text-anchor="middle">Order</text>
+
+      <line class="dg-line" x1="322" y1="56" x2="364" y2="56" marker-end="url(#ar2)"/>
+      <text class="dg-lbl" x="343" y="47" text-anchor="middle">bhejo</text>
+
+      <rect class="dg-box" x="364" y="34" width="132" height="44" rx="6"/>
+      <text class="dg-t" x="430" y="52" text-anchor="middle">Delivery +</text>
+      <text class="dg-t" x="430" y="67" text-anchor="middle">Quality Check</text>
+
+      <line class="dg-line" x1="496" y1="46" x2="560" y2="46" marker-end="url(#ar2)"/>
+      <text class="dg-lbl" x="528" y="37" text-anchor="middle">jo pass</text>
+      <rect class="dg-accent" x="560" y="24" width="104" height="40" rx="6"/>
+      <text class="dg-t" x="612" y="49" text-anchor="middle">Stock</text>
+
+      <line class="dg-line" x1="496" y1="70" x2="560" y2="118" marker-end="url(#ar2)"/>
+      <text class="dg-lbl" x="500" y="104">jo reject</text>
+      <rect class="dg-box" x="560" y="118" width="104" height="40" rx="6"/>
+      <text class="dg-t sm" x="612" y="137" text-anchor="middle">Vendor se</text>
+      <text class="dg-t sm" x="612" y="151" text-anchor="middle">baat</text>
+    </svg>
+    <figcaption>Har delivery ki alag receiving entry banti hai. Sirf pass hua maal stock mein jaata hai.</figcaption>
+  </figure>
+
+  <div class="mod">
+    <h3>Material ki Maang</h3>
+    <dl class="rows">
+      <div><dt>Kya hai</dt><dd>Factory ke andar koi bhi &mdash; store keeper, production incharge &mdash; "mujhe itna material chahiye" ki parchi daalta hai. Manager haan/naa karta hai. Haan hone par order ki draft copy apne aap ban jaati hai.</dd></div>
+      <div><dt>Kyun chahiye</dt><dd>Kuch bhi kharidne se pehle ek manzoori ka step. Bina iske har koi apne mann se vendor ko order de de &mdash; paisa aur control dono haath se nikal jaate hain.</dd></div>
+      <div><dt>Kahan / Kab</dt><dd>Sabse pehla step. Jab kisi ko lage stock kam pad raha hai.</dd></div>
+    </dl>
+    <div class="eg">
+      <p class="t">Example</p>
+      <p>Welding shop wale ne dekha rod khatam ho raha hai &rarr; 50 kg ki maang daali &rarr; manager ne approve kiya &rarr; order ki draft copy taiyaar.</p>
+    </div>
+  </div>
+
+  <div class="mod">
+    <h3>Kharid ka Order</h3>
+    <dl class="rows">
+      <div><dt>Kya hai</dt><dd>Vendor ko bheja jaane wala pakka order. Ek hi cheez ke liye 2&ndash;3 vendors ke rate mangwa ke compare kar sakte ho, sabse achha chun lo &mdash; uske rate order pe apne aap lag jaate hain. Order ka PDF ban ke vendor ko email chala jaata hai.</dd></div>
+      <div><dt>Kyun chahiye</dt><dd>Vendor kaunsa aur kis rate pe &mdash; sab likhit record. Baad mein "itna maal aana baaki hai" isi order ke against dikhta hai.</dd></div>
+      <div><dt>Kahan / Kab</dt><dd>Maang approve hone ke baad. Purchase department banata hai.</dd></div>
+    </dl>
+    <div class="eg">
+      <p class="t">Example</p>
+      <p>Steel rod ke liye 3 vendors &mdash; A &#8377;95/kg, B &#8377;98, C &#8377;92. C chuna &rarr; uska rate order pe lag gaya, order C ko email ho gaya.</p>
+    </div>
+  </div>
+
+  <div class="mod">
+    <h3>Maal ki Receiving + Quality Check</h3>
+    <dl class="rows">
+      <div><dt>Kya hai</dt><dd>Jab vendor ka maal aata hai, har delivery ki ek receiving entry banti hai. Har item pe likhte ho: <strong>kitna aaya, kitna theek nikla, kitna kharab</strong>. Sirf theek wala maal stock mein jaata hai. Kharab wala reason ke saath record ho jaata hai.</dd></div>
+      <div><dt>Kyun chahiye</dt><dd>Pehle jitna aaya poora stock mein chadh jaata tha &mdash; kharab maal bhi. Ab quality check ka step hai: 100 aaye, 92 pass, 8 reject. Reject ka record vendor se baat karne ke liye rehta hai.</dd></div>
+      <div><dt>Kahan / Kab</dt><dd>Jab vendor ka truck aata hai. Store keeper entry karta hai, quality wala pass/fail decide karta hai.</dd></div>
+    </dl>
+    <div class="eg">
+      <p class="t">Example</p>
+      <p>100 rod order the, 100 aaye, 12 tede-mede nikle &rarr; 88 stock mein chadhe, 12 "rejected &mdash; bent" note ho gaye. Vendor ko batao ya agle bill mein adjust karo.</p>
+    </div>
+  </div>
+
+  <!-- ============ STOCK ============ -->
+  <h2><span class="num">3</span>Stock aur Lagat</h2>
+
+  <div class="mod">
+    <h3>Sahi Lagat &mdash; Apne Aap Average Cost</h3>
+    <dl class="rows">
+      <div><dt>Kya hai</dt><dd>Har item ki asli khareed lagat system khud nikaalta hai. Jab bhi naya stock alag rate pe aata hai, purani aur nayi lagat ka average ho ke item ki cost update ho jaati hai.</dd></div>
+      <div><dt>Kyun chahiye</dt><dd>Pehle system item ki <em>bechne wali</em> keemat ko hi lagat maan raha tha &mdash; galat. Isse production ki lagat aur stock ki value dono galat aati thi. Ab jo actual paisa diya, wahi lagat.</dd></div>
+      <div><dt>Kahan / Kab</dt><dd>Automatic &mdash; maal receive hone par, production poori hone par.</dd></div>
+    </dl>
+    <div class="eg">
+      <p class="t">Example</p>
+      <p>10 kg rod &#64; &#8377;50 pehle se the (&#8377;500). 10 kg &#64; &#8377;70 naye aaye (&#8377;700). Ab 20 kg, item ki cost &#8377;60 &mdash; production isi &#8377;60 pe cost lagayega.</p>
+    </div>
+  </div>
+
+  <div class="mod">
+    <h3>Batch aur Expiry Tracking</h3>
+    <dl class="rows">
+      <div><dt>Kya hai</dt><dd>Jab bhi stock aata hai, ek "batch" (lot) banta hai &mdash; batch number, aane ki date, aur agar lagu ho to expiry date. Use karte time sabse pehle expire hone wala batch pehle nikalta hai.</dd></div>
+      <div><dt>Kyun chahiye</dt><dd>Traceability &mdash; kaunsa lot kis order mein gaya. Aur chemical / food / dawai jaise items ki expiry manage hoti hai. Expiry paas aane par manager ko alert.</dd></div>
+      <div><dt>Kahan / Kab</dt><dd>Automatic har baar stock aane / jaane par.</dd></div>
+    </dl>
+  </div>
+
+  <div class="mod">
+    <h3>Kam Stock ki Chetavani</h3>
+    <dl class="rows">
+      <div><dt>Kya hai</dt><dd>Har item pe ek minimum level set karo. Stock us level pe pahunchte hi manager ko notification. Ek click pe wahin se material ki maang bhi ban jaati hai &mdash; banne wale product ke liye uske saare raw material apne aap suggest ho jaate hain.</dd></div>
+      <div><dt>Kyun chahiye</dt><dd>Stock khatam hone se production ruk jaati hai. Ye pehle hi bata deta hai.</dd></div>
+      <div><dt>Kahan / Kab</dt><dd>Har sale / consumption ke baad check hota rehta hai.</dd></div>
+    </dl>
+  </div>
+
+  <!-- ============ PRODUCTION ============ -->
+  <h2><span class="num">4</span>Production ka Hissa</h2>
+
+  <figure>
+    <svg viewBox="0 0 680 250" role="img" aria-label="Production flow: recipe aur stock se production ka kaam banta hai, material reserve hota hai, start pe issue hota hai, phir steps chalte hain, poore hone par finished maal aur scrap.">
+      <defs>
+        <marker id="ar3" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/>
+        </marker>
+      </defs>
+      <rect class="dg-box" x="16" y="20" width="120" height="40" rx="6"/>
+      <text class="dg-t" x="76" y="44" text-anchor="middle">Recipe</text>
+      <rect class="dg-box" x="16" y="80" width="120" height="40" rx="6"/>
+      <text class="dg-t" x="76" y="104" text-anchor="middle">Stock</text>
+
+      <line class="dg-line" x1="136" y1="40" x2="188" y2="62" marker-end="url(#ar3)"/>
+      <line class="dg-line" x1="136" y1="100" x2="188" y2="78" marker-end="url(#ar3)"/>
+
+      <rect class="dg-accent" x="188" y="48" width="140" height="44" rx="6"/>
+      <text class="dg-t" x="258" y="66" text-anchor="middle">Production ka</text>
+      <text class="dg-t" x="258" y="81" text-anchor="middle">Kaam</text>
+
+      <line class="dg-line" x1="258" y1="92" x2="258" y2="126" marker-end="url(#ar3)"/>
+      <text class="dg-lbl" x="266" y="113">banate hi: reserve</text>
+      <text class="dg-lbl" x="266" y="146">shuru pe: issue</text>
+
+      <rect class="dg-box" x="188" y="146" width="140" height="40" rx="6"/>
+      <text class="dg-t" x="258" y="170" text-anchor="middle">Kaam Chalu (WIP)</text>
+
+      <line class="dg-line" x1="328" y1="166" x2="378" y2="166" marker-end="url(#ar3)"/>
+
+      <rect class="dg-box" x="378" y="132" width="150" height="68" rx="6"/>
+      <text class="dg-t sm" x="453" y="152" text-anchor="middle">Cutting &middot; Welding</text>
+      <text class="dg-t sm" x="453" y="168" text-anchor="middle">Quality &middot; Packing</text>
+      <text class="dg-lbl" x="453" y="188" text-anchor="middle">saare step poore</text>
+
+      <line class="dg-line" x1="528" y1="166" x2="576" y2="146" marker-end="url(#ar3)"/>
+      <rect class="dg-accent" x="576" y="118" width="96" height="40" rx="6"/>
+      <text class="dg-t" x="624" y="142" text-anchor="middle">Finished</text>
+
+      <line class="dg-line" x1="528" y1="182" x2="576" y2="204" marker-end="url(#ar3)"/>
+      <rect class="dg-box" x="576" y="188" width="96" height="36" rx="6"/>
+      <text class="dg-t sm" x="624" y="210" text-anchor="middle">Scrap (log)</text>
+    </svg>
+    <figcaption>Material sirf "shuru" karne par stock se nikalta hai. Kaam tabhi "poora" hota hai jab har step ho jaaye.</figcaption>
+  </figure>
+
+  <div class="mod">
+    <h3>Recipe / Samagri List</h3>
+    <dl class="rows">
+      <div><dt>Kya hai</dt><dd>Har banne wale product ke liye "ek piece banane mein kya-kya lagta hai" ki list &mdash; raw material aur kitni quantity.</dd></div>
+      <div><dt>Kyun chahiye</dt><dd>Production planning, material calculation aur lagat &mdash; sab isi list pe khade hain.</dd></div>
+      <div><dt>Kahan / Kab</dt><dd>Product setup ke time ek baar. Har production kaam isi ko use karta hai.</dd></div>
+    </dl>
+    <div class="eg">
+      <p class="t">Example</p>
+      <p>Ek Steel Chair = 5 rod + 1 cushion + 8 screw. 10 chair ka kaam &rarr; 50 rod, 10 cushion, 80 screw chahiye.</p>
+    </div>
+  </div>
+
+  <div class="mod">
+    <h3>Production ka Kaam</h3>
+    <dl class="rows">
+      <div><dt>Kya hai</dt><dd>Ek production job &mdash; "10 Steel Chair banao". System check karta hai material poora hai ya nahi, banne par raw material stock se kat jaata hai aur finished chair stock mein aa jaati hai. Lagat aur munafa dono dikhta hai.</dd></div>
+      <div><dt>Kyun chahiye</dt><dd>Production track karne ki central cheez &mdash; kya ban raha hai, kaun laga hai, kitni lagat, faayde ka sauda hai ya nahi.</dd></div>
+      <div><dt>Kahan / Kab</dt><dd>Jab production planner decide karta hai ki ek batch banana hai.</dd></div>
+    </dl>
+  </div>
+
+  <div class="mod">
+    <h3>Material Rok lena + Kaam Chalu</h3>
+    <dl class="rows">
+      <div><dt>Kya hai</dt><dd>Kaam banate hi uska material "reserve" ho jaata hai &mdash; physical stock nahi hilta, bas "available" kam dikhta hai taaki doosra kaam usi material pe plan na ho. Kaam "shuru" karte hi material shop floor pe issue ho jaata hai (stock se nikal jaata hai). Ab kaam chalu hai &mdash; material gaya, product abhi nahi bana.</dd></div>
+      <div><dt>Kyun chahiye</dt><dd>Pehle material sirf kaam poora hone par katta tha. Do kaam dono possible dikhte the, phir ek material kha leta, doosra atak jaata. Ab reservation ye jhagda pehle hi khatam karta hai.</dd></div>
+      <div><dt>Kahan / Kab</dt><dd>Reserve &mdash; kaam banate hi. Issue &mdash; "Start" button dabate hi. Kaam cancel karo to material wapas stock mein aa jaata hai.</dd></div>
+    </dl>
+    <div class="eg">
+      <p class="t">Example</p>
+      <p>2 chair ke kaam plan kiye, dono ko 50 rod chahiye, stock 60. Reservation ke baad doosra kaam saaf dikhata hai "sirf 10 rod available" &mdash; pehle hi pata chal jaata hai, production floor pe surprise nahi.</p>
+    </div>
+  </div>
+
+  <div class="mod">
+    <h3>Production ke Steps</h3>
+    <dl class="rows">
+      <div><dt>Kya hai</dt><dd>Ek kaam ke andar steps &mdash; Cutting &rarr; Welding &rarr; Quality Check &rarr; Packing. Har step pe kaun laga hai, kab shuru/khatam. Kaam tabhi "poora" hota hai jab saare steps ho jaayein.</dd></div>
+      <div><dt>Kyun chahiye</dt><dd>Pehle ek hi status tha. Multi-step production mein pata nahi chalta job kahan atki hai, kis step pe time laga.</dd></div>
+      <div><dt>Kahan / Kab</dt><dd>Steps optional hain &mdash; simple product ke liye chhod do, ek hi step jaisa chalega.</dd></div>
+    </dl>
+  </div>
+
+  <div class="mod">
+    <h3>Reject / Wastage (Scrap)</h3>
+    <dl class="rows">
+      <div><dt>Kya hai</dt><dd>Kaam poora hote time daalte ho: kitne theek bane, kitne kharab (scrap), aur kyun. Sirf theek wale finished stock mein jaate hain.</dd></div>
+      <div><dt>Kyun chahiye</dt><dd>Pehle 10 ka kaam hamesha exactly 10 deta tha. Asli production mein rejection hoti hai. Poore kaam ki lagat theek units pe baant jaati hai &mdash; scrap se per-piece lagat badh jaati hai, jo sahi hai.</dd></div>
+      <div><dt>Kahan / Kab</dt><dd>Kaam complete karte time.</dd></div>
+    </dl>
+    <div class="eg">
+      <p class="t">Example</p>
+      <p>10 planned, material lagat &#8377;3000. Agar 2 scrap ho gaye &rarr; &#8377;3000 &divide; 8 theek units = &#8377;375 per piece (bina scrap ke &#8377;300 hota). Sahi cost tabhi dikhega jab scrap count ho.</p>
+    </div>
+  </div>
+
+  <!-- ============ MONEY ============ -->
+  <h2><span class="num">5</span>Vendor ko Paisa</h2>
+
+  <figure>
+    <svg viewBox="0 0 680 170" role="img" aria-label="Vendor payment flow: order ya alag entry se vendor ka bill banta hai, phir payments record hote hain, bill paid ya overdue dikhta hai, aur outstanding total banta hai.">
+      <defs>
+        <marker id="ar4" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/>
+        </marker>
+      </defs>
+      <rect class="dg-box" x="16" y="24" width="126" height="40" rx="6"/>
+      <text class="dg-t sm" x="79" y="43" text-anchor="middle">Order (auto)</text>
+      <text class="dg-t sm" x="79" y="57" text-anchor="middle">ya alag entry</text>
+
+      <line class="dg-line" x1="142" y1="44" x2="196" y2="44" marker-end="url(#ar4)"/>
+
+      <rect class="dg-accent" x="196" y="24" width="126" height="40" rx="6"/>
+      <text class="dg-t" x="259" y="48" text-anchor="middle">Vendor ka Bill</text>
+
+      <line class="dg-line" x1="322" y1="44" x2="376" y2="44" marker-end="url(#ar4)"/>
+      <text class="dg-lbl" x="349" y="35" text-anchor="middle">payment</text>
+
+      <rect class="dg-box" x="376" y="24" width="126" height="40" rx="6"/>
+      <text class="dg-t" x="439" y="48" text-anchor="middle">Payments</text>
+
+      <line class="dg-line" x1="502" y1="44" x2="556" y2="44" marker-end="url(#ar4)"/>
+      <rect class="dg-box" x="556" y="24" width="110" height="40" rx="6"/>
+      <text class="dg-t sm" x="611" y="43" text-anchor="middle">Paid /</text>
+      <text class="dg-t sm" x="611" y="57" text-anchor="middle">Overdue</text>
+
+      <line class="dg-line" x1="259" y1="64" x2="259" y2="112" marker-end="url(#ar4)" stroke-dasharray="4 3"/>
+      <rect class="dg-box" x="176" y="112" width="166" height="38" rx="6"/>
+      <text class="dg-t sm" x="259" y="135" text-anchor="middle">Total baaki (Payable)</text>
+    </svg>
+    <figcaption>Bill sirf hisaab-kitaab hai, stock nahi hilata. Payment bill se zyada nahi ho sakti.</figcaption>
+  </figure>
+
+  <div class="mod">
+    <h3>Vendor ke Bill aur Payments</h3>
+    <dl class="rows">
+      <div><dt>Kya hai</dt><dd>Jaise customer ko invoice bhejte ho, waise vendor ka bill yahan enter hota hai. Order se apne aap bhar jaata hai ya alag se. Payment record karo &mdash; kitna diya, kitna baaki. Overdue bill alag rang mein. Vendor pe payment terms (kitne din ka udhaar) aur bank details.</dd></div>
+      <div><dt>Kyun chahiye</dt><dd>Pehle purchase side ka paisa track hi nahi hota tha &mdash; vendor ko kitna dena hai, kya diya, kya late ho gaya. Ab poora hisaab.</dd></div>
+      <div><dt>Kahan / Kab</dt><dd>Jab supplier ka invoice aata hai. Order page se seedha bill bana sakte ho.</dd></div>
+    </dl>
+  </div>
+
+  <!-- ============ GST ============ -->
+  <h2><span class="num">6</span>GST &mdash; Apne Aap Sahi</h2>
+
+  <figure>
+    <svg viewBox="0 0 620 190" role="img" aria-label="GST split: total tax lene ke baad system dekhta hai ki dono party ka state alag hai ya same. Alag hone par IGST, same ya pata na hone par CGST aur SGST aadha-aadha.">
+      <defs>
+        <marker id="ar5" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/>
+        </marker>
+      </defs>
+      <rect class="dg-box" x="16" y="72" width="150" height="46" rx="6"/>
+      <text class="dg-t sm" x="91" y="91" text-anchor="middle">Total GST &#8377;180</text>
+      <text class="dg-t sm" x="91" y="106" text-anchor="middle">+ dono ka state</text>
+
+      <line class="dg-line" x1="166" y1="95" x2="214" y2="95" marker-end="url(#ar5)"/>
+
+      <path class="dg-box" d="M234 95 L294 66 L354 95 L294 124 Z"/>
+      <text class="dg-t sm" x="294" y="92" text-anchor="middle">State</text>
+      <text class="dg-t sm" x="294" y="106" text-anchor="middle">alag?</text>
+
+      <line class="dg-line" x1="354" y1="80" x2="430" y2="50" marker-end="url(#ar5)"/>
+      <text class="dg-lbl" x="372" y="55">haan</text>
+      <rect class="dg-accent" x="430" y="30" width="170" height="40" rx="6"/>
+      <text class="dg-t" x="515" y="55" text-anchor="middle">IGST &#8377;180</text>
+
+      <line class="dg-line" x1="354" y1="110" x2="430" y2="140" marker-end="url(#ar5)"/>
+      <text class="dg-lbl" x="366" y="138">same / pata nahi</text>
+      <rect class="dg-accent" x="430" y="120" width="170" height="40" rx="6"/>
+      <text class="dg-t" x="515" y="145" text-anchor="middle">CGST &#8377;90 + SGST &#8377;90</text>
+    </svg>
+    <figcaption>Same state = CGST + SGST aadha-aadha. Doosra state = poora IGST. Agar state ya GST number diya ho to system khud pehchaan leta hai.</figcaption>
+  </figure>
+
+  <div class="mod">
+    <h3>GST Split (CGST / SGST / IGST)</h3>
+    <dl class="rows">
+      <div><dt>Kya hai</dt><dd>Har bill/invoice pe GST apne aap sahi tarike se banta hai. Same state mein bech rahe ho &rarr; CGST + SGST (aadha-aadha). Doosre state mein &rarr; IGST (poora). "Place of supply" apne aap set ho jaata hai.</dd></div>
+      <div><dt>Kyun chahiye</dt><dd>Pehle ek flat GST line thi &mdash; GST rules ke hisaab se sahi invoice nahi tha. Ab compliant hai, invoice PDF pe proper breakdown.</dd></div>
+      <div><dt>Kahan / Kab</dt><dd>Automatic har bill/invoice save pe.</dd></div>
+    </dl>
+    <div class="eg">
+      <p class="t">Example</p>
+      <p>Karnataka ki company Karnataka mein bech rahi &rarr; CGST &#8377;90 + SGST &#8377;90. Wahi company Tamil Nadu mein bech rahi &rarr; IGST &#8377;180.</p>
+    </div>
+  </div>
+
+  <!-- ============ ROADMAP ============ -->
+  <h2><span class="num">7</span>Aage Kya Add Hona Baaki Hai</h2>
+  <p class="intro">Ye cheezein abhi system mein nahi hain. Har ek ke saath: matlab kya, asli example, aur kaunsi company ko chahiye.</p>
+
+  <div class="road">
+    <h3><span class="rank">1</span>Product ke andar Product (Multi-level Recipe)</h3>
+    <p>Abhi recipe ek level ki hai: product &rarr; raw materials. Agar koi raw material khud banaya jaata hai (uski apni recipe hai), to system usko nahi samajhta.</p>
+    <div class="eg">
+      <p class="t">Example &mdash; Steel Almirah</p>
+      <p>Almirah = <strong>Door Assembly</strong> + <strong>Frame Assembly</strong> + Lock. Aur Door Assembly khud = Steel Sheet + Hinge + Handle. Abhi tumhe Door aur Frame ke alag kaam manually banane padte hain, phir Almirah ka. System nahi kehta "pehle 2 sub-part banao".</p>
+    </div>
+    <p class="need"><b>Kaun:</b> Chhoti company &mdash; shaayad nahi. <span class="yes">Mid company &mdash; zaroori.</span> Furniture, electrical panel, machinery, pump, auto-parts &mdash; inme multi-level recipe aam baat hai.</p>
+  </div>
+
+  <div class="road">
+    <h3><span class="rank">2</span>Sab Kaam ka Combined Material Plan</h3>
+    <p>Reservation ke baad "available" to dikhta hai, par ek jagah "saare pending kaam mila ke kitna material chahiye, kitna kam hai" &mdash; ye plan nahi banta.</p>
+    <div class="eg">
+      <p class="t">Example &mdash; 5 pending kaam</p>
+      <p>Sab mila ke 267 kg rod chahiye, stock 100 kg &rarr; ek screen batata "167 kg kam hai" aur ek click pe ek consolidated maang bana deta. Abhi ye har kaam alag dekh ke khud jodna padta hai.</p>
+    </div>
+    <p class="need"><b>Kaun:</b> Chhoti &mdash; nahi (1&ndash;2 kaam, dimag mein ho jaata hai). <span class="yes">Mid &mdash; bahut kaam ki cheez.</span> 10&ndash;50 kaam khule hon to purchase team ka roz ka kaam hai. Bina iske ya to zyada kharid lete hain (paisa block) ya production rukti hai.</p>
+  </div>
+
+  <div class="road">
+    <h3><span class="rank">3</span>Order pe Approval Limit</h3>
+    <p>Maang pe manzoori hai, order pe nahi. Jiske paas order banane ki permission hai wo bade se bada order bhej sakta hai bina kisi review ke.</p>
+    <div class="eg">
+      <p class="t">Example</p>
+      <p>&#8377;5,000 tak &mdash; executive khud. &#8377;5,000&ndash;50,000 &mdash; manager ki manzoori. &#8377;50,000+ &mdash; director. Abhi ye limit system mein nahi hai.</p>
+    </div>
+    <p class="need"><b>Kaun:</b> Chhoti &mdash; nahi (owner sab dekhta hai). <span class="yes">Mid &mdash; haan.</span> Purchase team badi ho to audit aur budget control ke liye chahiye. Chhota feature hai.</p>
+  </div>
+
+  <div class="road">
+    <h3><span class="rank">4</span>Vendor ki Performance Report</h3>
+    <p>Receiving ka data ab store hota hai (kitna aaya, kitna reject, time pe aaya ya nahi), par vendor-wise score-card nahi.</p>
+    <div class="eg">
+      <p class="t">Example</p>
+      <p>Vendor A &mdash; time pe 92%, reject 2%. Vendor B &mdash; time pe 71%, reject 8%. Isse pata chalta B se bacho chahe rate sasta ho. Abhi ye data hai par ek jagah dikhta nahi.</p>
+    </div>
+    <p class="need"><b>Kaun:</b> Chhoti &mdash; nahi (3&ndash;4 vendors, sab yaad). <span class="yes">Mid &mdash; bahut useful.</span> Data pehle se hai, sirf ek report banani hai &mdash; achha faayda kam mehnat mein.</p>
+  </div>
+
+  <div class="road">
+    <h3><span class="rank">5</span>Debit Note (Vendor ko wapas claim)</h3>
+    <p>Receiving pe reject qty note hoti hai, par vendor ko formal document nahi jaata.</p>
+    <div class="eg">
+      <p class="t">Example</p>
+      <p>100 rod &#64; &#8377;100 mangaaye, 15 kharab. Vendor ne poore 100 ka bill (&#8377;10,000) bheja. Tumhe &#8377;1,500 ka Debit Note banana chahiye &mdash; "itna kam denge" ya "agle bill mein adjust".</p>
+    </div>
+    <p class="need"><b>Kaun:</b> Chhoti &mdash; nahi (phone pe adjust). <span class="yes">Mid &mdash; haan.</span> GST ke hisaab se ek official document hai, accounts reconciliation ke liye.</p>
+  </div>
+
+  <div class="road">
+    <h3><span class="rank">6</span>Ek Maang &rarr; Kai Vendor ke Order</h3>
+    <p>Ek approved maang se ek hi order banta hai. Maang ke items alag-alag vendor se nahi mangwa sakte.</p>
+    <div class="eg">
+      <p class="t">Example</p>
+      <p>Maang mein: Rod, Paint, Bolt. Rod Vendor A se sasta, Paint B se, Bolt C se. Abhi teen alag order manually banane padenge aur maang se link toot jaata hai.</p>
+    </div>
+    <p class="need"><b>Kaun:</b> Chhoti &mdash; workaround chal jaata hai. <span class="yes">Mid &mdash; haan.</span> Har material ka alag preferred vendor hota hai.</p>
+  </div>
+
+  <div class="road">
+    <h3><span class="rank">7</span>Har Piece ka Serial Number</h3>
+    <p>Abhi lot/batch level tracking hai. Har individual piece ka apna number, warranty, service history &mdash; nahi.</p>
+    <div class="eg">
+      <p class="t">Example &mdash; Generator company</p>
+      <p>Customer: "Generator SN-2026-0453 kharab hai." System se pata chale: kaunse kaam mein bana, kaunse parts (unke serial), kaunsa customer, kab bika, warranty valid hai ya nahi. Batch se ye nahi milta &mdash; batch mein 50 the.</p>
+    </div>
+    <p class="need"><b>Kaun:</b> Chhoti &mdash; nahi. Mid &mdash; sirf high-value / warranty wale saamaan (generator, machine, electronics, pump, engine). FMCG / hardware / consumable wali company ko bhi nahi.</p>
+  </div>
+
+  <div class="road">
+    <h3><span class="rank">8</span>Kai Godown / Location ka Stock</h3>
+    <p>Abhi har item ka ek total number. Kaunsa maal kaunse godown / rack mein hai &mdash; nahi.</p>
+    <div class="eg">
+      <p class="t">Example</p>
+      <p>Rod total 500 kg = Pune factory 300 + Mumbai warehouse 200. Mumbai se dispatch karte time system "500 available" dikhata hai, actual wahan 200. Godown ke beech transfer track nahi hota.</p>
+    </div>
+    <p class="need"><b>Kaun:</b> Chhoti &mdash; nahi (factory hi store hai). Mid &mdash; sirf agar sach mein kai branches / warehouses ho. Ye bada change hai &mdash; sirf demand aane par banao.</p>
+  </div>
+
+  <!-- ============ WHO NEEDS WHAT ============ -->
+  <h2><span class="num">8</span>Kis Company ko Kya Chahiye</h2>
+  <div class="tw">
+    <table>
+      <thead>
+        <tr><th>Hissa</th><th>Chhoti company (1&ndash;15 log, 1 jagah)</th><th>Mid company (15&ndash;150 log)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Maang / Order / Receiving</td><td>Maang skip kar sakte ho; order + receiving direct</td><td>Poora chain &mdash; maang manzoori, vendor rate compare, quality check</td></tr>
+        <tr><td>Lagat aur batch</td><td>Auto average cost + kam stock alert kaafi</td><td>Wahi + stock value ki report</td></tr>
+        <tr><td>Production</td><td>Recipe + simple kaam; steps optional</td><td>Steps, material reservation, scrap tracking</td></tr>
+        <tr><td>Vendor payment</td><td>Bill + payment record</td><td>Bill + payment + (aage) approval limit</td></tr>
+        <tr><td>GST</td><td>Auto CGST+SGST (zyadatar local sale)</td><td>CGST+SGST aur IGST dono</td></tr>
+        <tr><td>Multi-level recipe / combined plan</td><td class="no">Aam taur pe nahi</td><td class="yes">Haan, zaroori</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p><strong>Nichod:</strong> Jo abhi bana hai, wo ek chhoti se mid manufacturing company ke liye poora kaam karta hai &mdash; material maangne se le kar finished maal bech kar paisa milne tak. "Aage kya baaki hai" wale zyadatar items sirf tab chahiye jab company mid-size ho jaaye ya khaas industry ki ho.</p>
+
+  <div class="foot">
+    <p><strong>Ye guide non-technical version hai.</strong> Developer / setup ke liye alag detailed handbook hai jisme har cheez ka technical layout, data aur test coverage diya hai. Nayi feature chahiye to roadmap section mein number mark karke ye file wapas share kar do.</p>
+  </div>
+
+</div>

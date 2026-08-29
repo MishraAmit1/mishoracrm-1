@@ -31,8 +31,11 @@
             <div class="page-sub">Master permission list — add a permission here to make it instantly available for Tenant Admin and the tenant-side role builder. No seeder/code changes needed.</div>
         </div>
         <div class="page-actions">
-            <a href="{{ route('superadmin.roles.tenant-admin.edit') }}" class="btn btn-secondary">
-                Edit Tenant Admin Permissions
+            <a href="{{ route('superadmin.roles.edit', 'tenant_admin') }}" class="btn btn-secondary">
+                Edit Tenant Admin Role
+            </a>
+            <a href="{{ route('superadmin.roles.edit', 'staff') }}" class="btn btn-secondary">
+                Edit Default Staff Role
             </a>
             <a href="{{ route('superadmin.permissions.create') }}" class="btn btn-primary">
                 <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:15px;height:15px">

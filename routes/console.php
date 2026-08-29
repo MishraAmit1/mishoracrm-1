@@ -35,6 +35,10 @@ Schedule::command('subscriptions:auto-renew')->dailyAt('06:00');
 // ── Service subscription expiry alerts — daily ─────────────────────
 Schedule::command('subscriptions:remind-expiry')->dailyAt('08:30');
 
+// ── Platform (workspace) subscription lifecycle — expire lapsed plans
+// and warn tenant admins before their own CRM plan runs out — daily ──
+Schedule::command('subscriptions:check-platform')->dailyAt('07:30');
+
 // ── Upcoming appointment reminders — hourly (24h-ahead window) ─────
 Schedule::command('appointments:remind-upcoming')->hourly();
 

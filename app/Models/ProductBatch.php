@@ -17,6 +17,7 @@ class ProductBatch extends Model
         'batch_number',
         'quantity',
         'initial_quantity',
+        'unit_cost',
         'expiry_date',
         'received_at',
         'purchase_order_id',
@@ -28,6 +29,7 @@ class ProductBatch extends Model
     protected $casts = [
         'quantity'            => 'decimal:2',
         'initial_quantity'    => 'decimal:2',
+        'unit_cost'           => 'decimal:2',
         'expiry_date'         => 'date',
         'received_at'         => 'date',
         'expiry_notified_at'  => 'datetime',

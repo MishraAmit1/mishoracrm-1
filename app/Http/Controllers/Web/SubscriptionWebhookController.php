@@ -46,9 +46,10 @@ class SubscriptionWebhookController extends Controller
         Subscription::where('razorpay_order_id', $orderId)
             ->whereIn('status', ['pending_payment', 'past_due'])
             ->update([
-                'status'              => 'active',
-                'razorpay_payment_id' => $payment['id'] ?? null,
-                'started_at'          => now(),
+                'status'                   => 'active',
+                'razorpay_payment_id'      => $payment['id'] ?? null,
+                'started_at'               => now(),
+                'renewal_reminder_sent_at' => null,
             ]);
     }
 

@@ -70,11 +70,11 @@
     </div>
 </div>
 
-{{-- System Roles (read-only) --}}
+{{-- System Roles --}}
 <div style="margin-bottom:24px">
     <div style="font-size:12px;font-weight:700;color:var(--text-400);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">
         System Roles
-        <span style="font-size:11px;font-weight:400;color:var(--text-400);text-transform:none;letter-spacing:0;margin-left:6px">(predefined — cannot be edited)</span>
+        <span style="font-size:11px;font-weight:400;color:var(--text-400);text-transform:none;letter-spacing:0;margin-left:6px">(built-in — the Staff role can be customised for your workspace)</span>
     </div>
     <div class="roles-grid">
         @foreach($systemRoles as $role)
@@ -87,25 +87,39 @@
                 </div>
                 <div style="flex:1">
                     <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
-                        <div class="role-name">{{ ucwords(str_replace('_',' ',$role->name)) }}</div>
-                        <span class="sys-label">System</span>
-                    </div>
-                    <div class="role-desc">
-                        @if($role->name === 'tenant_admin') Full access to all modules and settings
-                        @elseif($role->name === 'staff') Basic CRM access — leads, contacts, follow-ups
-                        @else {{ $role->description ?? '—' }}
+                        <div class="role-name">{{ $role->label }}</div>
+                        @if($role->customised)
+                            <span class="sys-label" style="background:var(--purple-dim);color:var(--purple)">Customised</span>
+                        @elseif($role->editable)
+                            <span class="sys-label">System</span>
+                        @else
+                            <span class="sys-label">Platform-managed</span>
                         @endif
                     </div>
+                    <div class="role-desc">{{ $role->description }}</div>
                 </div>
             </div>
             <div class="role-card-body">
-                <span class="perm-count">{{ $role->permissions_count ?? $role->permissions->count() }} permissions</span>
+                <span class="perm-count">{{ $role->perm_count }} permissions</span>
                 <span class="user-count">
                     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:13px;height:13px">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/>
                     </svg>
-                    {{ $role->users_count ?? 0 }} staff
+                    {{ $role->user_count }} staff
                 </span>
+            </div>
+            <div class="action-row">
+                @if($role->customised)
+                    <a href="{{ route('tenant.roles.edit', $role->id) }}" class="btn btn-secondary btn-sm">Edit Permissions</a>
+                    <a href="{{ route('tenant.roles.show', $role->id) }}" class="btn btn-secondary btn-sm">View</a>
+                @else
+                    <form method="POST" action="{{ route('tenant.roles.system.customise', $role->base) }}"
+                          onsubmit="return confirm('This creates your workspace\'s own editable copy of the {{ $role->label }} role. Current {{ $role->label }} members move to it automatically. Continue?')">
+                        @csrf
+                        <button type="submit" class="btn btn-secondary btn-sm">Customise</button>
+                    </form>
+                    <span style="font-size:11.5px;color:var(--text-400);align-self:center">Uses platform defaults</span>
+                @endif
             </div>
         </div>
         @endforeach
@@ -160,12 +174,17 @@
             <div class="action-row">
                 <a href="{{ route('tenant.roles.edit', $role->id) }}" class="btn btn-secondary btn-sm">Edit Permissions</a>
                 <a href="{{ route('tenant.roles.show', $role->id) }}" class="btn btn-secondary btn-sm">View</a>
-                <form method="POST" action="{{ route('tenant.roles.destroy', $role->id) }}"
-                      onsubmit="return confirm('Delete role \'{{ addslashes($displayName) }}\'?')"
-                      style="margin-left:auto">
-                    @csrf @method('DELETE')
-                    <button type="submit" class="btn btn-secondary btn-sm" style="color:var(--red)">Delete</button>
-                </form>
+                @if($role->users_count > 0)
+                    <a href="{{ route('tenant.roles.show', $role->id) }}#danger-zone"
+                       class="btn btn-secondary btn-sm" style="color:var(--red);margin-left:auto">Delete…</a>
+                @else
+                    <form method="POST" action="{{ route('tenant.roles.destroy', $role->id) }}"
+                          onsubmit="return confirm('Delete role \'{{ addslashes($displayName) }}\'?')"
+                          style="margin-left:auto">
+                        @csrf @method('DELETE')
+                        <button type="submit" class="btn btn-secondary btn-sm" style="color:var(--red)">Delete</button>
+                    </form>
+                @endif
             </div>
         </div>
         @endforeach

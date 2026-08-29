@@ -81,6 +81,18 @@ class User extends Authenticatable
         return $this->user_type === 'staff';
     }
 
+    /** Primary spatie role, or null. */
+    public function primaryRole(): ?\Spatie\Permission\Models\Role
+    {
+        return $this->roles->first();
+    }
+
+    /** Human-friendly name of the user's primary role, e.g. "Sales Manager". */
+    public function roleLabel(): string
+    {
+        return \App\Helpers\Roles::label($this->primaryRole()?->name);
+    }
+
     public function getAvatarUrlAttribute(): ?string
     {
         return $this->avatar

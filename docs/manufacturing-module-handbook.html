@@ -1,0 +1,928 @@
+<title>Manufacturing Module Handbook</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap">
+
+<style>
+  :root{
+    --paper:#FBFAF6; --surface:#FFFFFF; --surface-2:#F4F1EA;
+    --ink:#1C1E26; --muted:#585B65; --faint:#8A8D97;
+    --rule:#E6E2D7; --rule-strong:#D3CEC0;
+    --blue:#2E4A7C; --blue-soft:#E9EFF8;
+    --amber:#A65C24; --amber-soft:#F5EBDE;
+    --done:#3B7A50; --done-soft:#E5EFE8;
+    --shadow:0 1px 2px rgba(20,22,30,.05), 0 10px 30px rgba(20,22,30,.04);
+    --sheet:#F7F5EF; --sheet-rule:#DAD5C8; --sheet-ink:#3C3E46;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#131519; --surface:#1B1D23; --surface-2:#232630;
+      --ink:#E8E6DE; --muted:#9EA0A9; --faint:#767983;
+      --rule:#2A2C34; --rule-strong:#3B3E48;
+      --blue:#9DB9E9; --blue-soft:#1D2A3D;
+      --amber:#E1A263; --amber-soft:#332619;
+      --done:#71B385; --done-soft:#1D2E24;
+      --shadow:0 1px 2px rgba(0,0,0,.35), 0 12px 34px rgba(0,0,0,.28);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#131519; --surface:#1B1D23; --surface-2:#232630;
+    --ink:#E8E6DE; --muted:#9EA0A9; --faint:#767983;
+    --rule:#2A2C34; --rule-strong:#3B3E48;
+    --blue:#9DB9E9; --blue-soft:#1D2A3D;
+    --amber:#E1A263; --amber-soft:#332619;
+    --done:#71B385; --done-soft:#1D2E24;
+    --shadow:0 1px 2px rgba(0,0,0,.35), 0 12px 34px rgba(0,0,0,.28);
+  }
+
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:"Newsreader", Georgia, "Times New Roman", serif;
+    font-size:17px; line-height:1.68; font-weight:400;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .layout{max-width:1140px; margin:0 auto; padding:0 24px}
+  @media (min-width:1080px){
+    .layout{
+      display:grid; grid-template-columns:212px minmax(0,760px);
+      gap:56px; justify-content:center; align-items:start;
+    }
+    .toc{position:sticky; top:0; max-height:100vh; overflow-y:auto; padding:40px 0}
+  }
+
+  /* ---------- TOC ---------- */
+  .toc{display:none}
+  @media (min-width:1080px){.toc{display:block}}
+  .toc-title{
+    font-family:"Archivo", system-ui, sans-serif; font-weight:600;
+    font-size:.68rem; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--faint); margin:0 0 12px;
+  }
+  .toc a{
+    display:block; padding:3px 0; color:var(--muted); text-decoration:none;
+    font-size:.86rem; line-height:1.45; font-family:"Archivo", system-ui, sans-serif;
+    border-left:2px solid transparent; padding-left:12px; margin-left:-14px;
+    transition:color .12s, border-color .12s;
+  }
+  .toc a:hover{color:var(--ink); border-color:var(--rule-strong)}
+  .toc a.sub{font-size:.8rem; color:var(--faint); padding-left:24px}
+  .toc a.grp{margin-top:14px; color:var(--blue); font-weight:600}
+
+  main{padding:40px 0 96px; min-width:0}
+
+  /* ---------- Masthead ---------- */
+  .eyebrow{
+    font-family:"Archivo", system-ui, sans-serif; font-weight:600;
+    font-size:.7rem; letter-spacing:.15em; text-transform:uppercase;
+    color:var(--blue);
+  }
+  h1{
+    font-family:"Archivo", system-ui, sans-serif; font-weight:700;
+    font-size:clamp(2.1rem, 5.5vw, 3rem); line-height:1.05;
+    letter-spacing:-.022em; margin:.5rem 0 0; text-wrap:balance;
+  }
+  .dek{
+    font-size:1.18rem; color:var(--muted); margin:.9rem 0 0; max-width:34em;
+    line-height:1.5;
+  }
+  .stamp{
+    margin-top:22px; padding-top:16px; border-top:1px solid var(--rule);
+    display:flex; flex-wrap:wrap; gap:8px 20px; align-items:center;
+    font-family:"IBM Plex Mono", ui-monospace, monospace; font-size:.78rem;
+    color:var(--faint);
+  }
+
+  /* ---------- Legend chips ---------- */
+  .legend{display:flex; flex-wrap:wrap; gap:10px; margin-top:16px}
+  .chip{
+    display:inline-flex; align-items:center; gap:7px;
+    font-family:"Archivo", system-ui, sans-serif; font-size:.74rem; font-weight:500;
+    padding:4px 10px; border-radius:999px; border:1px solid var(--rule-strong);
+    color:var(--muted); background:var(--surface);
+  }
+  .dot{width:8px; height:8px; border-radius:50%; flex:none}
+  .dot.done{background:var(--done)}
+  .dot.new{background:var(--amber)}
+  .dot.road{background:transparent; border:1.5px solid var(--faint)}
+
+  /* ---------- Section headings ---------- */
+  h2{
+    font-family:"Archivo", system-ui, sans-serif; font-weight:700;
+    font-size:1.7rem; letter-spacing:-.015em; line-height:1.15;
+    margin:72px 0 4px; padding-top:26px; border-top:2px solid var(--ink);
+    text-wrap:balance;
+  }
+  h2 .n{color:var(--faint); font-weight:500; margin-right:.5em; font-variant-numeric:tabular-nums}
+  .section-note{color:var(--muted); font-size:1.02rem; margin:.5rem 0 0; max-width:62ch}
+
+  .grp-label{
+    font-family:"Archivo", system-ui, sans-serif; font-weight:600;
+    font-size:.72rem; letter-spacing:.13em; text-transform:uppercase;
+    color:var(--blue); margin:44px 0 0;
+    display:flex; align-items:center; gap:12px;
+  }
+  .grp-label::after{content:""; flex:1; height:1px; background:var(--rule)}
+
+  h3{
+    font-family:"Archivo", system-ui, sans-serif; font-weight:600;
+    font-size:1.24rem; letter-spacing:-.01em; margin:26px 0 0;
+    display:flex; align-items:baseline; flex-wrap:wrap; gap:10px;
+  }
+  .status{
+    font-family:"IBM Plex Mono", ui-monospace, monospace; font-size:.66rem;
+    font-weight:500; letter-spacing:.04em; padding:2px 7px; border-radius:4px;
+    text-transform:uppercase; position:relative; top:-2px;
+  }
+  .status.done{background:var(--done-soft); color:var(--done)}
+  .status.new{background:var(--amber-soft); color:var(--amber)}
+  .status.road{background:var(--surface-2); color:var(--faint); border:1px solid var(--rule)}
+
+  p{margin:.9rem 0; max-width:68ch}
+  strong{font-weight:600}
+  a{color:var(--blue)}
+
+  /* ---------- Definition rows ---------- */
+  dl{margin:16px 0 0; display:grid; grid-template-columns:minmax(0,1fr); gap:0}
+  dl > div{
+    display:grid; grid-template-columns:92px minmax(0,1fr); gap:16px;
+    padding:11px 0; border-bottom:1px solid var(--rule); align-items:start;
+  }
+  dl > div:first-child{border-top:1px solid var(--rule)}
+  dt{
+    font-family:"Archivo", system-ui, sans-serif; font-weight:600;
+    font-size:.7rem; letter-spacing:.09em; text-transform:uppercase;
+    color:var(--faint); padding-top:3px;
+  }
+  dd{margin:0; font-size:1rem; line-height:1.6}
+  @media (max-width:560px){
+    dl > div{grid-template-columns:1fr; gap:3px}
+    dt{padding-top:0}
+  }
+
+  /* ---------- Meta grid (data / screens / tests) ---------- */
+  .meta{
+    margin:18px 0 8px; display:grid; gap:1px; background:var(--rule);
+    border:1px solid var(--rule); border-radius:8px; overflow:hidden;
+  }
+  @media (min-width:620px){.meta.cols-2{grid-template-columns:1fr 1fr}}
+  .meta > div{background:var(--surface); padding:13px 15px}
+  .meta h4{
+    font-family:"Archivo", system-ui, sans-serif; font-weight:600;
+    font-size:.66rem; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--faint); margin:0 0 7px;
+  }
+  .meta code, code{
+    font-family:"IBM Plex Mono", ui-monospace, monospace; font-size:.82em;
+    background:var(--surface-2); padding:1px 5px; border-radius:4px;
+    color:var(--ink); border:1px solid var(--rule);
+  }
+  .meta ul{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:5px}
+  .meta li{font-family:"IBM Plex Mono", ui-monospace, monospace; font-size:.78rem; color:var(--muted); line-height:1.4}
+  .meta li code{font-size:1em}
+
+  /* ---------- Callout / example box ---------- */
+  .box{
+    margin:18px 0; padding:16px 18px; border-radius:8px;
+    background:var(--surface); border:1px solid var(--rule);
+    box-shadow:var(--shadow);
+  }
+  .box.ex{border-left:3px solid var(--amber)}
+  .box .k{
+    font-family:"Archivo", system-ui, sans-serif; font-weight:600;
+    font-size:.66rem; letter-spacing:.11em; text-transform:uppercase;
+    color:var(--amber); margin:0 0 8px;
+  }
+  .box p{margin:.5rem 0; font-size:.97rem}
+  .box pre{
+    margin:8px 0 0; padding:12px; background:var(--surface-2); border-radius:6px;
+    font-family:"IBM Plex Mono", ui-monospace, monospace; font-size:.76rem;
+    line-height:1.55; overflow-x:auto; color:var(--ink);
+    border:1px solid var(--rule);
+  }
+
+  /* ---------- Tables ---------- */
+  .tw{overflow-x:auto; margin:20px 0; border:1px solid var(--rule); border-radius:8px}
+  table{border-collapse:collapse; width:100%; font-size:.9rem}
+  th,td{
+    text-align:left; padding:10px 14px; border-bottom:1px solid var(--rule);
+    vertical-align:top; line-height:1.45;
+  }
+  th{
+    font-family:"Archivo", system-ui, sans-serif; font-weight:600;
+    font-size:.68rem; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--faint); background:var(--surface-2); white-space:nowrap;
+  }
+  tr:last-child td{border-bottom:none}
+  td.num, th.num{font-variant-numeric:tabular-nums; white-space:nowrap}
+  .pri{font-family:"Archivo", system-ui, sans-serif; font-weight:600; font-size:.72rem; padding:2px 8px; border-radius:999px; white-space:nowrap}
+  .pri.h{background:var(--amber-soft); color:var(--amber)}
+  .pri.m{background:var(--blue-soft); color:var(--blue)}
+  .pri.l{background:var(--surface-2); color:var(--faint)}
+  .yes{color:var(--done); font-weight:600}
+  .no{color:var(--faint)}
+
+  /* ---------- Diagram sheet (always light — a drafting sheet) ---------- */
+  figure.sheet{
+    margin:26px 0; padding:20px 14px 10px; border-radius:6px;
+    background:var(--sheet); border:1px solid var(--sheet-rule);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.6), 0 1px 3px rgba(20,22,30,.06);
+    overflow-x:auto;
+  }
+  figure.sheet pre.mermaid{background:transparent; margin:0; text-align:center; min-width:min-content}
+  figure.sheet figcaption{
+    margin-top:12px; padding-top:8px; border-top:1px dashed var(--sheet-rule);
+    font-family:"IBM Plex Mono", ui-monospace, monospace; font-size:.72rem;
+    color:var(--sheet-ink); text-align:center; line-height:1.5;
+  }
+
+  /* ---------- Roadmap item ---------- */
+  .road{
+    margin:28px 0; padding:20px 22px; border-radius:10px;
+    background:var(--surface); border:1px solid var(--rule);
+    border-left:3px solid var(--amber); box-shadow:var(--shadow);
+  }
+  .road h3{margin-top:0}
+  .road .rank{
+    font-family:"IBM Plex Mono", ui-monospace, monospace; font-weight:500;
+    color:var(--amber); margin-right:.4em;
+  }
+  .road .tags{display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 4px}
+  .tag{
+    font-family:"Archivo", system-ui, sans-serif; font-size:.72rem; font-weight:500;
+    padding:3px 9px; border-radius:6px; background:var(--surface-2);
+    color:var(--muted); border:1px solid var(--rule);
+  }
+  .tag b{color:var(--ink); font-weight:600}
+
+  hr.soft{border:none; border-top:1px solid var(--rule); margin:14px 0}
+
+  .foot{
+    margin-top:80px; padding-top:24px; border-top:2px solid var(--ink);
+    font-size:.95rem; color:var(--muted);
+  }
+  .foot strong{color:var(--ink)}
+
+  ::selection{background:var(--blue-soft)}
+  a:focus-visible, summary:focus-visible{outline:2px solid var(--blue); outline-offset:3px; border-radius:2px}
+</style>
+
+<div class="layout">
+
+  <nav class="toc" aria-label="Contents">
+    <p class="toc-title">Contents</p>
+    <a href="#pipeline">The pipeline</a>
+    <a href="#who">Small vs mid company</a>
+    <a class="grp" href="#shipped">Shipped modules</a>
+    <a class="sub" href="#pr">Purchase Requests</a>
+    <a class="sub" href="#po">Purchase Orders + Quotes</a>
+    <a class="sub" href="#grn">GRN + Quality</a>
+    <a class="sub" href="#cost">Weighted-Avg Costing</a>
+    <a class="sub" href="#batch">Batch + FEFO + Expiry</a>
+    <a class="sub" href="#lowstock">Low Stock + Reorder</a>
+    <a class="sub" href="#bom">Bill of Materials</a>
+    <a class="sub" href="#wo">Work Orders</a>
+    <a class="sub" href="#wip">Reservation + WIP</a>
+    <a class="sub" href="#stages">Production Stages</a>
+    <a class="sub" href="#scrap">Scrap / Yield</a>
+    <a class="sub" href="#ap">Accounts Payable</a>
+    <a class="sub" href="#gst">GST Split</a>
+    <a class="grp" href="#roadmap">Roadmap</a>
+    <a class="sub" href="#r0">0 · Contact state fix</a>
+    <a class="sub" href="#r1">1 · Multi-level BOM</a>
+    <a class="sub" href="#r2">2 · MRP aggregation</a>
+    <a class="sub" href="#r3">3 · PO approval limits</a>
+    <a class="sub" href="#r4">4 · Vendor scorecard</a>
+    <a class="sub" href="#r5">5 · Debit notes</a>
+    <a class="sub" href="#r6">6 · PR &rarr; multi-PO</a>
+    <a class="sub" href="#r7">7 · Serial tracking</a>
+    <a class="sub" href="#r8">8 · Multi-warehouse</a>
+    <a class="grp" href="#appendix">Appendix</a>
+    <a class="sub" href="#a-data">Data model</a>
+    <a class="sub" href="#a-perms">Permissions</a>
+    <a class="sub" href="#a-tests">Test coverage</a>
+    <a class="sub" href="#a-how">How to use this doc</a>
+  </nav>
+
+  <main>
+    <header>
+      <p class="eyebrow">SaaS CRM &nbsp;&middot;&nbsp; Internal Reference</p>
+      <h1>Manufacturing &amp; Procurement</h1>
+      <p class="dek">Har module kya hai, kyun banaya, workflow mein kaha lagta hai &mdash; aur aage kya baaki hai, itne detail mein ki feature request seedha yahin se ban jaaye.</p>
+      <div class="stamp">
+        <span>Status: 29 Aug 2026</span>
+        <span>222 automated tests passing</span>
+        <span>Laravel / MySQL</span>
+      </div>
+      <div class="legend">
+        <span class="chip"><span class="dot done"></span>Shipped (pehle se)</span>
+        <span class="chip"><span class="dot new"></span>Shipped — is round mein</span>
+        <span class="chip"><span class="dot road"></span>Roadmap — abhi baaki</span>
+      </div>
+    </header>
+
+    <!-- ================= PIPELINE ================= -->
+    <h2 id="pipeline"><span class="n">1</span>Ek nazar mein &mdash; the material pipeline</h2>
+    <p class="section-note">Ye stack ek chhoti se mid manufacturing company ka pura "material lifecycle" cover karta hai: material maangna &rarr; kharidna &rarr; quality check ke saath receive karna &rarr; sahi cost ke saath stock mein daalna &rarr; usse production karna &rarr; finished goods &rarr; bechna. Saath mein purchase-side ka paisa (vendor ko kitna dena hai) aur GST compliance.</p>
+
+    <figure class="sheet">
+<pre class="mermaid">
+%%{init:{'theme':'base','themeVariables':{'background':'#F7F5EF','primaryColor':'#EDE8DC','primaryTextColor':'#26282F','primaryBorderColor':'#9A9384','lineColor':'#5C5E68','secondaryColor':'#E4EBF6','tertiaryColor':'#F1EDE3','fontFamily':'IBM Plex Mono, ui-monospace, monospace','fontSize':'12px'}}}%%
+flowchart TD
+  PR[Purchase Request] -->|approve| PO[Purchase Order]
+  PO -.->|compare| VQ[Vendor Quotes]
+  VQ -.->|pick vendor| PO
+  PO -->|send| V((Vendor))
+  V -->|delivers goods| GRN[Goods Receipt + QC]
+  GRN -->|accepted qty| STK[(Stock<br/>batch + weighted-avg cost)]
+  GRN -->|rejected qty| RJ[Vendor follow-up]
+  PO -.->|supplier invoices| BILL[Vendor Bill]
+  BILL --> PAY[Payments / AP]
+  STK -->|Bill of Materials| WO[Work Order]
+  WO -->|create: reserve| STK
+  WO -->|start: issue materials| WIP[[WIP]]
+  WIP -->|routing stages| QC{QC / stages}
+  QC -->|complete| FG[(Finished Goods<br/>+ scrap logged)]
+  FG --> INV[Invoice]
+  INV --> CUST((Customer))
+  INV -.->|GST| TAX[CGST / SGST / IGST]
+  BILL -.->|GST| TAX
+</pre>
+      <figcaption>Solid arrow = material ya document ka main flow. Dashed = supporting / financial / tax side.</figcaption>
+    </figure>
+
+    <h3 id="who">Chhoti company vs mid company &mdash; kaun kya use karega</h3>
+    <div class="tw">
+      <table>
+        <thead>
+          <tr><th>Layer</th><th>Chhoti company (1&ndash;15 log, 1 location)</th><th>Mid company (15&ndash;150 log)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Procurement (PR / PO / GRN)</td><td>PR shaayad skip; PO + GRN directly</td><td>Poora chain &mdash; PR approval, vendor quotes, QC</td></tr>
+          <tr><td>Costing &amp; batches</td><td>Weighted-avg cost + low-stock alert kaafi</td><td>Same + inventory valuation reports</td></tr>
+          <tr><td>Production</td><td>BOM + simple Work Order; stages optional</td><td>Stages/routing, reservation, scrap tracking</td></tr>
+          <tr><td>Accounts Payable</td><td>Bill + payment record; approval nahi</td><td>Bill + payment + (roadmap) approval limits</td></tr>
+          <tr><td>GST</td><td>Auto CGST/SGST (mostly local sales)</td><td>CGST/SGST + IGST inter-state</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><strong>Bottom line:</strong> jo aaj shipped hai wo ek chhoti-mid manufacturer ke liye end-to-end kaam karta hai. Roadmap items mostly tabhi chahiye jab company mid-size ho ya specific industry (serialised high-value goods, multi-plant).</p>
+
+    <!-- ================= SHIPPED ================= -->
+    <h2 id="shipped"><span class="n">2</span>Shipped modules</h2>
+    <p class="section-note">Har block ka structure ek jaisa hai &mdash; <em>Kya</em> (definition), <em>Kyun</em> (kaunsa problem solve karta hai), <em>Kaha / Kab</em> (workflow mein position), phir data, screens aur tests.</p>
+
+    <p class="grp-label">A &middot; Procurement</p>
+
+    <!-- PR -->
+    <article>
+      <h3 id="pr">Purchase Requests (PR) <span class="status done">shipped</span></h3>
+      <dl>
+        <div><dt>Kya</dt><dd>Andar se koi bhi "mujhe ye material chahiye" ki request daalta hai. Approver haan/naa karta hai; approve pe ek <strong>draft Purchase Order</strong> apne aap ban jaata hai.</dd></div>
+        <div><dt>Kyun</dt><dd>Kharidne se pehle authorization ka ek step &mdash; kaun maang raha hai, kis department ke liye, kyun. Bina iske har koi seedha vendor ko order bhej deta.</dd></div>
+        <div><dt>Kaha / Kab</dt><dd>Pipeline ka pehla step. Shop floor / stores / production planner PR banata hai; purchase manager approve karta hai.</dd></div>
+      </dl>
+      <figure class="sheet">
+<pre class="mermaid">
+%%{init:{'theme':'base','themeVariables':{'background':'#F7F5EF','primaryColor':'#EDE8DC','primaryTextColor':'#26282F','primaryBorderColor':'#9A9384','lineColor':'#5C5E68','fontFamily':'IBM Plex Mono, ui-monospace, monospace','fontSize':'12px'}}}%%
+stateDiagram-v2
+  [*] --> pending: submit
+  pending --> rejected: reject (+reason)
+  pending --> approved: approve
+  approved --> converted: auto-create draft PO
+  converted --> [*]
+  rejected --> [*]
+</pre>
+        <figcaption>PR lifecycle. "converted" pe linked Purchase Order maujood hota hai.</figcaption>
+      </figure>
+      <div class="meta cols-2">
+        <div><h4>Data</h4><ul><li><code>purchase_requests</code> — number, department_id, items&nbsp;json, status, approved_by</li></ul></div>
+        <div><h4>Screens</h4><ul><li><code>tenant.purchase-requests.*</code></li><li>index / create / show / approve / reject</li></ul></div>
+      </div>
+      <div class="meta"><div><h4>Tests</h4><ul><li><code>PurchaseRequestCrudTest</code></li></ul></div></div>
+    </article>
+
+    <!-- PO -->
+    <article>
+      <h3 id="po">Purchase Orders + Vendor Quotes <span class="status done">shipped</span></h3>
+      <dl>
+        <div><dt>Kya</dt><dd>Vendor ko formal order. Ek draft PO ke against 2&ndash;3 vendors ke <strong>quotes</strong> daal ke compare kar sakte ho, sabse achha pick karo &mdash; uske rates PO pe apply ho jaate hain. PO PDF ban ke email ho jaata hai.</dd></div>
+        <div><dt>Kyun</dt><dd>Vendor selection transparent (rate comparison record), aur ek clean document jo vendor ke paas jaata hai. Received quantity isi PO ke against track hoti hai.</dd></div>
+        <div><dt>Kaha / Kab</dt><dd>PR approve hone ke baad (ya directly). Draft &rarr; vendor set &rarr; Sent &rarr; goods aane par receive.</dd></div>
+      </dl>
+      <figure class="sheet">
+<pre class="mermaid">
+%%{init:{'theme':'base','themeVariables':{'background':'#F7F5EF','primaryColor':'#EDE8DC','primaryTextColor':'#26282F','primaryBorderColor':'#9A9384','lineColor':'#5C5E68','fontFamily':'IBM Plex Mono, ui-monospace, monospace','fontSize':'12px'}}}%%
+flowchart LR
+  D[Draft PO] -->|add quotes| Q[Vendor A / B / C]
+  Q -->|select best| D
+  D -->|vendor set + Send| S[Sent]
+  S -->|1st delivery| PR1[Partially received]
+  PR1 -->|final delivery| R[Received]
+  D -->|no longer needed| X[Cancelled]
+  S --> X
+</pre>
+        <figcaption>PO status flow. "Partially / Received" sirf GRN (agla module) se reachable hain.</figcaption>
+      </figure>
+      <div class="meta cols-2">
+        <div><h4>Data</h4><ul><li><code>purchase_orders</code> — vendor_id, purchase_request_id, items&nbsp;json, subtotal/discount/tax, status</li><li><code>vendor_quotes</code> — per-vendor rates against PO lines</li></ul></div>
+        <div><h4>Screens</h4><ul><li><code>tenant.purchase-orders.*</code></li><li>PDF, email to vendor, Excel export</li></ul></div>
+      </div>
+      <div class="meta"><div><h4>Tests</h4><ul><li><code>PurchaseOrderCrudFlowTest</code>, <code>VendorQuoteTest</code></li></ul></div></div>
+    </article>
+
+    <!-- GRN -->
+    <article>
+      <h3 id="grn">Goods Receipt Note (GRN) + Quality Inspection <span class="status new">is round</span></h3>
+      <dl>
+        <div><dt>Kya</dt><dd>Har delivery = ek GRN. Har line pe <strong>Received / Accepted / Rejected</strong> + reason. Sirf <em>accepted</em> quantity stock aur cost mein jaati hai; rejected qty GRN pe aur PO line ke <code>rejected_quantity</code> pe log hoti hai.</dd></div>
+        <div><dt>Kyun</dt><dd>Pehle receive karte hi poori qty stock mein aa jaati thi &mdash; defective maal bhi. Real factory mein QC step hota hai: 100 aaye, 92 pass, 8 reject. Rejected qty ka record vendor follow-up / debit note ke liye chahiye.</dd></div>
+        <div><dt>Kaha / Kab</dt><dd>Jab vendor ka truck aata hai. Store keeper GRN banata hai; QC accepted qty decide karta hai.</dd></div>
+      </dl>
+      <figure class="sheet">
+<pre class="mermaid">
+%%{init:{'theme':'base','themeVariables':{'background':'#F7F5EF','primaryColor':'#EDE8DC','primaryTextColor':'#26282F','primaryBorderColor':'#9A9384','lineColor':'#5C5E68','fontFamily':'IBM Plex Mono, ui-monospace, monospace','fontSize':'12px'}}}%%
+flowchart TD
+  DEL[Delivery arrives] --> G[Create GRN]
+  G --> L{Per line}
+  L -->|received 100| I[Inspect]
+  I -->|accepted 92| A[+92 to stock as batch<br/>weighted-avg cost updated]
+  I -->|rejected 8| RJ[GRN + PO line.rejected_quantity += 8<br/>no stock movement]
+  A --> ST{PO status}
+  ST -->|all lines fully accepted| REC[Received]
+  ST -->|some pending| PART[Partially received]
+</pre>
+        <figcaption>Ek GRN = ek receiving event (incremental qty). Multiple GRNs ek PO ke against chalte hain jab tak accepted total = ordered.</figcaption>
+      </figure>
+      <div class="meta cols-2">
+        <div><h4>Data</h4><ul><li><code>goods_receipt_notes</code> — number, received_date, items&nbsp;json {received / accepted / rejected / reason / batch / expiry}</li></ul></div>
+        <div><h4>Screens</h4><ul><li>PO show &rarr; "Goods Receipt (GRN)" form</li><li><code>tenant.purchase-orders.grns.show</code></li></ul></div>
+      </div>
+      <div class="meta"><div><h4>Tests</h4><ul><li><code>GoodsReceiptTest</code></li></ul></div></div>
+    </article>
+
+    <p class="grp-label">B &middot; Inventory &amp; Costing</p>
+
+    <!-- COST -->
+    <article>
+      <h3 id="cost">Weighted-Average Costing <span class="status new">is round</span></h3>
+      <dl>
+        <div><dt>Kya</dt><dd>Har product pe ab <code>cost_price</code> (weighted moving average) alag hai <code>rate</code> (selling price) se. Jab bhi PO se stock receive hota hai, us line ke rate se cost roll-forward hota hai: <code>(oldQty&times;oldCost + inQty&times;inRate) / newQty</code>.</dd></div>
+        <div><dt>Kyun</dt><dd>Pehle BOM / Work Order costing raw material ke <em>selling</em> rate ko cost maan raha tha &mdash; galat. Production cost aur inventory valuation dono galat aate the. Ab actual paid rate cost banta hai.</dd></div>
+        <div><dt>Kaha / Kab</dt><dd>Automatic &mdash; GRN accept, Work Order complete. Manual override product form pe.</dd></div>
+      </dl>
+      <figure class="sheet">
+<pre class="mermaid">
+%%{init:{'theme':'base','themeVariables':{'background':'#F7F5EF','primaryColor':'#EDE8DC','primaryTextColor':'#26282F','primaryBorderColor':'#9A9384','lineColor':'#5C5E68','fontFamily':'IBM Plex Mono, ui-monospace, monospace','fontSize':'12px'}}}%%
+flowchart LR
+  ON["On hand<br/>10 units @ &#8377;50<br/>= &#8377;500"] --> BL{{blend}}
+  IN["Receive<br/>10 units @ &#8377;70<br/>= &#8377;700"] --> BL
+  BL --> NEW["20 units @ &#8377;60<br/>cost_price = &#8377;60"]
+  NEW -.->|consumed by| BOM["Work Order<br/>material cost"]
+  NEW -.->|current_stock &times; cost_price| VAL["Stock value<br/>report"]
+</pre>
+        <figcaption>Rate 0 (e.g. draft PO se pehle) ho to average untouched rehta hai. Batch pe bhi <code>unit_cost</code> stamp hota hai.</figcaption>
+      </figure>
+      <div class="meta cols-2">
+        <div><h4>Data</h4><ul><li><code>products.cost_price</code>, <code>product_batches.unit_cost</code></li></ul></div>
+        <div><h4>Screens</h4><ul><li>Product form "Purchase Cost / Unit"</li><li>Products list "Cost" col + "Stock Value (at cost)"</li></ul></div>
+      </div>
+      <div class="meta"><div><h4>Tests</h4><ul><li><code>InventoryCostingTest</code></li></ul></div></div>
+    </article>
+
+    <!-- BATCH -->
+    <article>
+      <h3 id="batch">Batch Tracking (FEFO) + Expiry Alerts <span class="status done">shipped</span></h3>
+      <dl>
+        <div><dt>Kya</dt><dd>Jab bhi stock aata hai (GRN ya Work Order), ek <strong>batch</strong> banta hai &mdash; batch number, received date, optional expiry. Consumption <strong>FEFO</strong> (First-Expiry-First-Out) hota hai: sabse pehle expire hone wala batch pehle use hota hai.</dd></div>
+        <div><dt>Kyun</dt><dd>Traceability (kaunsa lot kis order mein gaya) aur perishables / chemicals / food ke liye expiry management. Ek daily command expiring batches pe tenant admin ko alert karta hai.</dd></div>
+        <div><dt>Kaha / Kab</dt><dd>Automatic har receipt / consumption pe. Product &rarr; "Batches" page pe ledger dikhta hai.</dd></div>
+      </dl>
+      <div class="meta cols-2">
+        <div><h4>Data</h4><ul><li><code>product_batches</code> — batch_number, quantity, initial_quantity, unit_cost, expiry_date, purchase_order_id / work_order_id</li></ul></div>
+        <div><h4>Screens</h4><ul><li><code>tenant.products.batches</code></li><li>command <code>products:check-batch-expiry</code></li></ul></div>
+      </div>
+      <div class="meta"><div><h4>Tests</h4><ul><li><code>ProductBatchTest</code></li></ul></div></div>
+    </article>
+
+    <!-- LOW STOCK -->
+    <article>
+      <h3 id="lowstock">Low Stock + BOM Reorder Suggestions <span class="status done">shipped</span></h3>
+      <dl>
+        <div><dt>Kya</dt><dd>Har product pe reorder level + reorder quantity. Jab stock line cross karta hai, tenant admin ko notification. Low Stock page se ek click pe pre-filled Purchase Request &mdash; finished good ke liye uska BOM explode ho ke raw materials suggest hote hain.</dd></div>
+        <div><dt>Kyun</dt><dd>Stockouts se production rukti hai. Reorder suggestion se procurement ko manually BOM calculate nahi karna padta.</dd></div>
+        <div><dt>Kaha / Kab</dt><dd>Continuous &mdash; har sale / consumption ke baad check. Sidebar &rarr; Purchase &rarr; Low Stock.</dd></div>
+      </dl>
+      <div class="meta"><div><h4>Tests</h4><ul><li><code>ProductLowStockSuggestionTest</code>, <code>InvoiceBomConsumptionTest</code></li></ul></div></div>
+    </article>
+
+    <p class="grp-label">C &middot; Production</p>
+
+    <!-- BOM -->
+    <article>
+      <h3 id="bom">Bill of Materials (BOM) <span class="status done">shipped</span></h3>
+      <dl>
+        <div><dt>Kya</dt><dd>Har finished good ke liye "1 unit banane mein kya-kya lagta hai" &mdash; raw material + quantity per unit. Product edit page pe define hota hai.</dd></div>
+        <div><dt>Kyun</dt><dd>Production planning, material requirement, aur costing sab BOM pe khade hain. BOM ke bina Work Order ko pata nahi kya consume karna hai.</dd></div>
+        <div><dt>Kaha / Kab</dt><dd>Product setup ke time. Ek baar define, har Work Order use karta hai.</dd></div>
+      </dl>
+      <div class="box ex">
+        <p class="k">Example</p>
+        <pre>Steel Chair (finished good)
+  Steel Rod       &times; 5   (per chair)
+  Cushion         &times; 1
+  Screws          &times; 8</pre>
+        <p>WO of 10 chairs &rarr; 50 rod, 10 cushion, 80 screws needed.</p>
+      </div>
+      <div class="meta"><div><h4>Data</h4><ul><li><code>bill_of_material_items</code> — product_id (finished), material_id (raw), quantity_per_unit</li></ul></div></div>
+    </article>
+
+    <!-- WO -->
+    <article>
+      <h3 id="wo">Work Orders <span class="status done">shipped</span></h3>
+      <dl>
+        <div><dt>Kya</dt><dd>Ek production job: "10 &times; Steel Chair banao". Material shortfall check, stock consumption, cost snapshot (material + labor + machine), margin vs selling price.</dd></div>
+        <div><dt>Kyun</dt><dd>Production ko track karne ki central entity &mdash; kya ban raha hai, kaun laga hai, kitna cost aaya, profitable hai ya nahi.</dd></div>
+        <div><dt>Kaha / Kab</dt><dd>Jab production planner decide karta hai batch banana hai. Gated behind the "Manufacturing" module toggle.</dd></div>
+      </dl>
+      <p>Lifecycle ab reservation, WIP, stages aur scrap se enrich ho gaya hai &mdash; agla diagram poora picture dikhata hai.</p>
+      <div class="meta cols-2">
+        <div><h4>Data</h4><ul><li><code>work_orders</code> — product_id, quantity, produced_quantity, scrap_quantity, status, *_at, labor/machine/material cost</li></ul></div>
+        <div><h4>Screens</h4><ul><li><code>tenant.work-orders.*</code> (module-gated)</li></ul></div>
+      </div>
+    </article>
+
+    <!-- WIP -->
+    <article>
+      <h3 id="wip">Material Reservation + WIP <span class="status new">is round</span></h3>
+      <dl>
+        <div><dt>Kya</dt><dd>WO <strong>create</strong> pe BOM materials <em>reserve</em> ho jaate hain (physical stock nahi hilta, sirf available-to-promise girti hai). WO <strong>start</strong> pe materials <em>issue</em> hote hain &mdash; FEFO consume + reservation release, aur material cost yahin freeze. Ye WIP hai: material gaya, finished good abhi nahi.</dd></div>
+        <div><dt>Kyun</dt><dd>Pehle material sirf completion pe consume hota tha (all-or-nothing). Do pending WO dono feasible dikhte the, phir ek stock kha leta, doosra fail. Reservation ye race khatam karta hai.</dd></div>
+        <div><dt>Kaha / Kab</dt><dd>Reserve &rarr; auto on create. Issue &rarr; "Start &amp; Issue Materials" button. Cancel &rarr; WIP ho to material wapas stock, warna sirf reservation release.</dd></div>
+      </dl>
+      <figure class="sheet">
+<pre class="mermaid">
+%%{init:{'theme':'base','themeVariables':{'background':'#F7F5EF','primaryColor':'#EDE8DC','primaryTextColor':'#26282F','primaryBorderColor':'#9A9384','lineColor':'#5C5E68','fontFamily':'IBM Plex Mono, ui-monospace, monospace','fontSize':'12px'}}}%%
+stateDiagram-v2
+  [*] --> pending: create (reserve BOM materials)
+  pending --> pending: edit (re-point reservation)
+  pending --> cancelled: release reservation
+  pending --> in_progress: START — issue materials (FEFO consume), freeze cost, materials_issued_at
+  in_progress --> in_progress: run routing stages
+  in_progress --> cancelled: return issued materials to stock
+  in_progress --> completed: credit produced qty to FG (blocked until all stages done)
+  completed --> [*]
+  cancelled --> [*]
+</pre>
+        <figcaption>Legacy path bhi zinda hai: agar WO seedha complete kiya jaaye bina start ke, to purana behaviour (consume-at-completion) chalta hai.</figcaption>
+      </figure>
+      <div class="meta cols-2">
+        <div><h4>Data</h4><ul><li><code>products.reserved_stock</code> (available = current &minus; reserved)</li><li><code>work_orders.materials_issued_at</code></li></ul></div>
+        <div><h4>Tests</h4><ul><li><code>WorkOrderWipTest</code></li></ul></div>
+      </div>
+    </article>
+
+    <!-- STAGES -->
+    <article>
+      <h3 id="stages">Production Stages / Routing <span class="status new">is round</span></h3>
+      <dl>
+        <div><dt>Kya</dt><dd>WO ke andar ordered steps &mdash; Cutting &rarr; Welding &rarr; QC &rarr; Packing. Har stage pe assigned worker + status (pending / in&nbsp;progress / done / skipped) + start/complete time. WO create/edit form pe stage rows.</dd></div>
+        <div><dt>Kyun</dt><dd>Pehle ek flat status tha. Multi-step production mein pata nahi chalta job kahan atki hai, kis stage pe kitna time laga. Ab WO complete tabhi hota hai jab har stage done/skipped ho.</dd></div>
+        <div><dt>Kaha / Kab</dt><dd>Stages sirf tab actionable jab WO <em>in progress</em> (materials issued). Stage-less WO bilkul pehle jaisa (single start&rarr;complete) &mdash; optional feature.</dd></div>
+      </dl>
+      <figure class="sheet">
+<pre class="mermaid">
+%%{init:{'theme':'base','themeVariables':{'background':'#F7F5EF','primaryColor':'#EDE8DC','primaryTextColor':'#26282F','primaryBorderColor':'#9A9384','lineColor':'#5C5E68','fontFamily':'IBM Plex Mono, ui-monospace, monospace','fontSize':'12px'}}}%%
+flowchart LR
+  S1[1 Cutting<br/>done] --> S2[2 Welding<br/>in progress] --> S3[3 QC<br/>pending] --> S4[4 Packing<br/>pending]
+  S4 -.->|all done/skipped| C{{WO can complete}}
+  S3 -.->|any pending| B[[complete blocked]]
+</pre>
+        <figcaption>Stage transitions: start / complete / skip / reopen. Reuse <code>work_orders.manage</code> permission.</figcaption>
+      </figure>
+      <div class="meta cols-2">
+        <div><h4>Data</h4><ul><li><code>work_order_stages</code> — sequence, name, assigned_to, status, started/completed_at</li></ul></div>
+        <div><h4>Tests</h4><ul><li><code>WorkOrderStagesTest</code></li></ul></div>
+      </div>
+    </article>
+
+    <!-- SCRAP -->
+    <article>
+      <h3 id="scrap">Scrap / Yield <span class="status new">is round</span></h3>
+      <dl>
+        <div><dt>Kya</dt><dd>WO complete pe <strong>Produced (good)</strong> + <strong>Scrap</strong> + reason enter hota hai. <code>quantity</code> = planned run (material consumption drive karta hai); sirf produced qty finished-good stock mein credit hoti hai.</dd></div>
+        <div><dt>Kyun</dt><dd>Pehle 10 ka WO hamesha exactly 10 finished goods deta tha. Real production mein rejection / wastage hoti hai. Poore run ka cost good units absorb karte hain &mdash; scrap se cost/unit badhta hai (correct costing).</dd></div>
+        <div><dt>Kaha / Kab</dt><dd>Completion screen pe. Total scrap (0 produced) bhi valid &mdash; materials phir bhi consumed, batch contamination waghera.</dd></div>
+      </dl>
+      <div class="box ex">
+        <p class="k">Example — cost absorbs scrap</p>
+        <pre>Planned 10, material cost &#8377;3000
+  No scrap:  &#8377;3000 / 10  = &#8377;300 per unit
+  2 scrap:   &#8377;3000 / 8   = &#8377;375 per unit  &larr; good units carry it</pre>
+      </div>
+      <div class="meta"><div><h4>Data</h4><ul><li><code>work_orders.produced_quantity / scrap_quantity / scrap_reason</code>; <code>WorkOrder::yieldQuantity()</code></li></ul></div></div>
+    </article>
+
+    <p class="grp-label">D &middot; Payables</p>
+
+    <!-- AP -->
+    <article>
+      <h3 id="ap">Accounts Payable &mdash; Vendor Bills + Payments <span class="status new">is round</span></h3>
+      <dl>
+        <div><dt>Kya</dt><dd>Sales side ke Invoice/Payment ka mirror, purchase side ke liye. Vendor Bill PO se pre-fill ho ya standalone; payment record karo &rarr; <code>amount_paid</code> + status (unpaid / partially&nbsp;paid / paid). Overdue badge + filter. Vendor pe payment terms + bank details.</dd></div>
+        <div><dt>Kyun</dt><dd>Pehle purchase-side ka koi paisa tracking nahi thi &mdash; vendor ko kitna dena hai, kya pay hua, kya overdue. Bill <strong>purely financial</strong> hai; stock nahi hilata (wo GRN ka kaam).</dd></div>
+        <div><dt>Kaha / Kab</dt><dd>Jab supplier ka invoice aata hai. PO show &rarr; "Create Vendor Bill". Vendor page pe outstanding + bills list.</dd></div>
+      </dl>
+      <figure class="sheet">
+<pre class="mermaid">
+%%{init:{'theme':'base','themeVariables':{'background':'#F7F5EF','primaryColor':'#EDE8DC','primaryTextColor':'#26282F','primaryBorderColor':'#9A9384','lineColor':'#5C5E68','fontFamily':'IBM Plex Mono, ui-monospace, monospace','fontSize':'12px'}}}%%
+flowchart LR
+  PO[Purchase Order<br/>received] -->|pre-fill| B[Vendor Bill]
+  B0[Standalone entry] --> B
+  B -->|record payment| P1[Partially paid]
+  P1 -->|record payment| PD[Paid]
+  B -->|due date past| OD[[Overdue badge]]
+  B -->|not owed| CX[Cancelled — drops from AP total]
+  B -.->|sum total &minus; paid| AP[(Vendor outstanding)]
+</pre>
+        <figcaption>Payment bill se zyada nahi ho sakti. Bill jispe payment ho chuki, edit lock. GST split (agla module) yahan bhi lagta hai.</figcaption>
+      </figure>
+      <div class="meta cols-2">
+        <div><h4>Data</h4><ul><li><code>vendor_bills</code>, <code>vendor_bill_payments</code></li><li><code>vendors.payment_terms_days / bank_details</code></li></ul></div>
+        <div><h4>Screens</h4><ul><li><code>tenant.vendor-bills.*</code></li><li>Permissions <code>vendor_bills.*</code>; Sidebar &rarr; Purchase</li></ul></div>
+      </div>
+      <div class="meta"><div><h4>Tests</h4><ul><li><code>VendorBillTest</code></li></ul></div></div>
+    </article>
+
+    <p class="grp-label">E &middot; Compliance</p>
+
+    <!-- GST -->
+    <article>
+      <h3 id="gst">GST &mdash; CGST / SGST / IGST Split <span class="status new">is round</span></h3>
+      <dl>
+        <div><dt>Kya</dt><dd>Har tax doc (Quotation, Invoice, Purchase Order, Vendor Bill) pe <code>place_of_supply</code>, <code>is_inter_state</code>, <code>cgst_amount</code>, <code>sgst_amount</code>, <code>igst_amount</code>. Same state &rarr; CGST+SGST (aadha-aadha); alag state &rarr; full IGST. <code>tax_amount</code> still = total.</dd></div>
+        <div><dt>Kyun</dt><dd>Pehle ek flat GST line thi &mdash; GST-compliant invoice nahi. Ab place-of-supply logic proper hai.</dd></div>
+        <div><dt>Kaha / Kab</dt><dd>Automatic doc save pe. Sales: supplier = tenant company state (<code>settings['state']</code>), recipient = customer. Purchase: supplier = vendor, recipient = tenant. Show pages + PDFs proper split dikhate hain.</dd></div>
+      </dl>
+      <figure class="sheet">
+<pre class="mermaid">
+%%{init:{'theme':'base','themeVariables':{'background':'#F7F5EF','primaryColor':'#EDE8DC','primaryTextColor':'#26282F','primaryBorderColor':'#9A9384','lineColor':'#5C5E68','fontFamily':'IBM Plex Mono, ui-monospace, monospace','fontSize':'12px'}}}%%
+flowchart TD
+  T["Tax amount &#8377;180<br/>supplier state + recipient state"] --> Q{Both states<br/>known &amp; different?}
+  Q -->|yes — inter-state| IG["IGST &#8377;180"]
+  Q -->|no / same / unknown| CS["CGST &#8377;90 + SGST &#8377;90"]
+  IG --> D["place_of_supply = recipient state<br/>gstLines() -> PDF + show"]
+  CS --> D
+</pre>
+        <figcaption>State resolve: 2-letter code, full name, ya GSTIN ke pehle 2 digit &mdash; teeno se. Dono unknown &rarr; intra-state (chhote single-state business ka safe default), aur breakdown surface hota hai.</figcaption>
+      </figure>
+      <div class="meta cols-2">
+        <div><h4>Data</h4><ul><li><code>App\Services\GstService</code>, <code>App\HasGstBreakdown</code> trait (<code>gstLines()</code>)</li><li>5 cols &times; quotations / invoices / purchase_orders / vendor_bills</li></ul></div>
+        <div><h4>Known gap</h4><ul><li>Vendor form state = dropdown. <strong>Contact form abhi bhi free text</strong> &mdash; roadmap item 0.</li></ul></div>
+      </div>
+      <div class="meta"><div><h4>Tests</h4><ul><li><code>GstBreakdownTest</code></li></ul></div></div>
+    </article>
+
+    <!-- ================= ROADMAP ================= -->
+    <h2 id="roadmap"><span class="n">3</span>Roadmap &mdash; abhi kya baaki hai</h2>
+    <p class="section-note">Priority order mein (highest value / effort ratio pehle). Har item itne detail mein hai ki tum ise mark karke wapas bhej sako &mdash; data model + flow + effort sab yahin hai.</p>
+
+    <div class="tw">
+      <table>
+        <thead><tr><th>#</th><th>Item</th><th>Chhoti</th><th>Mid</th><th class="num">Effort</th><th>Priority</th></tr></thead>
+        <tbody>
+          <tr><td class="num">0</td><td>Contact state fix (GST)</td><td class="no">&ndash;</td><td class="yes">yes</td><td class="num">XS</td><td><span class="pri h">Do first</span></td></tr>
+          <tr><td class="num">1</td><td>Multi-level BOM</td><td class="no">rarely</td><td class="yes">must</td><td class="num">L</td><td><span class="pri h">Mid: high</span></td></tr>
+          <tr><td class="num">2</td><td>MRP aggregation</td><td class="no">no</td><td class="yes">high value</td><td class="num">M</td><td><span class="pri h">Mid: high</span></td></tr>
+          <tr><td class="num">3</td><td>PO approval limits</td><td class="no">no</td><td class="yes">yes</td><td class="num">S</td><td><span class="pri m">Mid: med-high</span></td></tr>
+          <tr><td class="num">4</td><td>Vendor scorecard</td><td class="no">no</td><td class="yes">high value</td><td class="num">S</td><td><span class="pri m">Good ROI</span></td></tr>
+          <tr><td class="num">5</td><td>Debit notes</td><td class="no">no</td><td class="yes">yes (GST)</td><td class="num">S</td><td><span class="pri m">Med</span></td></tr>
+          <tr><td class="num">6</td><td>PR &rarr; multi-PO split</td><td class="no">workaround</td><td class="yes">yes</td><td class="num">M</td><td><span class="pri m">Med</span></td></tr>
+          <tr><td class="num">7</td><td>Serial number tracking</td><td class="no">no</td><td class="no">niche</td><td class="num">M</td><td><span class="pri l">Industry-specific</span></td></tr>
+          <tr><td class="num">8</td><td>Multi-warehouse</td><td class="no">no</td><td class="no">depends</td><td class="num">L</td><td><span class="pri l">Demand-based</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- R0 -->
+    <div class="road" id="r0">
+      <h3><span class="rank">0</span>Contact state dropdown + place-of-supply warning</h3>
+      <p><strong>Kya:</strong> GST feature ne vendor form ka state dropdown bana diya, par contact (customer) form abhi bhi free text hai (complex JS-driven form). Agar customer ka state ya GSTIN blank ho, ya typo ho ("karnatka"), to place-of-supply resolve nahi hota &rarr; galat CGST/SGST/IGST &rarr; non-compliant invoice jo compliant dikhta hai.</p>
+      <div class="box ex">
+        <p class="k">Fix</p>
+        <p>1. Contact create/edit form mein <code>state</code> ko <code>config('crm.states')</code> dropdown banao. 2. Invoice/Quotation save pe agar recipient state + GSTIN dono blank hon to ek soft warning: "Place of supply not set &mdash; GST split assumed intra-state." 3. Ek data-fix command purane contacts ke free-text state ko codes mein normalize kare (vendor migration jaisa).</p>
+      </div>
+      <div class="tags"><span class="tag">Effort <b>XS</b></span><span class="tag">Files: 2 blade + 1 request + 1 command</span><span class="tag">Regression risk <b>low</b></span></div>
+      <p><strong>Kaun:</strong> koi bhi tenant jo GST invoice bhejta hai. <span class="yes">Do this first</span> &mdash; compliance bug hai.</p>
+    </div>
+
+    <!-- R1 -->
+    <div class="road" id="r1">
+      <h3><span class="rank">1</span>Multi-level BOM (sub-assemblies)</h3>
+      <p><strong>Kya:</strong> Abhi BOM ek level explode hota hai: finished good &rarr; raw materials. Agar koi "raw material" khud manufactured hai (apna BOM rakhta hai), wo recursively handle nahi hota.</p>
+      <div class="box ex">
+        <p class="k">Real example — Steel Almirah</p>
+        <pre>Almirah (finished good)
+&#9500;&#9472; Door Assembly   (sub-assembly — apna BOM)
+&#9474;  &#9500;&#9472; Steel Sheet 2mm &times; 1.5
+&#9474;  &#9500;&#9472; Hinge &times; 3
+&#9474;  &#9492;&#9472; Handle &times; 1
+&#9500;&#9472; Frame Assembly  (sub-assembly)
+&#9474;  &#9500;&#9472; Steel Angle &times; 4
+&#9474;  &#9492;&#9472; Welding Rod &times; 0.2 kg
+&#9492;&#9472; Lock &times; 1</pre>
+        <p>Abhi: Door Assembly aur Frame Assembly ke liye <em>alag Work Orders</em> manually. System nahi samajhta ki Almirah banane se pehle 2 sub-assemblies chahiye.</p>
+      </div>
+      <p><strong>Proposed:</strong> <code>bill_of_material_items.material_id</code> khud ek finished/sub-assembly product ho sakta hai. BOM explosion recursive &mdash; jab shortfall check ya reserve/issue hota hai, sub-assembly ke liye ya to (a) uska stock use ho, ya (b) ek nested Work Order chain suggest / auto-create ho. Circular-BOM guard chahiye.</p>
+      <p><strong>Data:</strong> koi nayi table nahi &mdash; <code>StockService::productionShortfallFor</code>, <code>reserveForProduction</code>, <code>issueForProduction</code>, <code>consumeForProduction</code>, <code>WorkOrder::calculateLiveMaterialCost</code> sab recursive banane padenge, ek depth limit + visited-set ke saath.</p>
+      <div class="tags"><span class="tag">Effort <b>L</b></span><span class="tag">Touches: StockService, WorkOrderService, WO create UI</span></div>
+      <p><strong>Kaun:</strong> <span class="no">Chhoti company &mdash; shaayad nahi</span> (simple 1-level products). <span class="yes">Mid &mdash; must have.</span> Furniture, electrical panels, machinery, pumps, auto-parts &mdash; 2&ndash;4 level BOM common.</p>
+    </div>
+
+    <!-- R2 -->
+    <div class="road" id="r2">
+      <h3><span class="rank">2</span>MRP Aggregation (material requirements planning)</h3>
+      <p><strong>Kya:</strong> Reservation (gap #6) ne available stock dikha diya, par ek <em>combined plan</em> nahi banta. Har WO alag dekhna padta hai.</p>
+      <div class="box ex">
+        <p class="k">Real example — 5 open Work Orders</p>
+        <pre>WO-1  10 Chairs  &rarr; 50 Steel Rod
+WO-2  20 Tables  &rarr; 80 Steel Rod
+WO-3  15 Chairs  &rarr; 75 Steel Rod
+WO-4   5 Almirah &rarr; 30 Steel Rod
+WO-5   8 Tables  &rarr; 32 Steel Rod
+&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;
+Total needed  267 kg
+On hand       100 kg
+Net shortage  167 kg  &rarr; ONE consolidated PR/PO</pre>
+      </div>
+      <figure class="sheet">
+<pre class="mermaid">
+%%{init:{'theme':'base','themeVariables':{'background':'#F7F5EF','primaryColor':'#EDE8DC','primaryTextColor':'#26282F','primaryBorderColor':'#9A9384','lineColor':'#5C5E68','fontFamily':'IBM Plex Mono, ui-monospace, monospace','fontSize':'12px'}}}%%
+flowchart LR
+  W1[open WOs] -->|explode BOM| AGG{{aggregate<br/>per material}}
+  STK[(on-hand)] --> AGG
+  RES[(reserved)] --> AGG
+  INC[incoming POs] --> AGG
+  AGG -->|gross &minus; available &minus; incoming| NET[Net requirement<br/>per material]
+  NET -->|1 click| PR[Consolidated Purchase Request]
+</pre>
+        <figcaption>Ek "Material Requirements" screen &mdash; sab short materials, quantity, ek click pe consolidated PR.</figcaption>
+      </figure>
+      <p><strong>Proposed:</strong> nayi read-only screen + service <code>MrpService::plan($tenantId)</code>. Loop over pending/in-progress-not-issued WOs, BOM explode, aggregate per material, subtract (on-hand &minus; reserved) + (incoming PO qty). Output: per-material net requirement. "Create PR" button consolidated PR banata hai. Koi schema change nahi.</p>
+      <div class="tags"><span class="tag">Effort <b>M</b></span><span class="tag">Base ready (reservation done)</span><span class="tag">New: 1 service + 1 screen</span></div>
+      <p><strong>Kaun:</strong> <span class="no">Chhoti &mdash; nahi</span> (1&ndash;2 WO, mentally calc). <span class="yes">Mid &mdash; high value.</span> 10&ndash;50 open WOs pe procurement team roz ye karti hai. Bina iske over-purchase (paisa block) ya production ruk.</p>
+    </div>
+
+    <!-- R3 -->
+    <div class="road" id="r3">
+      <h3><span class="rank">3</span>PO Approval Limits / Spend Authorization</h3>
+      <p><strong>Kya:</strong> PR pe approval hai, PO khud nahi. Jiske paas <code>purchase_orders.create</code> hai wo &#8377;10 lakh ka PO bhej sakta hai bina kisi review ke.</p>
+      <div class="box ex">
+        <p class="k">Real example — approval matrix</p>
+        <pre>&#8804; &#8377;5,000       &rarr; executive self-approve
+&#8377;5k &ndash; &#8377;50,000  &rarr; manager approval
+&gt; &#8377;50,000       &rarr; director approval</pre>
+      </div>
+      <p><strong>Proposed:</strong> tenant settings mein approval thresholds (JSON). PO "Send" karne se pehle agar total &gt; threshold ho &rarr; status <code>pending_approval</code>, approver ko notification (PR ke <code>notifyApprovers</code> pattern jaisa). Approve/reject actions. Draft PO edit ho sakta hai; approved PO lock.</p>
+      <p><strong>Data:</strong> <code>purchase_orders</code> mein <code>approval_status</code>, <code>approved_by</code>, <code>approved_at</code>. Settings mein thresholds. Nayi permission <code>purchase_orders.approve</code>.</p>
+      <div class="tags"><span class="tag">Effort <b>S</b></span><span class="tag">Pattern exists (PR approval)</span></div>
+      <p><strong>Kaun:</strong> <span class="no">Chhoti &mdash; nahi</span> (owner sab dekhta hai). <span class="yes">Mid &mdash; yes.</span> 5&ndash;10 log procurement mein &rarr; audit, fraud prevention, budget control.</p>
+    </div>
+
+    <!-- R4 -->
+    <div class="road" id="r4">
+      <h3><span class="rank">4</span>Vendor Performance Dashboard</h3>
+      <p><strong>Kya:</strong> GRN data ab capture ho raha hai (received vs accepted vs rejected, delivery dates), par koi scorecard nahi.</p>
+      <div class="box ex">
+        <p class="k">Real example — vendor selection ke time</p>
+        <pre>Vendor A  45 POs | on-time 92% | reject 2.1% | avg delay 1.2d
+Vendor B  38 POs | on-time 71% | reject 8.4% | avg delay 6.5d
+Vendor C  12 POs | on-time 100%| reject 0%   | avg delay 0d</pre>
+        <p>Isse pata: Vendor B se bacho chahe rate kam ho.</p>
+      </div>
+      <p><strong>Proposed:</strong> Vendor show page + ek "Vendors &rarr; Performance" list. Compute from GRN + PO: on-time % (received_date vs expected_delivery_date), rejection % (rejected / received across GRNs), avg delay, PO count, total spend. Sirf ek reporting query + UI.</p>
+      <div class="tags"><span class="tag">Effort <b>S</b></span><span class="tag">Data already captured</span><span class="tag">No schema change</span></div>
+      <p><strong>Kaun:</strong> <span class="no">Chhoti &mdash; nahi</span> (3&ndash;4 vendors, yaad hote hain). <span class="yes">Mid &mdash; high value.</span> Data-driven purchase decisions + negotiation leverage. Achha ROI &mdash; data ready hai.</p>
+    </div>
+
+    <!-- R5 -->
+    <div class="road" id="r5">
+      <h3><span class="rank">5</span>Debit Notes</h3>
+      <p><strong>Kya:</strong> GRN pe rejected qty + reason log hoti hai, par vendor ko formal document nahi jaata.</p>
+      <div class="box ex">
+        <p class="k">Real example</p>
+        <pre>Ordered 100 rod @ &#8377;100.  15 defective (GRN).
+Vendor bill:  &#8377;10,000 (full 100)
+Debit Note:   &#8377;1,500 (15 &times; &#8377;100) against vendor
+              &rarr; pay less / adjust in next bill</pre>
+      </div>
+      <p><strong>Proposed:</strong> nayi <code>vendor_debit_notes</code> table (ya reuse vendor_bills with a type flag). GRN se generate: rejected lines &times; rate. PDF + email. Vendor Bill / outstanding pe adjust hota hai (negative payable). GST-compliant document.</p>
+      <div class="tags"><span class="tag">Effort <b>S</b></span><span class="tag">Builds on GRN + Vendor Bill (dono done)</span></div>
+      <p><strong>Kaun:</strong> <span class="no">Chhoti &mdash; nahi</span> (phone pe adjust). <span class="yes">Mid &mdash; yes.</span> GST compliance + accounts reconciliation.</p>
+    </div>
+
+    <!-- R6 -->
+    <div class="road" id="r6">
+      <h3><span class="rank">6</span>PR &rarr; Multiple PO Split</h3>
+      <p><strong>Kya:</strong> Ek approved PR &rarr; ek draft PO (<code>hasOne</code>, 1:1). Ek PR ke items alag-alag vendors se nahi kharid sakte.</p>
+      <div class="box ex">
+        <p class="k">Real example</p>
+        <pre>PR: Steel Rod, Paint, Bolts
+  Steel Rod &rarr; Vendor A (sasta)
+  Paint     &rarr; Vendor B
+  Bolts     &rarr; Vendor C
+&rarr; abhi: 3 alag PO manually, PR link tootega</pre>
+      </div>
+      <p><strong>Proposed:</strong> <code>purchase_requests</code> &rarr; <code>hasMany(PurchaseOrder)</code>. Approve pe ek "split" UI: PR lines ko vendor-wise group karo, per group ek PO. PR status "converted" jab saari lines koi PO mein ho. Har PO PR se linked rehta hai.</p>
+      <div class="tags"><span class="tag">Effort <b>M</b></span><span class="tag">Data model change (hasOne &rarr; hasMany)</span></div>
+      <p><strong>Kaun:</strong> <span class="no">Chhoti &mdash; workaround chalega</span> (1&ndash;2 vendors). <span class="yes">Mid &mdash; yes.</span> Har material category ka alag preferred vendor.</p>
+    </div>
+
+    <!-- R7 -->
+    <div class="road" id="r7">
+      <h3><span class="rank">7</span>Serial Number Tracking</h3>
+      <p><strong>Kya:</strong> Abhi batch-level (FEFO) traceability. "Batch X se 50 units gaye." Per-unit serial nahi.</p>
+      <div class="box ex">
+        <p class="k">Real example — Generator company</p>
+        <pre>Complaint: "Generator SN-2026-0453 kharab hai"
+&rarr; kaunse WO mein bana, kaunsa alternator/motor (unke serials),
+   kaunsa customer, kab bika, warranty valid?, pehle service?
+Batch se ye nahi milta — batch mein 50 the.</pre>
+      </div>
+      <p><strong>Proposed:</strong> <code>product_units</code> table (serial, product_id, work_order_id, batch_id, invoice_id, warranty_until, status). Serialised flag per product. WO completion pe N serial rows generate. Invoice line pe serial pick. Warranty / service history un pe.</p>
+      <div class="tags"><span class="tag">Effort <b>M</b></span><span class="tag">New table + WO + Invoice hooks</span></div>
+      <p><strong>Kaun:</strong> <span class="no">Chhoti &mdash; nahi.</span> <span class="no">Mid &mdash; sirf high-value / warranty-bound goods</span> (generators, machinery, electronics, medical devices, pumps, engines). FMCG / consumables / hardware ko bhi nahi.</p>
+    </div>
+
+    <!-- R8 -->
+    <div class="road" id="r8">
+      <h3><span class="rank">8</span>Multi-warehouse / Location Stock</h3>
+      <p><strong>Kya:</strong> Har product ka ek global number (<code>current_stock</code>). Batch hai par batch kis godown / rack mein hai, nahi.</p>
+      <div class="box ex">
+        <p class="k">Real example — Pune factory + Mumbai warehouse</p>
+        <pre>Steel Rod total 500 kg  =  Pune 300 + Mumbai 200
+Mumbai se dispatch: system "500 available" dikhata hai,
+  actual Mumbai mein 200.  Inter-location transfer track nahi.</pre>
+      </div>
+      <p><strong>Proposed:</strong> <code>warehouses</code> table + stock ko (product &times; warehouse) dimension pe le jaana &mdash; <code>product_location_stock</code> ya batches pe <code>warehouse_id</code>. Har stock query (shortfall, FEFO, reserve, low-stock) mein location filter. Stock transfer document (out of one, into another). <strong>Bada architectural change.</strong></p>
+      <div class="tags"><span class="tag">Effort <b>L</b></span><span class="tag">Every stock query changes</span></div>
+      <p><strong>Kaun:</strong> <span class="no">Chhoti &mdash; nahi</span> (factory = store). <span class="no">Mid &mdash; sirf agar actual multiple branches / warehouses / depots</span> (distribution companies, multi-plant). Single-location mid ko bhi nahi. <strong>Demand aane par hi banao.</strong></p>
+    </div>
+
+    <!-- ================= APPENDIX ================= -->
+    <h2 id="appendix"><span class="n">4</span>Appendix</h2>
+
+    <h3 id="a-data">A &middot; Data model &mdash; is round mein add hui tables / columns</h3>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Table</th><th>New?</th><th>Key columns</th></tr></thead>
+        <tbody>
+          <tr><td><code>products</code></td><td>cols</td><td><code>cost_price</code>, <code>reserved_stock</code></td></tr>
+          <tr><td><code>product_batches</code></td><td>col</td><td><code>unit_cost</code></td></tr>
+          <tr><td><code>vendors</code></td><td>cols</td><td><code>payment_terms_days</code>, <code>bank_details</code>; <code>state</code> normalised</td></tr>
+          <tr><td><code>vendor_bills</code></td><td class="yes">new</td><td>number, vendor_invoice_number, items, totals, amount_paid, status, GST cols</td></tr>
+          <tr><td><code>vendor_bill_payments</code></td><td class="yes">new</td><td>amount, method, paid_at, reference</td></tr>
+          <tr><td><code>goods_receipt_notes</code></td><td class="yes">new</td><td>number, received_date, items {received/accepted/rejected/reason/batch/expiry}</td></tr>
+          <tr><td><code>work_orders</code></td><td>cols</td><td><code>materials_issued_at</code>, <code>produced_quantity</code>, <code>scrap_quantity</code>, <code>scrap_reason</code></td></tr>
+          <tr><td><code>work_order_stages</code></td><td class="yes">new</td><td>sequence, name, assigned_to, status, started/completed_at</td></tr>
+          <tr><td><code>quotations / invoices / purchase_orders / vendor_bills</code></td><td>cols</td><td><code>place_of_supply</code>, <code>is_inter_state</code>, <code>cgst_amount</code>, <code>sgst_amount</code>, <code>igst_amount</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 id="a-perms">B &middot; Permissions</h3>
+    <p>Nayi: <code>vendor_bills.view_own</code>, <code>vendor_bills.view_all</code>, <code>vendor_bills.create</code>, <code>vendor_bills.edit</code>, <code>vendor_bills.delete</code>, <code>vendor_bills.record_payment</code>. Reused: GRN receiving &rarr; <code>purchase_orders.receive</code>; production stages &rarr; <code>work_orders.manage</code>. tenant_admin sabhi permissions auto-milte hain (<code>Permission::all()</code>).</p>
+
+    <h3 id="a-tests">C &middot; Test coverage</h3>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Test file</th><th>Covers</th></tr></thead>
+        <tbody>
+          <tr><td><code>InventoryCostingTest</code></td><td>Weighted-avg roll-forward, BOM cost basis, WO completion cost, stock value</td></tr>
+          <tr><td><code>VendorBillTest</code></td><td>Bill create, PO pre-fill, payment status, overpay block, edit lock, cancel, isolation</td></tr>
+          <tr><td><code>GoodsReceiptTest</code></td><td>Accepted-only-to-stock, GRN snapshot, multi-GRN accumulate &amp; cap, draft-PO block</td></tr>
+          <tr><td><code>WorkOrderWipTest</code></td><td>Reserve on create, availability, issue-at-start, no double consume, cancel returns, scrap costing</td></tr>
+          <tr><td><code>WorkOrderStagesTest</code></td><td>Stage sequence, not-actionable-until-start, complete blocked by open stages, endpoint</td></tr>
+          <tr><td><code>GstBreakdownTest</code></td><td>Intra CGST+SGST, inter IGST, state/name/GSTIN resolve, unknown default, per-doc storage</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Full suite: <strong>222 tests, 584 assertions, all passing.</strong> Automated tests layout / JS / PDF rendering nahi pakadte &mdash; browser mein manual pass abhi baaki hai.</p>
+
+    <h3 id="a-how">D &middot; Is doc ko kaise use karein</h3>
+    <div class="box">
+      <p><strong>1.</strong> Roadmap section mein jo items chahiye unpe mark karo (number likh do, ya highlight).</p>
+      <p><strong>2.</strong> Ye file (ya iska link) wapas bhej do &mdash; "1, 2 aur 3 karo" jaisa.</p>
+      <p><strong>3.</strong> Main us item ki detail (data model + flow) yahin se pick karke implement kar dunga, tests ke saath.</p>
+      <p><strong>Pehle:</strong> jo shipped hai use commit karo (7 logical commits), app browser mein manually test karo, phir roadmap.</p>
+    </div>
+
+    <div class="foot">
+      <p><strong>Uncommitted.</strong> Is round ka pura kaam abhi commit nahi hua &mdash; ~40 files, 12 migrations, 5 nayi tables. Recommendation: costing / AP / GRN / WIP / stages / scrap / GST &mdash; har ek alag commit, taaki review aur rollback dono asaan.</p>
+    </div>
+
+  </main>
+</div>

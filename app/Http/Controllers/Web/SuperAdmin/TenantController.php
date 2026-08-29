@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Web\SuperAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
+use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class TenantController extends Controller
@@ -74,12 +76,15 @@ class TenantController extends Controller
             ? (int) ($tenant->subscription->plan->features['users'] ?? 0)
             : null;
 
+        $allPlans = Plan::orderBy('sort_order')->get();
+
         return view('superadmin.tenants.show', compact(
             'tenant',
             'paymentHistory',
             'users',
             'userCount',
-            'planUserLimit'
+            'planUserLimit',
+            'allPlans'
         ));
     }
 
@@ -91,6 +96,62 @@ class TenantController extends Controller
         $tenant->update(['status' => $request->status]);
 
         return back()->with('success', "Tenant status changed from {$old} to {$request->status}.");
+    }
+
+    // ── Manual subscription control ───────────────────────────────
+    // Lets support change a tenant's plan, fix/extend their term, comp a
+    // plan, or resolve a stuck payment without touching the DB directly.
+    public function updateSubscription(Tenant $tenant, Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'plan_id'       => ['required', 'exists:plans,id'],
+            'status'        => ['required', Rule::in(['trial', 'active', 'cancelled', 'expired'])],
+            'billing_cycle' => ['required', Rule::in(['monthly', 'yearly'])],
+            'ends_at'       => ['nullable', 'date'],
+            'trial_ends_at' => ['nullable', 'date'],
+            'note'          => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $subscription = $tenant->subscription;
+
+        $payload = [
+            'plan_id'                  => $data['plan_id'],
+            'status'                   => $data['status'],
+            'billing_cycle'            => $data['billing_cycle'],
+            'ends_at'                  => $data['ends_at'] ?: null,
+            'trial_ends_at'            => $data['trial_ends_at'] ?: null,
+            // Let the "expiring soon" reminder fire again for the new term.
+            'renewal_reminder_sent_at' => null,
+        ];
+
+        if ($data['status'] === 'cancelled' && !$subscription?->cancelled_at) {
+            $payload['cancelled_at'] = now();
+        }
+        if ($data['status'] !== 'cancelled') {
+            $payload['cancelled_at'] = null;
+        }
+
+        if ($subscription) {
+            $subscription->update($payload);
+        } else {
+            $payload['tenant_id']  = $tenant->id;
+            $payload['started_at'] = now();
+            $subscription = Subscription::create($payload);
+        }
+
+        $planName = Plan::find($data['plan_id'])?->name ?? 'Unknown';
+
+        AuditLog::record([
+            'tenant_id'   => $tenant->id,
+            'action'      => 'subscription_updated',
+            'model_type'  => Subscription::class,
+            'model_id'    => $subscription->id,
+            'model_label' => $tenant->name,
+            'description' => "Superadmin set {$tenant->name} to {$planName} / {$data['status']}"
+                . ($data['note'] ? " — {$data['note']}" : ''),
+        ]);
+
+        return back()->with('success', "Subscription updated — {$planName} ({$data['status']}).");
     }
 
     // ── Module access — Manufacturing (Work Orders + Product Batches) ──

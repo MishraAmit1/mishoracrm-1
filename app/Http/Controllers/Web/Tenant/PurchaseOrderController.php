@@ -13,6 +13,7 @@ use App\Models\PurchaseRequest;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Services\EmailService;
+use App\Services\GoodsReceiptService;
 use App\Services\PurchaseOrderService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
@@ -100,7 +101,7 @@ class PurchaseOrderController extends Controller
     public function create(Request $request): View
     {
         $vendors  = Vendor::where('tenant_id', auth()->user()->tenant_id)->orderBy('name')->get(['id', 'name', 'company', 'phone', 'email', 'address', 'city', 'state', 'gst_number']);
-        $products = Product::where('tenant_id', auth()->user()->tenant_id)->active()->orderBy('name')->get(['id', 'product_code', 'name', 'description', 'rate', 'tax_percent', 'hsn', 'unit']);
+        $products = Product::where('tenant_id', auth()->user()->tenant_id)->active()->orderBy('name')->get(['id', 'product_code', 'name', 'description', 'rate', 'cost_price', 'tax_percent', 'hsn', 'unit']);
 
         $purchaseRequest = $request->filled('purchase_request_id')
             ? PurchaseRequest::where('id', $request->purchase_request_id)
@@ -130,7 +131,7 @@ class PurchaseOrderController extends Controller
     {
         $purchaseOrder = $this->findPurchaseOrder($id);
         $this->authorize('view', $purchaseOrder);
-        $purchaseOrder->load(['vendor', 'purchaseRequest', 'createdBy', 'vendorQuotes.vendor']);
+        $purchaseOrder->load(['vendor', 'purchaseRequest', 'createdBy', 'vendorQuotes.vendor', 'vendorBills', 'goodsReceiptNotes.createdBy']);
 
         $vendors = ($purchaseOrder->status === 'draft' && !$purchaseOrder->vendor_id)
             ? Vendor::where('tenant_id', auth()->user()->tenant_id)->orderBy('name')->get(['id', 'name', 'company'])
@@ -152,7 +153,7 @@ class PurchaseOrderController extends Controller
         }
 
         $vendors  = Vendor::where('tenant_id', auth()->user()->tenant_id)->orderBy('name')->get(['id', 'name', 'company', 'phone', 'email', 'address', 'city', 'state', 'gst_number']);
-        $products = Product::where('tenant_id', auth()->user()->tenant_id)->active()->orderBy('name')->get(['id', 'product_code', 'name', 'description', 'rate', 'tax_percent', 'hsn', 'unit']);
+        $products = Product::where('tenant_id', auth()->user()->tenant_id)->active()->orderBy('name')->get(['id', 'product_code', 'name', 'description', 'rate', 'cost_price', 'tax_percent', 'hsn', 'unit']);
 
         return view('tenant.purchase-orders.edit', compact('purchaseOrder', 'vendors', 'products'));
     }
@@ -205,26 +206,52 @@ class PurchaseOrderController extends Controller
         return back()->with('success', 'Purchase Order status updated.');
     }
 
-    // ── Receive — records received qty per line, re-derives status ──
+    // ── Receive — logs one Goods Receipt Note (GRN). Records received &
+    // accepted qty per line; only the accepted qty is credited to stock. ──
     public function receive(PurchaseOrderReceiveRequest $request, int|string $id): RedirectResponse
     {
         $purchaseOrder = $this->findPurchaseOrder($id);
         $this->authorize('receive', $purchaseOrder);
 
-        $items = collect($request->validated()['items']);
-
-        $receivedByRowIndex = $items->map(fn ($row) => $row['received_quantity'])->toArray();
-
-        $batchInfoByRowIndex = $items->map(fn ($row) => [
-            'batch_number' => $row['batch_number'] ?? null,
-            'expiry_date'  => $row['expiry_date'] ?? null,
+        $data  = $request->validated();
+        $lines = collect($data['items'])->map(fn ($row) => [
+            'received_qty'     => $row['received_quantity'] ?? 0,
+            'accepted_qty'     => $row['accepted_quantity'] ?? null,
+            'rejection_reason' => $row['rejection_reason'] ?? null,
+            'batch_number'     => $row['batch_number'] ?? null,
+            'expiry_date'      => $row['expiry_date'] ?? null,
         ])->toArray();
 
-        PurchaseOrderService::receive($purchaseOrder, $receivedByRowIndex, $batchInfoByRowIndex);
+        $grn = GoodsReceiptService::record(
+            $purchaseOrder,
+            $lines,
+            auth()->id(),
+            $data['received_date'] ?? null,
+            $data['note'] ?? null
+        );
+
+        $msg = "Goods Receipt {$grn->number} recorded.";
+        if ($grn->hasRejections()) {
+            $msg .= " {$grn->totalRejected()} unit(s) rejected — follow up with the vendor.";
+        }
 
         return redirect()
             ->route('tenant.purchase-orders.show', $purchaseOrder->id)
-            ->with('success', 'Received quantities recorded.');
+            ->with('success', $msg);
+    }
+
+    // ── Goods Receipt Note detail ─────────────────────────────────
+    public function showGrn(int|string $id, int|string $grnId)
+    {
+        $purchaseOrder = $this->findPurchaseOrder($id);
+        $this->authorize('view', $purchaseOrder);
+
+        $grn = $purchaseOrder->goodsReceiptNotes()
+            ->with('createdBy')
+            ->where('id', $grnId)
+            ->firstOrFail();
+
+        return view('tenant.purchase-orders.grn', compact('purchaseOrder', 'grn'));
     }
 
     // ── Download PDF ──────────────────────────────────────────────

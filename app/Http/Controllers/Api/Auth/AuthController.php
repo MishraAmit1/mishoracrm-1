@@ -63,12 +63,15 @@ class AuthController extends Controller
                      ?? Plan::where('slug', 'free')->first();
  
                 if ($plan) {
+                    $isFree = (float) $plan->monthly_price === 0.0;
+
                     $tenant->subscriptions()->create([
                         'plan_id'       => $plan->id,
-                        'status'        => 'trial',
-                        'trial_ends_at' => now()->addDays(14),
+                        // Free plan = permanent active subscription, no lockout.
+                        'status'        => $isFree ? 'active' : 'trial',
+                        'trial_ends_at' => $isFree ? null : now()->addDays(14),
                         'started_at'    => now(),
-                        'ends_at'       => now()->addDays(14),
+                        'ends_at'       => $isFree ? null : now()->addDays(14),
                     ]);
                 }
  

@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Subscription Module — Documentation</title>
+<style>
+  :root {
+    --ink: #1a1a2e;
+    --muted: #55607a;
+    --line: #d9dee8;
+    --accent: #3d5afe;
+    --accent-soft: #eef1ff;
+    --amber-soft: #fff5e6;
+    --amber-line: #f0c169;
+    --green-soft: #e9f8ef;
+    --green-line: #7fce9f;
+    --red-soft: #fdecec;
+    --red-line: #e79a9a;
+    --code-bg: #f4f6fa;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    line-height: 1.55;
+    font-size: 12px;
+    margin: 0;
+    padding: 0;
+  }
+  .page { max-width: 820px; margin: 0 auto; padding: 32px 28px 60px; }
+
+  h1 { font-size: 25px; margin: 0 0 4px; letter-spacing: -0.02em; }
+  h2 {
+    font-size: 17px; margin: 34px 0 10px; padding-top: 14px;
+    border-top: 2px solid var(--ink);
+    letter-spacing: -0.01em;
+  }
+  h3 { font-size: 13.5px; margin: 20px 0 6px; color: #12203f; }
+  h4 { font-size: 12px; margin: 14px 0 4px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+  p { margin: 6px 0; }
+  ul, ol { margin: 6px 0 6px; padding-left: 20px; }
+  li { margin: 3px 0; }
+  a { color: var(--accent); text-decoration: none; }
+  code {
+    font-family: "SF Mono", "Cascadia Mono", Consolas, monospace;
+    background: var(--code-bg); border: 1px solid var(--line);
+    border-radius: 4px; padding: 0.5px 4px; font-size: 10.5px;
+  }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--line); border-radius: 6px;
+    padding: 10px 12px; overflow-x: auto; font-size: 10.5px; line-height: 1.5;
+  }
+  pre code { background: none; border: none; padding: 0; }
+
+  table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 10.5px; }
+  th, td { border: 1px solid var(--line); padding: 5px 8px; text-align: left; vertical-align: top; }
+  th { background: #f0f3f9; font-weight: 600; }
+
+  .lead {
+    background: var(--accent-soft); border: 1px solid #c7d0ff; border-radius: 8px;
+    padding: 12px 14px; margin: 14px 0; font-size: 11.5px;
+  }
+  .note { border-left: 3px solid var(--accent); background: #f7f9ff; padding: 8px 12px; margin: 10px 0; }
+  .tag {
+    display: inline-block; font-size: 9.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.04em; padding: 1px 7px; border-radius: 20px; vertical-align: middle;
+  }
+  .tag.done { background: var(--green-soft); color: #1c7c46; border: 1px solid var(--green-line); }
+  .tag.todo { background: var(--amber-soft); color: #8a5a00; border: 1px solid var(--amber-line); }
+  .tag.hi { background: var(--red-soft); color: #a12b2b; border: 1px solid var(--red-line); }
+  .tag.lo { background: #eef0f4; color: #55607a; border: 1px solid var(--line); }
+
+  .meta { color: var(--muted); font-size: 11px; margin: 2px 0; }
+
+  /* ---- flow diagram ---- */
+  .flow { margin: 14px 0 4px; }
+  .fstep {
+    border: 1.5px solid var(--line); border-radius: 8px; padding: 8px 12px; margin: 0 auto;
+    max-width: 560px; background: #fff; position: relative;
+  }
+  .fstep .n {
+    position: absolute; left: -11px; top: -11px; width: 22px; height: 22px; border-radius: 50%;
+    background: var(--accent); color: #fff; font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .fstep b { display: block; font-size: 11.5px; }
+  .fstep span { color: var(--muted); font-size: 10.5px; }
+  .farrow { text-align: center; color: #9aa4bd; font-size: 15px; line-height: 1; margin: 5px 0; }
+  .fbranch { display: flex; gap: 12px; max-width: 560px; margin: 0 auto; }
+  .fbranch .fstep { flex: 1; max-width: none; }
+  .fstep.green { border-color: var(--green-line); background: var(--green-soft); }
+  .fstep.amber { border-color: var(--amber-line); background: var(--amber-soft); }
+  .fstep.red { border-color: var(--red-line); background: var(--red-soft); }
+
+  /* ---- print ---- */
+  @page { size: A4; margin: 14mm 12mm; }
+  @media print {
+    .page { max-width: none; padding: 0; }
+    h2 { break-before: auto; }
+    h2, h3, h4 { break-after: avoid; }
+    table, pre, .fstep, .fbranch, .lead, .note { break-inside: avoid; }
+    a { color: var(--ink); }
+    .no-print { display: none; }
+  }
+  .pb { break-before: page; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<h1>Subscription Module — Complete Documentation</h1>
+<p class="meta"><strong>Last updated:</strong> 2026-08-29 &nbsp;·&nbsp; <strong>Scope:</strong> Platform (SaaS) subscription — a tenant workspace subscribing to a Plan and paying the platform via Razorpay.</p>
+<p class="meta"><strong>Status:</strong> Launch-ready. 4 launch-blocker fixes + real free tier shipped 2026-08-29. Recurring auto-billing, GST invoicing and a few hardening items are deferred — see §8.</p>
+
+<div class="lead">
+<strong>How to use this doc in future:</strong> share <code>docs/subscription-module.md</code> (the source of this PDF) in a prompt and name the pending item from §8 you want built. Every §8 item is written so it can be picked up directly from here.
+</div>
+
+<h2>1. Two different "subscription" concepts</h2>
+<p>The codebase has <strong>two</strong> unrelated things both called "subscription". Do not mix them. This doc covers the <strong>Platform Subscription</strong> only.</p>
+<table>
+<tr><th></th><th>Platform Subscription (this doc)</th><th>Service Subscription</th></tr>
+<tr><td>Table</td><td><code>subscriptions</code></td><td><code>service_subscriptions</code></td></tr>
+<tr><td>Model</td><td><code>App\Models\Subscription</code></td><td><code>App\Models\ServiceSubscription</code></td></tr>
+<tr><td>Meaning</td><td>A tenant workspace pays <em>us</em> (the SaaS) for a Plan</td><td>A tenant's <em>own customer</em> subscribes to a service the tenant sells</td></tr>
+<tr><td>Money flow</td><td>Tenant → Platform (Razorpay)</td><td>Tenant's customer → Tenant (tracked, invoiced)</td></tr>
+<tr><td>Gate</td><td><code>CheckSubscription</code> middleware locks the whole workspace</td><td><code>module:subscriptions</code> feature flag</td></tr>
+<tr><td>Cron</td><td><code>subscriptions:check-platform</code></td><td><code>subscriptions:auto-renew</code>, <code>subscriptions:remind-expiry</code></td></tr>
+</table>
+
+<h2>2. Key files</h2>
+<table>
+<tr><th>Area</th><th>File</th></tr>
+<tr><td>Model</td><td><code>app/Models/Subscription.php</code></td></tr>
+<tr><td>Plan / Coupon models</td><td><code>app/Models/Plan.php</code>, <code>app/Models/Coupon.php</code></td></tr>
+<tr><td>Access gate (middleware)</td><td><code>app/Http/Middleware/CheckSubscription.php</code> — alias <code>subscription</code></td></tr>
+<tr><td>Tenant billing controller</td><td><code>app/Http/Controllers/Web/Tenant/SubscriptionController.php</code></td></tr>
+<tr><td>Razorpay webhook</td><td><code>app/Http/Controllers/Web/SubscriptionWebhookController.php</code></td></tr>
+<tr><td>Razorpay API wrapper</td><td><code>app/Services/RazorpayService.php</code></td></tr>
+<tr><td>Superadmin plan CRUD</td><td><code>app/Http/Controllers/Web/SuperAdmin/PlanController.php</code></td></tr>
+<tr><td>Superadmin manual control</td><td><code>app/Http/Controllers/Web/SuperAdmin/TenantController.php</code> → <code>updateSubscription()</code></td></tr>
+<tr><td>Expiry / reminder cron</td><td><code>app/Console/Commands/CheckPlatformSubscriptions.php</code></td></tr>
+<tr><td>Signup (creates trial / free sub)</td><td><code>RegisterController.php</code> (web), <code>Api/Auth/AuthController.php</code> (API)</td></tr>
+<tr><td>Routes</td><td><code>routes/web.php</code> (search <code>subscription</code>), <code>routes/console.php</code></td></tr>
+<tr><td>Tenant views</td><td><code>resources/views/tenant/subscription/*</code> — plans, checkout, current, success, expired</td></tr>
+<tr><td>Superadmin view</td><td><code>resources/views/superadmin/tenants/show.blade.php</code></td></tr>
+<tr><td>Notification types</td><td><code>config/notifications.php</code></td></tr>
+</table>
+
+<h2 class="pb">3. Data model</h2>
+
+<h3><code>subscriptions</code> table</h3>
+<table>
+<tr><th>Column</th><th>Notes</th></tr>
+<tr><td><code>tenant_id</code></td><td>FK, cascade delete</td></tr>
+<tr><td><code>plan_id</code></td><td>FK to <code>plans</code></td></tr>
+<tr><td><code>coupon_id</code></td><td>nullable, set when a coupon is applied at checkout</td></tr>
+<tr><td><code>original_amount</code>, <code>discount_amount</code></td><td>rupee amounts, for reporting</td></tr>
+<tr><td><code>razorpay_order_id</code></td><td>created at checkout</td></tr>
+<tr><td><code>razorpay_payment_id</code>, <code>razorpay_signature</code></td><td>set after successful payment</td></tr>
+<tr><td><code>razorpay_subscription_id</code></td><td>reserved for future recurring billing — <strong>currently always null</strong></td></tr>
+<tr><td><code>status</code></td><td>enum: <code>trial</code>, <code>active</code>, <code>cancelled</code>, <code>expired</code>, <code>past_due</code>, <code>pending_payment</code></td></tr>
+<tr><td><code>billing_cycle</code></td><td><code>monthly</code> | <code>yearly</code></td></tr>
+<tr><td><code>trial_ends_at</code></td><td>when the 14-day trial ends (paid plans only)</td></tr>
+<tr><td><code>started_at</code></td><td>when the current paid term started</td></tr>
+<tr><td><code>ends_at</code></td><td>when the current term expires (<code>null</code> = free plan / no expiry)</td></tr>
+<tr><td><code>cancelled_at</code></td><td>set when tenant cancels</td></tr>
+<tr><td><code>renewal_reminder_sent_at</code></td><td><span class="tag done">added 2026-08-29</span> de-dupes the "expiring soon" email; reset to <code>null</code> on every activation</td></tr>
+</table>
+<p><code>Tenant::subscription()</code> = <code>hasOne(Subscription::class)->latestOfMany()</code> — a tenant can have many rows historically; the latest one is "current".</p>
+
+<h3>Status meanings</h3>
+<table>
+<tr><th>Status</th><th>Access?</th><th>Meaning</th></tr>
+<tr><td><code>trial</code></td><td>Yes (until <code>trial_ends_at</code>)</td><td>14-day free trial on a paid plan</td></tr>
+<tr><td><code>active</code></td><td>Yes (until <code>ends_at</code>, or forever if free)</td><td>Paid &amp; current, or free plan</td></tr>
+<tr><td><code>pending_payment</code></td><td>No</td><td>Checkout started, payment not completed</td></tr>
+<tr><td><code>past_due</code></td><td>No</td><td>Payment failed</td></tr>
+<tr><td><code>cancelled</code></td><td>Yes <strong>until <code>ends_at</code></strong>, then No</td><td>Tenant cancelled; keeps access for the paid period</td></tr>
+<tr><td><code>expired</code></td><td>No</td><td>Term ended; set by the daily cron</td></tr>
+</table>
+
+<h3>Model helpers (<code>Subscription.php</code>)</h3>
+<ul>
+<li><code>isFree()</code> — plan's <code>monthly_price == 0</code>. Free subs never expire, never lock out.</li>
+<li><code>isActive()</code> — <code>status === 'active'</code> <strong>and</strong> (free OR <code>ends_at</code> null OR future).</li>
+<li><code>isTrial()</code> — <code>status === 'trial'</code> and <code>trial_ends_at</code> in the future.</li>
+<li><code>isExpired()</code> — the gate check. Returns <code>false</code> for free plans. <code>cancelled</code> counts as expired <strong>only after</strong> <code>ends_at</code> passes.</li>
+<li><code>daysLeft()</code>, <code>trialDaysLeft()</code>, <code>getMrrAttribute()</code>.</li>
+</ul>
+
+<h3><code>plans</code> table</h3>
+<p>Global (no tenant scope). <code>features</code> is a JSON map used for module gating and quotas:</p>
+<pre><code>{ "leads": 500, "users": 5, "whatsapp": true, "reports": true,
+  "service": true, "manufacturing": true, "subscriptions": true, ... }</code></pre>
+<ul>
+<li><code>-1</code> = unlimited.</li>
+<li>A <code>false</code>/absent key = feature off (superadmin can still force-on per tenant — see <code>Tenant::hasModuleEnabled()</code>).</li>
+<li>Seeded plans (<code>PlanSeeder</code>): <strong>Free Trial</strong> (₹0), <strong>Starter</strong> (₹999/mo), <strong>Pro</strong> (₹2499/mo).</li>
+</ul>
+
+<h3>Coupons</h3>
+<p>Applied at checkout via AJAX. <code>type</code> = <code>percentage</code> | <code>flat</code>, optional <code>max_discount</code> cap, <code>max_uses</code>, <code>expires_at</code>, <code>applicable_to</code> (<code>all</code> | <code>specific_user</code>). <code>used_count</code> increments <strong>only on successful payment</strong> (<code>verify()</code>).</p>
+
+<h2 class="pb">4. The full flow</h2>
+
+<div class="flow">
+
+  <div class="fstep"><span class="n">1</span><b>Tenant signs up</b><span>RegisterController (web) / Api\Auth\AuthController (API)</span></div>
+  <div class="farrow">▼</div>
+  <div class="fbranch">
+    <div class="fstep green"><b>Free plan (₹0)</b><span>status = active · trial_ends_at = null · ends_at = null · never locks out</span></div>
+    <div class="fstep"><b>Paid plan</b><span>status = trial · trial_ends_at = ends_at = now + 14 days</span></div>
+  </div>
+  <div class="farrow">▼</div>
+
+  <div class="fstep"><span class="n">2</span><b>Daily use — every tenant route</b><span>CheckSubscription middleware: <code>if (!$sub || $sub-&gt;isExpired()) → redirect('subscription.expired')</code> · JSON → HTTP 402</span></div>
+  <div class="farrow">▼</div>
+
+  <div class="fstep"><span class="n">3</span><b>View plans — <code>/subscription/plans</code></b><span>any logged-in user · "monthly_billing_enabled" setting controls monthly pricing display</span></div>
+  <div class="farrow">▼</div>
+
+  <div class="fstep amber"><span class="n">4</span><b>Checkout — <code>GET /subscription/checkout/{plan}/{cycle}</code> · ADMIN ONLY</b><span>computes amount → creates Razorpay Order → upserts a <code>pending_payment</code> row with <code>ends_at</code> pre-computed → renders Razorpay page</span></div>
+  <div class="farrow">▼</div>
+
+  <div class="fstep"><span class="n">5</span><b>Coupon (optional) — <code>POST /subscription/apply-coupon</code> · ADMIN ONLY</b><span>validates coupon → recreates the Order at the discounted amount → stores <code>coupon_id</code> + <code>discount_amount</code></span></div>
+  <div class="farrow">▼</div>
+
+  <div class="fstep"><span class="n">6</span><b>Payment</b><span>Razorpay popup → on success the browser posts back to verify</span></div>
+  <div class="farrow">▼</div>
+
+  <div class="fbranch">
+    <div class="fstep green"><b>7a · <code>POST /subscription/verify</code> (admin)</b><span>signature verified → TX: old active/trial/pending → cancelled; matched row → active, store payment_id, started_at = now, renewal_reminder_sent_at = null, coupon used_count++ → <code>/subscription/success</code></span></div>
+    <div class="fstep"><b>7b · Webhook fallback (browser closed)</b><span><code>POST /webhook/razorpay</code> · no auth, signature-verified, CSRF-exempt · <code>payment.captured</code> → pending/past_due row → active</span></div>
+  </div>
+  <div class="farrow">▼</div>
+
+  <div class="fstep amber"><span class="n">8</span><b>Daily cron 07:30 — <code>subscriptions:check-platform</code></b><span>each active/trial sub: <em>lapsed</em> → status = expired + notify (<code>subscription.platform_expired</code>); <em>expires within 7 days &amp; not yet reminded</em> → email (<code>subscription.platform_expiring</code>) + set renewal_reminder_sent_at. Free plans skipped.</span></div>
+  <div class="farrow">▼</div>
+
+  <div class="fstep red"><span class="n">9</span><b>Cancel — <code>POST /subscription/cancel</code> · ADMIN ONLY</b><span>status = cancelled, cancelled_at = now · access CONTINUES until <code>ends_at</code>, then the cron expires it</span></div>
+  <div class="farrow">▼</div>
+
+  <div class="fstep"><span class="n">10</span><b>Re-subscribe</b><span>from <code>/subscription/plans</code> or <code>/subscription/expired</code> → new <code>pending_payment</code> row → active</span></div>
+
+</div>
+
+<h2 class="pb">5. What was added on 2026-08-29</h2>
+<p>Five changes. For each: <strong>what / why / when / how</strong>.</p>
+
+<h3>5.1 Platform-subscription expiry &amp; reminder cron &nbsp;<span class="tag done">done</span> <span class="tag lo">#2</span></h3>
+<h4>What</h4>
+<p>New command <code>app/Console/Commands/CheckPlatformSubscriptions.php</code> (<code>subscriptions:check-platform</code>), scheduled daily 07:30 in <code>routes/console.php</code>. New column <code>subscriptions.renewal_reminder_sent_at</code> (migration <code>2026_08_29_120000_...</code>). New notification types <code>subscription.platform_expiring</code> and <code>subscription.platform_expired</code> in <code>config/notifications.php</code>.</p>
+<h4>Why</h4>
+<p>Before this, an expired workspace was still <code>status = active</code> in the DB — only <code>isExpired()</code> computed it at read-time. So (a) tenants got <strong>zero warning</strong> before lockout, (b) superadmin dashboards counted stale "active" subs and wrong MRR.</p>
+<h4>When it runs</h4>
+<p>Automatically every day at 07:30 (needs the Laravel scheduler cron — see §6). Can also be run manually any time.</p>
+<h4>How to use</h4>
+<pre><code>php artisan subscriptions:check-platform                 # default: warn 7 days ahead
+php artisan subscriptions:check-platform --reminder-days=14</code></pre>
+<p>Output: <code>Platform subscriptions — expired: N, reminded: M.</code> Tenant admins receive in-app + email notifications; reminders link to <code>/subscription/plans</code>.</p>
+
+<h3>5.2 Billing routes are admin-only &nbsp;<span class="tag done">done</span> <span class="tag lo">#4</span></h3>
+<h4>What</h4>
+<p><code>checkout</code>, <code>verify</code>, <code>cancel</code>, <code>apply-coupon</code> routes wrapped in the <code>tenant.admin</code> middleware group in <code>routes/web.php</code>. View-only routes (<code>plans</code>, <code>current</code>, <code>expired</code>, <code>success</code>) stay open to all staff.</p>
+<h4>Why</h4>
+<p>Previously <strong>any</strong> staff user could purchase or <strong>cancel the whole company's subscription</strong>. Billing is an owner/admin action.</p>
+<h4>When</h4>
+<p>Enforced on every request to those routes. A non-admin hitting them gets <code>403</code>.</p>
+<h4>How to use / extend</h4>
+<p>If you add a new billing action route, put it inside the same <code>Route::middleware('tenant.admin')-&gt;group(...)</code> block in <code>routes/web.php</code> (~line 255).</p>
+
+<h3>5.3 Cancel no longer locks the tenant out immediately &nbsp;<span class="tag done">done</span> <span class="tag lo">#3</span></h3>
+<h4>What</h4>
+<p><code>Subscription::isExpired()</code> now treats <code>cancelled</code> as expired <strong>only after <code>ends_at</code> has passed</strong>. Added a "cancelled — access until DATE" banner to <code>resources/views/tenant/subscription/current.blade.php</code>.</p>
+<h4>Why</h4>
+<p>The old code returned <code>true</code> for any <code>cancelled</code> sub, so a tenant who paid for a full year and then cancelled was locked out <strong>the same second</strong> — contradicting the on-screen message ("you can use until …").</p>
+<h4>When</h4>
+<p>Takes effect immediately on cancel; the daily cron finishes the job when <code>ends_at</code> passes.</p>
+<h4>How to use</h4>
+<p>Nothing to do — <code>cancel()</code> already sets <code>cancelled_at</code>. The cron handles final expiry.</p>
+
+<h3>5.4 Real free tier &nbsp;<span class="tag done">done</span> <span class="tag lo">#5</span></h3>
+<h4>What</h4>
+<ul>
+<li><code>Subscription::isFree()</code> helper — plan <code>monthly_price == 0</code>.</li>
+<li><code>isExpired()</code> returns <code>false</code> for free subs; <code>isActive()</code> returns <code>true</code> with a null <code>ends_at</code>.</li>
+<li>Signup (web + API) creates free-plan subs as <code>status = active</code>, <code>trial_ends_at = null</code>, <code>ends_at = null</code>.</li>
+<li>"You're on the free plan — no expiry" banner in <code>current.blade.php</code>; the Cancel button and "Days Remaining" row are hidden for free.</li>
+</ul>
+<h4>Why</h4>
+<p>The "Free Trial" plan (₹0) used to get a 14-day <code>ends_at</code> and then lock out — and the <code>/expired</code> page only lists <strong>paid</strong> plans. So there was effectively <strong>no free tier</strong> despite one existing.</p>
+<h4>When</h4>
+<p>Applies to every new free-plan signup. Existing stuck free rows are also covered because <code>isExpired()</code> now short-circuits on <code>isFree()</code>.</p>
+<h4>How to use</h4>
+<p>To make a plan behave as free, set its <code>monthly_price</code> to <code>0</code> in the superadmin Plans screen. To convert an existing tenant to free, use the superadmin manual control (below) — pick the free plan, status <code>active</code>, clear both date fields.</p>
+
+<h3>5.5 Superadmin manual subscription control &nbsp;<span class="tag done">done</span> <span class="tag lo">#12</span></h3>
+<h4>What</h4>
+<p><code>TenantController::updateSubscription()</code> + route <code>superadmin.tenants.update-subscription</code> + a "Manage Subscription" form card on the tenant detail page (<code>superadmin/tenants/show.blade.php</code>).</p>
+<h4>Why</h4>
+<p>Support had <strong>no way</strong> to extend a trial, move a tenant between plans, comp a plan (partnership / goodwill), or fix a stuck payment without editing the database by hand.</p>
+<h4>When to use</h4>
+<ul>
+<li>Customer paid out-of-band (bank transfer) → set plan + status <code>active</code> + <code>ends_at</code>.</li>
+<li>Extend a trial → bump <code>trial_ends_at</code>.</li>
+<li>Comp Pro for a partner → pick Pro, status <code>active</code>, set <code>ends_at</code> (or leave blank for open-ended).</li>
+<li>Downgrade / move to free → pick free plan, status <code>active</code>, clear dates.</li>
+<li>Wrongly-expired tenant → status <code>active</code> + correct <code>ends_at</code>.</li>
+</ul>
+<h4>How to use</h4>
+<p>Superadmin → Tenants → open a tenant → <strong>Manage Subscription</strong> card → set Plan / Status / Billing cycle / Expires on / Trial ends on / Note → <strong>Save</strong>. Every change writes an <code>AuditLog</code> row (<code>action = subscription_updated</code>) including the note. <code>renewal_reminder_sent_at</code> is auto-reset so the "expiring soon" email can fire again for the new term.</p>
+
+<h2 class="pb">6. Operations &amp; setup</h2>
+
+<h3>6.1 Environment variables (<code>.env</code>)</h3>
+<pre><code>RAZORPAY_KEY_ID=rzp_live_xxxxxxxx
+RAZORPAY_KEY_SECRET=xxxxxxxx
+RAZORPAY_WEBHOOK_SECRET=xxxxxxxx</code></pre>
+<p>Config: <code>config/services.php</code> → <code>razorpay</code>.</p>
+
+<h3>6.2 Razorpay dashboard</h3>
+<ul>
+<li>Create a <strong>Webhook</strong> pointing at <code>https://&lt;your-domain&gt;/webhook/razorpay</code> with the same secret as <code>RAZORPAY_WEBHOOK_SECRET</code>.</li>
+<li>Subscribe to events: <code>payment.captured</code>, <code>payment.failed</code>. (<code>subscription.*</code> events are for the future recurring-billing work.)</li>
+</ul>
+
+<h3>6.3 Laravel scheduler (required for expiry &amp; reminders)</h3>
+<p>One system cron entry runs all scheduled commands:</p>
+<pre><code>* * * * * cd /path-to-app &amp;&amp; php artisan schedule:run &gt;&gt; /dev/null 2&gt;&amp;1</code></pre>
+<p>Verify our command is registered:</p>
+<pre><code>php artisan schedule:list | grep check-platform
+# 30 7 * * *  php artisan subscriptions:check-platform</code></pre>
+
+<h3>6.4 Plans</h3>
+<p>Superadmin → Plans. Set <code>monthly_price = 0</code> for the free tier. <code>features</code> JSON drives module access and quotas. "Monthly billing enabled" toggle controls whether the public pricing page shows monthly prices.</p>
+
+<h3>6.5 Migration</h3>
+<pre><code>php artisan migrate     # applies 2026_08_29_120000_add_renewal_reminder_sent_at_to_subscriptions_table</code></pre>
+
+<h2 class="pb">7. Testing checklist</h2>
+<ul>
+<li>New signup on <strong>free</strong> plan → can use workspace indefinitely, no "trial ends" banner, <code>/subscription/current</code> shows "No expiry".</li>
+<li>New signup on <strong>paid</strong> plan → 14-day trial, banner counts down.</li>
+<li>Trial lapses (set <code>trial_ends_at</code> in the past) → next request redirects to <code>/subscription/expired</code>.</li>
+<li>Run <code>php artisan subscriptions:check-platform</code> → lapsed sub becomes <code>expired</code>, admin gets notification.</li>
+<li>Sub expiring in 5 days → command emails admin once; second run does <strong>not</strong> re-email.</li>
+<li>Checkout as a <strong>non-admin</strong> staff user → <code>403</code>.</li>
+<li>Full paid checkout in Razorpay test mode → <code>verify</code> activates, old sub cancelled, <code>/success</code> shows.</li>
+<li>Apply a valid coupon at checkout → amount drops, <code>used_count</code> increments only after payment.</li>
+<li>Cancel an active paid sub → still has access, banner shows "access until DATE", cron expires it after <code>ends_at</code>.</li>
+<li>Superadmin <strong>Manage Subscription</strong> → change plan / extend date → reflected on tenant side + <code>AuditLog</code> row created.</li>
+<li>Razorpay webhook with a bad signature → <code>400</code>, logged.</li>
+</ul>
+
+<h2 class="pb">8. Pending work</h2>
+<p>Not done yet. Ordered by priority. Each item is self-contained — share this doc and name the item to have it built.</p>
+
+<h3>8.1 Recurring auto-billing &nbsp;<span class="tag hi">high</span> <span class="tag lo">large</span> <span class="tag lo">#1</span></h3>
+<p><strong>Problem:</strong> Only Razorpay <strong>Orders</strong> (one-time) are used. <code>razorpay_subscription_id</code> and the <code>subscription.activated/cancelled</code> webhook handlers exist but nothing creates a Razorpay Subscription. Every renewal is a manual re-purchase by the tenant → churn.</p>
+<p><strong>Build:</strong> Razorpay <strong>Subscriptions API</strong> with a mandate (UPI AutoPay / e-NACH / card). Store <code>razorpay_subscription_id</code>. On <code>subscription.charged</code> webhook, extend <code>ends_at</code> and record the payment. Add dunning (retry + notify) on <code>subscription.pending</code>/<code>halted</code>.</p>
+<p><strong>Touches:</strong> <code>RazorpayService</code> (add <code>createSubscription</code>, <code>cancelSubscription</code>), <code>SubscriptionWebhookController</code> (flesh out <code>subscription.*</code>), <code>SubscriptionController::checkout</code> (mandate flow), <code>Plan</code> (<code>razorpay_monthly_plan_id</code> / <code>razorpay_yearly_plan_id</code> already exist — wire them up).</p>
+
+<h3>8.2 GST tax invoice / payment receipt &nbsp;<span class="tag hi">high if GST-registered</span> <span class="tag lo">medium</span> <span class="tag lo">#11</span></h3>
+<p><strong>Problem:</strong> No downloadable invoice/receipt for platform payments. Only <code>razorpay_payment_id</code> is stored. India law requires a GST tax invoice per payment.</p>
+<p><strong>Build:</strong> <code>platform_invoices</code> table (number, tenant, subscription, base amount, GST %, CGST/SGST/IGST split by tenant state, total, PDF path). Generate on <code>verify()</code> + webhook activation. Download link on <code>/subscription/current</code> and superadmin tenant page. Reuse the existing invoice-PDF tooling.</p>
+
+<h3>8.3 Webhook / verify consistency + idempotency &nbsp;<span class="tag todo">medium</span> <span class="tag lo">medium</span> <span class="tag lo">#7</span></h3>
+<p><strong>Problem:</strong> <code>onPaymentCaptured</code> doesn't cancel old subs, doesn't set <code>ends_at</code>, doesn't bump coupon <code>used_count</code> — so browser-closed-after-payment leaves two <code>active</code> rows. No idempotency: Razorpay retries the same event.</p>
+<p><strong>Build:</strong> Extract the "activate this order" logic into one method called by <strong>both</strong> <code>verify()</code> and the webhook. Add a <code>processed_at</code> / event-id guard (or a <code>webhook_events</code> table) so repeats are no-ops.</p>
+
+<h3>8.4 <code>verify()</code> edge case — paid customer locked out &nbsp;<span class="tag todo">medium</span> <span class="tag lo">small</span> <span class="tag lo">#6</span></h3>
+<p><strong>Problem:</strong> <code>verify()</code> cancels <strong>all</strong> active/trial/pending subs, then activates the row matching <code>razorpay_order_id</code>. If that row isn't found, the tenant is left with <strong>nothing active</strong> despite paying.</p>
+<p><strong>Build:</strong> Look up + validate the target row <strong>before</strong> cancelling anything; if not found, fetch the payment from Razorpay by <code>order_id</code> and reconstruct, or abort without cancelling. Log loudly.</p>
+
+<h3>8.5 Coupon hardening &nbsp;<span class="tag todo">medium — only if running campaigns</span> <span class="tag lo">small–medium</span> <span class="tag lo">#8</span></h3>
+<ul>
+<li>Race condition: concurrent redemptions can exceed <code>max_uses</code> (check-then-increment gap). → atomic conditional increment, or a <code>coupon_redemptions</code> table with a unique constraint.</li>
+<li>No tenant scoping: <code>Coupon.tenant_id</code> exists but <code>isValid()</code> ignores it — Tenant A's coupon works for Tenant B. → add the check.</li>
+<li>No rate limit on <code>apply-coupon</code> → coupon-code brute force. → <code>throttle</code> middleware.</li>
+</ul>
+
+<h3>8.6 <code>checkout</code> is a GET with side effects &nbsp;<span class="tag lo">low</span> <span class="tag lo">small</span> <span class="tag lo">#9</span></h3>
+<p><strong>Problem:</strong> <code>GET /subscription/checkout/...</code> creates a DB row <strong>and</strong> a Razorpay Order. Prefetch / crawler / refresh creates junk orders.</p>
+<p><strong>Build:</strong> Split — GET renders a confirm page; <code>POST</code> creates the Order + row.</p>
+
+<h3>8.7 Proration on upgrade/downgrade &nbsp;<span class="tag lo">low</span> <span class="tag lo">medium</span> <span class="tag lo">#10</span></h3>
+<p><strong>Problem:</strong> Mid-cycle plan change forfeits the remaining paid days and money; new <code>ends_at = now + 1 cycle</code>.</p>
+<p><strong>Build:</strong> Credit unused days of the old plan against the new plan's price at checkout; show the prorated amount.</p>
+
+<h3>8.8 Minor items &nbsp;<span class="tag lo">low</span></h3>
+<ul>
+<li><code>resources/views/components/layouts/navbar.blade.php:187</code> — <code>$user-&gt;tenant-&gt;subscription-&gt;status</code> has no null guard → page crashes if a tenant somehow has no subscription. Add <code>?-&gt;</code>.</li>
+<li><code>resources/views/components/sidebar.blade.php</code> — <code>now()-&gt;diffInDays($trial_ends_at, false)</code> returns a float in Carbon 3 → shows "13.6 days left". Cast to <code>int</code>.</li>
+<li>Prices are cast <code>decimal:2</code> but <code>checkout()</code> casts to <code>(int)</code> → can't charge ₹499.50. Use paise/float end-to-end if fractional pricing is ever needed.</li>
+<li><code>PlanController::destroy</code> blocks deletion when there are <strong>active</strong> subs but not <strong>trial</strong> subs → a plan with trial users can be deleted.</li>
+<li><code>payment.failed</code> only sets <code>status = past_due</code> — no dunning email, no retry.</li>
+<li>Currency hard-coded <code>INR</code> throughout (fine while India-only).</li>
+</ul>
+
+<h2 class="pb">9. Changelog</h2>
+<table>
+<tr><th>Date</th><th>Change</th></tr>
+<tr><td>2026-08-29</td><td><strong>Audit + 4 launch blockers + free tier.</strong> Added <code>subscriptions:check-platform</code> cron (expiry + 7-day reminder), <code>renewal_reminder_sent_at</code> column, <code>platform_expiring</code>/<code>platform_expired</code> notifications. Billing routes (<code>checkout</code>/<code>verify</code>/<code>cancel</code>/<code>apply-coupon</code>) restricted to <code>tenant.admin</code>. <code>isExpired()</code> fixed so <code>cancelled</code> keeps access until <code>ends_at</code>. Real free tier: <code>isFree()</code>, free signups created as permanent <code>active</code>. Superadmin <code>updateSubscription()</code> manual control with audit logging.</td></tr>
+<tr><td>(earlier)</td><td>Base module: Plan CRUD, trial on signup, Razorpay Order checkout, coupon support, <code>CheckSubscription</code> gate, webhook for <code>payment.captured</code>/<code>failed</code>.</td></tr>
+</table>
+
+</div>
+</body>
+</html>

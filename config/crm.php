@@ -94,6 +94,17 @@ return [
         ],
     ],
 
+    // ── Vendor Bill (Accounts Payable) ───────────────────────────
+    'vendor_bill' => [
+        'statuses' => [
+            'unpaid'         => ['label' => 'Unpaid',          'color' => 'amber',  'bg' => 'amber-dim'],
+            'partially_paid' => ['label' => 'Partially Paid',   'color' => 'purple', 'bg' => 'purple-dim'],
+            'paid'           => ['label' => 'Paid',             'color' => 'green',  'bg' => 'green-dim'],
+            'cancelled'      => ['label' => 'Cancelled',        'color' => 'red',    'bg' => 'red-dim'],
+        ],
+        'default_terms_days' => 30,
+    ],
+
     // ── Task ──────────────────────────────────────────────────────
     'task' => [
         'statuses' => [

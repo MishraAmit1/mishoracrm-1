@@ -114,9 +114,9 @@ class WorkOrderController extends Controller
     {
         $workOrder = $this->findWorkOrder($id);
         $this->authorize('view', $workOrder);
-        $workOrder->load(['product.billOfMaterials.material', 'createdBy', 'assignedTo']);
+        $workOrder->load(['product.billOfMaterials.material', 'createdBy', 'assignedTo', 'stages.assignedTo']);
 
-        $shortfall = in_array($workOrder->status, ['pending', 'in_progress'], true)
+        $shortfall = (in_array($workOrder->status, ['pending', 'in_progress'], true) && !$workOrder->materialsIssued())
             ? WorkOrderService::previewShortfall($workOrder->product, (float) $workOrder->quantity)
             : [];
 
@@ -158,6 +158,7 @@ class WorkOrderController extends Controller
         $workOrder = $this->findWorkOrder($id);
         $this->authorize('delete', $workOrder);
         $number = $workOrder->number;
+        WorkOrderService::releaseOnDelete($workOrder);
         $workOrder->delete();
 
         return redirect()
@@ -175,11 +176,15 @@ class WorkOrderController extends Controller
             return back()->with('error', 'Only a pending work order can be started.');
         }
 
-        WorkOrderService::start($workOrder);
+        try {
+            WorkOrderService::start($workOrder);
+        } catch (ValidationException $e) {
+            return back()->with('error', collect($e->errors())->flatten()->first());
+        }
 
         return redirect()
             ->route('tenant.work-orders.show', $workOrder->id)
-            ->with('success', 'Work Order started.');
+            ->with('success', 'Work Order started — raw materials issued to production.');
     }
 
     // ── Complete ──────────────────────────────────────────────────
@@ -192,9 +197,19 @@ class WorkOrderController extends Controller
             return back()->with('error', 'Only an in-progress work order can be completed.');
         }
 
-        $request->validate(['expiry_date' => ['nullable', 'date']]);
+        $validated = $request->validate([
+            'expiry_date'       => ['nullable', 'date'],
+            'produced_quantity' => ['nullable', 'numeric', 'min:0'],
+            'scrap_quantity'    => ['nullable', 'numeric', 'min:0'],
+            'scrap_reason'      => ['nullable', 'string', 'max:255'],
+        ]);
 
-        $shortfall = WorkOrderService::previewShortfall($workOrder->product, (float) $workOrder->quantity);
+        // Materials already issued at start → no shortfall check needed
+        // (they're consumed; the BOM would false-positive against the now
+        // lower stock level).
+        $shortfall = $workOrder->materialsIssued()
+            ? []
+            : WorkOrderService::previewShortfall($workOrder->product, (float) $workOrder->quantity);
 
         if (!empty($shortfall) && $workOrder->tenant->wantsAutoCreatePurchaseRequestOnShortfall()) {
             $purchaseRequest = $this->createShortfallPurchaseRequest($workOrder, $shortfall);
@@ -203,16 +218,28 @@ class WorkOrderController extends Controller
         }
 
         try {
-            WorkOrderService::complete($workOrder, $request->input('expiry_date'));
+            WorkOrderService::complete(
+                $workOrder,
+                $validated['expiry_date'] ?? null,
+                $validated['produced_quantity'] ?? null,
+                $validated['scrap_quantity'] ?? null,
+                $validated['scrap_reason'] ?? null,
+            );
         } catch (ValidationException $e) {
             return back()->with('error', collect($e->errors())->flatten()->first());
         }
 
         $this->notifyCompletion($workOrder);
 
+        $wo = $workOrder->fresh();
+        $msg = "Work Order {$wo->number} completed — {$wo->produced_quantity} produced";
+        if ((float) $wo->scrap_quantity > 0) {
+            $msg .= ", {$wo->scrap_quantity} scrapped";
+        }
+
         return redirect()
             ->route('tenant.work-orders.show', $workOrder->id)
-            ->with('success', "Work Order {$workOrder->number} completed — stock updated.");
+            ->with('success', $msg . '.');
     }
 
     // ── Auto-create a Purchase Request for a Work Order's raw material
@@ -333,5 +360,30 @@ class WorkOrderController extends Controller
         return redirect()
             ->route('tenant.work-orders.show', $workOrder->id)
             ->with('success', 'Work Order cancelled.');
+    }
+
+    // ── Routing stage transitions ─────────────────────────────────
+    public function stageAction(Request $request, int|string $id, int|string $stageId): RedirectResponse
+    {
+        $workOrder = $this->findWorkOrder($id);
+        $this->authorize('manage', $workOrder);
+
+        $stage = $workOrder->stages()->where('id', $stageId)->firstOrFail();
+
+        $action = $request->input('action');
+
+        try {
+            match ($action) {
+                'start'    => WorkOrderService::startStage($stage),
+                'complete' => WorkOrderService::completeStage($stage),
+                'skip'     => WorkOrderService::skipStage($stage),
+                'reopen'   => WorkOrderService::reopenStage($stage),
+                default    => abort(400),
+            };
+        } catch (ValidationException $e) {
+            return back()->with('error', collect($e->errors())->flatten()->first());
+        }
+
+        return back()->with('success', "Stage \"{$stage->name}\" updated.");
     }
 }

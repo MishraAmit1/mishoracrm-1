@@ -1,0 +1,26 @@
+<?php
+
+namespace Database\Factories;
+
+use App\Models\Tenant;
+use App\Models\Vendor;
+use Illuminate\Database\Eloquent\Factories\Factory;
+
+/**
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Vendor>
+ */
+class VendorFactory extends Factory
+{
+    protected $model = Vendor::class;
+
+    public function definition(): array
+    {
+        return [
+            'tenant_id' => Tenant::factory(),
+            'name'      => fake()->company(),
+            'company'   => fake()->company(),
+            'phone'     => fake()->numerify('98########'),
+            'email'     => fake()->safeEmail(),
+        ];
+    }
+}

@@ -24,13 +24,15 @@ class Subscription extends Model
         'started_at',
         'ends_at',
         'cancelled_at',
+        'renewal_reminder_sent_at',
     ];
 
     protected $casts = [
-        'trial_ends_at' => 'datetime',
-        'started_at'    => 'datetime',
-        'ends_at'       => 'datetime',
-        'cancelled_at'  => 'datetime',
+        'trial_ends_at'            => 'datetime',
+        'started_at'               => 'datetime',
+        'ends_at'                  => 'datetime',
+        'cancelled_at'             => 'datetime',
+        'renewal_reminder_sent_at' => 'datetime',
     ];
 
     // ── Relationships ─────────────────────────────────────────────
@@ -75,9 +77,18 @@ class Subscription extends Model
 
     // ── Helpers ───────────────────────────────────────────────────
 
+    // Free plan (₹0) — never billed, so never locked out. `ends_at` on a
+    // free subscription is informational only.
+    public function isFree(): bool
+    {
+        return $this->plan && (float) $this->plan->monthly_price === 0.0;
+    }
+
     public function isActive(): bool
     {
-        return $this->status === 'active' && $this->ends_at?->isFuture();
+        if ($this->status !== 'active') return false;
+
+        return $this->isFree() || $this->ends_at === null || $this->ends_at->isFuture();
     }
 
     public function isTrial(): bool
@@ -87,8 +98,15 @@ class Subscription extends Model
 
     public function isExpired(): bool
     {
+        // Free plan tenants are never locked out.
+        if ($this->isFree()) return false;
+
         if ($this->status === 'expired') return true;
-        if ($this->status === 'cancelled') return true;
+
+        // Cancelled still has access until the paid term actually runs out.
+        if ($this->status === 'cancelled') {
+            return !$this->ends_at || $this->ends_at->isPast();
+        }
 
         // ends_at past ho gayi
         if ($this->ends_at && $this->ends_at->isPast()) return true;

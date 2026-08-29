@@ -79,15 +79,20 @@
 
 @php
     $cfg          = config('staff');
-    $roles        = $cfg['roles'];
     $types        = $cfg['employment_types'];
     $avatarColors = $cfg['avatar_colors'];
     $avColor      = $avatarColors[abs(crc32($staff->user->name ?? '')) % count($avatarColors)];
     $avBg         = $avColor['bg'];
     $avTx         = $avColor['text'];
 
-    $userRole     = $staff->user->roles->first()?->name ?? 'staff';
-    $roleConfig   = $roles[$userRole] ?? ['label'=>ucfirst($userRole),'color'=>'accent','bg'=>'accent-dim'];
+    $userRole     = $staff->user->roles->first()?->name;
+    $isAdminRole  = $userRole === 'tenant_admin';
+    $isStaffRole  = $userRole === 'staff' || str_ends_with((string) $userRole, '_staff');
+    $roleConfig   = [
+        'label' => \App\Helpers\Roles::label($userRole ?: 'staff'),
+        'color' => $isAdminRole ? 'red' : ($isStaffRole ? 'green' : 'accent'),
+        'bg'    => $isAdminRole ? 'red-dim' : ($isStaffRole ? 'green-dim' : 'accent-dim'),
+    ];
     $typeConfig   = $types[$staff->employment_type] ?? ['label'=>ucfirst($staff->employment_type),'color'=>'accent','bg'=>'accent-dim'];
 @endphp
 
@@ -358,29 +363,29 @@
             </div>
             <div class="dc-body">
                 @php
-                    $permMap = [
-                        'leads'       => in_array($userRole, ['tenant_admin','manager','staff']),
-                        'contacts'    => in_array($userRole, ['tenant_admin','manager','staff']),
-                        'deals'       => in_array($userRole, ['tenant_admin','manager']),
-                        'quotations'  => in_array($userRole, ['tenant_admin','manager']),
-                        'invoices'    => in_array($userRole, ['tenant_admin']),
-                        'staff'       => in_array($userRole, ['tenant_admin']),
-                        'reports'     => in_array($userRole, ['tenant_admin','manager']),
-                        'settings'    => in_array($userRole, ['tenant_admin']),
-                        'tasks'       => in_array($userRole, ['tenant_admin','manager','staff']),
-                        'followups'   => in_array($userRole, ['tenant_admin','manager','staff']),
-                    ];
+                    // Real access, derived from the permissions actually on this user's role.
+                    $userPermNames = $staff->user->user_type === 'tenant_admin'
+                        ? \Spatie\Permission\Models\Permission::pluck('name')
+                        : $staff->user->getPermissionNames();
+                    $userModules = $userPermNames->map(fn($p) => explode('.', $p)[0])->unique();
+
+                    $shownModules = ['leads','contacts','deals','quotations','invoices','staff','reports','settings','tasks','followups','tickets','appointments'];
                 @endphp
                 <div class="perm-grid">
-                    @foreach($permMap as $module => $hasAccess)
+                    @foreach($shownModules as $module)
+                    @php $hasAccess = $userModules->contains($module); @endphp
                     <div class="perm-item">
                         <div class="perm-dot {{ $hasAccess ? 'yes':'no' }}"></div>
                         <span style="{{ $hasAccess ? 'color:var(--text-100)':'color:var(--text-400)' }}">
-                            {{ ucfirst($module) }}
+                            {{ ucfirst(str_replace('_',' ',$module)) }}
                         </span>
                     </div>
                     @endforeach
                 </div>
+                <p style="font-size:11.5px;color:var(--text-400);margin-top:12px">
+                    Based on the <strong>{{ $roleConfig['label'] }}</strong> role.
+                    <a href="{{ route('tenant.roles.index') }}" style="color:var(--accent)">Manage roles &amp; permissions</a>
+                </p>
             </div>
         </div>
 

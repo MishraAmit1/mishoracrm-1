@@ -113,6 +113,14 @@ class RolesAndPermissionsSeeder extends Seeder
             'purchase_orders.receive',
             'purchase_orders.export',
 
+            // ── Vendor Bills (Accounts Payable) ───────────────────
+            'vendor_bills.view_own',
+            'vendor_bills.view_all',
+            'vendor_bills.create',
+            'vendor_bills.edit',
+            'vendor_bills.delete',
+            'vendor_bills.record_payment',
+
             // ── Work Orders ───────────────────────────────────────
             'work_orders.view_own',
             'work_orders.view_all',
@@ -210,10 +218,12 @@ class RolesAndPermissionsSeeder extends Seeder
 
         // Tenant Admin — everything within their tenant
         $tenantAdmin = Role::firstOrCreate(['name' => 'tenant_admin', 'guard_name' => 'web']);
+        $tenantAdmin->forceFill(['description' => 'Full access to every module and setting (platform-managed).'])->save();
         $tenantAdmin->syncPermissions(Permission::all());
 
         // Staff — basic access (tenant admin can create custom roles for more)
         $staff = Role::firstOrCreate(['name' => 'staff', 'guard_name' => 'web']);
+        $staff->forceFill(['description' => 'Standard access for team members. Each workspace can customise its own copy.'])->save();
         $staff->syncPermissions([
             'leads.view_own',
             'leads.create',

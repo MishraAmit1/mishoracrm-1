@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Tenant Admin Role Permissions')
+@section('title', $pageTitle . ' Permissions')
 
 @push('styles')
 <style>
@@ -59,16 +59,28 @@
         'purchase_requests' => '🛒', 'purchase_orders' => '📦', 'work_orders' => '🔧',
         'staff' => '👥', 'departments' => '🏢', 'whatsapp' => '💬', 'email' => '📧',
         'reports' => '📊', 'settings' => '⚙️', 'notifications' => '🔔', 'roles' => '🔐',
-        'attendance' => '🕐', 'audit_logs' => '📜',
+        'attendance' => '🕐', 'audit_logs' => '📜', 'subscriptions' => '📆',
+        'appointments' => '🗓️', 'time_entries' => '⏱️', 'tickets' => '🎫',
     ];
 @endphp
 
 <div class="page-head">
     <div>
-        <div class="page-title">Tenant Admin Role Permissions</div>
-        <div class="page-sub">Controls what every Tenant Admin can access across all tenants. Only Super Admin can change this.</div>
+        <div style="font-size:12px;color:var(--text-300);margin-bottom:4px">
+            <a href="{{ route('superadmin.permissions.index') }}" style="color:var(--text-300);text-decoration:none">Roles &amp; Permissions</a>
+            <span style="margin:0 6px">›</span> {{ $pageTitle }}
+        </div>
+        <div class="page-title">{{ $pageTitle }} Permissions</div>
+        <div class="page-sub">{{ $pageSub }} Only Super Admin can change this.</div>
     </div>
-    <a href="{{ route('superadmin.permissions.index') }}" class="btn btn-secondary">← Back to Roles & Permissions</a>
+    <a href="{{ route('superadmin.permissions.index') }}" class="btn btn-secondary">← Back</a>
+</div>
+
+<div style="display:flex;gap:8px;margin-bottom:16px">
+    <a href="{{ route('superadmin.roles.edit', 'tenant_admin') }}"
+       class="btn btn-sm {{ $roleKey === 'tenant_admin' ? 'btn-primary' : 'btn-secondary' }}">Tenant Admin</a>
+    <a href="{{ route('superadmin.roles.edit', 'staff') }}"
+       class="btn btn-sm {{ $roleKey === 'staff' ? 'btn-primary' : 'btn-secondary' }}">Default Staff</a>
 </div>
 
 @if(session('success'))
@@ -77,7 +89,7 @@
 </div>
 @endif
 
-<form method="POST" action="{{ route('superadmin.roles.tenant-admin.update') }}" id="roleForm">
+<form method="POST" action="{{ route('superadmin.roles.update', $roleKey) }}" id="roleForm">
     @csrf
     @method('PUT')
 
@@ -87,7 +99,7 @@
                 <div>
                     <div class="fc-title">Permissions</div>
                     <div class="fc-sub">
-                        Select what Tenant Admins can access
+                        Select what this role can access
                         <span id="totalCount" style="font-weight:700;color:var(--accent);margin-left:4px">
                             ({{ count($selPerms) }} selected)
                         </span>
