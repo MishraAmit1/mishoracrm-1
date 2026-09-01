@@ -226,7 +226,7 @@ class TenantController extends Controller
     // Tracking, and any future module) so each new sub-feature doesn't
     // need its own copy-pasted toggle/clear method pair like
     // manufacturing/service above did. Same tri-state override behavior. ──
-    private const TOGGLEABLE_MODULES = ['subscriptions', 'appointments', 'time_tracking', 'tickets'];
+    private const TOGGLEABLE_MODULES = ['subscriptions', 'appointments', 'time_tracking', 'tickets', 'loyalty'];
 
     private function moduleLabel(string $module): string
     {
@@ -235,6 +235,7 @@ class TenantController extends Controller
             'appointments'  => 'Appointments / Booking',
             'time_tracking' => 'Time Tracking',
             'tickets'       => 'Tickets / Helpdesk',
+            'loyalty'       => 'Customer Loyalty',
             default         => ucfirst(str_replace('_', ' ', $module)),
         };
     }

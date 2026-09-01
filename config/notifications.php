@@ -327,6 +327,16 @@ return [
             'message'  => 'Work Order {{number}} completed — {{quantity}} × {{product}} produced, stock updated',
         ],
 
+        // ── Loyalty ───────────────────────────────────────────────
+        'loyalty.winback' => [
+            'label'    => 'Customers Going Quiet',
+            'icon'     => 'user-x',
+            'color'    => 'amber',
+            'group'    => 'Loyalty',
+            'channels' => ['in_app', 'email'],
+            'message'  => '{{count}} loyalty customer(s) haven\'t visited in {{days}}+ days — send them a win-back offer',
+        ],
+
         // ── System ────────────────────────────────────────────────
         'system.announcement' => [
             'label'    => 'Announcement',

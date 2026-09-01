@@ -1,367 +1,356 @@
 @extends('layouts.app')
-@section('title', 'SuperAdmin Dashboard')
+@section('title', 'Platform Overview')
 
 @push('styles')
-<style>
-.grid-main   { display: grid; grid-template-columns: 1fr 360px; gap: 16px; margin-bottom: 16px; }
-.grid-bottom { display: grid; grid-template-columns: 1fr 1fr;   gap: 16px; margin-bottom: 16px; }
-@media(max-width:1100px) { .grid-main,.grid-bottom { grid-template-columns: 1fr; } }
+    @include('partials.panel-ui')
+    <style>
+        /* Super-admin surfaces run on a red identity accent. */
+        .dsh--sa { --e: var(--red); --ew: var(--red-dim); }
 
-/* SuperAdmin badge */
-.sa-badge {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 4px 10px; border-radius: 20px;
-    background: rgba(255,82,87,0.1);
-    border: 1px solid rgba(255,82,87,0.25);
-    color: var(--red); font-size: 11px; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 0.6px;
-    margin-bottom: 6px;
-}
-.sa-badge-dot {
-    width: 5px; height: 5px; border-radius: 50%;
-    background: var(--red);
-    animation: blink 1.5s ease-in-out infinite;
-}
-@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+        .sa-tabs { display: flex; gap: 3px; background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: 9px; padding: 3px; }
+        .sa-tab { padding: 5px 13px; font-size: 11.5px; font-weight: 600; border-radius: 6px; cursor: pointer; border: none; background: none; color: var(--text-300); font-family: var(--font); transition: all 0.15s var(--ease); }
+        .sa-tab.on { background: var(--bg-surface); color: var(--text-100); box-shadow: var(--shadow-sm); }
 
-/* Plan cards */
-.plan-cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
-@media(max-width:700px) { .plan-cards { grid-template-columns: 1fr; } }
-.plan-card {
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-default);
-    border-radius: var(--r-md); padding: 16px;
-    transition: border-color 0.15s var(--ease);
-}
-.plan-card:hover { border-color: var(--border-strong); }
-.plan-card-name  { font-size: 13px; font-weight: 700; color: var(--text-100); margin-bottom: 4px; }
-.plan-card-price { font-size: 11.5px; color: var(--text-300); font-family: var(--mono); margin-bottom: 12px; }
-.plan-card-row   { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
-.plan-card-label { color: var(--text-300); }
-.plan-card-val   { color: var(--text-100); font-weight: 600; font-family: var(--mono); }
-.plan-card-mrr   { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-subtle); font-size: 12.5px; color: var(--green); font-weight: 600; font-family: var(--mono); }
+        /* Compact stat pair under the donut. */
+        .sa-mini { display: flex; gap: 10px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border-subtle); }
+        .sa-mini > div { flex: 1; }
+        .sa-mini-n { font-size: 19px; font-weight: 700; color: var(--text-100); letter-spacing: -0.5px; font-variant-numeric: tabular-nums; }
+        .sa-mini-l { font-size: 11px; color: var(--text-300); margin-top: 2px; }
 
-/* Alert row */
-.alert-row {
-    display: flex; align-items: flex-start; gap: 12px;
-    padding: 12px 20px; border-bottom: 1px solid var(--border-subtle);
-    transition: background 0.15s var(--ease);
-}
-.alert-row:last-child { border-bottom: none; }
-.alert-row:hover { background: var(--bg-hover); }
-.alert-dot-wrap { width: 32px; height: 32px; border-radius: 50%; background: var(--red-dim); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.alert-dot-wrap svg { width: 14px; height: 14px; color: var(--red); }
-.alert-title { font-size: 13px; font-weight: 600; color: var(--text-100); }
-.alert-sub   { font-size: 11.5px; color: var(--text-300); margin-top: 1px; font-family: var(--mono); }
-
-/* Tenant table status */
-.t-status { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; }
-.t-status::before { content:''; width:5px; height:5px; border-radius:50%; }
-.t-active    { background:var(--green-dim); color:var(--green); }
-.t-active::before { background:var(--green); }
-.t-inactive  { background:var(--amber-dim); color:var(--amber); }
-.t-inactive::before { background:var(--amber); }
-.t-suspended { background:var(--red-dim); color:var(--red); }
-.t-suspended::before { background:var(--red); }
-
-/* Period tabs */
-.period-tabs { display:flex; gap:2px; background:var(--bg-input); border-radius:var(--r-sm); padding:2px; }
-.period-tab  { padding:4px 10px; font-size:12px; font-weight:600; border-radius:4px; cursor:pointer; border:none; background:none; color:var(--text-300); font-family:var(--font); transition:all 0.15s var(--ease); }
-.period-tab.active { background:var(--bg-surface); color:var(--text-100); box-shadow:0 1px 4px rgba(0,0,0,0.2); }
-</style>
+        .sa-chart { height: 232px; position: relative; }
+        .sa-chart canvas { width: 100% !important; height: 100% !important; }
+    </style>
 @endpush
+
+@php
+    $icons = [
+        'building' => 'M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21',
+        'cash'     => 'M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75',
+        'users'    => 'M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.75 3.75 0 11-6.75 0 3.75 3.75 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z',
+        'clock'    => 'M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z',
+        'warn'     => 'M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z',
+        'arrow'    => 'M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3',
+        'list'     => 'M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z',
+        'tag'      => 'M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z M6 6h.008v.008H6V6z',
+        'dots'     => 'M12 13.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM6 13.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM18 13.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z',
+    ];
+
+    $statusPill = fn($s) => match ($s) {
+        'active'    => 'on',
+        'inactive'  => 'warn',
+        'suspended' => 'off',
+        default     => 'muted',
+    };
+
+    $sTotal = max($stats['total_tenants'], 1);
+
+    $planActiveTotal = collect($planBreakdown)->sum('active_count');
+    $planTrialTotal  = collect($planBreakdown)->sum('trial_count');
+    $planMrrTotal    = collect($planBreakdown)->sum('mrr');
+@endphp
 
 @section('content')
 
-{{-- Page header --}}
-<div class="page-head">
-    <div>
-        <div class="sa-badge">
-            <div class="sa-badge-dot"></div>
-            Super Admin
+<div class="dsh dsh--sa">
+
+    {{-- ── Header ─────────────────────────────────────────────────── --}}
+    <div class="dsh-head">
+        <div>
+            <div class="dsh-eyebrow">Super Admin · {{ now()->format('l, d M Y') }}</div>
+            <div class="dsh-title">Platform Overview</div>
+            <div class="dsh-sub">Tenants, subscriptions and revenue across CrmPro.</div>
         </div>
-        <div class="page-title">Platform Overview</div>
-        <div class="page-sub">
-            {{ now()->format('l, d M Y') }} &mdash; All tenants across CrmPro
-        </div>
-    </div>
-    <div class="page-actions">
-        {{-- <a href="{{ route('superadmin.tenants.create') }}" --}}  <a href="#"
-         class="btn btn-primary">
-            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-            </svg>
-            Add Tenant
-        </a>
-        <a href="{{ route('superadmin.tenants.index') }}"
-        class="btn btn-secondary">
-            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z"/>
-            </svg>
-            All Tenants
-        </a>
-    </div>
-</div>
-
-{{-- Stat cards --}}
-<div class="stats-grid">
-
-    <div class="stat-card s-blue">
-        <div class="stat-top">
-            <div class="stat-icon s-blue">
-                <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/>
-                </svg>
-            </div>
-            <div class="stat-trend up">
-                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/></svg>
-                +{{ $stats['new_this_month'] }}
-            </div>
-        </div>
-        <div class="stat-num">{{ $stats['total_tenants'] }}</div>
-        <div class="stat-label">Total Tenants</div>
-        <div class="stat-sub">{{ $stats['active_tenants'] }} active &middot; {{ $stats['new_today'] }} today</div>
-    </div>
-
-    <div class="stat-card s-green">
-        <div class="stat-top">
-            <div class="stat-icon s-green">
-                <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75"/>
-                </svg>
-            </div>
-            <div class="stat-trend up">
-                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/></svg>
-                MRR
-            </div>
-        </div>
-        <div class="stat-num">₹{{ number_format($stats['total_mrr'] / 1000, 1) }}K</div>
-        <div class="stat-label">Monthly Recurring Revenue</div>
-        <div class="stat-sub">{{ $stats['active_subs'] }} paid subscriptions</div>
-    </div>
-
-    <div class="stat-card s-amber">
-        <div class="stat-top">
-            <div class="stat-icon s-amber">
-                <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.75 3.75 0 11-6.75 0 3.75 3.75 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/>
-                </svg>
-            </div>
-            <div class="stat-trend up">
-                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/></svg>
-                +{{ $stats['new_this_month'] }}
-            </div>
-        </div>
-        <div class="stat-num">{{ $stats['total_users'] }}</div>
-        <div class="stat-label">Total Users</div>
-        <div class="stat-sub">{{ $stats['active_users'] }} active users</div>
-    </div>
-
-    <div class="stat-card s-purple">
-        <div class="stat-top">
-            <div class="stat-icon s-purple">
-                <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
-                </svg>
-            </div>
-            @if($stats['expiring_soon'] > 0)
-            <div class="stat-trend down">
-                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9.303 3.376c.866 1.5-.217 3.374-1.948 3.374H4.645c-1.73 0-2.813-1.874-1.948-3.374l7.028-12.124c.866-1.5 3.032-1.5 3.898 0l7.027 12.124z"/></svg>
-                Alert
-            </div>
-            @endif
-        </div>
-        <div class="stat-num">{{ $stats['trial_subs'] }}</div>
-        <div class="stat-label">On Trial</div>
-        <div class="stat-sub">{{ $stats['expiring_soon'] }} expiring in 7 days</div>
-    </div>
-
-</div>
-
-{{-- Charts row --}}
-<div class="grid-main">
-
-    {{-- Signups + Revenue chart --}}
-    <div class="card">
-        <div class="card-header">
-            <div>
-                <div class="card-title">Growth Overview</div>
-                <div class="card-subtitle">Signups & revenue — {{ now()->year }}</div>
-            </div>
-            <div class="period-tabs">
-                <button class="period-tab active" onclick="switchChart('signups',this)">Signups</button>
-                <button class="period-tab" onclick="switchChart('revenue',this)">Revenue</button>
-            </div>
-        </div>
-        <div class="card-body" style="padding-bottom:12px">
-            <canvas id="growthChart" height="220" style="width:100%;display:block"></canvas>
+        <div class="dsh-acts">
+            <a href="{{ route('superadmin.plans.index') }}" class="dbtn">
+                <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $icons['tag'] }}"/></svg>
+                Manage Plans
+            </a>
+            <a href="{{ route('superadmin.tenants.index') }}" class="dbtn dbtn-accent">
+                <svg fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $icons['list'] }}"/></svg>
+                All Tenants
+            </a>
         </div>
     </div>
 
-    {{-- Plan breakdown --}}
-    <div class="card">
-        <div class="card-header">
-            <div>
-                <div class="card-title">Plan Breakdown</div>
-                <div class="card-subtitle">Active subscriptions by plan</div>
+    {{-- ── KPI row ────────────────────────────────────────────────── --}}
+    <div class="kgrid">
+
+        <div class="kcard" style="--k:#6378ff;--kw:rgba(99,120,255,.12);--kb:rgba(99,120,255,.4)">
+            <div class="khead">
+                <span class="kico"><svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $icons['building'] }}"/></svg></span>
+                <span class="klabel">Tenants</span>
+                <a href="{{ route('superadmin.tenants.index') }}" class="kdots"><svg fill="currentColor" viewBox="0 0 24 24"><path d="{{ $icons['dots'] }}"/></svg></a>
+            </div>
+            <div class="kmid">
+                <span class="knum">{{ number_format($stats['total_tenants']) }}</span>
+                <div class="kspark"><canvas id="spTenants"></canvas></div>
+            </div>
+            <div class="kfoot">
+                @if($stats['new_this_month'] > 0)
+                    <span class="kdelta up">+{{ $stats['new_this_month'] }}</span>
+                @endif
+                <span class="knote">{{ $stats['active_tenants'] }} active · {{ $stats['new_this_month'] }} new this month</span>
             </div>
         </div>
-        <div class="card-body">
-            <div class="plan-cards">
-                @foreach($planBreakdown as $plan)
-                <div class="plan-card">
-                    <div class="plan-card-name">{{ $plan['name'] }}</div>
-                    <div class="plan-card-price">₹{{ number_format($plan['price']) }}/mo</div>
-                    <div class="plan-card-row">
-                        <span class="plan-card-label">Active</span>
-                        <span class="plan-card-val">{{ $plan['active_count'] }}</span>
+
+        <div class="kcard" style="--k:#2dd4a0;--kw:rgba(45,212,160,.12);--kb:rgba(45,212,160,.4)">
+            <div class="khead">
+                <span class="kico"><svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $icons['cash'] }}"/></svg></span>
+                <span class="klabel">Monthly Revenue</span>
+            </div>
+            <div class="kmid">
+                <span class="knum">₹{{ $stats['total_mrr'] >= 100000 ? number_format($stats['total_mrr'] / 100000, 2) . 'L' : number_format($stats['total_mrr']) }}</span>
+                <div class="kspark"><canvas id="spRevenue"></canvas></div>
+            </div>
+            <div class="kfoot">
+                <span class="knote">{{ $stats['active_subs'] }} paid · ₹{{ number_format($stats['total_mrr'] * 12) }} ARR</span>
+            </div>
+        </div>
+
+        <div class="kcard" style="--k:#a78bfa;--kw:rgba(167,139,250,.12);--kb:rgba(167,139,250,.4)">
+            <div class="khead">
+                <span class="kico"><svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $icons['users'] }}"/></svg></span>
+                <span class="klabel">Users</span>
+            </div>
+            <div class="kmid">
+                <span class="knum">{{ number_format($stats['total_users']) }}</span>
+            </div>
+            <div class="kfoot">
+                <span class="knote">{{ $stats['active_users'] }} active across all tenants</span>
+            </div>
+        </div>
+
+        <div class="kcard" style="--k:#f8b84e;--kw:rgba(248,184,78,.14);--kb:rgba(248,184,78,.4)">
+            <div class="khead">
+                <span class="kico"><svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $icons['clock'] }}"/></svg></span>
+                <span class="klabel">Trials</span>
+            </div>
+            <div class="kmid">
+                <span class="knum">{{ number_format($stats['trial_subs']) }}</span>
+            </div>
+            <div class="kfoot">
+                @if($stats['expiring_soon'] > 0)
+                    <span class="kdelta down">
+                        <svg fill="none" stroke="currentColor" stroke-width="2.25" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $icons['warn'] }}"/></svg>
+                        {{ $stats['expiring_soon'] }}
+                    </span>
+                    <span class="knote">subscriptions expiring in ≤ 7 days</span>
+                @else
+                    <span class="knote">no subscriptions expiring soon</span>
+                @endif
+            </div>
+        </div>
+
+    </div>
+
+    {{-- ── Detail grid ─────────────────────────── --}}
+    <div class="dgrid-side" style="grid-template-columns:minmax(0,1fr) 340px">
+
+        <div class="dstack">
+
+            <div class="dcard">
+                <div class="dcard-h">
+                    <div>
+                        <div class="dcard-t">Growth</div>
+                        <div class="dcard-s">Monthly signups &amp; revenue — {{ now()->year }}</div>
                     </div>
-                    <div class="plan-card-row">
-                        <span class="plan-card-label">Trial</span>
-                        <span class="plan-card-val">{{ $plan['trial_count'] }}</span>
+                    <div class="sa-tabs">
+                        <button class="sa-tab on" onclick="switchChart('signups', this)">Signups</button>
+                        <button class="sa-tab" onclick="switchChart('revenue', this)">Revenue</button>
                     </div>
-                    <div class="plan-card-mrr">MRR ₹{{ number_format($plan['mrr']) }}</div>
                 </div>
-                @endforeach
+                <div class="dcard-b">
+                    <div class="sa-chart"><canvas id="growthChart"></canvas></div>
+                </div>
             </div>
 
-            {{-- Tenant status donut --}}
-            <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border-subtle)">
-                <div class="card-title" style="margin-bottom:14px">Tenant Status</div>
-                <div class="donut-wrap">
-                    <svg width="80" height="80" viewBox="0 0 80 80" style="flex-shrink:0">
+            <div class="dcard">
+                <div class="dcard-h">
+                    <div>
+                        <div class="dcard-t">Recent Tenants</div>
+                        <div class="dcard-s">Newest {{ count($recentTenants) }} signup{{ count($recentTenants) !== 1 ? 's' : '' }}</div>
+                    </div>
+                    <a href="{{ route('superadmin.tenants.index') }}" class="dbtn dbtn-sm">View all →</a>
+                </div>
+                <div style="overflow-x:auto">
+                    <table class="rtable">
+                        <thead>
+                            <tr>
+                                <th>Company</th>
+                                <th>Subdomain</th>
+                                <th>Plan</th>
+                                <th>Status</th>
+                                <th>Joined</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($recentTenants as $t)
+                            <tr>
+                                <td data-label="Company">
+                                    <div class="rname">
+                                        <span class="rav rav-sq" style="background:linear-gradient(135deg,#6378ff,#8b5cf6)">{{ strtoupper(substr($t['name'], 0, 2)) }}</span>
+                                        <span>
+                                            <span class="rn">{{ $t['name'] }}</span>
+                                            <div class="rsub">{{ $t['email'] }}</div>
+                                        </span>
+                                    </div>
+                                </td>
+                                <td data-label="Subdomain" class="rmono">{{ $t['subdomain'] }}</td>
+                                <td data-label="Plan" style="color:var(--text-100);font-weight:600">{{ $t['plan'] }}</td>
+                                <td data-label="Status"><span class="dpill {{ $statusPill($t['status']) }}">{{ ucfirst($t['status']) }}</span></td>
+                                <td data-label="Joined" class="rmono">{{ $t['joined_ago'] }}</td>
+                                <td>
+                                    <a href="{{ route('superadmin.tenants.show', $t['id']) }}" class="icobtn">
+                                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $icons['arrow'] }}"/></svg>
+                                    </a>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr><td colspan="6" class="dempty">No tenants yet.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="dstack">
+
+            <div class="dcard">
+                <div class="dcard-h">
+                    <div>
+                        <div class="dcard-t">Tenant Status</div>
+                        <div class="dcard-s">{{ $stats['total_tenants'] }} tenant{{ $stats['total_tenants'] !== 1 ? 's' : '' }} total</div>
+                    </div>
+                </div>
+                <div class="dcard-b">
+                    <div class="ddonut">
                         @php
-                            $total    = max($stats['total_tenants'], 1);
-                            $actPct   = round(($stats['active_tenants']   / $total) * 188);
-                            $inactPct = round(($stats['inactive_tenants'] / $total) * 188);
-                            $suspPct  = round(($stats['suspended']        / $total) * 188);
-                            $off1 = 0;
-                            $off2 = -$actPct;
-                            $off3 = -$actPct - $inactPct;
+                            $circ = 201.06; // 2πr, r = 32
+                            $segments = [
+                                ['val' => $stats['active_tenants'],   'color' => 'var(--green)'],
+                                ['val' => $stats['inactive_tenants'], 'color' => 'var(--amber)'],
+                                ['val' => $stats['suspended'],        'color' => 'var(--red)'],
+                            ];
+                            $acc = 0;
                         @endphp
-                        <circle cx="40" cy="40" r="30" fill="none" stroke="var(--border-subtle)" stroke-width="12"/>
-                        <circle cx="40" cy="40" r="30" fill="none" stroke="var(--green)"  stroke-width="12" stroke-dasharray="{{ $actPct }} 188"  stroke-dashoffset="{{ $off1 }}" transform="rotate(-90 40 40)"/>
-                        <circle cx="40" cy="40" r="30" fill="none" stroke="var(--amber)"  stroke-width="12" stroke-dasharray="{{ $inactPct }} 188" stroke-dashoffset="{{ $off2 }}" transform="rotate(-90 40 40)"/>
-                        <circle cx="40" cy="40" r="30" fill="none" stroke="var(--red)"    stroke-width="12" stroke-dasharray="{{ $suspPct }} 188"  stroke-dashoffset="{{ $off3 }}" transform="rotate(-90 40 40)"/>
-                    </svg>
-                    <div class="donut-legend">
-                        <div class="legend-item">
-                            <div class="legend-dot" style="background:var(--green)"></div>
-                            <span class="legend-label">Active</span>
-                            <span class="legend-val">{{ $stats['active_tenants'] }}</span>
+                        <svg width="86" height="86" viewBox="0 0 88 88" style="flex-shrink:0">
+                            <circle cx="44" cy="44" r="32" fill="none" stroke="var(--border-subtle)" stroke-width="11"/>
+                            @foreach($segments as $seg)
+                                @php $len = $seg['val'] / $sTotal * $circ; @endphp
+                                @if($len > 0)
+                                    <circle cx="44" cy="44" r="32" fill="none" stroke="{{ $seg['color'] }}" stroke-width="11"
+                                        stroke-dasharray="{{ $len }} {{ $circ }}" stroke-dashoffset="{{ -$acc }}"
+                                        transform="rotate(-90 44 44)"/>
+                                @endif
+                                @php $acc += $len; @endphp
+                            @endforeach
+                        </svg>
+                        <div class="dlegend">
+                            <div class="dlegend-item"><span class="dlegend-dot" style="background:var(--green)"></span><span class="dlegend-l">Active</span><span class="dlegend-v">{{ $stats['active_tenants'] }}</span></div>
+                            <div class="dlegend-item"><span class="dlegend-dot" style="background:var(--amber)"></span><span class="dlegend-l">Inactive</span><span class="dlegend-v">{{ $stats['inactive_tenants'] }}</span></div>
+                            <div class="dlegend-item"><span class="dlegend-dot" style="background:var(--red)"></span><span class="dlegend-l">Suspended</span><span class="dlegend-v">{{ $stats['suspended'] }}</span></div>
                         </div>
-                        <div class="legend-item">
-                            <div class="legend-dot" style="background:var(--amber)"></div>
-                            <span class="legend-label">Inactive</span>
-                            <span class="legend-val">{{ $stats['inactive_tenants'] }}</span>
+                    </div>
+                    <div class="sa-mini">
+                        <div>
+                            <div class="sa-mini-n">{{ $stats['new_this_month'] }}</div>
+                            <div class="sa-mini-l">New this month</div>
                         </div>
-                        <div class="legend-item">
-                            <div class="legend-dot" style="background:var(--red)"></div>
-                            <span class="legend-label">Suspended</span>
-                            <span class="legend-val">{{ $stats['suspended'] }}</span>
+                        <div>
+                            <div class="sa-mini-n">{{ $stats['new_today'] }}</div>
+                            <div class="sa-mini-l">New today</div>
+                        </div>
+                        <div>
+                            <div class="sa-mini-n">{{ $stats['expired_subs'] }}</div>
+                            <div class="sa-mini-l">Expired subs</div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-</div>
-
-{{-- Recent tenants + expiring alerts --}}
-<div class="grid-bottom">
-
-    {{-- Recent tenants table --}}
-    <div class="card">
-        <div class="card-header">
-            <div>
-                <div class="card-title">Recent Tenants</div>
-                <div class="card-subtitle">Latest signups</div>
-            </div>
-            <a href="{{ route('superadmin.tenants.index') }}"
-            class="btn btn-secondary btn-sm">View all →</a>
-        </div>
-        <div style="overflow-x:auto">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Company</th>
-                        <th>Subdomain</th>
-                        <th>Plan</th>
-                        <th>Status</th>
-                        <th>Joined</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($recentTenants as $tenant)
-                    <tr>
-                        <td data-label="Company">
-                            <div class="td-name">{{ $tenant['name'] }}</div>
-                            <div style="font-size:11.5px;color:var(--text-400)">{{ $tenant['email'] }}</div>
-                        </td>
-                        <td class="td-mono" style="font-size:12px" data-label="Subdomain">{{ $tenant['subdomain'] }}.crmPro.in</td>
-                        <td style="font-size:12.5px;color:var(--text-200)" data-label="Plan">{{ $tenant['plan'] }}</td>
-                        <td data-label="Status">
-                            <span class="t-status t-{{ $tenant['status'] }}">
-                                {{ ucfirst($tenant['status']) }}
-                            </span>
-                        </td>
-                        <td class="td-mono" style="font-size:11.5px;color:var(--text-400)" data-label="Joined">{{ $tenant['joined_ago'] }}</td>
-                        <td>
-                            <a href="{{ route('superadmin.tenants.show', $tenant['id']) }}"
-                            class="btn btn-secondary btn-sm btn-icon">
-                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/>
-                                </svg>
-                            </a>
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    {{-- Expiring subscriptions --}}
-    <div class="card">
-        <div class="card-header">
-            <div>
-                <div class="card-title">Expiring Soon</div>
-                <div class="card-subtitle">Subscriptions in next 7 days</div>
-            </div>
-            @if($stats['expiring_soon'] > 0)
-            <span class="badge badge-lost">{{ $stats['expiring_soon'] }} alerts</span>
-            @endif
-        </div>
-
-        @if(count($expiringSoon) > 0)
-        @foreach($expiringSoon as $exp)
-        <div class="alert-row">
-            <div class="alert-dot-wrap">
-                <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
-                </svg>
-            </div>
-            <div style="flex:1">
-                <div class="alert-title">{{ $exp['tenant_name'] }}</div>
-                <div class="alert-sub">
-                    {{ $exp['plan'] }} &middot; Expires {{ $exp['ends_at'] }}
-                    &middot; {{ $exp['days_left'] }}d left
+            <div class="dcard">
+                <div class="dcard-h">
+                    <div>
+                        <div class="dcard-t">Plans</div>
+                        <div class="dcard-s">Active subscriptions by plan</div>
+                    </div>
+                    <a href="{{ route('superadmin.plans.index') }}" class="icobtn">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $icons['arrow'] }}"/></svg>
+                    </a>
+                </div>
+                <div style="overflow-x:auto">
+                    <table class="rtable compact">
+                        <thead>
+                            <tr>
+                                <th>Plan</th>
+                                <th class="num">Active</th>
+                                <th class="num">Trial</th>
+                                <th class="num">MRR</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($planBreakdown as $plan)
+                            <tr>
+                                <td data-label="Plan">
+                                    <span class="rn">{{ $plan['name'] }}</span>
+                                    <div class="rsub">₹{{ number_format($plan['price']) }}/mo</div>
+                                </td>
+                                <td data-label="Active" class="num" style="color:var(--text-100);font-weight:600">{{ $plan['active_count'] }}</td>
+                                <td data-label="Trial" class="num">{{ $plan['trial_count'] }}</td>
+                                <td data-label="MRR" class="num" style="color:{{ $plan['mrr'] > 0 ? 'var(--green)' : 'var(--text-400)' }};font-weight:600">{{ $plan['mrr'] > 0 ? '₹' . number_format($plan['mrr']) : '—' }}</td>
+                            </tr>
+                            @empty
+                            <tr><td colspan="4" class="dempty">No plans configured.</td></tr>
+                            @endforelse
+                        </tbody>
+                        @if(count($planBreakdown) > 0)
+                        <tfoot>
+                            <tr>
+                                <td>Total</td>
+                                <td class="num">{{ $planActiveTotal }}</td>
+                                <td class="num">{{ $planTrialTotal }}</td>
+                                <td class="num" style="color:var(--green)">₹{{ number_format($planMrrTotal) }}</td>
+                            </tr>
+                        </tfoot>
+                        @endif
+                    </table>
                 </div>
             </div>
-            <span class="badge badge-{{ $exp['days_left'] <= 2 ? 'lost' : 'contacted' }}">
-                {{ $exp['days_left'] }}d
-            </span>
+
         </div>
-        @endforeach
-        @else
-        <div style="padding:32px 20px;text-align:center">
-            <div style="font-size:28px;margin-bottom:8px">✅</div>
-            <div style="font-size:13px;color:var(--text-300)">No subscriptions expiring in next 7 days</div>
-        </div>
-        @endif
+
     </div>
+
+    {{-- ── Expiring soon (only when there is something) ──────────── --}}
+    @if(count($expiringSoon) > 0)
+    <div class="dcard" style="margin-top:12px">
+        <div class="dcard-h">
+            <div class="dcard-ht">
+                <span class="dcard-ico" style="--c:var(--amber);--cw:var(--amber-dim)"><svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $icons['warn'] }}"/></svg></span>
+                <div>
+                    <div class="dcard-t">Expiring Soon</div>
+                    <div class="dcard-s">Active subscriptions ending in the next 7 days</div>
+                </div>
+            </div>
+            <span class="dpill off">{{ $stats['expiring_soon'] }}</span>
+        </div>
+        <div class="dcard-b tight">
+            @foreach($expiringSoon as $exp)
+            <div class="dlist-row" style="--li:var(--{{ $exp['days_left'] <= 2 ? 'red' : 'amber' }});--liw:var(--{{ $exp['days_left'] <= 2 ? 'red' : 'amber' }}-dim)">
+                <span class="dlist-ico"><svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $icons['warn'] }}"/></svg></span>
+                <div class="dlist-main">
+                    <div class="dlist-t">{{ $exp['tenant_name'] }}</div>
+                    <div class="dlist-s">{{ $exp['plan'] }} · expires {{ $exp['ends_at'] }}</div>
+                </div>
+                <span class="dpill {{ $exp['days_left'] <= 2 ? 'off' : 'warn' }}">{{ $exp['days_left'] }}d left</span>
+            </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
 
 </div>
 
@@ -370,71 +359,119 @@
 @push('scripts')
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-Chart.defaults.font.family = "'Outfit', sans-serif";
-Chart.defaults.color       = '#5c6380';
+    Chart.defaults.font.family = "'Outfit', sans-serif";
 
-const months       = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const signupsData  = @json($signupsChart);
-const revenueData  = @json($revenueChart);
-let   currentChart = 'signups';
+    function resolveColor(c) {
+        const p = document.createElement('span');
+        p.style.color = c; document.body.appendChild(p);
+        const v = getComputedStyle(p).color; p.remove(); return v || c;
+    }
+    function cssVar(n, f) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim() || f; }
+    function toRgba(c, a) { const m = resolveColor(c).match(/\d+(\.\d+)?/g); return m ? `rgba(${m[0]},${m[1]},${m[2]},${a})` : c; }
 
-const ctx  = document.getElementById('growthChart').getContext('2d');
-const grad = ctx.createLinearGradient(0, 0, 0, 220);
-grad.addColorStop(0, 'rgba(99,120,255,0.18)');
-grad.addColorStop(1, 'rgba(99,120,255,0.00)');
+    const C_TEXT  = resolveColor(cssVar('--text-100', '#0d0f1a'));
+    const C_MUTE  = resolveColor(cssVar('--text-300', '#7b84a8'));
+    const C_SURF  = resolveColor(cssVar('--bg-surface', '#fff'));
+    const C_LINE  = toRgba(cssVar('--text-400', '#b0b8d4'), 0.28);
+    const C_ACC   = resolveColor(cssVar('--accent', '#6378ff'));
+    const C_GREEN = resolveColor(cssVar('--green', '#2dd4a0'));
+    Chart.defaults.color = C_MUTE;
 
-const growthChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-        labels: months,
-        datasets: [{
-            label: 'New Tenants',
-            data: signupsData,
-            backgroundColor: 'rgba(99,120,255,0.7)',
-            borderRadius: 4,
-            borderSkipped: false,
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: { intersect: false, mode: 'index' },
-        plugins: {
-            legend: { display: false },
-            tooltip: {
-                backgroundColor: '#181c24',
-                borderColor: 'rgba(255,255,255,0.08)',
-                borderWidth: 1,
-                titleColor: '#f2f4ff',
-                bodyColor: '#9ca3c0',
-                padding: 12,
+    const months      = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const signupsData = @json($signupsChart);
+    const revenueData = @json($revenueChart);
+
+    /* ── KPI mini sparklines (faint track behind the real series) ── */
+    function miniSpark(id, series, color) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const s = series.map(Number);
+        const peak = Math.max.apply(null, s.concat([0]));
+        new Chart(el.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: s.map((_, i) => i),
+                datasets: [
+                    { data: s.map(() => (peak > 0 ? peak : 1)), backgroundColor: toRgba(color, 0.12), borderRadius: 3, barPercentage: 0.72, categoryPercentage: 0.9, grouped: false },
+                    { data: s, backgroundColor: toRgba(color, 0.5), borderRadius: 3, barPercentage: 0.72, categoryPercentage: 0.9, grouped: false },
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                scales: { x: { display: false }, y: { display: false, beginAtZero: true } },
+                animation: { duration: 450 },
             }
+        });
+    }
+    miniSpark('spTenants', signupsData, C_ACC);
+    miniSpark('spRevenue', revenueData, C_GREEN);
+
+    /* ── Growth chart — soft area line ────────────────────────────── */
+    const gctx = document.getElementById('growthChart').getContext('2d');
+    const gFill = gctx.createLinearGradient(0, 0, 0, 232);
+    gFill.addColorStop(0, toRgba(C_ACC, 0.2));
+    gFill.addColorStop(1, toRgba(C_ACC, 0));
+
+    const growthChart = new Chart(gctx, {
+        type: 'line',
+        data: {
+            labels: months,
+            datasets: [{
+                data: signupsData,
+                borderColor: C_ACC,
+                backgroundColor: gFill,
+                borderWidth: 2.5,
+                pointRadius: 0,
+                pointHoverRadius: 5,
+                pointHoverBackgroundColor: C_ACC,
+                tension: 0.3,
+                fill: true,
+            }]
         },
-        scales: {
-            x: { grid: { color: 'rgba(255,255,255,0.04)', drawBorder: false }, ticks: { font: { family: "'DM Mono',monospace", size: 11 } } },
-            y: { grid: { color: 'rgba(255,255,255,0.04)', drawBorder: false }, ticks: { font: { family: "'DM Mono',monospace", size: 11 }, stepSize: 1 } }
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { intersect: false, mode: 'index' },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: C_TEXT, titleColor: C_SURF, bodyColor: C_SURF,
+                    padding: 10, displayColors: false, cornerRadius: 8,
+                },
+            },
+            scales: {
+                x: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 11 } } },
+                y: {
+                    grid: { color: C_LINE, drawTicks: false },
+                    border: { display: false },
+                    ticks: { font: { size: 10.5 }, precision: 0, maxTicksLimit: 5, padding: 8 },
+                    beginAtZero: true,
+                },
+            }
         }
-    }
-});
+    });
 
-function switchChart(type, btn) {
-    document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
-    btn.classList.add('active');
-    currentChart = type;
+    function switchChart(type, btn) {
+        document.querySelectorAll('.sa-tab').forEach(t => t.classList.remove('on'));
+        btn.classList.add('on');
+        const isRevenue = type === 'revenue';
+        const color = isRevenue ? C_GREEN : C_ACC;
+        const fill = gctx.createLinearGradient(0, 0, 0, 232);
+        fill.addColorStop(0, toRgba(color, 0.22));
+        fill.addColorStop(1, toRgba(color, 0));
 
-    if (type === 'signups') {
-        growthChart.data.datasets[0].label   = 'New Tenants';
-        growthChart.data.datasets[0].data    = signupsData;
-        growthChart.data.datasets[0].backgroundColor = 'rgba(99,120,255,0.7)';
-        growthChart.options.scales.y.ticks.callback = v => v;
-    } else {
-        growthChart.data.datasets[0].label   = 'Revenue (₹)';
-        growthChart.data.datasets[0].data    = revenueData;
-        growthChart.data.datasets[0].backgroundColor = 'rgba(45,212,160,0.7)';
-        growthChart.options.scales.y.ticks.callback = v =>
-            v >= 100000 ? '₹' + (v/100000).toFixed(1) + 'L' : '₹' + (v/1000).toFixed(0) + 'K';
+        growthChart.data.datasets[0].data = isRevenue ? revenueData : signupsData;
+        growthChart.data.datasets[0].borderColor = color;
+        growthChart.data.datasets[0].backgroundColor = fill;
+        growthChart.data.datasets[0].pointHoverBackgroundColor = color;
+        growthChart.options.scales.y.ticks.callback = isRevenue
+            ? (v => v >= 100000 ? '₹' + (v / 100000).toFixed(1) + 'L' : (v >= 1000 ? '₹' + (v / 1000).toFixed(0) + 'K' : '₹' + v))
+            : (v => v);
+        growthChart.options.plugins.tooltip.callbacks = {
+            label: ctx => isRevenue ? '₹' + Number(ctx.raw).toLocaleString('en-IN') : ctx.raw + ' signup' + (ctx.raw === 1 ? '' : 's'),
+        };
+        growthChart.update();
     }
-    growthChart.update();
-}
 </script>
 @endpush

@@ -161,6 +161,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'tickets.edit',
             'tickets.delete',
 
+            // ── Customer Loyalty ──────────────────────────────────
+            'loyalty.view',           // See members, points, tiers, ledger
+            'loyalty.manage',         // Edit rules, manually adjust points
+
             // ── Staff ─────────────────────────────────────────────
             'staff.view',
             'staff.create',

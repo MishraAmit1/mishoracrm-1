@@ -151,7 +151,19 @@ input:checked + .toggle-slider:before { transform:translateX(16px); }
                 <div class="form-group">
                     <label class="form-label">Response Message <span class="required">*</span></label>
                     <textarea name="response_message" id="flowResponse" class="form-input" rows="5" required placeholder="Welcome! How can we help you today?"></textarea>
+                    @if(auth()->user()->tenant?->hasModuleEnabled('loyalty'))
+                    <span class="form-hint">Loyalty placeholders: <code>@{{loyalty_points}}</code> <code>@{{loyalty_tier}}</code> <code>@{{loyalty_redeemable}}</code> <code>@{{loyalty_lifetime}}</code> <code>@{{contact_name}}</code> <code>@{{tenant_name}}</code> — filled with the sender's real data.</span>
+                    @endif
                 </div>
+                @if(auth()->user()->tenant?->hasModuleEnabled('loyalty'))
+                <div class="form-group">
+                    <label class="form-label">Action</label>
+                    <select name="action" id="flowAction" class="form-input">
+                        <option value="">None — just send the message</option>
+                        <option value="loyalty_join">Enrol the sender in the loyalty programme (grants the welcome bonus)</option>
+                    </select>
+                </div>
+                @endif
                 <div class="form-group">
                     <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
                         <input type="checkbox" name="is_default" id="flowDefault" value="1">
@@ -176,6 +188,7 @@ const flowData = {
         keywords: @json(implode(', ', $flow->trigger_keywords ?? [])),
         match: @json($flow->keyword_match),
         response: @json($flow->response_message),
+        action: @json($flow->action ?? ''),
         is_default: {{ $flow->is_default ? 'true' : 'false' }},
     },
     @endforeach
@@ -191,6 +204,7 @@ function openEditModal(id) {
     document.getElementById('flowKeywords').value = f.keywords;
     document.getElementById('flowMatch').value = f.match;
     document.getElementById('flowResponse').value = f.response;
+    if (document.getElementById('flowAction')) document.getElementById('flowAction').value = f.action || '';
     document.getElementById('flowDefault').checked = f.is_default;
     document.getElementById('formCard').scrollIntoView({ behavior: 'smooth' });
 }

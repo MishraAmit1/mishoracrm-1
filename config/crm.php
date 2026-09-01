@@ -105,6 +105,21 @@ return [
         'default_terms_days' => 30,
     ],
 
+    // ── Customer Loyalty ─────────────────────────────────────────
+    'loyalty' => [
+        'tiers' => [
+            'bronze' => ['label' => 'Bronze', 'color' => 'amber',  'bg' => 'amber-dim'],
+            'silver' => ['label' => 'Silver', 'color' => 'accent', 'bg' => 'accent-dim'],
+            'gold'   => ['label' => 'Gold',   'color' => 'green',   'bg' => 'green-dim'],
+        ],
+        'transaction_types' => [
+            'earn'   => ['label' => 'Earned',    'color' => 'green'],
+            'redeem' => ['label' => 'Redeemed',  'color' => 'accent'],
+            'expire' => ['label' => 'Expired',   'color' => 'red'],
+            'adjust' => ['label' => 'Adjusted',  'color' => 'amber'],
+        ],
+    ],
+
     // ── Task ──────────────────────────────────────────────────────
     'task' => [
         'statuses' => [

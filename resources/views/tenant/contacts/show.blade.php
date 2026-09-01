@@ -512,6 +512,7 @@
             @php
                 $hiddenFields = collect($contactFields['fields'])
                     ->where('show_in_list', false)
+                    ->reject(fn($f) => !empty($f['module']) && !auth()->user()->tenant?->hasModuleEnabled($f['module']))
                     ->filter(fn($f) => !empty($contact->{$f['key']}))
                     ->values();
             @endphp
@@ -526,13 +527,18 @@
                     <div class="cs-dl-row">
                         <span class="cs-dl-key">{{ $hf['label'] }}</span>
                         <span class="cs-dl-val" style="font-size:12.5px;max-width:160px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-                            {{ $contact->{$hf['key']} }}
+                            @php $hv = $contact->{$hf['key']}; @endphp
+                            {{ $hv instanceof \Carbon\CarbonInterface ? $hv->format('d M Y') : $hv }}
                         </span>
                     </div>
                     @endif
                     @endforeach
                 </div>
             </div>
+            @endif
+
+            @if(auth()->user()->tenant?->hasModuleEnabled('loyalty'))
+                @include('tenant.loyalty._contact-panel')
             @endif
 
         </div>{{-- /cs-sidebar --}}

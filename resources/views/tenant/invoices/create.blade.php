@@ -89,6 +89,7 @@
 
 @php
     $defaultTerms = config('crm.quotation.terms_default', "1. Payment due within 30 days.\n2. Prices are inclusive of GST unless stated otherwise.");
+    $loyaltyOn = $tenant->hasModuleEnabled('loyalty');
     $contactsJson = $contacts->mapWithKeys(fn($c) => [
         $c->id => [
             'name'    => $c->name,
@@ -97,6 +98,9 @@
             'email'   => $c->email,
             'address' => trim(collect([$c->address, $c->city, $c->state])->filter()->implode(', ')),
             'gst'     => $c->gst_number,
+            'loyalty' => $loyaltyOn && $c->loyalty_points > 0
+                ? number_format($c->loyalty_points) . ' pts' . ($c->loyalty_tier ? ' · ' . ucfirst($c->loyalty_tier) : '')
+                : null,
         ]
     ]);
 
@@ -359,6 +363,7 @@ function loadContact(id) {
         ${c.phone || ''} ${c.email ? '· ' + c.email : ''}<br/>
         ${c.address || ''}
         ${c.gst ? '<br/>GST: ' + c.gst : ''}
+        ${c.loyalty ? '<br/><span style="color:var(--green);font-weight:600">★ Loyalty: ' + c.loyalty + '</span>' : ''}
     `;
     box.style.display = 'block';
 }

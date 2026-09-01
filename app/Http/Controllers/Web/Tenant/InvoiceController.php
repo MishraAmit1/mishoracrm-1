@@ -12,6 +12,8 @@ use App\Models\Service;
 use App\Models\ServiceSubscription;
 use App\Services\EmailService;
 use App\Services\InvoicePdfTemplateRenderer;
+use App\Services\LoyaltyCampaignService;
+use App\Services\LoyaltyService;
 use App\Services\NotificationService;
 use App\Services\StockService;
 use App\Services\WebhookService;
@@ -140,7 +142,7 @@ class InvoiceController extends Controller
     {
         $contacts = Contact::where('tenant_id', $this->tenantId())
             ->orderBy('name')
-            ->get(['id', 'name', 'company', 'phone', 'email', 'address', 'city', 'state', 'gst_number']);
+            ->get(['id', 'name', 'company', 'phone', 'email', 'address', 'city', 'state', 'gst_number', 'loyalty_points', 'loyalty_tier']);
 
         $contact = $request->filled('contact_id')
             ? Contact::where('id', $request->contact_id)->where('tenant_id', $this->tenantId())->first()
@@ -234,8 +236,15 @@ class InvoiceController extends Controller
         $tenant   = auth()->user()->tenant;
         $statuses = Invoice::statuses();
 
+        // Loyalty redemption panel — only when the module is on, there is a
+        // customer, and the bill isn't settled yet.
+        $loyaltyQuote = null;
+        if ($tenant->hasModuleEnabled('loyalty') && $invoice->contact && $invoice->status !== 'paid' && !$invoice->hasLoyaltyRedemption()) {
+            $loyaltyQuote = app(LoyaltyService::class)->quoteRedemption($invoice);
+        }
+
         return view('tenant.invoices.show', compact(
-            'invoice', 'tenant', 'statuses'
+            'invoice', 'tenant', 'statuses', 'loyaltyQuote'
         ));
     }
 
@@ -248,6 +257,12 @@ class InvoiceController extends Controller
             return redirect()
                 ->route('tenant.invoices.show', $invoice->id)
                 ->with('error', 'Paid invoice cannot be edited.');
+        }
+
+        if ($invoice->hasLoyaltyRedemption() || $invoice->hasCampaignCoupon() || $invoice->hasLoyaltyReward()) {
+            return redirect()
+                ->route('tenant.invoices.show', $invoice->id)
+                ->with('error', 'Remove the loyalty redemption / coupon / reward before editing this invoice.');
         }
 
         $contacts = Contact::where('tenant_id', $this->tenantId())
@@ -271,6 +286,10 @@ class InvoiceController extends Controller
 
         if ($invoice->status === 'paid') {
             return back()->with('error', 'Paid invoice cannot be edited.');
+        }
+
+        if ($invoice->hasLoyaltyRedemption() || $invoice->hasCampaignCoupon() || $invoice->hasLoyaltyReward()) {
+            return back()->with('error', 'Remove the loyalty redemption / coupon / reward before editing this invoice.');
         }
 
         $request->validate([
@@ -329,6 +348,21 @@ class InvoiceController extends Controller
             return back()->with('error', 'Paid invoice cannot be deleted.');
         }
 
+        // Return any loyalty points redeemed on this invoice to the customer.
+        if ($invoice->hasLoyaltyRedemption()) {
+            app(LoyaltyService::class)->reverseRedemption($invoice, auth()->id());
+        }
+
+        // Release a campaign coupon so the customer can use it elsewhere.
+        if ($invoice->hasCampaignCoupon()) {
+            app(LoyaltyCampaignService::class)->reverseCoupon($invoice);
+        }
+
+        // Return points spent on a catalog reward.
+        if ($invoice->hasLoyaltyReward()) {
+            app(LoyaltyService::class)->reverseReward($invoice, auth()->id());
+        }
+
         // Restore stock — only reachable for draft/sent/partial invoices
         // since paid invoices already block deletion above.
         StockService::applyInvoiceItems($invoice->items ?? [], +1);
@@ -348,24 +382,27 @@ class InvoiceController extends Controller
             'status' => ['required', 'in:draft,sent,paid,partial,overdue'],
         ]);
 
-        $invoice = $this->findInvoice($id);
-        $data    = ['status' => $request->status];
+        $invoice  = $this->findInvoice($id);
+        $wasPaid  = $invoice->status === 'paid';
+        $nowPaid  = $request->status === 'paid';
+        $data     = ['status' => $request->status];
 
-        if ($request->status === 'paid') {
-            $data['paid_amount'] = $invoice->total;
+        if ($nowPaid) {
+            // Loyalty points already tendered settle part of the bill, so cash
+            // "paid" is the remainder.
+            $data['paid_amount'] = max(0, (float) $invoice->total - (float) $invoice->loyalty_discount);
             $data['paid_at']     = now();
         }
 
         $invoice->update($data);
 
-        if ($request->status === 'paid') {
-            WebhookService::fire('invoice.paid', $invoice->tenant_id, [
-                'id'           => $invoice->id,
-                'number'       => $invoice->number,
-                'total'        => $invoice->total,
-                'paid_at'      => now()->toIso8601String(),
-                'contact_name' => $invoice->contact?->name,
-            ]);
+        if ($nowPaid) {
+            $this->afterInvoicePaid($invoice);
+        }
+
+        // Status moved back off "paid" — claw back any loyalty points earned.
+        if ($wasPaid && !$nowPaid) {
+            app(LoyaltyService::class)->reverseForInvoice($invoice);
         }
 
         return back()->with('success', 'Invoice status updated.');
@@ -500,7 +537,9 @@ class InvoiceController extends Controller
         }
 
         $paidAmount   = $invoice->payments()->sum('amount');
-        $newStatus    = $paidAmount >= $invoice->total ? 'paid' : 'partial';
+        // Loyalty points redeemed on this invoice count toward settling it.
+        $settled      = round($paidAmount + (float) $invoice->loyalty_discount, 2);
+        $newStatus    = $settled >= (float) $invoice->total ? 'paid' : 'partial';
         $latestPaidAt = collect($rows)->max('paid_at');
 
         $invoice->update([
@@ -528,9 +567,150 @@ class InvoiceController extends Controller
                     $invoice
                 );
             }
+
+            // Award loyalty points (idempotent, no-op if the module is off).
+            app(LoyaltyService::class)->awardForInvoice($invoice);
         }
 
         $count = count($rows);
         return back()->with('success', "{$count} payment(s) recorded. Status: " . ucfirst($newStatus));
+    }
+
+    // ── Loyalty — redeem points against this invoice ──────────────
+    public function redeemLoyalty(Request $request, int|string $id): RedirectResponse
+    {
+        $invoice = $this->findInvoice($id);
+
+        $request->validate([
+            'points' => ['nullable', 'integer', 'min:1'],
+            'use_max' => ['nullable', 'boolean'],
+        ]);
+
+        $requested = $request->boolean('use_max') ? null : $request->integer('points');
+        if (!$request->boolean('use_max') && !$requested) {
+            return back()->with('error', 'Enter how many points to redeem, or choose "use maximum".');
+        }
+
+        $result = app(LoyaltyService::class)->applyRedemption($invoice, $requested, auth()->id());
+
+        if (!$result['ok']) {
+            return back()->with('error', $result['message']);
+        }
+
+        // Points may have settled the bill in full.
+        $invoice->refresh();
+        if ($invoice->settledAmount() >= (float) $invoice->total && $invoice->status !== 'paid') {
+            $invoice->update([
+                'status'      => 'paid',
+                'paid_amount' => max(0, (float) $invoice->total - (float) $invoice->loyalty_discount),
+                'paid_at'     => now(),
+            ]);
+            $this->afterInvoicePaid($invoice);
+        }
+
+        return back()->with('success', $result['message']);
+    }
+
+    public function unredeemLoyalty(int|string $id): RedirectResponse
+    {
+        $invoice = $this->findInvoice($id);
+
+        if ($invoice->status === 'paid') {
+            return back()->with('error', 'Cannot change loyalty redemption on a settled invoice.');
+        }
+
+        if (!$invoice->hasLoyaltyRedemption()) {
+            return back()->with('error', 'No loyalty points are redeemed on this invoice.');
+        }
+
+        app(LoyaltyService::class)->reverseRedemption($invoice, auth()->id());
+
+        return back()->with('success', 'Loyalty redemption removed — points returned to the customer.');
+    }
+
+    // ── Loyalty — apply a campaign coupon code to this invoice ────
+    public function applyCoupon(Request $request, int|string $id): RedirectResponse
+    {
+        $invoice = $this->findInvoice($id);
+
+        $data = $request->validate(['code' => ['required', 'string', 'max:20']]);
+
+        $result = app(LoyaltyCampaignService::class)->applyCoupon($invoice, $data['code'], auth()->id());
+
+        if (!$result['ok']) {
+            return back()->with('error', $result['message']);
+        }
+
+        $invoice->refresh();
+        if ($invoice->settledAmount() >= (float) $invoice->total && $invoice->status !== 'paid') {
+            $invoice->update([
+                'status'      => 'paid',
+                'paid_amount' => max(0, (float) $invoice->total - (float) $invoice->loyalty_discount - (float) $invoice->campaign_discount),
+                'paid_at'     => now(),
+            ]);
+            $this->afterInvoicePaid($invoice);
+        }
+
+        return back()->with('success', trim($result['message'] . ' ' . ($result['note'] ?? '')));
+    }
+
+    public function removeCoupon(int|string $id): RedirectResponse
+    {
+        $invoice = $this->findInvoice($id);
+
+        if ($invoice->status === 'paid') {
+            return back()->with('error', 'Cannot change the coupon on a settled invoice.');
+        }
+
+        if (!$invoice->hasCampaignCoupon()) {
+            return back()->with('error', 'No campaign coupon is applied to this invoice.');
+        }
+
+        app(LoyaltyCampaignService::class)->reverseCoupon($invoice);
+
+        return back()->with('success', 'Campaign coupon removed.');
+    }
+
+    // ── Loyalty — redeem a standing catalog reward (free item) ────
+    public function redeemReward(Request $request, int|string $id): RedirectResponse
+    {
+        $invoice = $this->findInvoice($id);
+
+        $data = $request->validate(['reward' => ['required', 'string', 'max:120']]);
+
+        $result = app(LoyaltyService::class)->redeemReward($invoice, $data['reward'], auth()->id());
+
+        return back()->with($result['ok'] ? 'success' : 'error', $result['message']);
+    }
+
+    public function removeReward(int|string $id): RedirectResponse
+    {
+        $invoice = $this->findInvoice($id);
+
+        if ($invoice->status === 'paid') {
+            return back()->with('error', 'Cannot change the reward on a settled invoice.');
+        }
+
+        if (!$invoice->hasLoyaltyReward()) {
+            return back()->with('error', 'No reward is redeemed on this invoice.');
+        }
+
+        app(LoyaltyService::class)->reverseReward($invoice, auth()->id());
+
+        return back()->with('success', 'Reward removed — points returned to the customer.');
+    }
+
+    // Shared post-"paid" side effects (webhook + notification + loyalty earn).
+    private function afterInvoicePaid(Invoice $invoice): void
+    {
+        WebhookService::fire('invoice.paid', $invoice->tenant_id, [
+            'id'           => $invoice->id,
+            'number'       => $invoice->number,
+            'total'        => $invoice->total,
+            'paid_at'      => now()->toIso8601String(),
+            'contact_name' => $invoice->contact?->name,
+        ]);
+
+        app(LoyaltyService::class)->awardForInvoice($invoice);
     }
 }

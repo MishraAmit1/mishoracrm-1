@@ -52,3 +52,15 @@ Schedule::command('appointments:mark-no-show')->hourly();
 // ── Ticket SLA breach check (no staff reply within priority window) —
 // every 15 minutes, same cadence as the lead SLA check ─────────────
 Schedule::command('tickets:check-sla')->everyFifteenMinutes();
+
+// ── Loyalty points expiry — lapse earn lots past their expiry date — daily
+Schedule::command('loyalty:expire-points')->dailyAt('02:00');
+
+// ── Loyalty points-expiry reminders (nudge before they lapse) — daily ──
+Schedule::command('loyalty:expiry-reminders')->dailyAt('09:30');
+
+// ── Loyalty birthday / anniversary rewards — every morning ─────────
+Schedule::command('loyalty:occasion-offers')->dailyAt('07:15');
+
+// ── Loyalty win-back digest to tenant admins — weekly (Monday) ─────
+Schedule::command('loyalty:win-back-digest')->weeklyOn(1, '08:00');

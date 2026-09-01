@@ -22,6 +22,7 @@ class Service extends Model
         'tax_percent',
         'hsn',
         'unit',
+        'category',
         'is_active',
         'billing_cycle',
         'duration_value',

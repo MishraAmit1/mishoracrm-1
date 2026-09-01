@@ -231,6 +231,46 @@ class Tenant extends Model
         return route('public.support.show', $this->ensureSupportToken());
     }
 
+    // ── Public "check my rewards" link — same token convention. Only
+    // usable when the Loyalty module is on AND the tenant opted in via
+    // settings['loyalty']['public_lookup']. ─────────────────────────
+    public function ensureRewardsToken(): string
+    {
+        $settings = $this->settings ?? [];
+
+        if (empty($settings['rewards_token'])) {
+            $settings['rewards_token'] = Str::random(40);
+            $this->update(['settings' => $settings]);
+        }
+
+        return $settings['rewards_token'];
+    }
+
+    public function rewardsPublicUrl(): string
+    {
+        return route('public.rewards.show', $this->ensureRewardsToken());
+    }
+
+    public function loyaltyPublicLookupEnabled(): bool
+    {
+        return $this->hasModuleEnabled('loyalty')
+            && (bool) ($this->loyaltySettings()['public_lookup'] ?? false);
+    }
+
+    // The wa.me link a customer follows to auto-join the loyalty programme,
+    // or null when the tenant hasn't set up the QR welcome feature.
+    public function loyaltyWelcomeUrl(): ?string
+    {
+        $s      = $this->loyaltySettings();
+        $number = preg_replace('/\D/', '', (string) ($s['welcome_wa_number'] ?? ''));
+
+        if ((int) $s['welcome_bonus_points'] <= 0 || $number === '') {
+            return null;
+        }
+
+        return 'https://wa.me/' . $number . '?text=' . rawurlencode($s['welcome_keyword'] ?: 'JOIN');
+    }
+
     // settings['booking'][...] — configured via the tenant's Appointments
     // Settings page. Defaults keep booking OFF until the tenant opts in.
     public function bookingSettings(): array
@@ -252,5 +292,50 @@ class Tenant extends Model
         ];
 
         return array_replace_recursive($defaults, $this->settings['booking'] ?? []);
+    }
+
+    // ── Customer Loyalty rules — settings['loyalty'][...], tenant-editable
+    // via the Loyalty Settings page. Same defaults-merge pattern as
+    // bookingSettings(). Gate the feature itself with hasModuleEnabled('loyalty');
+    // this only holds the numeric rules. ────────────────────────────────
+    public const LOYALTY_DEFAULTS = [
+        'points_per_amount'     => 1,     // points earned ...
+        'amount_per_point_block' => 100,  // ... per this much spent (paid)
+        'redeem_points_block'   => 100,   // this many points ...
+        'redeem_value'          => 10,    // ... equal this much discount
+        'min_discount'          => 0,     // floor on a redemption, per bill
+        'max_discount_percent'  => 20,    // cap on a redemption, % of the bill
+        'expiry_months'         => 12,    // earned points lapse after N months (0 = never)
+        'max_points_per_day'    => 500,   // anti-abuse: max points one contact can earn per day
+        'tiers'                 => [
+            'bronze' => 0,
+            'silver' => 2000,
+            'gold'   => 10000,
+        ],
+        // ── Engagement (Phase 3) — 0 = that feature is off ──────────
+        'birthday_bonus_points'    => 0,   // points gifted on a customer's birthday
+        'anniversary_bonus_points' => 0,   // points gifted on their anniversary
+        'referral_bonus_points'    => 0,   // points to BOTH sides when a referral is linked
+        'inactive_days'            => 30,  // "lapsed" cut-off for the win-back list
+        'expiry_reminder_days'     => 7,   // warn the customer this many days before points lapse (0 = off)
+        // ── Flash / double-points days ─────────────────────────────
+        'multiplier'      => 1,            // points multiplier on the days below
+        'multiplier_days' => [],           // weekday keys: mon tue wed thu fri sat sun
+        // ── Standing reward catalog — [{name, points}] — "500 pts = 1 free coffee" ──
+        'reward_catalog'  => [],
+        // ── Customer messaging (opt-in) ────────────────────────────
+        'notify_customers'    => false,    // WhatsApp/Email the customer after each points earn
+        'whatsapp_self_check' => false,    // reply to "points"/"balance" keywords on WhatsApp
+        'public_lookup'       => false,    // enable the OTP-guarded "check my rewards" page
+        // ── WhatsApp "scan to join" welcome capture (§2a) ──────────
+        'welcome_bonus_points' => 0,       // points a first-time WhatsApp joiner gets (0 = off)
+        'welcome_keyword'      => 'JOIN',  // the wa.me prefill text customers send
+        'welcome_wa_number'    => '',      // the tenant's WhatsApp Business number (digits)
+        'welcome_message'      => 'Welcome to {{tenant_name}} rewards, {{contact_name}}! 🎉 You have {{points}} points to start.',
+    ];
+
+    public function loyaltySettings(): array
+    {
+        return array_replace_recursive(self::LOYALTY_DEFAULTS, $this->settings['loyalty'] ?? []);
     }
 }

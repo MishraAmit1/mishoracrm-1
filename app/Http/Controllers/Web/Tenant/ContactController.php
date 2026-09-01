@@ -96,6 +96,7 @@ class ContactController extends Controller
 
         $contact = Contact::create($data);
 
+        $this->applyReferral($contact, $request->input('referred_by_code'));
         $this->saveContactAttachments($request, $contact);
         $this->syncEmployees($request, $contact);
 
@@ -124,6 +125,10 @@ class ContactController extends Controller
             'attachments.uploadedBy',
         ]);
 
+        if (auth()->user()->tenant?->hasModuleEnabled('loyalty')) {
+            $contact->load(['loyaltyTransactions' => fn ($q) => $q->limit(20), 'referredBy:id,name']);
+        }
+
         $timeline = \App\Services\ActivityTimelineService::forContact($contact);
 
         return view('tenant.contacts.show', compact('contact', 'timeline'));
@@ -145,6 +150,7 @@ class ContactController extends Controller
         $contact = $this->findContact($id);
         $contact->update($request->validated());
 
+        $this->applyReferral($contact, $request->input('referred_by_code'));
         $this->saveContactAttachments($request, $contact);
         $this->syncEmployees($request, $contact);
 
@@ -154,6 +160,30 @@ class ContactController extends Controller
                 'id'     => $contact->id,
             ])
             ->with('success', 'Contact updated successfully.');
+    }
+
+    // ── Referral linkage — first time only, then award both sides ──
+    private function applyReferral(Contact $contact, ?string $code): void
+    {
+        $code = strtoupper(trim((string) $code));
+
+        if ($code === '' || $contact->referred_by_contact_id) {
+            return;
+        }
+
+        $referrer = Contact::where('tenant_id', $contact->tenant_id)
+            ->where('referral_code', $code)
+            ->where('id', '!=', $contact->id)
+            ->first();
+
+        if (!$referrer) {
+            return;
+        }
+
+        $contact->referred_by_contact_id = $referrer->id;
+        $contact->save();
+
+        app(\App\Services\LoyaltyService::class)->awardReferral($referrer, $contact);
     }
 
     // ── Contact-level attachments: save uploaded files ─────────────

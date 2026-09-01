@@ -1,12 +1,21 @@
 @php
     $sections = $contactFields['sections'];
-    $fields   = $contactFields['fields'];
+    // Drop fields gated behind a module the tenant doesn't have.
+    $fields   = collect($contactFields['fields'])
+        ->reject(fn($f) => !empty($f['module']) && !auth()->user()->tenant?->hasModuleEnabled($f['module']))
+        ->all();
 
     // Group fields by section
     $grouped = collect($fields)->groupBy('section');
 
-    // Helper: get old/model value
-    $val = fn(string $key) => old($key, $model->{$key} ?? '');
+    // Helper: get old/model value (dates rendered as Y-m-d for <input type=date>)
+    $val = function (string $key) use ($model) {
+        $v = $model->{$key} ?? '';
+        if ($v instanceof \Carbon\CarbonInterface) {
+            $v = $v->format('Y-m-d');
+        }
+        return old($key, $v);
+    };
 
     // Section icon color map
     $sectionIconBg = [

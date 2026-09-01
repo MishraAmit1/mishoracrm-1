@@ -86,6 +86,19 @@ Route::prefix('/support')->name('public.support.')->controller(\App\Http\Control
 });
 
 // ══════════════════════════════════════════════════════════════════
+// PUBLIC — Customer "check my rewards" (token-guarded, OTP-verified)
+// ══════════════════════════════════════════════════════════════════
+
+Route::prefix('/rewards')->name('public.rewards.')->controller(\App\Http\Controllers\Public\RewardsController::class)->group(function () {
+    Route::get('/{token}', 'show')->name('show');
+    Route::post('/{token}/logout', 'logout')->name('logout');
+    Route::middleware('throttle:10,1')->group(function () {
+        Route::post('/{token}/request-otp', 'requestOtp')->name('request-otp');
+        Route::post('/{token}/verify', 'verify')->name('verify');
+    });
+});
+
+// ══════════════════════════════════════════════════════════════════
 // RAZORPAY WEBHOOK (no CSRF, no auth — Razorpay se aata hai)
 // ══════════════════════════════════════════════════════════════════
 
@@ -458,6 +471,16 @@ Route::middleware(['tenant', 'auth', 'subscription'])
                 Route::get('/{id}/pdf', 'pdf')->name('pdf');
                 Route::post('/{id}/send', 'send')->name('send');
                 Route::post('/{id}/record-payment', 'recordPayment')->name('record_payment');
+
+                // Loyalty points redemption + campaign coupons against an invoice.
+                Route::middleware(['module:loyalty', 'permission:loyalty.manage'])->group(function () {
+                    Route::post('/{id}/redeem-loyalty', 'redeemLoyalty')->name('redeem_loyalty');
+                    Route::post('/{id}/unredeem-loyalty', 'unredeemLoyalty')->name('unredeem_loyalty');
+                    Route::post('/{id}/apply-coupon', 'applyCoupon')->name('apply_coupon');
+                    Route::post('/{id}/remove-coupon', 'removeCoupon')->name('remove_coupon');
+                    Route::post('/{id}/redeem-reward', 'redeemReward')->name('redeem_reward');
+                    Route::post('/{id}/remove-reward', 'removeReward')->name('remove_reward');
+                });
             });
         });
 
@@ -605,6 +628,36 @@ Route::middleware(['tenant', 'auth', 'subscription'])
                 Route::delete('/{id}', 'destroy')->name('destroy')->middleware('permission:tickets.delete');
                 Route::delete('/{ticketId}/attachments/{attachmentId}', 'destroyAttachment')->name('attachments.destroy')->middleware('permission:tickets.edit');
             });
+        });
+
+        // Customer Loyalty routes — gated behind its own module toggle.
+        // Owner-driven feature: off/hidden until superadmin enables it.
+        Route::prefix('/loyalty')->name('loyalty.')->middleware('module:loyalty')->group(function () {
+            Route::controller(Tenant\LoyaltyController::class)->group(function () {
+                Route::middleware('permission:loyalty.view')->group(function () {
+                    Route::get('/', 'index')->name('index');
+                    Route::get('/lookup', 'lookup')->name('lookup');
+                    Route::get('/win-back', 'winBack')->name('win-back');
+                    Route::get('/top-customers', 'topCustomers')->name('top-customers');
+                });
+                Route::middleware('permission:loyalty.manage')->group(function () {
+                    Route::get('/settings', 'settings')->name('settings');
+                    Route::post('/settings', 'updateSettings')->name('settings.update');
+                    Route::post('/contacts/{contact}/adjust', 'adjustPoints')->name('adjust');
+                });
+            });
+
+            // Targeted campaigns / customer coupons
+            Route::middleware('permission:loyalty.manage')->prefix('campaigns')->name('campaigns.')
+                ->controller(Tenant\LoyaltyCampaignController::class)->group(function () {
+                    Route::get('/', 'index')->name('index');
+                    Route::get('/create', 'create')->name('create');
+                    Route::post('/', 'store')->name('store');
+                    Route::get('/{campaign}', 'show')->name('show');
+                    Route::post('/{campaign}/launch', 'launch')->name('launch');
+                    Route::post('/{campaign}/end', 'end')->name('end');
+                    Route::delete('/{campaign}', 'destroy')->name('destroy');
+                });
         });
 
         // Vendors routes

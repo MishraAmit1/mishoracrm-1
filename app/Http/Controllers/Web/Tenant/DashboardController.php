@@ -205,17 +205,28 @@ class DashboardController extends Controller
         ];
 
 
-        // ── Trend %s — each stat card's badge is a real month-over-month
-        // comparison, not a hardcoded number. 0 when there's no prior-month
-        // baseline to compare against (avoids a misleading divide-by-zero
-        // "+100%" on a brand new tenant). ──────────────────────────────
+        // ── Trend %s — rolling 30-day window vs the previous 30 days.
+        // Calendar-month comparison made every card read "-100%" on the
+        // 1st of a month; a rolling window stays meaningful any day.
+        // 0 when there's no prior-window baseline (avoids a misleading
+        // divide-by-zero swing on a brand new tenant). ────────────────
         $trendPct = fn($current, $previous) => $previous > 0
             ? round((($current - $previous) / $previous) * 100, 1)
             : 0;
 
-        $stats['revenue_trend'] = $trendPct($stats['revenue_this_month'], $stats['revenue_last_month']);
-        $stats['leads_trend']   = $trendPct($stats['new_leads_month'], $stats['new_leads_last_month']);
-        $stats['deals_trend']   = $trendPct($stats['deals_created_this_month'], $stats['deals_created_last_month']);
+        $win  = [now()->subDays(30), now()];
+        $prev = [now()->subDays(60), now()->subDays(30)];
+
+        $leads30      = Lead::whereBetween('created_at', $win)->count();
+        $leadsPrev30  = Lead::whereBetween('created_at', $prev)->count();
+        $dealsNew30   = Deal::whereBetween('created_at', $win)->count();
+        $dealsPrev30  = Deal::whereBetween('created_at', $prev)->count();
+        $revenue30    = Invoice::where('status', 'paid')->whereBetween('paid_at', $win)->sum('total');
+        $revenuePrev30 = Invoice::where('status', 'paid')->whereBetween('paid_at', $prev)->sum('total');
+
+        $stats['revenue_trend'] = $trendPct($revenue30, $revenuePrev30);
+        $stats['leads_trend']   = $trendPct($leads30, $leadsPrev30);
+        $stats['deals_trend']   = $trendPct($dealsNew30, $dealsPrev30);
         $stats['tasks_trend']   = $trendPct($stats['tasks_completed'], $stats['tasks_completed_last_month']);
 
         // ── Revenue chart — last 12 months ────────────────────────
@@ -232,10 +243,56 @@ class DashboardController extends Controller
             $chartData[] = round($revenueRaw[$m] ?? 0, 2);
         }
 
+        // ── KPI sparklines — last 8 months of activity so each stat
+        // card carries a small trend chart like the dashboard mockup. ──
+        $sparkMonths = collect(range(7, 0))->map(fn($i) => now()->startOfMonth()->subMonths($i));
+        $sparkFrom   = $sparkMonths->first();
+        $monthKey    = fn($y, $m) => $y . '-' . $m;
+
+        $leadsByMonth = Lead::where('created_at', '>=', $sparkFrom)
+            ->selectRaw('YEAR(created_at) y, MONTH(created_at) m, COUNT(*) c')
+            ->groupBy('y', 'm')->get()->keyBy(fn($r) => $monthKey($r->y, $r->m));
+        $dealsByMonth = Deal::where('created_at', '>=', $sparkFrom)
+            ->selectRaw('YEAR(created_at) y, MONTH(created_at) m, COUNT(*) c')
+            ->groupBy('y', 'm')->get()->keyBy(fn($r) => $monthKey($r->y, $r->m));
+        $wonByMonth = Deal::where('stage', 'won')->where('updated_at', '>=', $sparkFrom)
+            ->selectRaw('YEAR(updated_at) y, MONTH(updated_at) m, SUM(value) v')
+            ->groupBy('y', 'm')->get()->keyBy(fn($r) => $monthKey($r->y, $r->m));
+        $convByMonth = Lead::whereNotNull('converted_at')->where('converted_at', '>=', $sparkFrom)
+            ->selectRaw('YEAR(converted_at) y, MONTH(converted_at) m, COUNT(*) c')
+            ->groupBy('y', 'm')->get()->keyBy(fn($r) => $monthKey($r->y, $r->m));
+
+        $spark = ['leads' => [], 'deals' => [], 'won' => [], 'conversion' => []];
+        foreach ($sparkMonths as $d) {
+            $k = $monthKey($d->year, $d->month);
+            $spark['leads'][]      = (int) ($leadsByMonth[$k]->c ?? 0);
+            $spark['deals'][]      = (int) ($dealsByMonth[$k]->c ?? 0);
+            $spark['won'][]        = round($wonByMonth[$k]->v ?? 0, 2);
+            $spark['conversion'][] = (int) ($convByMonth[$k]->c ?? 0);
+        }
+
+        // ── Extra KPI stats — Won deals value + Conversion rate, with
+        // their own month-over-month trend badges. ────────────────────
+        $convertedTotal = Lead::where('status', 'converted')->count();
+        $stats['conversion_rate']       = $stats['total_leads'] > 0
+            ? round($convertedTotal / $stats['total_leads'] * 100, 1)
+            : 0;
+        $stats['conversions_this_month'] = Lead::where('status', 'converted')
+            ->whereMonth('converted_at', now()->month)->whereYear('converted_at', now()->year)->count();
+
+        $conv30      = Lead::where('status', 'converted')->whereBetween('converted_at', $win)->count();
+        $convPrev30  = Lead::where('status', 'converted')->whereBetween('converted_at', $prev)->count();
+        $wonVal30    = Deal::where('stage', 'won')->whereBetween('updated_at', $win)->sum('value');
+        $wonValPrev30 = Deal::where('stage', 'won')->whereBetween('updated_at', $prev)->sum('value');
+
+        $stats['won_trend']        = $trendPct($wonVal30, $wonValPrev30);
+        $stats['conversion_trend'] = $trendPct($conv30, $convPrev30);
+
         // ── Pipeline by stage ─────────────────────────────────────
         $pipelineRaw = Deal::selectRaw('stage, COUNT(*) as count, SUM(value) as total')
             ->groupBy('stage')
-            ->get();
+            ->get()
+            ->keyBy('stage');
 
         $stageColors = [
             'new'         => 'var(--accent)',
@@ -245,14 +302,61 @@ class DashboardController extends Controller
             'lost'        => 'var(--red)',
         ];
 
+        // Representative (highest-value) deal per stage — powers the
+        // company / value / rep line on each pipeline stage card.
+        $stageOrder = ['new', 'proposal', 'negotiation', 'won', 'lost'];
+        $topDeals   = Deal::with(['contact', 'lead', 'assignedTo'])
+            ->whereIn('stage', $stageOrder)
+            ->orderByDesc('value')
+            ->get()
+            ->groupBy('stage')
+            ->map(fn($g) => $g->first());
+
+        $compactMoney = function ($v) {
+            $v = (float) $v;
+            if ($v >= 100000) return '₹' . number_format($v / 100000, 1) . 'L';
+            if ($v >= 1000)   return '₹' . number_format($v / 1000, 0) . 'K';
+            return '₹' . number_format($v);
+        };
+
+        // Per-stage 6-month sparkline — deals in each stage bucketed by
+        // the month they were created (the little trend line per column).
+        $pipeMonths   = collect(range(5, 0))->map(fn($i) => now()->startOfMonth()->subMonths($i));
+        $pipeSparkRaw = Deal::whereIn('stage', $stageOrder)
+            ->where('created_at', '>=', $pipeMonths->first())
+            ->selectRaw('stage, YEAR(created_at) y, MONTH(created_at) m, COUNT(*) c')
+            ->groupBy('stage', 'y', 'm')
+            ->get();
+
+        $pipeSpark = [];
+        foreach ($stageOrder as $st) {
+            $pipeSpark[$st] = $pipeMonths->map(function ($d) use ($pipeSparkRaw, $st) {
+                $row = $pipeSparkRaw->first(fn($r) => $r->stage === $st
+                    && (int) $r->y === $d->year && (int) $r->m === $d->month);
+                return (int) ($row->c ?? 0);
+            })->toArray();
+        }
+
         $maxCount = $pipelineRaw->max('count') ?: 1;
-        $pipeline = $pipelineRaw->map(fn($s) => [
-            'label'  => ucfirst($s->stage),
-            'value'  => $s->count,
-            'amount' => '₹' . number_format($s->total / 100000, 1) . 'L',
-            'color'  => $stageColors[$s->stage] ?? 'var(--accent)',
-            'pct'    => round(($s->count / $maxCount) * 100),
-        ])->values()->toArray();
+        $pipeline = collect($stageOrder)->map(function ($stage) use ($pipelineRaw, $topDeals, $stageColors, $maxCount, $compactMoney, $pipeSpark) {
+            $row   = $pipelineRaw[$stage] ?? null;
+            $count = (int) ($row->count ?? 0);
+            $total = (float) ($row->total ?? 0);
+            $top   = $topDeals[$stage] ?? null;
+
+            return [
+                'stage'       => $stage,
+                'label'       => Deal::stages()[$stage] ?? ucfirst($stage),
+                'value'       => $count,
+                'amount'      => '₹' . number_format($total / 100000, 1) . 'L',
+                'color'       => $stageColors[$stage] ?? 'var(--accent)',
+                'pct'         => round(($count / $maxCount) * 100),
+                'spark'       => $pipeSpark[$stage] ?? [],
+                'top_company' => $top ? ($top->contact?->company ?: $top->lead?->company ?: $top->title) : null,
+                'top_value'   => $top ? $compactMoney($top->value) : null,
+                'top_rep'     => $top?->assignedTo?->name,
+            ];
+        })->toArray();
 
         // ── Recent leads ──────────────────────────────────────────
         $recentLeads = Lead::with('assignedTo')
@@ -263,6 +367,8 @@ class DashboardController extends Controller
                 'id'       => $l->id,
                 'name'     => $l->name,
                 'phone'    => $l->phone,
+                'company'  => $l->company ?: '—',
+                'value'    => (float) ($l->lead_value ?? 0),
                 'source'   => $l->source ?? '—',
                 'status'   => $l->status,
                 'assigned' => $l->assignedTo?->name ?? '—',
@@ -413,6 +519,7 @@ class DashboardController extends Controller
         $data = compact(
             'stats',
             'chartData',
+            'spark',
             'pipeline',
             'recentLeads',
             'todayTasks',

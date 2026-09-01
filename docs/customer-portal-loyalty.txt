@@ -1,0 +1,759 @@
+CUSTOMER PORTAL + GLOBAL LOYALTY WALLET — PLANNING NOTES
+Discussed: 2026-09-01. Design-reviewed: 2026-09-01 (5 gaps found + resolved,
+see Section 0B). Status: PLANNING ONLY — no code written yet.
+Yeh file poori discussion cover karti hai. Jab implement karna ho, yeh file
+share kar dena — sab context isi mein hai. Isse pehle wali file
+"docs/customer-loyalty.txt" hai (loyalty module Phase 1-7, sab ban chuka hai,
+284 tests green) — yeh uske UPAR ka layer hai.
+
+============================================================
+0. YEH KYON — CONTEXT
+============================================================
+Loyalty module (points, tiers, redemption, campaigns/coupons, birthday/
+referral/win-back, WhatsApp self-check + QR welcome capture, public OTP
+"check my rewards" page, category segmentation, flash-days, reward catalog,
+top-customers) 2026-08-31 ko COMPLETE ho gaya. Sab per-tenant.
+
+Reference dekha: stampzo.in — digital stamp-card platform for local shops
+(salon/cafe/bakery/gym). Uska model:
+  - QR scan → digital card phone ke home screen pe (PWA, koi app nahi)
+  - Stamp per visit; card full → free reward ("buy 4 get 5th free")
+  - Customer ek baar login karke apna card kahin bhi dekh sakta hai (PIN recovery)
+  - Merchant dashboard: members, visits, unlocked rewards, live scan feed,
+    30-day trends
+  - Staff "scan → stamp" 2-second flow
+  - QR Kit: window poster, counter stand, table tent, board, flyer
+
+DECISION (owner ne liya):
+  Customer ko ek GLOBAL login chahiye. Ravi (ek phone) agar 3 shops
+  (salon, cafe, kirana) ka customer hai, toh wo EK BAAR login kare aur
+  teeno shops ke points + offers + stamps ek "wallet" mein dekhe. Customer
+  ko multiple-shop choice mile.
+
+  IMPORTANT — data isolation nahi todni: har shop apna data (points, tier,
+  stamps, offers, visit history) alag rakhta hai. Salon Ravi ke cafe ke
+  points NAHI dekh sakta. Sirf CUSTOMER ko apna sab kuch ek jagah dikhta
+  hai. Yeh multi-tenant CRM ka non-negotiable rule hai.
+
+  Agar 3 shops ek hi business ke branches hain (ek owner) → wo alag case
+  hai (ek tenant, multiple locations, ek Contact, shared points, visit pe
+  location tag). Yeh doc us case ke baare mein NAHI hai.
+
+============================================================
+0A. ROLLOUT — PER-TENANT MODULE GATING (IMPORTANT)
+============================================================
+Yeh feature EK NAYA MODULE hai: `customer_portal`. Bilkul `loyalty` module
+jaisa gate hoga (dekho customer-loyalty.txt Section 1). Har tenant ke liye
+by-default OFF. Tabhi ON jab:
+  a) Tenant ke PLAN mein yeh feature ho — Plan.features['customer_portal'] === true
+     (subscription purchase), YA
+  b) Superadmin ne us tenant ke liye manually force-ON kiya ho —
+     settings['modules']['customer_portal'] === true (tri-state override).
+Warna OFF. Superadmin force-OFF bhi kar sakta hai (=== false).
+
+  → Tenant::hasModuleEnabled('customer_portal') — exact same tri-state logic
+    jo hasModuleEnabled('loyalty') use karta hai. Koi naya method nahi,
+    same helper, naya module key.
+
+DEPENDENCY: `customer_portal` bina `loyalty` ke bekaar hai (wallet loyalty
+data hi dikhata hai). Rule: wallet card kisi tenant ka tabhi dikhega jab
+us tenant ke liye DONO ON hon — hasModuleEnabled('loyalty') AND
+hasModuleEnabled('customer_portal'). Superadmin UI warn kare agar portal
+grant karte waqt loyalty OFF ho.
+
+SUPERADMIN SETUP (loyalty jaisa, same pattern):
+  - SuperAdmin\TenantController::TOGGLEABLE_MODULES mein 'customer_portal' add
+  - moduleLabel(): 'customer_portal' => 'Customer Portal / Wallet'
+  - superadmin/tenants/show.blade $moduleConfigs mein entry (toggle + reset)
+  - Plan.features mein 'customer_portal' bech-ne layak feature
+
+------------------------------------------------------------
+0A.1 — PERMISSION NAHI MILA TOH KYA BEHAVIOUR (dono taraf)
+------------------------------------------------------------
+TENANT SIDE (customer_portal OFF, chahe loyalty ON ho):
+  - Loyalty module POORA kaam karta rehta hai — points, tiers, campaigns,
+    reward catalog, WhatsApp self-check, QR welcome, sab internal. Kuch
+    band nahi hota.
+  - Portal-specific cheezein HIDDEN/BLOCKED:
+      * loyalty/settings pe "Customer Portal" + stamp section nahi dikhta
+      * /loyalty/counter page (Section 4A) + invoice [Scan Customer] — 404 / hidden
+      * QR Kit posters — hidden
+      * Contact show page pe "Customer account / link status" panel — hidden
+        (ya "Upgrade to enable" note)
+  - Us tenant ke Contacts KABHI kisi customer wallet mein surface nahi hote.
+  - Sidebar / loyalty index pe ek soft CTA: "Customer Portal is available on
+    the Pro plan / contact support" (optional).
+
+CUSTOMER SIDE (Ravi linked hai 3 shops se, sirf 1 ke paas portal ON):
+  - Wallet mein SIRF woh shops ke cards dikhte hain jinke paas
+    customer_portal (+ loyalty) ON hai. Baaki shop ka card wallet mein
+    nahi aata — jaise wo shop portal mein hai hi nahi.
+  - Jis din wo shop feature enable karega, uska card apne aap wallet mein
+    aa jayega (link pehle se bana hai, sirf visibility filter hat gaya).
+  - Agar Ravi ka KOI BHI linked shop portal-enabled nahi → login ho jaata
+    hai (login platform-level hai, tenant-gated nahi), par wallet empty:
+    "No rewards cards yet. Visit a participating shop to start collecting."
+    (Dead-end nahi — kal ko koi shop enable kar sakta hai.)
+  - /wallet/{tenant} route: agar us tenant ke paas feature OFF hai → 404,
+    chahe linked Contact exist karta ho.
+
+LINKING (customer_id) — feature se INDEPENDENT:
+  - CustomerLinkService har matching Contact ko link karta hai, chahe us
+    tenant ka portal ON ho ya OFF. Link ek sasta FK hai + future-proof
+    (enable karte hi instant visible).
+  - Visibility ka filter WALLET QUERY pe lagta hai, link pe nahi.
+
+CUSTOMER OTP REQUEST — abuse guard:
+  - OTP tabhi bhejo jab wo phone system mein KISI BHI tenant ke Contact se
+    match kare (chahe portal OFF ho). Random number → "code sent" generic
+    message par actually kuch nahi (existence leak nahi), OR seedha soft
+    error. Isse koi bhi Customer account nahi bana sakta bina kisi shop ka
+    customer bane.
+
+------------------------------------------------------------
+0A.2 — INDEPENDENT MODULE, PAR EK HI CODEBASE (dobara clarify)
+------------------------------------------------------------
+"Independent module" ka matlab: apna module key, apna gate, apne routes/
+controllers (App\Http\Controllers\Portal\*), apna guard (customer). LEKIN
+SAME CRM repo/app/database — alag project NAHI (decision 2026-09-01).
+Seam clean rakho taaki future mein standalone product banana ho toh extract
+ho sake (dekho Section 9 reuse map + Section 12 guardrails).
+
+============================================================
+0B. DESIGN REVIEW — 5 GAPS AUR UNKE RESOLUTIONS (2026-09-01)
+============================================================
+Pehla draft review karne pe 5 holes mile. Har ek ka fix decide ho gaya —
+neeche summary, detail relevant section mein.
+
+GAP 1 — Counter pe redeem/stamp karna abhi bhi jhanjhat. Wallet sirf
+  read-only info dikhata hai; "show code at counter" = staff ko code type
+  karna. Stampzo ka "customer QR dikhaye, staff scan kare, 2 sec" wala flow
+  design nahi tha.
+  RESOLUTION → Section 4A (naya):
+    * Wallet QR = Laravel temporary SIGNED URL (payload: customer_id,
+      90-sec expiry). Phone number QR mein NAHI. Fake-proof.
+    * Alag "counter app" nahi — existing invoice ke Loyalty panel mein
+      [Scan Customer] button (camera + jsQR) → contact auto-fill + one-tap
+      apply (points / offer / reward).
+    * Bill-nahi-banane wale shops (kirana) ke liye standalone
+      /loyalty/counter page: scan/type → card → [+1 Stamp] / [Redeem] one-tap.
+    * Offer bhi wallet mein QR → staff coupon field pe scan.
+    * permission: naya `loyalty.stamp` (cashier ko bina full manage diye).
+
+GAP 2 — Phone = sole identity. Shop staff ne galat number type kiya
+  (Ravi ka number Sunita ke Contact pe) → Sunita login karke Ravi ka data
+  dekh legi. Plus email-only Contacts (jinke paas phone nahi) kabhi link
+  nahi honge.
+  RESOLUTION → Section 2 + Section 12:
+    * OTP hi ownership proof hai (WhatsApp/banking model) — fully
+      preventable nahi, par:
+    * `contacts.phone_verified` bool. Staff-created walk-in = false;
+      customer OTP-link = true.
+    * HISTORY wale Contact (redemptions, ya lifetime_points > 100, ya
+      linked paid invoice) → auto-link NAHI. Wallet mein "We found an
+      account at {shop} — {points} points. Is this you? [Yes] [Not me]".
+      "Not me" → unlink + tenant ko "possible wrong number on contact #X"
+      alert. Thin Contact (0-50 welcome pts, no history) → silently link.
+    * Tenant "Needs review" list — flagged/unverified numbers, merge/fix
+      (MergeService already hai).
+    * EMAIL = doosri linking key. CustomerLinkService email pe bhi match
+      (case-insensitive). Login pe optional "add your email to find more
+      cards" → email OTP → email-only Contacts link.
+
+GAP 3 — Phone matching `RIGHT(REPLACE(REPLACE(...)))` har login pe poore
+  `contacts` table ka full scan (expression pe index nahi). 10 lakh
+  contacts pe ~1-2 sec/login → peak pe CRM hang.
+  RESOLUTION → Section 1 + Section 2 + Section 9:
+    * NEW `contacts.phone_normalized` (varchar(15), index
+      (tenant_id, phone_normalized) + plain (phone_normalized)).
+      Contact `saving` observer → substr(preg_replace('/\D/','',phone), -10).
+      Backfill migration (PHP chunks).
+    * SAARE phone lookups → `WHERE phone_normalized = ?` (index hit).
+      Refactor EXISTING bhi: WhatsappChatbotService::findContactByWaId,
+      loyalty self-check, welcome, Public\RewardsController::matchContact,
+      Api\Tenant\LoyaltyController::lookup.
+    * `customers.phone` bhi normalized store + unique index.
+
+GAP 4 — Section 3 ka login flow pehle Customer::firstOrCreate karta tha,
+  phir OTP. Random numbers daalne se lakhon junk Customer rows + OTP spam +
+  enumeration.
+  RESOLUTION → Section 3:
+    * request-otp REORDER: (1) normalize (2) koi Contact match karta hai
+      kisi bhi tenant mein? NO → generic "if you're a member of a
+      participating shop, a code was sent" (kuch nahi bheja, small fake
+      delay), Customer create NAHI. YES → firstOrCreate + OTP.
+    * Response hamesha same (existence leak nahi).
+    * Rate limit: throttle:5,10 per IP + per-phone max 3 OTP/hour + 60s resend.
+    * Weekly cleanup command: Customer with last_login_at NULL AND
+      created_at < 30d AND zero linked contacts → soft-delete.
+    * Superadmin Customers list default filter: ">=1 linked shop" ya
+      "logged in at least once".
+
+GAP 5 — Wallet card design points-first tha. Pure-stamps shop (kirana:
+  "10 visits = 1 free") ka card "0 points, no tier" = toota hua dikhta.
+  RESOLUTION → Section 4 + Section 5:
+    * LoyaltyService::snapshot() extend → stamp_count, stamps_required,
+      stamp_reward, mode, rewards_unlocked bhi.
+    * Card component `mode` pe primary display switch:
+        points → bada number = points + tier badge + "₹X redeemable"
+        stamps → bada visual = stamp grid (● ● ● ○ ○ ...) + "N more for {reward}"
+        both   → stamp grid upar, points+tier compact neeche
+    * Empty state per mode ("Start earning on your next visit" /
+      "0/10 — visit to start your card").
+
+============================================================
+1. CORE ARCHITECTURE — GLOBAL CUSTOMER IDENTITY
+============================================================
+Naya platform-level actor: "Customer" — `User` (staff) jaisa hi, par
+customers ke liye, kisi tenant ka nahi.
+
+NEW TABLE — `customers` (tenant scope se BAHAR, global):
+  - id
+  - phone            — identity key. Store NORMALIZED (last-10 digits,
+                       preg_replace('/\D/','',...)). UNIQUE index.
+  - name
+  - email            — nullable. Case-insensitive, second linking key
+                       (Gap 2). email_verified_at nullable.
+  - pin_hash         — nullable (bcrypt). Optional fast re-login.
+  - last_login_at    — nullable
+  - blocked_at       — nullable (superadmin abuse control)
+  - timestamps
+
+NEW COLUMN — `contacts.customer_id` → customers.id (nullable FK, nullOnDelete):
+  Ek Customer ↔ KAI Contact rows (har tenant ka apna ek Contact). Yeh link
+  hi wallet ko power deta hai.
+
+NEW COLUMN — `contacts.phone_normalized` varchar(15) nullable (Gap 3):
+  substr(preg_replace('/\D/','', phone), -10). Contact `saving` observer
+  se auto-populate. Index: (tenant_id, phone_normalized) AND (phone_normalized).
+  Backfill migration (PHP chunks, portability). SAARE phone lookups isi
+  column pe (naye + existing WhatsApp/loyalty code refactor).
+
+NEW COLUMN — `contacts.phone_verified` boolean default false (Gap 2):
+  Staff-created walk-in = false. Customer OTP-link confirm = true. Tenant
+  bhi manually confirm kar sakta hai. Wallet auto-link logic isko dekhta hai.
+
+MODEL: App\Models\Customer
+  - NO BelongsToTenant trait (global).
+  - implements Authenticatable (Section 3).
+  - relations: contacts() hasMany(Contact::class)
+  - helper: walletContacts() — Contacts jinke tenant ke liye DONO modules ON
+    (hasModuleEnabled('loyalty') AND hasModuleEnabled('customer_portal'))
+    AND (loyalty_lifetime_points > 0 OR stamp_count > 0 OR koi campaign
+    recipient) — yani "card dikhane layak" (Section 0A.1 + Gap 5).
+  - helper: pendingContacts() — history-wale unverified linked Contacts jo
+    "Is this you?" confirmation ka wait kar rahe hain (Gap 2).
+
+Contact model:
+  - add customer() belongsTo(Customer::class)
+  - customer_id / phone_normalized / phone_verified — NONE fillable
+    (observer / link service owns them).
+  - `saving` observer: phone_normalized recompute jab phone dirty ho.
+
+============================================================
+2. LINKING — CUSTOMER ↔ CONTACTS
+============================================================
+Ek service: App\Services\CustomerLinkService
+
+  a) linkByPhone(Customer $customer): array
+     Sab tenants ke Contacts (withoutGlobalScopes) jinka
+     phone_normalized = customer.phone (INDEX HIT, Gap 3) AND customer_id
+     NULL ho. Email set ho toh contacts.email (lower) = customer.email
+     wale bhi. Har match:
+       - thin Contact (loyalty_lifetime_points <= 100 AND koi redemption/
+         paid-invoice nahi AND stamp history nahi) → seedha link + treat
+         as verified-by-otp.
+       - history-wala Contact → link kar do PAR "pending confirmation"
+         mark (customer ko wallet mein "Is this you?" — Gap 2). Confirm
+         hone tak card SHOW nahi hota.
+     Return: ['linked' => n, 'pending' => m]. Login/create ke waqt call.
+
+  b) attachContactToCustomer(Contact $contact): void
+     Ek naye/updated Contact ke liye — agar us phone_normalized (ya email)
+     ka Customer already exist karta hai toh link kar do (naya Customer
+     NAHI banao yahan — Customer sirf customer khud login karke banata hai).
+     Same thin/history rule jaisa (a). Call sites:
+       - ContactController::store / update (phone/email set/change hone pe)
+       - Public\TicketController, Public\AppointmentController jab naya
+         Contact banate hain
+       - WhatsappChatbotService::enrolFromWhatsapp (QR/WhatsApp join)
+
+  c) confirmContact(Customer, Contact, bool $isMe): void
+     Wallet ke "Is this you? [Yes]/[Not me]" se.
+       - Yes → phone_verified = true (ya email), pending hataao, card show.
+       - Not me → customer_id NULL, tenant ko notification
+         "loyalty.wrong_number" (contact #X — customer denied ownership),
+         tenant "Needs review" list mein.
+
+  d) backfill: skip for launch (Customers abhi bane hi nahi).
+
+Guard: phone_normalized null/short (<10) → koi phone link nahi (email try).
+Do Contacts same tenant same phone → dono evaluate (history rule per-contact).
+
+============================================================
+3. CUSTOMER AUTHENTICATION
+============================================================
+NEW GUARD in config/auth.php:
+  guards.customer   → driver: session, provider: customers
+  providers.customers → driver: eloquent, model: App\Models\Customer
+
+Customer model implements Illuminate\Contracts\Auth\Authenticatable
+(use Authenticatable trait). password field NAHI — passwordless.
+
+LOGIN FLOW (passwordless):
+  Step 1 — request OTP (ORDER IMPORTANT — Gap 4):
+    1. Phone normalize (last-10).
+    2. Rate check: throttle:5,10 per IP + per-phone max 3 OTP/hour (60s resend).
+    3. CONTACT-MATCH CHECK — kisi bhi tenant ka Contact hai jiska
+       phone_normalized = X? (withoutGlobalScopes, INDEX HIT.)
+         NO  → generic reply "If you're a member of a participating shop,
+               we've sent a code." Kuch NAHI bheja. Customer create NAHI.
+               (chhota fake delay taaki timing se leak na ho.)
+         YES → Customer::firstOrCreate(['phone' => X]) →
+               CustomerLinkService::linkByPhone($customer) →
+               OTP generate (6-digit, hashed, 10-min TTL, 5-attempt lock).
+    4. OTP deliver: WhatsApp (agar match hue Contacts mein se kisi ka tenant
+       WhatsApp-connected — pehla milta) ELSE Email (customer.email ya kisi
+       linked Contact ka email). SMS nahi hai.
+    5. Response HAMESHA same (existence leak nahi).
+  Step 2 — code verify:
+    - Match → session login (Auth::guard('customer')->login($customer, remember: true)).
+    - last_login_at = now().
+    - Agar pin_hash NULL → optionally "set a 4-6 digit PIN for faster login"
+      screen (skippable).
+    - Agar linkByPhone ne "pending" Contacts diye (Gap 2) → wallet pe seedha
+      "Is this you?" cards dikhao.
+  Fast re-login (agar PIN set):
+    - phone + PIN → verify → login. PIN galat 5 baar → PIN lock, OTP par
+      wapas. throttle:5,10 per IP dono endpoints pe.
+
+JUNK CLEANUP (Gap 4):
+  Weekly command `customers:prune` — Customer jinka last_login_at NULL AND
+  created_at < 30 din AND zero linked contacts → soft-delete. (Edge: Contact
+  delete hone se orphan ho gaya wala bhi.)
+
+OTP STORAGE:
+  Naya table `customer_otps` (loyalty_otps jaisa hi, par tenant_id ke bina):
+    id, customer_id (nullable), phone, channel, code_hash, attempts, ip,
+    expires_at (NULLABLE — MySQL TIMESTAMP ON UPDATE gotcha, dekho
+    loyalty_otps migration), verified_at, timestamps.
+  Model App\Models\CustomerOtp — LoyaltyOtp se copy, tenant hataao.
+  (Alternative: loyalty_otps.tenant_id ko nullable karke reuse — par alag
+  table cleaner, kyunki maqsad alag hai.)
+
+SESSION:
+  - remember cookie long-lived (30 din+) — PWA use case.
+  - Customer guard ki apni middleware: `auth:customer`.
+  - Logout route.
+
+PWA:
+  - resources/views/portal/... + public/manifest webmanifest + service
+    worker (optional, minimal — bas installability ke liye manifest kaafi
+    hai + apple-touch-icon meta).
+  - "Add to home screen" prompt.
+
+============================================================
+4. CUSTOMER WALLET PORTAL
+============================================================
+URL — DECISION PENDING (Section 10). Do options:
+  A) Alag subdomain: app.<base-domain>  (e.g. app.saas-crm.test)
+     - IdentifyTenant middleware YAHAN NAHI lagta.
+     - Cleaner, "customer app" feel.
+  B) Path on base domain: /wallet
+     - Base domain pe already auth/pricing/public pages hain — fit ho jayega.
+RECOMMEND: A (subdomain) agar infra allow kare, warna B.
+
+ROUTES (throttle per Section 3 — 5,10 per IP + per-phone caps):
+  GET  /login                       — phone entry
+  POST /login/request-otp           — Gap 4 reorder
+  POST /login/verify                — → session
+  POST /login/pin                   — fast re-login (PIN)
+  POST /pin                         — set/change PIN (auth:customer)
+  POST /logout
+  GET  /wallet                      — card list (auth:customer)
+  GET  /wallet/{tenant}             — one shop card (auth:customer; linked
+                                      Contact + DONO modules ON, warna 404)
+  POST /wallet/{tenant}/confirm     — "Is this you? Yes/Not me" (Gap 2)
+  GET  /wallet/{tenant}/qr          — signed counter QR payload (Section 4A)
+  GET  /wallet/{tenant}/history     — full activity (optional, or inline)
+  GET  /profile                     — name/email edit (auth:customer)
+
+STAFF-side counter routes (guard web + permission:loyalty.stamp +
+module:customer_portal):
+  GET  /loyalty/counter             — scan/type page
+  POST /loyalty/counter/resolve     — QR/phone → contact card JSON
+  POST /loyalty/counter/stamp       — +1 stamp
+  (redeem/offer/reward → existing invoice endpoints)
+
+VIEW — /wallet (card list):
+  Har card ek tile — PRIMARY display shop ke `mode` pe (Gap 5):
+    - Shop name + logo (tenant.name, tenant.logo)
+    - mode=points → bada points number + tier badge + "₹34 off available"
+    - mode=stamps → bada stamp progress (● ● ● ○ ○, "3/5") + "2 more for {reward}"
+    - mode=both   → stamp progress primary, points+tier chhota neeche
+    - Active offers count (campaign recipients + tier discount)
+    - Last visit date
+  Sirf Customer::walletContacts() (Section 1) — DONO modules ON + card
+  dikhane layak. "Pending confirmation" (Gap 2) cards alag section mein:
+  "Is this you?".
+
+VIEW — /wallet/{tenant} (one shop):
+  - HEADER mode ke hisaab se (Gap 5): points card ya stamp-grid card ya both.
+    snapshot() se: points, tier, lifetime, redeemable ₹, stamp_count,
+    stamps_required, stamp_reward, mode, rewards_unlocked.
+  - "SHOW AT COUNTER" QR — signed short-lived (Section 4A). Yehi Ravi
+    counter pe dikhata hai. Redeemable points / unlocked reward hone pe
+    prominent.
+  - MY OFFERS: is customer ke us shop ke LoyaltyCampaignRecipient rows jinki
+    campaign active+unexpired+cap-not-reached AND recipient ne use nahi kiya
+    (redeemed_count < usage_limit). Har offer: reward label, code + uska
+    apna chhota QR (Section 4A), expiry.
+  - Tier discount eligibility: "You're Gold — 10% off eligible" (agar tenant
+    ne aisa configure kiya ho — abhi tier-based auto-discount nahi hai,
+    dekho customer-loyalty.txt gap #3; agar chahiye toh alag).
+  - RECENT ACTIVITY: LoyaltyService::snapshot()['recent'] + stamp events +
+    expiry warnings ("200 points expire 12 Sep").
+  - Birthday/anniversary edit? Optional — customer apna birthday daale toh
+    tenant ke birthday campaign mein aa jaye (Contact.birthday set via link).
+
+DATA REUSE:
+  - LoyaltyService::snapshot(Contact) — EXTEND (Gap 5): abhi
+    points/tier/redeemable/recent deta hai; stamp_count, stamps_required,
+    stamp_reward, mode, rewards_unlocked bhi add karo.
+  - LoyaltyCampaignRecipient — offers.
+  - Tenant::loyaltySettings() — rules.
+  NOTHING tenant-scoped query customer context mein — hamesha explicit
+  tenant_id + withoutGlobalScopes, kyunki koi tenant User authenticated nahi.
+
+============================================================
+4A. COUNTER REDEMPTION / STAMP — WALLET QR (Gap 1)
+============================================================
+Problem: wallet read-only tha. Ravi ko counter pe redeem/stamp karne ke
+liye staff CRM mein contact dhoondhta tha (slow). Fix:
+
+WALLET QR (Ravi ke phone pe):
+  - Har card pe ek "Show at counter" QR. Encode karta hai ek Laravel
+    TEMPORARY SIGNED URL:
+        app.<domain>/counter/scan/{signed}   (URL::temporarySignedRoute,
+        payload = customer_id, expiry = 90 sec)
+  - PHONE NUMBER QR mein NAHI. Laravel signature khud validate karta hai
+    (`signed` middleware) → fake/replay nahi.
+  - Har ~60 sec QR refresh (naya signed URL) — screenshot bekaar.
+
+STAFF SIDE — 2 raste (dono banao):
+
+  (i) INVOICE PE — jo shops bill banate hain (salon, restaurant):
+      Invoice show page ka existing "Loyalty" panel (Phase 2/6) mein naya
+      [Scan Customer] button:
+        - Camera kholo (jsQR — chhoti vendored JS, getUserMedia)
+        - Ravi ka wallet QR scan → signed URL verify → us shop ke liye
+          Ravi ka Contact resolve → panel auto-fill:
+          "Ravi — 340 pts, Gold. [Use Max ₹34]  [Offer K7P2QF]  [Free reward]"
+        - Ek tap → apply (existing applyRedemption / applyCoupon / redeemReward)
+      Contact search khatam. Offer code bhi scan se aa jaata hai (type nahi).
+
+  (ii) STANDALONE /loyalty/counter — jo shops bill nahi banate (kirana):
+      - Bada [Scan QR]  +  [Type phone]  input
+      - Resolve → us shop ka card: naam, points, tier, stamps X/N,
+        unlocked rewards, active offers
+      - One-tap buttons:
+          [+1 Stamp]        (mode stamps/both)
+          [Redeem ₹X points] (creates a redemption; agar us contact ka koi
+                              open invoice nahi → "loyalty voucher" record
+                              jo agli invoice auto-consume kare, ya staff
+                              turant chhoti invoice banaye — DECISION §10)
+          [Apply offer …]    (har active offer ka button)
+          [Redeem free reward] (agar stamp_rewards_earned > 0 ya reward unlocked)
+      - `permission:loyalty.stamp` (naya — cashier ko bina loyalty.manage diye)
+      - Sirf hasModuleEnabled('customer_portal') pe available.
+
+SECURITY:
+  - Signed URL: sirf server bana sakta hai (APP_KEY). 90-sec expiry +
+    tenant-side "consume once" flag → replay nahi.
+  - Staff jab QR verify kare → us STAFF ke tenant ke liye hi Ravi ka
+    Contact resolve hota hai (tenant isolation — Section 12). Doosre shop
+    ka data kabhi nahi.
+  - Camera permission na ho / QR na chale → [Type phone] fallback hamesha.
+
+============================================================
+5. STAMP / VISIT MODEL — (Stampzo parity, DECIDE karna hai kya is phase mein)
+============================================================
+Abhi module "points from ₹ spend" hai. Stampzo "stamp per visit" hai.
+Dono support karo — tenant chune.
+
+SETTINGS (Tenant::LOYALTY_DEFAULTS mein add):
+  'mode'             => 'points'        // points | stamps | both
+  'stamps_required'  => 5               // card size
+  'stamp_reward'     => ''              // "Free regular coffee"
+  'stamp_per'        => 'visit'         // visit | invoice | amount
+  'stamp_amount'     => 100             // agar stamp_per=amount: har ₹100 pe 1 stamp
+  'stamp_expiry_days'=> 0               // partial card N din baad reset (0 = never)
+
+CONTACT columns (naya migration):
+  - stamp_count          unsignedInt default 0   (current card progress)
+  - stamps_lifetime      unsignedInt default 0
+  - stamp_rewards_earned unsignedInt default 0
+  - stamp_updated_at     timestamp nullable
+
+LEDGER: LoyaltyTransaction.type mein 'stamp' aur 'stamp_reward' add.
+  (Ya alag table loyalty_stamp_events — par LoyaltyTransaction reuse simpler,
+  points column ko stamp count ki tarah use karo type='stamp' pe.)
+
+AWARD:
+  - stamp_per=visit/invoice → InvoiceController::awardForInvoice ke saath-saath
+    ek stamp bhi (agar mode stamps/both). Ya visit = "invoice paid" event.
+  - stamp_per=amount → floor(paid / stamp_amount) stamps.
+  - Manual "give stamp" → Section 4A ka /loyalty/counter page.
+  - stamp_count >= stamps_required → stamp_reward "unlocked", stamp_count -=
+    stamps_required, stamp_rewards_earned++, notify customer
+    ("Your card is full! Free coffee unlocked. Show this at the counter.")
+  - Anti-abuse: max 1 stamp per contact per day (ya tenant-set) — like
+    max_points_per_day.
+
+REDEEM (unlocked stamp reward):
+  - Staff-side (Section 4A): invoice Loyalty panel ya /loyalty/counter pe
+    "Redeem free reward" → stamp_rewards_earned--, note on invoice
+    (loyalty_reward field reuse), free item staff add kare. Reverse on delete.
+
+STAMP EXPIRY (agar stamp_expiry_days > 0):
+  - Scheduled command `loyalty:expire-stamps` (daily) — koi partial card
+    (stamp_count > 0) jiska stamp_updated_at > N din purana → stamp_count = 0,
+    ek 'stamp' type ledger row (negative) note ke saath. Notify optional.
+  - customer-loyalty.txt ke `loyalty:expire-points` jaisa hi pattern.
+
+STAFF FAST FLOW: Section 4A (ii) /loyalty/counter — scan/type → [+1 Stamp].
+Wallet QR = signed URL (Section 4A), phone/customer_id plaintext NAHI.
+Points-mode shops bhi isi page se "record a visit" kar sakte (agar tenant
+chahe — visit = fixed nominal points, DECISION §10).
+
+============================================================
+6. TENANT-SIDE CHANGES
+============================================================
+Zyada tar waisa hi. Additions:
+  - Contact show page (loyalty panel): "Customer account: Linked (last login
+    3 days ago)" / "Not linked" / "Pending — customer confirmation" (Gap 2).
+  - "NEEDS REVIEW" list (Gap 2): Contacts jinpe customer ne "not me" bola ya
+    phone_verified false + koi mismatch signal → tenant fix/merge kare
+    (MergeService).
+  - Loyalty index: unified overview (Stampzo dashboard jaisa) —
+      * Members / Points outstanding / Tier counts (already hai)
+      * Stamps: active cards, rewards unlocked, redeemed
+      * 30-day visit trend (chart — invoices paid per day)
+      * Recent activity feed (last 20 loyalty_transactions with contact name)
+  - Stamp settings section in loyalty/settings (Section 5).
+  - Counter page /loyalty/counter (Section 4A) + [Scan Customer] on invoice.
+  - QR Kit: printable posters — welcome QR ko A4 poster / counter stand /
+    table tent templates mein wrap (blade print CSS ya dompdf).
+
+Permissions (RolesAndPermissionsSeeder):
+  - keep loyalty.view / loyalty.manage
+  - optional naya: loyalty.stamp (cashier role ko de sakte hain bina
+    full manage diye)
+
+GATING: Section 6 ki har CUSTOMER-PORTAL cheez (Contact link panel, portal
+settings, Give-Stamp page, QR Kit, unified dashboard ka stamp/customer part)
+sirf tab dikhe jab Tenant::hasModuleEnabled('customer_portal'). Points/tier/
+campaign wale hisse loyalty-gate pe hi rehte hain (pehle jaise).
+
+============================================================
+7. SUPERADMIN CHANGES
+============================================================
+  - customer_portal module toggle — Section 0A (TOGGLEABLE_MODULES + label +
+    $moduleConfigs + Plan feature). Warn agar loyalty OFF hai jab portal grant ho.
+  - Naya page: Customers (platform-level list) — phone, name, linked shops
+    count, last login, block/unblock. Tenant ko yeh KABHI nahi dikhta.
+  - Metrics: total customers, active this month, avg shops per customer.
+  - `customers` table ka koi bhi query tenant context se strictly bahar.
+
+============================================================
+8. EXISTING LOYALTY PIECES KA KYA HOGA
+============================================================
+  - Public\RewardsController + /rewards/{token} OTP page (loyalty Phase 5):
+    Ismें merge ho jaye ya "bina login quick check" entry point bane. Best:
+    us page pe "Log in to see all your rewards in one place →" link jo
+    customer portal pe le jaye. Token page rakhna theek hai (jinke paas
+    portal account nahi).
+  - WhatsApp self-check (handleLoyaltyKeyword) + QR welcome
+    (handleLoyaltyWelcome) + findContactByWaId: PHASE 0 mein phone_normalized
+    pe refactor honge (Gap 3). Behaviour same, sirf query fast + indexed.
+    WhatsApp join se bana Contact → agar us phone ka Customer exist karta hai
+    → auto-link (attachContactToCustomer enrolFromWhatsapp mein call).
+  - Chatbot placeholder + loyalty_join action: unchanged.
+  - Campaigns, reward catalog, expiry, flash-days, birthday/referral/
+    win-back: unchanged — wallet inhe SURFACE karta hai, badalta nahi.
+
+============================================================
+9. REUSE MAP (jo already bana hai, uspe build karo)
+============================================================
+  - LoyaltyService::snapshot(Contact)     → wallet card data (extend, Gap 5)
+  - LoyaltyOtp / customer_otps pattern     → customer OTP (copy, tenant hatao)
+  - LoyaltyCampaignRecipient               → "My Offers"
+  - Public controllers (Rewards/Ticket/Appointment) → portal controller pattern
+  - Tenant::ensureRewardsToken() token pattern → agar path-based portal
+  - config/auth.php multi-guard             → customer guard
+  - barryvdh/laravel-dompdf (installed)     → QR Kit posters
+  - quickchart.io QR img (settings mein use hai) → wallet/poster/offer QR render
+  - Laravel URL::temporarySignedRoute + `signed` middleware → wallet counter QR (4A)
+  - jsQR (vendor into public/js) → staff camera QR decode (4A)
+  - WhatsappChatbotService::findContactByWaId → phone matching (REFACTOR to
+    phone_normalized, Gap 3 — yahi helper baaki jagah bhi use hota hai)
+  - Contact model observer pattern → phone_normalized auto-populate
+  - MergeService / DuplicateMatcher (already hai) → tenant "Needs review" fix (Gap 2)
+  - RolesAndPermissionsSeeder pattern       → loyalty.stamp permission
+  - loyalty:expire-points command pattern   → loyalty:expire-stamps, customers:prune
+  - "check my rewards" blade styles (rewards-show/result) → portal UI base
+  - LoyaltyNotifier                          → customer-facing stamp/reward pushes
+
+============================================================
+10. OPEN DECISIONS — implement se pehle clarify
+============================================================
+  RESOLVED (design review 2026-09-01, Section 0B):
+    - Wallet counter QR = Laravel temporary signed URL (customer_id, 90s).
+    - Alag project NAHI — same repo, isolated seam.
+    - Phone matching = new phone_normalized indexed column.
+    - request-otp = Contact-match check pehle, phir Customer create.
+
+  STILL OPEN:
+  1. Portal URL: alag subdomain (app.<domain>) ya path (/wallet)?
+     (subdomain = DNS + SSL + nginx infra kaam — sirf route decision nahi.)
+  2. PIN chahiye ya sirf OTP har baar? (PIN = fast re-login, extra code +
+     "PIN bhool gaya AND phone badal gaya" dead-end.)
+  3. Stamp model IS phase mein (Phase D) ya baad mein? (Kirana use-case ka
+     core stamps hi hai — points-only wallet unke liye adhura.)
+  4. Existing /rewards/{token} OTP page — hatao ya "quick check" ke liye
+     rakho + "log in for all rewards" link? (RECOMMEND: rakho.)
+  5. QR Kit posters — Phase E ya baad? (nice-to-have)
+  6. Customer portal se birthday/name edit kar sakta hai? Edit → sabhi
+     linked Contacts pe reflect ho ya sirf Customer row pe?
+  7. /loyalty/counter pe "Redeem points" jab koi open invoice nahi:
+     loyalty-voucher record (agli invoice auto-consume) YA staff turant
+     chhoti invoice banaye? (Section 4A)
+  8. Points-mode shop /loyalty/counter se "record a visit" kar sake
+     (= fixed nominal points)? Ya counter page sirf stamps-mode?
+  9. Unified merchant dashboard + Superadmin Customers page — Phase E ya alag?
+  10. Web-push notifications (PWA) — is scope mein nahi (NON-GOAL) ya baad mein?
+  11. "Delete my account" (customer): Customer row soft-delete + saare
+      links NULL. Contacts (tenant data) rehte hain. Confirm.
+
+============================================================
+11. PHASING — BUILD ORDER (mistake-free ke liye chhote steps)
+============================================================
+  PHASE 0 — Phone normalize (foundation, Gap 3) — SABSE PEHLE:
+    - contacts.phone_normalized column + indexes + Contact `saving` observer
+    - backfill migration (PHP chunks)
+    - REFACTOR existing phone lookups → phone_normalized:
+      WhatsappChatbotService::findContactByWaId, loyalty self-check, welcome,
+      Public\RewardsController::matchContact, Api\Tenant\LoyaltyController::lookup
+    - tests: observer populates on save, existing WhatsApp/loyalty tests still
+      green (284), format variants (+91 / spaces / dashes) sab match
+
+  PHASE A — Module gate + identity + linking (no customer UI):
+    - REGISTER MODULE `customer_portal` (Section 0A):
+      * SuperAdmin\TenantController::TOGGLEABLE_MODULES += 'customer_portal'
+      * moduleLabel() + superadmin/tenants/show.blade $moduleConfigs entry
+      * Plan.features['customer_portal'] sellable
+    - customers table (phone normalized, unique) + Customer model
+      (Authenticatable, no tenant) + contacts.customer_id + contacts.phone_verified
+    - CustomerLinkService (linkByPhone → thin/history split, email key,
+      attachContactToCustomer, confirmContact) — feature se independent (0A.1)
+    - wire attachContactToCustomer into Contact create/update + public
+      contact creators + enrolFromWhatsapp
+    - tests: link by phone_normalized, email link, thin auto-link vs
+      history-pending, cross-tenant many-to-one, module gate tri-state,
+      "not me" → unlink + tenant alert
+
+  PHASE B — Customer auth:
+    - customer guard in config/auth.php + customer_otps table + CustomerOtp
+    - CustomerAuthController — request-otp REORDER (Gap 4): contact-match
+      check → firstOrCreate → OTP; generic no-leak response
+    - verify / pin (set + fast-login) / logout
+    - login + set-pin blades
+    - throttle:5,10 per IP + per-phone 3/hour; session; remember; last_login_at
+    - `customers:prune` weekly command
+    - tests: no-match phone → no Customer created + generic reply, OTP login,
+      PIN login, lockout, rate limit, prune
+
+  PHASE C — Wallet portal:
+    - route group (subdomain or /wallet — DECISION §10) + auth:customer
+    - WalletController (index = cards, show = one shop)
+      * walletContacts(): DONO modules ON (0A.1)
+      * show({tenant}): 404 agar customer_portal OFF
+      * zero eligible shops → empty-state (dead-end nahi)
+      * "Is this you?" pending cards section (Gap 2) + confirmContact routes
+    - blades: MODE-ADAPTIVE card (points / stamps / both — Gap 5) + single card
+    - snapshot() EXTEND with stamp fields (Gap 5)
+    - tenant side: loyalty/settings "Customer Portal" section + Contact panel
+      link-status + "Needs review" list — sab hasModuleEnabled('customer_portal')
+    - PWA manifest + apple-touch-icon
+    - "check my rewards" token page pe "log in for all rewards" link
+    - tests: card list = linked+loyalty+portal only, portal-OFF card hidden,
+      /wallet/{off-tenant}=404, single-card isolation, offers listed,
+      cross-customer 404, pending-confirm flow, mode-adaptive render
+
+  PHASE D — Counter redemption + Stamp model (Section 4A + 5):
+    - Wallet counter QR (temporarySignedRoute, 90s) + /counter/scan endpoint
+    - jsQR vendored; [Scan Customer] on invoice Loyalty panel
+    - standalone /loyalty/counter page + `loyalty.stamp` permission
+    - LOYALTY_DEFAULTS: mode + stamp_* keys; contacts stamp_* columns
+    - LoyaltyService stamp award/redeem + anti-abuse; award hook in
+      awardForInvoice; loyalty:expire-stamps command
+    - loyalty/settings stamp section; wallet stamp card visual (Phase C ne
+      component bana diya, ab real data)
+    - tests: signed QR verify + expiry + replay-block, scan resolves right
+      tenant only, +1 stamp, card-full unlock, stamp per visit/amount, daily
+      cap, expire-stamps, redeem reward on invoice
+
+  PHASE E — Merchant dashboard + superadmin + QR Kit (polish):
+    - unified loyalty overview + 30-day visit trend + recent activity feed
+    - superadmin Customers page (default filter ">=1 linked shop", block/unblock)
+    - QR Kit printable posters (dompdf / print CSS)
+    - "delete my account" (§10) if in scope
+    - tests
+
+  Har phase ke baad: php artisan test (full), migrations dev+testing dono,
+  view:cache. Sab green rehna chahiye (abhi 284 green hain).
+
+============================================================
+12. GUARDRAILS / RISKS (dhyan rakhna)
+============================================================
+  - TENANT ISOLATION: customers table + wallet + /counter/scan queries kabhi
+    bhi tenant User ke through nahi. Har Contact fetch explicit tenant_id +
+    withoutGlobalScopes. Ek tenant kabhi customers enumerate na kar paaye.
+    Wallet {tenant} + counter scan: STAFF ke apne tenant ke liye hi Contact
+    resolve, warna 404.
+  - PHONE = IDENTITY (Gap 2): shop staff typo se Ravi ka number Sunita ke
+    Contact pe → jo number control karta hai wo us Contact ka "owner" ban
+    jaata hai (WhatsApp/banking jaisa model). Mitigations:
+      * history-wale Contact pe "Is this you?" confirm (auto-link nahi)
+      * "not me" → unlink + tenant alert + Needs-review list
+      * phone_verified flag; email = second key
+    Fully eliminate nahi hota — accept + document.
+  - NUMBER CHANGE: launch pe unsupported (support ticket). Baad mein: OTP to
+    old + new → Customer.phone update + re-link.
+  - phone_normalized: har save pe recompute (observer). Backfill ke baad
+    verify koi Contact chhoot na jaye. Index zaroori (Gap 3 ka pura point).
+  - SIGNED QR (4A): 90-sec expiry + consume-once. APP_KEY leak = QR forge —
+    standard Laravel risk, rotate on breach.
+  - PRIVACY: customer ab apna cross-shop data dekh sakta hai — data-subject
+    request + "delete my account" surface (§10 #11).
+  - OTP DELIVERY: SMS nahi hai. Jinke paas WhatsApp-connected shop nahi aur
+    email nahi → login nahi kar payenge. Portal tab hi useful jab kisi shop
+    ne unhe Contact banaya ho.
+  - blocked_at customer → login block, wallet 403.
+  - Rate limiting har auth + OTP + counter-scan endpoint pe.
+  - JUNK: request-otp pe Customer create SIRF Contact-match ke baad (Gap 4)
+    + customers:prune.
+
+============================================================
+13. NON-GOALS (yeh is doc mein NAHI hai)
+============================================================
+  - Cross-shop shared points / coalition loyalty (alag product).
+  - Multi-branch single-tenant (wo already ek Contact = ek balance).
+  - Customer-to-customer transfer of points.
+  - Native mobile app (PWA kaafi hai).
+  - SMS channel (CRM mein integration nahi).
+  - Payment / wallet money (sirf loyalty points/stamps).
+  - Web-push notifications (PWA) — Phase E ya baad, is scope mein nahi.
+  - Tier-based AUTO discount (customer-loyalty.txt gap #3) — abhi bhi manual.
+  - Standalone "koi bhi shop join kare, CRM ke bina" product — wo alag
+    project (Section 0A.2).

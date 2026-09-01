@@ -120,7 +120,9 @@
     ];
 
     $sections = $contactFields['sections'];
-    $grouped  = collect($contactFields['fields'])->groupBy('section');
+    $grouped  = collect($contactFields['fields'])
+        ->reject(fn($f) => !empty($f['module']) && !auth()->user()->tenant?->hasModuleEnabled($f['module']))
+        ->groupBy('section');
 @endphp
 
 <div class="cf-page">

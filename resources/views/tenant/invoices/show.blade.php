@@ -289,9 +289,139 @@
                         </strong>
                     </div>
 
+                    @if($invoice->hasLoyaltyRedemption())
+                    <div class="summary-row">
+                        <span>Loyalty Redeemed ({{ number_format($invoice->loyalty_points_redeemed) }} pts)</span>
+                        <strong style="color:var(--green)">− ₹{{ number_format($invoice->loyalty_discount, 2) }}</strong>
+                    </div>
+                    @endif
+                    @if($invoice->campaign_discount > 0)
+                    <div class="summary-row">
+                        <span>Campaign Coupon</span>
+                        <strong style="color:var(--green)">− ₹{{ number_format($invoice->campaign_discount, 2) }}</strong>
+                    </div>
+                    @endif
+                    @if($invoice->hasLoyaltyRedemption() || $invoice->campaign_discount > 0)
+                    <div class="summary-row">
+                        <span>Paid</span>
+                        <strong>₹{{ number_format($invoice->paid_amount, 2) }}</strong>
+                    </div>
+                    <div class="summary-row total">
+                        <span>Balance Due</span>
+                        <strong>₹{{ number_format($invoice->due_amount, 2) }}</strong>
+                    </div>
+                    @endif
+
                 </div>
 
             </div>
+
+            {{-- LOYALTY REDEMPTION --}}
+            @if($invoice->hasLoyaltyRedemption() && $invoice->status !== 'paid')
+            <div class="card mt-4">
+                <div class="card-head">Loyalty Points</div>
+                <div class="card-body">
+                    <p style="margin:0 0 12px;font-size:13.5px;color:var(--text-200)">
+                        <strong>{{ number_format($invoice->loyalty_points_redeemed) }} points</strong>
+                        redeemed on this invoice — worth
+                        <strong>₹{{ number_format($invoice->loyalty_discount, 2) }}</strong>.
+                    </p>
+                    <form method="POST" action="{{ route('tenant.invoices.unredeem_loyalty', $invoice->id) }}"
+                          onsubmit="return confirm('Remove this redemption and return the points to the customer?')">
+                        @csrf
+                        <button type="submit" class="btn btn-secondary">Remove Redemption</button>
+                    </form>
+                </div>
+            </div>
+            @elseif(!is_null($loyaltyQuote ?? null))
+            <div class="card mt-4">
+                <div class="card-head">Loyalty Points</div>
+                <div class="card-body">
+                    @if($invoice->contact->loyalty_points > 0)
+                    <p style="margin:0 0 10px;font-size:13px;color:var(--text-300)">
+                        {{ $invoice->contact->name }} has
+                        <strong style="color:var(--text-100)">{{ number_format($invoice->contact->loyalty_points) }} points</strong>{{ $invoice->contact->loyalty_tier ? ' · ' . $invoice->contact->loyaltyTierLabel() : '' }}.
+                    </p>
+                    @endif
+
+                    @if($loyaltyQuote['error'])
+                    <p style="margin:0;font-size:13px;color:var(--text-400)">{{ $loyaltyQuote['error'] }}</p>
+                    @else
+                    <p style="margin:0 0 12px;font-size:13px;color:var(--text-300)">
+                        Up to <strong style="color:var(--green)">{{ number_format($loyaltyQuote['points']) }} points (₹{{ number_format($loyaltyQuote['value'], 2) }})</strong> can be applied to this bill.
+                    </p>
+                    <form method="POST" action="{{ route('tenant.invoices.redeem_loyalty', $invoice->id) }}"
+                          style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                        @csrf
+                        <input type="number" name="points" min="1" step="1"
+                               placeholder="Points" style="width:120px;padding:8px 10px;background:var(--bg-input);border:1.5px solid var(--border-default);border-radius:var(--r-sm);color:var(--text-100);font-size:13px"/>
+                        <button type="submit" class="btn btn-secondary">Redeem</button>
+                        <button type="submit" name="use_max" value="1" class="btn btn-primary">Use Max</button>
+                    </form>
+                    @endif
+                </div>
+            </div>
+            @endif
+
+            {{-- CAMPAIGN COUPON --}}
+            @if($tenant->hasModuleEnabled('loyalty') && $invoice->contact && $invoice->status !== 'paid')
+            <div class="card mt-4">
+                <div class="card-head">Campaign Coupon</div>
+                <div class="card-body">
+                    @if($invoice->hasCampaignCoupon())
+                    <p style="margin:0 0 12px;font-size:13.5px;color:var(--text-200)">
+                        Coupon applied — <strong>₹{{ number_format($invoice->campaign_discount, 2) }}</strong> off.
+                    </p>
+                    <form method="POST" action="{{ route('tenant.invoices.remove_coupon', $invoice->id) }}">
+                        @csrf
+                        <button type="submit" class="btn btn-secondary">Remove Coupon</button>
+                    </form>
+                    @else
+                    <form method="POST" action="{{ route('tenant.invoices.apply_coupon', $invoice->id) }}"
+                          style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                        @csrf
+                        <input type="text" name="code" placeholder="Coupon code" required
+                               style="width:150px;padding:8px 10px;background:var(--bg-input);border:1.5px solid var(--border-default);border-radius:var(--r-sm);color:var(--text-100);font-size:13px;text-transform:uppercase"/>
+                        <button type="submit" class="btn btn-primary">Apply</button>
+                    </form>
+                    @endif
+                </div>
+            </div>
+            @endif
+
+            {{-- LOYALTY REWARD (free item) --}}
+            @php $rewardCatalog = $tenant->hasModuleEnabled('loyalty') ? ($tenant->loyaltySettings()['reward_catalog'] ?? []) : []; @endphp
+            @if($tenant->hasModuleEnabled('loyalty') && $invoice->contact && $invoice->status !== 'paid' && ($invoice->hasLoyaltyReward() || count($rewardCatalog)))
+            <div class="card mt-4">
+                <div class="card-head">Loyalty Reward</div>
+                <div class="card-body">
+                    @if($invoice->hasLoyaltyReward())
+                    <p style="margin:0 0 12px;font-size:13.5px;color:var(--text-200)">
+                        <strong>{{ $invoice->loyalty_reward }}</strong> redeemed for
+                        <strong>{{ number_format($invoice->loyalty_reward_points) }} points</strong> — add the item to the order.
+                    </p>
+                    <form method="POST" action="{{ route('tenant.invoices.remove_reward', $invoice->id) }}">
+                        @csrf
+                        <button type="submit" class="btn btn-secondary">Remove Reward</button>
+                    </form>
+                    @else
+                    <form method="POST" action="{{ route('tenant.invoices.redeem_reward', $invoice->id) }}" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                        @csrf
+                        <select name="reward" required style="padding:8px 10px;background:var(--bg-input);border:1.5px solid var(--border-default);border-radius:var(--r-sm);color:var(--text-100);font-size:13px">
+                            <option value="">— Choose a reward —</option>
+                            @foreach($rewardCatalog as $r)
+                            <option value="{{ $r['name'] }}" @disabled(($r['points'] ?? 0) > (int) $invoice->contact->loyalty_points)>
+                                {{ $r['name'] }} ({{ number_format($r['points'] ?? 0) }} pts)
+                            </option>
+                            @endforeach
+                        </select>
+                        <button type="submit" class="btn btn-primary">Redeem</button>
+                    </form>
+                    <div style="font-size:11.5px;color:var(--text-400);margin-top:6px">{{ $invoice->contact->name }} has {{ number_format($invoice->contact->loyalty_points) }} points.</div>
+                    @endif
+                </div>
+            </div>
+            @endif
 
             {{-- RECORD PAYMENT --}}
             @if($invoice->due_amount > 0)

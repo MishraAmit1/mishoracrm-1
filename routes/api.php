@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\Tenant\LeadController    as ApiLeadController;
 use App\Http\Controllers\Api\Tenant\DealController    as ApiDealController;
 use App\Http\Controllers\Api\Tenant\TaskController    as ApiTaskController;
 use App\Http\Controllers\Api\Tenant\QuotationController as ApiQuotationController;
+use App\Http\Controllers\Api\Tenant\LoyaltyController as ApiLoyaltyController;
 use App\Http\Controllers\Api\WebhookValidationController;
 
 Route::prefix('v1')->group(function () {
@@ -73,6 +74,9 @@ Route::prefix('v1')->group(function () {
         Route::delete('/quotations/{id}',           [ApiQuotationController::class, 'destroy']);
         Route::patch('/quotations/{id}/status',     [ApiQuotationController::class, 'updateStatus']);
         Route::post('/quotations/{id}/new-version', [ApiQuotationController::class, 'newVersion']);
+
+        // Loyalty — customer points lookup for an embedded rewards widget
+        Route::get('/loyalty/lookup',       [ApiLoyaltyController::class, 'lookup']);
 
         // Tasks
         Route::get('/tasks',                [ApiTaskController::class, 'index']);

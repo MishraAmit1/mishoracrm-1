@@ -119,6 +119,7 @@ class ServiceController extends Controller
             'tax_percent'     => ['required', 'numeric', 'min:0', 'max:100'],
             'hsn'             => ['nullable', 'string', 'max:50'],
             'unit'            => ['nullable', 'string', 'max:50'],
+            'category'        => ['nullable', 'string', 'max:80'],
             'is_active'       => ['nullable', 'boolean'],
             'billing_cycle'   => ['nullable', 'in:one_time,monthly,quarterly,yearly'],
             'duration_value'  => ['nullable', 'integer', 'min:1'],

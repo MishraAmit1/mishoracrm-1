@@ -9,12 +9,15 @@ class WhatsappChatbotFlow extends Model
 {
     use BelongsToTenant;
 
+    public const ACTIONS = ['loyalty_join'];
+
     protected $fillable = [
         'tenant_id',
         'name',
         'trigger_keywords',
         'keyword_match',
         'response_message',
+        'action',
         'quick_replies',
         'is_default',
         'is_active',

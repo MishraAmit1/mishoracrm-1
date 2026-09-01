@@ -100,6 +100,12 @@
                       style="resize:vertical" placeholder="Optional — shown in invoice/quotation item description">{{ old('description') }}</textarea>
         </div>
 
+        <div class="field">
+            <label class="fl">Category</label>
+            <input type="text" name="category" class="fi" value="{{ old('category') }}" placeholder="e.g. Consulting, Repairs"/>
+            <span style="font-size:11.5px;color:var(--text-400)">Used for targeted loyalty campaigns</span>
+        </div>
+
         <div class="fg2">
             <div class="field">
                 <label class="fl">Rate (₹) <span style="color:var(--red)">*</span></label>

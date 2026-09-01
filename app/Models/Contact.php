@@ -28,7 +28,48 @@ class Contact extends Model
         'pincode',
         'gst_number',
         'notes',
+        'birthday',
+        'anniversary',
     ];
+
+    // loyalty_* + referral_code + *_greeted_on columns are deliberately NOT
+    // fillable — LoyaltyService / model boot own them.
+    protected $casts = [
+        'loyalty_points'          => 'integer',
+        'loyalty_lifetime_points' => 'integer',
+        'loyalty_updated_at'      => 'datetime',
+        'birthday'                => 'date',
+        'anniversary'             => 'date',
+        'birthday_greeted_on'     => 'date',
+        'anniversary_greeted_on'  => 'date',
+    ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (Contact $contact) {
+            if (empty($contact->referral_code)) {
+                $contact->referral_code = static::generateReferralCode($contact->tenant_id);
+            }
+        });
+    }
+
+    // Short, unambiguous code (no 0/O/1/I) unique within the tenant.
+    public static function generateReferralCode(?int $tenantId): string
+    {
+        $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        do {
+            $code = '';
+            for ($i = 0; $i < 6; $i++) {
+                $code .= $alphabet[random_int(0, strlen($alphabet) - 1)];
+            }
+            $exists = static::withoutGlobalScopes()
+                ->where('tenant_id', $tenantId)
+                ->where('referral_code', $code)
+                ->exists();
+        } while ($exists);
+
+        return $code;
+    }
 
     // ── Relationships ─────────────────────────────────────────────
 
@@ -92,6 +133,21 @@ class Contact extends Model
         return $this->hasMany(ContactAttachment::class);
     }
 
+    public function loyaltyTransactions(): HasMany
+    {
+        return $this->hasMany(LoyaltyTransaction::class)->latest()->latest('id');
+    }
+
+    public function referredBy(): BelongsTo
+    {
+        return $this->belongsTo(Contact::class, 'referred_by_contact_id');
+    }
+
+    public function referrals(): HasMany
+    {
+        return $this->hasMany(Contact::class, 'referred_by_contact_id');
+    }
+
     // ── Scopes ────────────────────────────────────────────────────
 
     public function scopeSearch($query, string $search)
@@ -144,6 +200,17 @@ class Contact extends Model
         }
 
         return $result;
+    }
+
+    // Display label for the customer's current loyalty tier, or null when the
+    // module is unused / they've never earned. Colours live in config/crm.php.
+    public function loyaltyTierLabel(): ?string
+    {
+        if (!$this->loyalty_tier) {
+            return null;
+        }
+
+        return config("crm.loyalty.tiers.{$this->loyalty_tier}.label", ucfirst($this->loyalty_tier));
     }
 
     public function getFullAddressAttribute(): string

@@ -25,6 +25,7 @@ class Product extends Model
         'unit',
         'is_active',
         'type',
+        'category',
         'current_stock',
         'reserved_stock',
         'reorder_level',

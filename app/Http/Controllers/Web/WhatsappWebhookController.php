@@ -95,13 +95,13 @@ class WhatsappWebhookController extends Controller
             Log::error('WA log create failed', ['error' => $e->getMessage()]);
         }
 
-        // Chatbot processing
-        if ($messageText && $setting->chatbot_enabled) {
+        // Inbound message handling — the chatbot service runs loyalty's built-in
+        // replies first, then the tenant's own flows.
+        if ($messageText) {
             try {
-                $service = new WhatsappChatbotService($setting);
-                $service->handleIncomingMessage($waId, $messageText, $contactName);
+                (new WhatsappChatbotService($setting))->handleIncomingMessage($waId, $messageText, $contactName);
             } catch (\Throwable $e) {
-                Log::error('WhatsApp chatbot processing failed', ['error' => $e->getMessage()]);
+                Log::error('WhatsApp inbound processing failed', ['error' => $e->getMessage()]);
             }
         }
     }

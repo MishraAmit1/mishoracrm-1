@@ -254,6 +254,7 @@ class WhatsappChatbotController extends Controller
             'trigger_keywords' => ['required', 'string'],
             'keyword_match'    => ['required', 'in:any,exact,contains'],
             'response_message' => ['required', 'string', 'max:4096'],
+            'action'           => ['nullable', 'in:loyalty_join'],
             'is_default'       => ['nullable'],
         ]);
 
@@ -265,6 +266,7 @@ class WhatsappChatbotController extends Controller
             'trigger_keywords' => $keywords,
             'keyword_match'    => $request->keyword_match,
             'response_message' => $request->response_message,
+            'action'           => $request->action ?: null,
             'is_default'       => (bool) $request->is_default,
             'is_active'        => true,
         ]);
@@ -283,6 +285,7 @@ class WhatsappChatbotController extends Controller
             'trigger_keywords' => ['required', 'string'],
             'keyword_match'    => ['required', 'in:any,exact,contains'],
             'response_message' => ['required', 'string', 'max:4096'],
+            'action'           => ['nullable', 'in:loyalty_join'],
             'is_default'       => ['nullable'],
         ]);
 
@@ -293,6 +296,7 @@ class WhatsappChatbotController extends Controller
             'trigger_keywords' => $keywords,
             'keyword_match'    => $request->keyword_match,
             'response_message' => $request->response_message,
+            'action'           => $request->action ?: null,
             'is_default'       => (bool) $request->is_default,
         ]);
 

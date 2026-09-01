@@ -35,6 +35,12 @@ class Invoice extends Model
         'total',
         'currency',
         'paid_amount',
+        'loyalty_points_redeemed',
+        'loyalty_discount',
+        'loyalty_campaign_recipient_id',
+        'campaign_discount',
+        'loyalty_reward',
+        'loyalty_reward_points',
         'notes',
         'terms',
         'status',
@@ -62,6 +68,10 @@ class Invoice extends Model
         'igst_amount' => 'decimal:2',
         'total'       => 'decimal:2',
         'paid_amount' => 'decimal:2',
+        'loyalty_points_redeemed' => 'integer',
+        'loyalty_discount'        => 'decimal:2',
+        'campaign_discount'       => 'decimal:2',
+        'loyalty_reward_points'   => 'integer',
     ];
 
     // ── Relationships ─────────────────────────────────────────────
@@ -147,7 +157,35 @@ class Invoice extends Model
 
     public function getDueAmountAttribute(): float
     {
-        return round($this->total - $this->paid_amount, 2);
+        // Loyalty points and campaign coupons are tenders: they settle part of
+        // the bill without a cash payment, so they reduce what is still owed.
+        return round($this->total - $this->paid_amount - $this->loyalty_discount - $this->campaign_discount, 2);
+    }
+
+    public function hasLoyaltyRedemption(): bool
+    {
+        return $this->loyalty_points_redeemed > 0;
+    }
+
+    public function hasLoyaltyReward(): bool
+    {
+        return $this->loyalty_reward_points > 0;
+    }
+
+    public function hasCampaignCoupon(): bool
+    {
+        return $this->campaign_discount > 0 || $this->loyalty_campaign_recipient_id !== null;
+    }
+
+    // Cash collected + points + coupon tendered — used to decide paid/partial.
+    public function settledAmount(): float
+    {
+        return round($this->paid_amount + $this->loyalty_discount + $this->campaign_discount, 2);
+    }
+
+    public function campaignRecipient(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\LoyaltyCampaignRecipient::class, 'loyalty_campaign_recipient_id');
     }
 
     public function getFormattedTotalAttribute(): string

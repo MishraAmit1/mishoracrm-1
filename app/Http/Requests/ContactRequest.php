@@ -27,6 +27,11 @@ class ContactRequest extends FormRequest
             'notes'       => ['nullable', 'string', 'max:5000'],
             'lead_id'     => ['nullable', 'exists:leads,id'],
 
+            // ── Loyalty engagement ───────────────────────────────────
+            'birthday'         => ['nullable', 'date'],
+            'anniversary'      => ['nullable', 'date'],
+            'referred_by_code' => ['nullable', 'string', 'max:20'],
+
             // ── Contact-level attachments (visiting card / documents) ──
             'attachments'   => ['nullable', 'array', 'max:5'],
             'attachments.*' => ['file', 'max:10240', 'mimes:jpg,jpeg,png,webp,pdf,doc,docx,xls,xlsx'],
