@@ -110,12 +110,12 @@
     .dbtn-sm svg { width: 14px; height: 14px; }
 
     .dbtn-accent {
-        background: linear-gradient(135deg, var(--accent) 0%, #8b5cf6 100%);
+        background: var(--accent);
         color: #fff;
         border-color: transparent;
         box-shadow: 0 4px 14px var(--accent-glow);
     }
-    .dbtn-accent:hover { border-color: transparent; box-shadow: 0 7px 22px var(--accent-glow); }
+    .dbtn-accent:hover { background: var(--accent-hover); border-color: transparent; box-shadow: 0 7px 22px var(--accent-glow); }
 
     .dbtn-danger { color: var(--red); }
     .dbtn-danger:hover { background: var(--red-dim); border-color: var(--red); }
@@ -313,7 +313,7 @@
     }
     .rpill:hover { color: var(--text-100); border-color: var(--border-strong); }
     .rpill.on {
-        background: linear-gradient(135deg, var(--accent) 0%, #8b5cf6 100%);
+        background: var(--accent);
         border-color: transparent;
         color: #fff;
         box-shadow: 0 3px 11px var(--accent-glow);

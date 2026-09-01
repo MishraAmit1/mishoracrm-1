@@ -58,7 +58,7 @@
         <div>
             <div class="dsh-eyebrow">Super Admin · {{ now()->format('l, d M Y') }}</div>
             <div class="dsh-title">Platform Overview</div>
-            <div class="dsh-sub">Tenants, subscriptions and revenue across CrmPro.</div>
+            <div class="dsh-sub">Tenants, subscriptions and revenue across Milan CRM.</div>
         </div>
         <div class="dsh-acts">
             <a href="{{ route('superadmin.plans.index') }}" class="dbtn">
@@ -189,7 +189,7 @@
                             <tr>
                                 <td data-label="Company">
                                     <div class="rname">
-                                        <span class="rav rav-sq" style="background:linear-gradient(135deg,#6378ff,#8b5cf6)">{{ strtoupper(substr($t['name'], 0, 2)) }}</span>
+                                        <span class="rav rav-sq" style="background:#6378ff">{{ strtoupper(substr($t['name'], 0, 2)) }}</span>
                                         <span>
                                             <span class="rn">{{ $t['name'] }}</span>
                                             <div class="rsub">{{ $t['email'] }}</div>

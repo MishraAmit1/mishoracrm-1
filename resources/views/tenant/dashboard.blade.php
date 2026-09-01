@@ -662,10 +662,6 @@
 
         // Indigo → violet vertical wash on the peak bar; the same ramp as the
         // primary buttons, so the accent reads as one deliberate brand colour.
-        const drPeakFill = drCtx.createLinearGradient(0, 0, 0, 172);
-        drPeakFill.addColorStop(0, '#8b5cf6');
-        drPeakFill.addColorStop(1, C_ACC);
-
         new Chart(drCtx, {
             type: 'bar',
             data: {
@@ -684,7 +680,7 @@
                     },
                     {
                         data: drVals,
-                        backgroundColor: drVals.map(v => (v === drMax && drMax > 0) ? drPeakFill : toRgba(C_ACC, 0.38)),
+                        backgroundColor: drVals.map(v => (v === drMax && drMax > 0) ? C_ACC : toRgba(C_ACC, 0.38)),
                         borderRadius: 6,
                         borderSkipped: false,
                         barPercentage: 0.5,

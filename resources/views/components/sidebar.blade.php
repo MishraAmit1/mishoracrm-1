@@ -7,7 +7,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/>
             </svg>
         </div>
-        <span class="sb-logo-name">Crm<span>Pro</span></span>
+        <span class="sb-logo-name">Milan <span>CRM</span></span>
     </div>
 
     {{-- ── Nav body ─────────────────────────────────────────────── --}}

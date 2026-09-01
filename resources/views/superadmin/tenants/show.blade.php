@@ -20,7 +20,7 @@
         .th-hero-l { display: flex; align-items: center; gap: 16px; min-width: 0; }
         .th-avatar {
             width: 54px; height: 54px; border-radius: 15px; flex-shrink: 0; overflow: hidden;
-            background: linear-gradient(135deg, var(--accent), #8b5cf6); color: #fff;
+            background: var(--accent); color: #fff;
             display: flex; align-items: center; justify-content: center;
             font-size: 19px; font-weight: 800;
         }

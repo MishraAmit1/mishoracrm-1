@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Create workspace — CrmPro</title>
+<title>Create workspace — Milan CRM</title>
 <script>
 (function () {
   var saved = localStorage.getItem('crm_theme');
@@ -14,10 +14,12 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="{{ asset('css/auth.css') }}"/>
 <style>
-/* Register-specific: taller card, scroll */
-.auth-form-panel { justify-content: flex-start; padding-top: 36px; padding-bottom: 48px; }
-@media (min-height: 700px) { .auth-form-panel { justify-content: center; } }
-.auth-card { max-width: 400px; }
+/* Register-specific: the wizard card is a touch wider */
+.auth-card { max-width: 408px; }
+@media (max-height: 900px) {
+  .auth-form-panel { justify-content: flex-start; }
+  .auth-form-panel .auth-card { margin: 22px 0; }
+}
 </style>
 </head>
 <body>
@@ -27,9 +29,6 @@
   {{-- ── Left visual panel ── --}}
   <div class="auth-visual">
     <div class="visual-grid"></div>
-    <div class="geo-shape geo-1"></div>
-    <div class="geo-shape geo-2"></div>
-    <div class="geo-shape geo-3"></div>
 
     <div class="visual-content">
 
@@ -37,46 +36,59 @@
         <div class="v-logo-icon">
           <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/></svg>
         </div>
-        <span class="v-logo-name">Crm<span>Pro</span></span>
+        <span class="v-logo-name">Milan <span>CRM</span></span>
       </div>
 
       <div class="v-hero">
-        <h2>Set up your<br/>workspace in<br/><em>3 minutes</em></h2>
-        <p>Join thousands of Indian businesses already growing with CrmPro. Free 14-day trial, no credit card required.</p>
+        <h2>Your workspace,<br/>ready in <em>3 minutes</em></h2>
+        <p>Join thousands of Indian businesses growing with Milan CRM. Free 14-day trial — no credit card required.</p>
       </div>
 
-      <div class="v-features" style="margin-bottom:32px">
+      <div class="v-mock" style="max-width:400px">
+        <div class="v-mock-row">
+          <div class="v-mock-tile">
+            <div class="v-mock-l">New leads today</div>
+            <div class="v-mock-n">23</div>
+            <div class="v-mock-d up">▲ 6 vs yesterday</div>
+          </div>
+          <div class="v-mock-tile">
+            <div class="v-mock-l">Revenue MTD</div>
+            <div class="v-mock-n">₹4.8L</div>
+            <div class="v-mock-bars"><i style="height:35%"></i><i style="height:55%"></i><i style="height:48%"></i><i style="height:100%"></i><i style="height:70%"></i><i style="height:90%"></i></div>
+          </div>
+        </div>
+        <div class="v-mock-toast">
+          <span class="tk"><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg></span>
+          <span>
+            <span class="tt">Invoice paid</span><br/>
+            <span class="tb">₹86,400</span>
+          </span>
+        </div>
+      </div>
+
+      <div class="v-features">
         <div class="v-feature">
-          <div class="v-feature-dot"></div>
-          <span>Unlimited leads & pipeline management</span>
+          <span class="v-feature-ico"><svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.76c0 1.6 1.123 2.994 2.707 3.227 1.068.157 2.148.279 3.238.364.466.037.893.281 1.153.671L12 21l2.652-3.978c.26-.39.687-.634 1.153-.67 1.09-.086 2.17-.208 3.238-.365 1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/></svg></span>
+          <span>Unlimited leads &amp; pipeline management</span>
         </div>
         <div class="v-feature">
-          <div class="v-feature-dot" style="background:var(--green);box-shadow:0 0 8px rgba(45,212,160,0.4)"></div>
+          <span class="v-feature-ico"><svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg></span>
+          <span>GST invoicing &amp; payment tracking</span>
+        </div>
+        <div class="v-feature">
+          <span class="v-feature-ico"><svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 9.75a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 01.778-.332 48.294 48.294 0 005.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/></svg></span>
           <span>WhatsApp bulk messaging with templates</span>
         </div>
-        <div class="v-feature">
-          <div class="v-feature-dot" style="background:var(--amber);box-shadow:0 0 8px rgba(248,184,78,0.4)"></div>
-          <span>GST invoicing & payment tracking</span>
-        </div>
-        <div class="v-feature">
-          <div class="v-feature-dot"></div>
-          <span>Staff attendance & task management</span>
-        </div>
       </div>
 
-      <div class="v-stats">
-        <div class="v-stat">
-          <div class="v-stat-num">14</div>
-          <div class="v-stat-label">Day trial</div>
+      <div class="v-trust" style="margin-top:auto">
+        <div class="v-trust-avs">
+          <span style="background:#6378ff">RS</span>
+          <span style="background:#2dd4a0">NK</span>
+          <span style="background:#f8b84e">AV</span>
+          <span style="background:#a78bfa">PM</span>
         </div>
-        <div class="v-stat">
-          <div class="v-stat-num">Free</div>
-          <div class="v-stat-label">To start</div>
-        </div>
-        <div class="v-stat">
-          <div class="v-stat-num">5min</div>
-          <div class="v-stat-label">Setup</div>
-        </div>
+        <div class="v-trust-txt"><b>14-day free trial</b> · cancel anytime</div>
       </div>
 
     </div>
@@ -85,21 +97,23 @@
   {{-- ── Right form panel ── --}}
   <div class="auth-form-panel">
 
-    <a href="{{ route('pricing') }}" class="a-link" style="position:absolute;top:28px;right:64px;">Pricing</a>
-    <button class="theme-btn" onclick="toggleTheme()" type="button">
-      <svg id="ico-moon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/></svg>
-      <svg id="ico-sun" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:none"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/></svg>
-    </button>
+    <div class="fp-head">
+      <a href="{{ route('home') }}" style="display:flex;align-items:center;gap:9px;text-decoration:none">
+        <div class="v-logo-icon">
+          <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/></svg>
+        </div>
+        <span class="v-logo-name">Milan <span style="color:var(--accent)">CRM</span></span>
+      </a>
+      <div class="fp-head-r">
+        <a href="{{ route('pricing') }}" class="a-link">Pricing</a>
+        <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme" type="button" style="position:static">
+          <svg id="ico-moon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/></svg>
+          <svg id="ico-sun" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:none"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/></svg>
+        </button>
+      </div>
+    </div>
 
     <div class="auth-card">
-
-      {{-- Mobile logo --}}
-      <div class="mobile-logo">
-        <div class="v-logo-icon" style="width:32px;height:32px;">
-          <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="width:16px;height:16px;"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/></svg>
-        </div>
-        <span class="v-logo-name" style="font-size:16px;">Crm<span>Pro</span></span>
-      </div>
 
       <div class="card-head">
         <div class="card-tag"><div class="card-tag-dot"></div> Free 14-day trial</div>
@@ -158,7 +172,7 @@
             <div class="subdomain-row">
               <span class="subdomain-pre">https://</span>
               <input name="subdomain" type="text" class="subdomain-input @error('subdomain') has-error @enderror" placeholder="yourcompany" id="subInput" value="{{ old('subdomain') }}" required/>
-              <span class="subdomain-suf">.crmPro.in</span>
+              <span class="subdomain-suf">.milancrm.in</span>
             </div>
             @error('subdomain') <p class="field-error">{{ $message }}</p> @enderror
           </div>
@@ -306,7 +320,7 @@
 
           <div class="terms-box" style="margin-bottom:16px">
             <input type="checkbox" name="terms" id="termsChk" required/>
-            <p>I agree to CrmPro's <a href="/terms" target="_blank">Terms of Service</a> and <a href="/privacy" target="_blank">Privacy Policy</a>. Subscription charges apply after the trial period.</p>
+            <p>I agree to Milan CRM's <a href="/terms" target="_blank">Terms of Service</a> and <a href="/privacy" target="_blank">Privacy Policy</a>. Subscription charges apply after the trial period.</p>
           </div>
 
           <div class="btn-row">
@@ -322,7 +336,14 @@
       </div>
 
     </div>
+
+    <div class="fp-foot">
+      <span>© {{ now()->year }} Milan CRM</span>
+      <span><a href="/terms">Terms</a> · <a href="/privacy">Privacy</a></span>
+    </div>
+
   </div>
+
 </div>
 
 <script>

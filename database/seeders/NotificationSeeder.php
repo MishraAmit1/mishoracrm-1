@@ -292,7 +292,7 @@ class NotificationSeeder extends Seeder
             // ── System ────────────────────────────────────────────
             [
                 'type'    => 'system.announcement',
-                'title'   => 'Welcome to CrmPro! 🎉',
+                'title'   => 'Welcome to Milan CRM! 🎉',
                 'message' => 'Your CRM is set up and ready to use. Start by adding your first lead!',
                 'icon'    => 'bell',
                 'color'   => 'accent',

@@ -48,7 +48,7 @@ body { background: var(--bg-app); min-height:100vh; padding:24px 16px; }
 <body>
 
 <div class="pq-wrap">
-    <div class="pq-brand">Quotation shared by {{ $quotation->tenant->name ?? 'CrmPro' }}</div>
+    <div class="pq-brand">Quotation shared by {{ $quotation->tenant->name ?? 'Milan CRM' }}</div>
 
     @foreach(['success','error','info'] as $type)
     @if(session($type))

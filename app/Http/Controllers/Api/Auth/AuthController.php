@@ -86,7 +86,7 @@ class AuthController extends Controller
  
             return response()->json([
                 'success' => true,
-                'message' => 'Registration successful! Welcome to CrmPro 🎉',
+                'message' => 'Registration successful! Welcome to Milan CRM 🎉',
                 'data'    => [
                     'token'      => $result['token'],
                     'token_type' => 'Bearer',

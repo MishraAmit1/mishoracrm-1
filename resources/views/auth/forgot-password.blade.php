@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Reset Password — CrmPro</title>
+<title>Reset Password — Milan CRM</title>
 <script>
 (function () {
   var saved = localStorage.getItem('crm_theme');
@@ -113,7 +113,7 @@
         <div class="v-logo-icon" style="width:34px;height:34px;">
           <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="width:17px;height:17px;"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/></svg>
         </div>
-        <span class="v-logo-name">Crm<span style="color:var(--accent)">Pro</span></span>
+        <span class="v-logo-name">Milan <span style="color:var(--accent)">CRM</span></span>
       </div>
 
       {{-- ── Form state (before submit) ── --}}
@@ -179,7 +179,7 @@
 
         <div class="info-box">
           <div class="info-row"><div class="dot"></div><p>Check your spam or junk folder</p></div>
-          <div class="info-row"><div class="dot"></div><p>Email sent from <span style="font-family:var(--mono);font-size:11.5px;color:var(--accent)">noreply@crmpro.in</span></p></div>
+          <div class="info-row"><div class="dot"></div><p>Email sent from <span style="font-family:var(--mono);font-size:11.5px;color:var(--accent)">noreply@milancrm.in</span></p></div>
           <div class="info-row"><div class="dot"></div><p>Link is valid for 60 minutes only</p></div>
         </div>
 
