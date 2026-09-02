@@ -179,6 +179,22 @@ button, a, .btn, .sb-item, .drop-item, .vt-btn, .tb-btn { -webkit-tap-highlight-
 .sb-logo-name span { color: var(--accent); }
 .sidebar.collapsed .sb-logo-name { opacity: 0; pointer-events: none; }
 
+/* Brand logo image (theme-aware wordmark) */
+.brand-logo { display: inline-flex; align-items: center; line-height: 0; flex-shrink: 0; }
+.brand-logo__wm { height: var(--brand-logo-h, 28px); width: auto; display: block; }
+.brand-logo__mark { display: none; }
+.brand-logo__wm--light { display: none; }
+[data-theme="light"] .brand-logo__wm--light { display: block; }
+[data-theme="light"] .brand-logo__wm--dark { display: none; }
+
+/* Sidebar header: full wordmark when open, square mark when collapsed */
+.sb-header .brand-logo { --brand-logo-h: 24px; overflow: hidden; }
+.sidebar.collapsed .sb-header { padding: 0; justify-content: center; }
+.sidebar.collapsed .sb-header .brand-logo__wm { display: none !important; }
+.sidebar.collapsed .sb-header .brand-logo__mark {
+  display: block; height: 26px; width: 26px; object-fit: contain;
+}
+
 /* Scroll body */
 .sb-body {
   flex: 1; overflow-y: auto; overflow-x: hidden;

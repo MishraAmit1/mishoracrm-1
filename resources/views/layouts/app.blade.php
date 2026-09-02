@@ -5,6 +5,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="csrf-token" content="{{ csrf_token() }}" />
+
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32.png') }}" />
+    <link rel="icon" type="image/png" sizes="64x64" href="{{ asset('favicon-64.png') }}" />
+    <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}" />
     <title>@yield('title', 'Dashboard') — {{ Auth::user()?->tenant?->name ?? 'Milan CRM' }}</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />

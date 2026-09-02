@@ -182,6 +182,9 @@
                             @if($features['social_leads'] ?? false)
                                 <span class="feat-tag on">Social Leads</span>
                             @endif
+                            @if($features['lead_integrations'] ?? false)
+                                <span class="feat-tag on">Lead Sources</span>
+                            @endif
                             @foreach(config('modules') as $modKey => $mod)
                                 @if($features[$modKey] ?? false)
                                     <span class="feat-tag on">{{ $mod['label'] }}</span>

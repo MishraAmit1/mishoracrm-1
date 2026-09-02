@@ -180,9 +180,10 @@
     {{-- Boolean features --}}
     @php
         $boolFeatures = [
-            ['key' => 'feat_whatsapp',    'field' => 'whatsapp',     'label' => 'WhatsApp Integration', 'sub' => 'Send messages via WhatsApp'],
-            ['key' => 'feat_reports',     'field' => 'reports',      'label' => 'Advanced Reports',     'sub' => 'Analytics & revenue reports'],
-            ['key' => 'feat_social_leads','field' => 'social_leads', 'label' => 'Social Media Leads',   'sub' => 'Facebook / Instagram lead capture'],
+            ['key' => 'feat_whatsapp',          'field' => 'whatsapp',          'label' => 'WhatsApp Integration',      'sub' => 'Send messages via WhatsApp'],
+            ['key' => 'feat_reports',           'field' => 'reports',           'label' => 'Advanced Reports',          'sub' => 'Analytics & revenue reports'],
+            ['key' => 'feat_social_leads',      'field' => 'social_leads',      'label' => 'Social Media Leads',        'sub' => 'Facebook / Instagram lead capture'],
+            ['key' => 'feat_lead_integrations', 'field' => 'lead_integrations', 'label' => 'Third-party Lead Sources',  'sub' => 'IndiaMART, JustDial, TradeIndia, Meta Lead Ads, Sulekha'],
         ];
         // Gated premium modules — single source of truth in config/modules.php
         foreach (config('modules') as $modKey => $mod) {

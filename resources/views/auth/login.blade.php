@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32.png') }}"/>
+<link rel="icon" type="image/png" sizes="64x64" href="{{ asset('favicon-64.png') }}"/>
+<link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}"/>
 <title>Sign In — Milan CRM</title>
 <script>
 (function () {
@@ -25,10 +28,7 @@
     <div class="visual-content">
 
       <div class="v-logo">
-        <div class="v-logo-icon">
-          <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/></svg>
-        </div>
-        <span class="v-logo-name">Milan <span>CRM</span></span>
+        @include('components.brand-logo', ['h' => 30])
       </div>
 
       <div class="v-hero">
@@ -91,11 +91,8 @@
   <div class="auth-form-panel">
 
     <div class="fp-head">
-      <a href="{{ route('home') }}" style="display:flex;align-items:center;gap:9px;text-decoration:none">
-        <div class="v-logo-icon">
-          <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/></svg>
-        </div>
-        <span class="v-logo-name">Milan <span style="color:var(--accent)">CRM</span></span>
+      <a href="{{ route('home') }}" style="display:flex;align-items:center;text-decoration:none">
+        @include('components.brand-logo', ['h' => 24])
       </a>
       <div class="fp-head-r">
         <a href="{{ route('pricing') }}" class="a-link">Pricing</a>

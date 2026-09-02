@@ -343,6 +343,12 @@ input:checked + .toggle-slider:before { transform: translateX(22px); }
                     Social Media Leads
                 </li>
                 @endif
+                @if($plan->hasFeature('lead_integrations'))
+                <li>
+                    <svg class="feat-icon" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    Third-party Lead Sources
+                </li>
+                @endif
                 @foreach(config('modules') as $modKey => $mod)
                     @if($plan->hasFeature($modKey))
                     <li>

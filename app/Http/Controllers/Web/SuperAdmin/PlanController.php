@@ -126,14 +126,16 @@ class PlanController extends Controller
         $users = $request->boolean('users_unlimited') ? -1 : (int) $request->input('users_count', 0);
 
         $features = [
-            'users'        => $users,
-            'whatsapp'     => $request->boolean('feat_whatsapp'),
-            'reports'      => $request->boolean('feat_reports'),
-            'social_leads' => $request->boolean('feat_social_leads'),
+            'users'             => $users,
+            'whatsapp'          => $request->boolean('feat_whatsapp'),
+            'reports'           => $request->boolean('feat_reports'),
+            'social_leads'      => $request->boolean('feat_social_leads'),
+            'lead_integrations' => $request->boolean('feat_lead_integrations'),
         ];
 
         // remove false booleans to keep JSON clean (optional features only when true)
-        if (!$features['social_leads']) unset($features['social_leads']);
+        if (!$features['social_leads'])      unset($features['social_leads']);
+        if (!$features['lead_integrations']) unset($features['lead_integrations']);
 
         // Gated premium modules — single source of truth in config/modules.php.
         // Only truthy keys get written, same "optional features only when true" rule.

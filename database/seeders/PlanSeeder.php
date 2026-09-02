@@ -57,10 +57,11 @@ class PlanSeeder extends Seeder
                 'trial_days'    => 14,
                 'sort_order'    => 1,
                 'features'      => array_merge([
-                    'users'        => 5,
-                    'whatsapp'     => true,
-                    'reports'      => true,
-                    'social_leads' => true,
+                    'users'             => 5,
+                    'whatsapp'          => true,
+                    'reports'           => true,
+                    'social_leads'      => true,
+                    'lead_integrations' => true,
                 ], $starterModules),
             ],
             [
@@ -73,10 +74,11 @@ class PlanSeeder extends Seeder
                 'trial_days'    => 14,
                 'sort_order'    => 2,
                 'features'      => array_merge([
-                    'users'        => -1,
-                    'whatsapp'     => true,
-                    'reports'      => true,
-                    'social_leads' => true,
+                    'users'             => -1,
+                    'whatsapp'          => true,
+                    'reports'           => true,
+                    'social_leads'      => true,
+                    'lead_integrations' => true,
                 ], $allModules),
             ],
             [
@@ -89,10 +91,11 @@ class PlanSeeder extends Seeder
                 'trial_days'    => 0,
                 'sort_order'    => 3,
                 'features'      => array_merge([
-                    'users'        => -1,
-                    'whatsapp'     => true,
-                    'reports'      => true,
-                    'social_leads' => true,
+                    'users'             => -1,
+                    'whatsapp'          => true,
+                    'reports'           => true,
+                    'social_leads'      => true,
+                    'lead_integrations' => true,
                 ], $allModules),
             ],
         ];

@@ -199,6 +199,14 @@ body::after {
 .v-logo-name { font-size: 17px; font-weight: 700; color: var(--text-100); letter-spacing: -0.3px; }
 .v-logo-name span { color: var(--accent); }
 
+/* Brand logo image (theme-aware wordmark) */
+.brand-logo { display: inline-flex; align-items: center; line-height: 0; flex-shrink: 0; }
+.brand-logo__wm { height: var(--brand-logo-h, 28px); width: auto; display: block; }
+.brand-logo__mark { display: none; }
+.brand-logo__wm--light { display: none; }
+[data-theme="light"] .brand-logo__wm--light { display: block; }
+[data-theme="light"] .brand-logo__wm--dark { display: none; }
+
 /* Visual hero text */
 .v-hero { margin-top: 8px; }
 .v-hero h2 {

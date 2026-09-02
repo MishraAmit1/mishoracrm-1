@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32.png') }}"/>
+<link rel="icon" type="image/png" sizes="64x64" href="{{ asset('favicon-64.png') }}"/>
+<link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}"/>
 <title>Pricing — Milan CRM</title>
 <script>
 (function () {
@@ -24,10 +27,7 @@
   {{-- ── Nav ── --}}
   <nav class="pg-nav">
     <a href="{{ route('home') }}" class="pg-brand">
-      <div class="v-logo-icon" style="width:32px;height:32px;">
-        <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="width:15px;height:15px;"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/></svg>
-      </div>
-      <span class="v-logo-name" style="font-size:16px;">Milan <span>CRM</span></span>
+      @include('components.brand-logo', ['h' => 26])
     </a>
     <div class="pg-nav-links">
       <a href="{{ route('contact-sales') }}" class="a-link">Contact sales</a>
@@ -166,6 +166,14 @@
               <svg class="feat-icon" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
               @endif
               Meta &amp; social lead capture
+            </li>
+            <li class="{{ $plan->hasFeature('lead_integrations') ? '' : 'disabled' }}">
+              @if($plan->hasFeature('lead_integrations'))
+              <svg class="feat-icon" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+              @else
+              <svg class="feat-icon" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+              @endif
+              Third-party lead sources (IndiaMART, JustDial &amp; more)
             </li>
             @foreach(config('modules') as $modKey => $mod)
               @if($plan->hasFeature($modKey))
