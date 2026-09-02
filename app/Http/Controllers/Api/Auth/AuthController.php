@@ -58,21 +58,29 @@ class AuthController extends Controller
  
                 $user->assignRole('tenant_admin');
  
-                // Plan assign
-                $plan = Plan::where('slug', $request->plan ?? 'free')->first()
+                // Plan assign — custom (Enterprise) plans are sales-assisted.
+                $plan = Plan::where('slug', $request->plan ?? 'free')->where('is_custom', false)->first()
                      ?? Plan::where('slug', 'free')->first();
- 
-                if ($plan) {
-                    $isFree = (float) $plan->monthly_price === 0.0;
 
-                    $tenant->subscriptions()->create([
-                        'plan_id'       => $plan->id,
-                        // Free plan = permanent active subscription, no lockout.
-                        'status'        => $isFree ? 'active' : 'trial',
-                        'trial_ends_at' => $isFree ? null : now()->addDays(14),
-                        'started_at'    => now(),
-                        'ends_at'       => $isFree ? null : now()->addDays(14),
-                    ]);
+                if ($plan) {
+                    // trial_days > 0 → N-day trial; 0 + ₹0 plan → permanent free;
+                    // 0 + paid plan → trial ending now (client must pay to activate).
+                    $trialDays = (int) $plan->trial_days;
+                    $isFree    = (float) $plan->monthly_price === 0.0;
+
+                    if ($trialDays > 0) {
+                        $ends   = now()->addDays($trialDays);
+                        $window = ['status' => 'trial', 'trial_ends_at' => $ends, 'ends_at' => $ends];
+                    } elseif ($isFree) {
+                        $window = ['status' => 'active', 'trial_ends_at' => null, 'ends_at' => null];
+                    } else {
+                        $window = ['status' => 'trial', 'trial_ends_at' => now(), 'ends_at' => now()];
+                    }
+
+                    $tenant->subscriptions()->create(array_merge(
+                        ['plan_id' => $plan->id, 'started_at' => now()],
+                        $window,
+                    ));
                 }
  
                 // Create token

@@ -224,7 +224,7 @@ input:checked + .toggle-slider:before { transform: translateX(22px); }
 
     <div class="plans-header">
         <h1>Choose Your Plan</h1>
-        <p>Apne business ke liye sahi plan select karein. Kabhi bhi upgrade ya downgrade kar sakte hain.</p>
+        <p>Pick the plan that fits your team. You can upgrade or downgrade at any time — your data stays intact.</p>
     </div>
 
     @if($currentSub)
@@ -259,8 +259,9 @@ input:checked + .toggle-slider:before { transform: translateX(22px); }
     <div class="plans-grid">
         @foreach($plans as $plan)
         @php
+            $isCustom        = $plan->is_custom;
             $isCurrentPlan   = $currentSub && $currentSub->plan_id === $plan->id && $currentSub->isActive();
-            $isPopular       = $plan->slug === 'starter';
+            $isPopular       = !$isCustom && $plan->slug === 'starter';
             $monthlyPrice    = (int) $plan->monthly_price;
             $yearlyPrice     = (int) $plan->yearly_price;
             $hasDiscount     = $plan->hasDiscount();
@@ -276,6 +277,10 @@ input:checked + .toggle-slider:before { transform: translateX(22px); }
             <div class="plan-desc">{{ $plan->description ?? '' }}</div>
 
             <div class="plan-price">
+                @if($isCustom)
+                <span class="price-amount">Custom</span>
+                <div class="price-yearly-note">Volume pricing for large teams</div>
+                @else
                 {{-- Monthly price --}}
                 <div class="monthly-price" @if(!$monthlyBillingEnabled) style="display:none" @endif>
                     @if($monthlyPrice == 0)
@@ -311,18 +316,18 @@ input:checked + .toggle-slider:before { transform: translateX(22px); }
                     (₹{{ number_format(($hasDiscount ? $discYearly : $yearlyPrice) / 12, 0) }}/month billed annually)
                 </div>
                 @endif
+                @endif
             </div>
 
             <ul class="plan-features">
                 <li>
                     <svg class="feat-icon" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                    @php $leads = $plan->getFeature('leads'); @endphp
-                    {{ $leads == -1 ? 'Unlimited Leads' : number_format($leads) . ' Leads' }}
+                    Unlimited Leads &amp; Contacts
                 </li>
                 <li>
                     <svg class="feat-icon" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                     @php $users = $plan->getFeature('users'); @endphp
-                    {{ $users == -1 ? 'Unlimited Users' : number_format($users) . ' Team Members' }}
+                    {{ $users == -1 ? 'Unlimited Team Members' : 'Up to ' . number_format($users) . ' Team Members' }}
                 </li>
                 <li class="{{ $plan->hasFeature('whatsapp') ? '' : 'disabled' }}">
                     <svg class="feat-icon" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
@@ -348,7 +353,9 @@ input:checked + .toggle-slider:before { transform: translateX(22px); }
                 @endforeach
             </ul>
 
-            @if($monthlyPrice == 0)
+            @if($isCustom)
+                <a href="{{ route('contact-sales') }}" class="plan-btn outline">Talk to sales</a>
+            @elseif($monthlyPrice == 0)
                 <span class="plan-btn current-plan">Free Plan</span>
             @elseif($isCurrentPlan)
                 <span class="plan-btn current-plan">Current Plan</span>

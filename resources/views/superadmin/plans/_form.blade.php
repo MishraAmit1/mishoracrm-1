@@ -9,8 +9,8 @@
 @php
     $isEdit   = isset($plan);
     $features = $isEdit ? ($plan->features ?? []) : [];
-    $leadsVal = $features['leads'] ?? 100;
     $usersVal = $features['users'] ?? 5;
+    $isCustom = $isEdit ? $plan->is_custom : false;
 @endphp
 
 <form action="{{ $action }}" method="POST" id="plan-form">
@@ -50,26 +50,45 @@
     {{-- ── Pricing ─────────────────────────────────────────────── --}}
     <div class="section-title" style="margin-top:24px">Pricing</div>
 
-    <div class="form-row-3">
+    {{-- Custom / contact-sales toggle --}}
+    <div class="form-group feat-group">
+        <div class="feat-row">
+            <div class="feat-label-col">
+                <div class="feat-name">Custom (Contact Sales) plan</div>
+                <div class="feat-sub">Hides price &amp; checkout. Pricing page shows “Custom” with a “Talk to sales” button.</div>
+            </div>
+            <div class="feat-control-col">
+                <label class="toggle-wrap">
+                    <input type="hidden" name="is_custom" value="0">
+                    <input type="checkbox" name="is_custom" id="is-custom" value="1"
+                           {{ old('is_custom', $isCustom ? '1' : '0') == '1' ? 'checked' : '' }}>
+                    <span class="toggle-track"></span>
+                    <span class="toggle-lbl" id="lbl-is-custom" style="min-width:52px">{{ old('is_custom', $isCustom ? '1' : '0') == '1' ? 'Custom' : 'Priced' }}</span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-row-3" id="price-fields">
         <div class="form-group">
-            <label class="form-label">Monthly Price (₹) <span class="req">*</span></label>
+            <label class="form-label">Monthly Price (₹)</label>
             <div class="input-prefix-wrap">
                 <span class="input-prefix">₹</span>
                 <input type="number" name="monthly_price"
                        value="{{ old('monthly_price', $isEdit ? (int)$plan->monthly_price : '') }}"
                        class="form-control with-prefix @error('monthly_price') is-invalid @enderror"
-                       placeholder="0" min="0" required>
+                       placeholder="0" min="0">
             </div>
             @error('monthly_price')<div class="invalid-feedback">{{ $message }}</div>@enderror
         </div>
         <div class="form-group">
-            <label class="form-label">Yearly Price (₹) <span class="req">*</span></label>
+            <label class="form-label">Yearly Price (₹)</label>
             <div class="input-prefix-wrap">
                 <span class="input-prefix">₹</span>
                 <input type="number" name="yearly_price"
                        value="{{ old('yearly_price', $isEdit ? (int)$plan->yearly_price : '') }}"
                        class="form-control with-prefix @error('yearly_price') is-invalid @enderror"
-                       placeholder="0" min="0" required>
+                       placeholder="0" min="0">
             </div>
             @error('yearly_price')<div class="invalid-feedback">{{ $message }}</div>@enderror
         </div>
@@ -88,6 +107,27 @@
             <div class="form-hint" id="disc-preview" style="color:var(--green);display:none"></div>
             @error('discount_percentage')<div class="invalid-feedback">{{ $message }}</div>@enderror
         </div>
+    </div>
+
+    {{-- Free trial --}}
+    <div class="form-group feat-group" id="trial-group">
+        <div class="feat-row">
+            <div class="feat-label-col">
+                <div class="feat-name">Free trial</div>
+                <div class="feat-sub">
+                    Days of full access a new signup gets before paying.
+                    <strong>0 = no trial</strong> — a ₹0 plan stays permanently free, a paid plan goes straight to checkout.
+                </div>
+            </div>
+            <div class="feat-control-col">
+                <input type="number" name="trial_days" id="trial-days"
+                       value="{{ old('trial_days', $isEdit ? (int) $plan->trial_days : 0) }}"
+                       class="form-control feat-num @error('trial_days') is-invalid @enderror"
+                       placeholder="e.g. 14" min="0" max="365">
+                <span class="toggle-lbl" style="min-width:38px">days</span>
+            </div>
+        </div>
+        @error('trial_days')<div class="invalid-feedback">{{ $message }}</div>@enderror
     </div>
 
     {{-- ── Razorpay ─────────────────────────────────────────────── --}}
@@ -111,27 +151,8 @@
 
     {{-- ── Features ────────────────────────────────────────────── --}}
     <div class="section-title" style="margin-top:24px">Plan Features</div>
-
-    {{-- Leads --}}
-    <div class="form-group feat-group">
-        <div class="feat-row">
-            <div class="feat-label-col">
-                <div class="feat-name">Leads</div>
-                <div class="feat-sub">Max leads allowed</div>
-            </div>
-            <div class="feat-control-col">
-                <label class="toggle-wrap">
-                    <input type="checkbox" name="leads_unlimited" id="leads-unlimited"
-                           {{ old('leads_unlimited', ($leadsVal == -1) ? '1' : '0') == '1' ? 'checked' : '' }}>
-                    <span class="toggle-track"></span>
-                    <span class="toggle-lbl">Unlimited</span>
-                </label>
-                <input type="number" name="leads_count" id="leads-count"
-                       value="{{ old('leads_count', $leadsVal == -1 ? '' : $leadsVal) }}"
-                       class="form-control feat-num" placeholder="e.g. 500"
-                       min="1" {{ ($leadsVal == -1) ? 'disabled' : '' }}>
-            </div>
-        </div>
+    <div class="form-hint" style="margin-bottom:14px">
+        Leads &amp; contacts are unlimited on every plan — there is no lead cap to configure.
     </div>
 
     {{-- Users --}}
@@ -230,12 +251,20 @@ document.getElementById('plan-name').addEventListener('input', function () {
 });
 @endif
 
-// Leads unlimited toggle
-document.getElementById('leads-unlimited').addEventListener('change', function () {
-    const cnt = document.getElementById('leads-count');
-    cnt.disabled = this.checked;
-    if (this.checked) cnt.value = '';
-});
+// Custom (contact-sales) toggle — grey out price + trial fields
+const customToggle = document.getElementById('is-custom');
+const priceFields  = document.getElementById('price-fields');
+const trialGroup   = document.getElementById('trial-group');
+function syncCustom() {
+    const on = customToggle.checked;
+    document.getElementById('lbl-is-custom').textContent = on ? 'Custom' : 'Priced';
+    [priceFields, trialGroup].forEach(el => {
+        el.style.opacity = on ? '0.4' : '';
+        el.querySelectorAll('input').forEach(i => i.disabled = on);
+    });
+}
+customToggle.addEventListener('change', syncCustom);
+syncCustom();
 
 // Users unlimited toggle
 document.getElementById('users-unlimited').addEventListener('change', function () {

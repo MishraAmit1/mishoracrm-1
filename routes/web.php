@@ -18,6 +18,7 @@ use App\Http\Controllers\Web\SuperAdmin\LeadIntegrationController as SuperAdminL
 use App\Http\Controllers\Web\SuperAdmin\PlatformSettingController as SuperAdminPlatformSettingController;
 use App\Http\Controllers\Web\Tenant\LeadIntegrationController as TenantLeadIntegrationController;
 use App\Http\Controllers\Web\PricingController;
+use App\Http\Controllers\Web\ContactSalesController;
 use Illuminate\Support\Facades\Route;
 // ══════════════════════════════════════════════════════════════════
 // PUBLIC — Auth routes (base domain: saas-crm.test)
@@ -26,6 +27,11 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', fn() => view('welcome'))->name('home');
 Route::get('/pricing', [PricingController::class, 'index'])->name('pricing');
 Route::get('/privacy-policy', fn() => view('legal.privacy-policy'))->name('privacy-policy');
+
+// PUBLIC — "Talk to sales" flow behind the Enterprise plan
+Route::get('/contact-sales', [ContactSalesController::class, 'show'])->name('contact-sales');
+Route::post('/contact-sales', [ContactSalesController::class, 'store'])
+    ->middleware('throttle:10,1')->name('contact-sales.store');
 Route::middleware('auth')->post('/device-token', [DeviceTokenController::class, 'store']);
 Route::middleware('guest')->group(function () {
     Route::get('/login',  [LoginController::class, 'show'])->name('login');
@@ -164,6 +170,14 @@ Route::prefix('superadmin')
             Route::delete('/{plan}',       'destroy')->name('destroy');
             Route::post('/{plan}/toggle',  'toggle')->name('toggle');
             Route::post('/toggle-monthly-billing', 'toggleMonthlyBilling')->name('toggle-monthly-billing');
+        });
+
+        // Sales enquiries (public /contact-sales submissions)
+        Route::prefix('contact-enquiries')->name('contact-enquiries.')->controller(SuperAdmin\ContactEnquiryController::class)->group(function () {
+            Route::get('/',                  'index')->name('index');
+            Route::post('/settings',         'saveSettings')->name('settings');
+            Route::post('/{enquiry}/status', 'updateStatus')->name('status');
+            Route::delete('/{enquiry}',      'destroy')->name('destroy');
         });
 
         // Lead Integration access control

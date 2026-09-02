@@ -76,7 +76,7 @@ Everything below is about the **Platform Subscription**.
 | `razorpay_subscription_id` | reserved for future recurring billing — **currently always null** |
 | `status` | enum: `trial`, `active`, `cancelled`, `expired`, `past_due`, `pending_payment` |
 | `billing_cycle` | `monthly` \| `yearly` |
-| `trial_ends_at` | when the 14-day trial ends (paid plans only) |
+| `trial_ends_at` | when the free trial ends — length is `plans.trial_days` (0 = no trial) |
 | `started_at` | when the current paid term started |
 | `ends_at` | when the current term expires (`null` = free plan / no expiry) |
 | `cancelled_at` | set when tenant cancels |
@@ -88,7 +88,7 @@ Everything below is about the **Platform Subscription**.
 
 | Status | Access? | Meaning |
 |---|---|---|
-| `trial` | ✅ (until `trial_ends_at`) | 14-day free trial on a paid plan |
+| `trial` | ✅ (until `trial_ends_at`) | free trial (`plans.trial_days`); a paid no-trial plan gets `trial_ends_at = now()` and signup routes to checkout |
 | `active` | ✅ (until `ends_at`, or forever if free) | Paid & current, or free plan |
 | `pending_payment` | ❌ | Checkout started, payment not completed |
 | `past_due` | ❌ | Payment failed |
@@ -128,12 +128,14 @@ Applied at checkout via AJAX. `type` = `percentage` \| `flat`, optional `max_dis
 
 ```mermaid
 flowchart TD
-    A[Tenant signs up] --> B{Plan chosen}
-    B -->|Free plan| C[status = active<br/>ends_at = null<br/>no lockout, ever]
-    B -->|Paid plan| D[status = trial<br/>trial_ends_at = +14 days]
+    A[Tenant signs up] --> B{plans.trial_days}
+    B -->|0, ₹0 plan| C[status = active<br/>ends_at = null<br/>no lockout, ever]
+    B -->|> 0| D[status = trial<br/>trial_ends_at = +trial_days]
+    B -->|0, paid plan| F[status = trial<br/>trial_ends_at = now<br/>redirect to checkout]
 
     C --> E[Uses workspace]
     D --> E
+    F --> E
 
     E --> F{CheckSubscription<br/>middleware on every<br/>tenant route}
     F -->|isExpired = false| E
@@ -166,9 +168,10 @@ flowchart TD
 
 ### 4.2 Step-by-step
 
-1. **Signup** (`RegisterController` / API `AuthController`)
-   - Free plan → `status = active`, `trial_ends_at = null`, `ends_at = null`. Permanent, no lockout.
-   - Paid plan → `status = trial`, `trial_ends_at = ends_at = now + 14 days`.
+1. **Signup** (`RegisterController::subscriptionWindow()` / API `AuthController`) — driven by `plans.trial_days`:
+   - `trial_days > 0` → `status = trial`, `trial_ends_at = ends_at = now + trial_days`.
+   - `trial_days = 0` **and ₹0 plan** → `status = active`, `trial_ends_at = null`, `ends_at = null`. Permanent, no lockout.
+   - `trial_days = 0` **and paid plan** → `status = trial`, `trial_ends_at = now()`; web signup redirects straight to that plan's checkout.
 
 2. **Daily use** — every tenant route runs through `CheckSubscription`:
    ```php
@@ -305,8 +308,9 @@ php artisan migrate     # applies 2026_08_29_120000_add_renewal_reminder_sent_at
 
 ## 7. Testing checklist
 
-- [ ] New signup on **free** plan → can use workspace indefinitely, no "trial ends" banner, `/subscription/current` shows "No expiry".
-- [ ] New signup on **paid** plan → 14-day trial, banner counts down.
+- [ ] New signup on a **0-day / ₹0** plan → can use workspace indefinitely, no "trial ends" banner, `/subscription/current` shows "No expiry".
+- [ ] New signup on a plan with **trial_days > 0** → trial for that many days, banner counts down.
+- [ ] New signup on a **paid, 0-day** plan → lands on that plan's checkout page.
 - [ ] Trial lapses (set `trial_ends_at` in the past) → next request redirects to `/subscription/expired`.
 - [ ] Run `php artisan subscriptions:check-platform` → lapsed sub becomes `expired`, admin gets notification.
 - [ ] Sub expiring in 5 days → command emails admin once; second run does **not** re-email.

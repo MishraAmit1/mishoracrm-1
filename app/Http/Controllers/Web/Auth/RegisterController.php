@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Web\Auth;
  
 use App\Http\Controllers\Controller;
 use App\Models\Plan;
-use App\Models\PlatformSetting;
 use App\Models\Tenant;
 use App\Models\User;
 use Exception;
@@ -21,7 +20,12 @@ class RegisterController extends Controller
     // ── Show register form ────────────────────────────────────────
     public function show(): View
     {
-        $plans = Plan::where('is_active', true)->orderBy('sort_order')->get();
+        // Custom (Enterprise) plans are sales-assisted — not self-serve.
+        $plans = Plan::where('is_active', true)
+            ->where('is_custom', false)
+            ->orderBy('sort_order')
+            ->get();
+
         return view('auth.register', compact('plans'));
     }
  
@@ -79,39 +83,59 @@ class RegisterController extends Controller
                 // 3. Assign role
                 $user->assignRole('tenant_admin');
  
-                // 4. Assign plan / subscription
+                // 4. Assign plan / subscription — custom (Enterprise) plans are
+                //    sales-assisted and can't be self-selected here.
                 $planSlug = $request->plan ?? 'free';
-                $plan     = Plan::where('slug', $planSlug)->first()
+                $plan     = Plan::where('slug', $planSlug)->where('is_custom', false)->first()
                          ?? Plan::where('slug', 'free')->first();
- 
-                if ($plan) {
-                    $isFree = (float) $plan->monthly_price === 0.0;
 
-                    $tenant->subscriptions()->create([
-                        'plan_id'        => $plan->id,
-                        // Free plan starts as a permanent active subscription
-                        // (no expiry, no lockout). Paid plans get a 14-day trial.
-                        'status'         => $isFree ? 'active' : 'trial',
-                        'billing_cycle'  => 'monthly',
-                        'trial_ends_at'  => $isFree ? null : now()->addDays(14),
-                        'started_at'     => now(),
-                        'ends_at'        => $isFree ? null : now()->addDays(14),
-                    ]);
+                if ($plan) {
+                    $tenant->subscriptions()->create(array_merge(
+                        ['plan_id' => $plan->id, 'billing_cycle' => 'monthly', 'started_at' => now()],
+                        $this->subscriptionWindow($plan),
+                    ));
                 }
- 
-                return compact('tenant', 'user');
+
+                return ['tenant' => $tenant, 'user' => $user, 'plan' => $plan];
             });
- 
+
             // Auto-login after registration
             Auth::login($result['user']);
- 
+
+            // A paid plan with no free trial → straight to payment.
+            $plan = $result['plan'];
+            if ($plan && !$plan->hasTrial() && (float) $plan->monthly_price > 0) {
+                return redirect()->route('tenant.subscription.checkout', [$plan->slug, 'monthly'])
+                    ->with('success', 'Workspace created — complete payment to activate ' . $plan->name . '.');
+            }
+
             return redirect()->route('dashboard')
                 ->with('success', 'Welcome! Your workspace is ready. 🎉');
- 
+
         } catch (Exception $ex) {
             return back()
                 ->withInput()
                 ->with('error', "Something went wrong. Please try again. $ex");
         }
+    }
+
+    /**
+     * Status / trial window for a brand-new subscription on $plan.
+     *   trial_days > 0            → N-day trial, then expires until paid
+     *   trial_days = 0, ₹0 plan   → permanent free, no expiry, no lockout
+     *   trial_days = 0, paid plan → trial that ends now (register redirects to checkout)
+     */
+    private function subscriptionWindow(Plan $plan): array
+    {
+        if ($plan->hasTrial()) {
+            $ends = now()->addDays((int) $plan->trial_days);
+            return ['status' => 'trial', 'trial_ends_at' => $ends, 'ends_at' => $ends];
+        }
+
+        if ((float) $plan->monthly_price === 0.0) {
+            return ['status' => 'active', 'trial_ends_at' => null, 'ends_at' => null];
+        }
+
+        return ['status' => 'trial', 'trial_ends_at' => now(), 'ends_at' => now()];
     }
 }

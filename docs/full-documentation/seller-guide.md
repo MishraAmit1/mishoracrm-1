@@ -52,9 +52,14 @@ The common thread across every service-business prospect: **they're currently do
 ## 4. How Plans & Pricing Work
 
 Every customer subscribes to a **Plan**. Each plan defines:
-- Hard limits (max leads, max team members — or unlimited).
+- The number of team members (a fixed seat count, or unlimited). Leads and contacts are **always unlimited** — there is no lead cap on any plan.
 - Which optional modules are switched on: WhatsApp, Advanced Reports, Social Media Leads, Manufacturing, Service Catalog, Subscriptions, Appointments/Booking, Time Tracking, Tickets/Helpdesk.
 - Monthly or yearly pricing (with an automatic discount for annual commitment).
+
+The four seeded plans are **Free Trial**, **Starter**, **Pro**, and **Enterprise**. Enterprise is a
+*custom* plan: it carries no fixed price and no self-serve checkout — the pricing page shows "Custom"
+and a **Talk to sales** button that opens the public `/contact-sales` form. Those enquiries land in
+**Super Admin → Sales Enquiries** (and are emailed to the address set there).
 
 **This means you can position plans by vertical, not just by size:**
 - A "Starter" plan with just the CRM core suits anyone getting started.

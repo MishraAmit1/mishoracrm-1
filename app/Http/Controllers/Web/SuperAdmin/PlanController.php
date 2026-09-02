@@ -92,27 +92,40 @@ class PlanController extends Controller
             'name'                      => 'required|string|max:100',
             'slug'                      => $slugRule,
             'description'               => 'nullable|string|max:255',
-            'monthly_price'             => 'required|numeric|min:0',
-            'yearly_price'              => 'required|numeric|min:0',
+            'monthly_price'             => 'nullable|numeric|min:0',
+            'yearly_price'              => 'nullable|numeric|min:0',
             'discount_percentage'       => 'nullable|integer|min:0|max:100',
             'razorpay_monthly_plan_id'  => 'nullable|string|max:100',
             'razorpay_yearly_plan_id'   => 'nullable|string|max:100',
             'is_active'                 => 'boolean',
+            'is_custom'                 => 'boolean',
+            'trial_days'                => 'nullable|integer|min:0|max:365',
             'sort_order'                => 'required|integer|min:0',
         ]);
 
-        $data['is_active'] = $request->boolean('is_active', true);
+        $data['is_active']  = $request->boolean('is_active', true);
+        $data['is_custom']  = $request->boolean('is_custom');
+        $data['trial_days'] = (int) ($data['trial_days'] ?? 0);
+
+        // A custom (contact-sales) plan has no price, no checkout and no trial.
+        if ($data['is_custom']) {
+            $data['monthly_price'] = 0;
+            $data['yearly_price']  = 0;
+            $data['discount_percentage'] = 0;
+            $data['trial_days'] = 0;
+        } else {
+            $data['monthly_price'] = (float) ($data['monthly_price'] ?? 0);
+            $data['yearly_price']  = (float) ($data['yearly_price'] ?? 0);
+        }
 
         return $data;
     }
 
     private function buildFeatures(Request $request): array
     {
-        $leads = $request->boolean('leads_unlimited') ? -1 : (int) $request->input('leads_count', 0);
         $users = $request->boolean('users_unlimited') ? -1 : (int) $request->input('users_count', 0);
 
         $features = [
-            'leads'        => $leads,
             'users'        => $users,
             'whatsapp'     => $request->boolean('feat_whatsapp'),
             'reports'      => $request->boolean('feat_reports'),

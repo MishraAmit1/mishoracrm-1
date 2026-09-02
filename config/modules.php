@@ -17,6 +17,12 @@
 //
 // `icon` keys map to the shared $icons path map in
 // resources/views/superadmin/tenants/show.blade.php.
+//
+// `tier` = the lowest paid plan that bundles this module by default. Consumed
+// only by Database\Seeders\PlanSeeder to keep the module→plan mapping DRY:
+//   'starter' → included from the Starter plan up (Starter, Pro, Enterprise)
+//   'pro'     → included from the Pro plan up (Pro, Enterprise)
+// Superadmin can still add/remove any module on any plan in the plan editor.
 
 return [
     'manufacturing' => [
@@ -24,41 +30,48 @@ return [
         'desc'  => 'Work Orders + Product Batches (production tracking)',
         'blurb' => 'Work orders, BOM costing & production batches',
         'icon'  => 'cube',
+        'tier'  => 'pro',
     ],
     'service' => [
         'label' => 'Service Catalog',
         'desc'  => 'Service line items in Quotations / Invoices',
         'blurb' => 'Service line items on quotations & invoices',
         'icon'  => 'wrench',
+        'tier'  => 'pro',
     ],
     'subscriptions' => [
         'label' => 'Service Subscriptions',
         'desc'  => 'Customer subscription tracking, expiry reminders, renewals',
         'blurb' => 'Recurring customer plans, renewals & reminders',
         'icon'  => 'renew',
+        'tier'  => 'pro',
     ],
     'appointments' => [
         'label' => 'Appointments / Booking',
         'desc'  => 'Public online booking link + staff appointment management',
         'blurb' => 'Public online booking + staff scheduling',
         'icon'  => 'calendar',
+        'tier'  => 'starter',
     ],
     'time_tracking' => [
         'label' => 'Time Tracking',
         'desc'  => 'Task timers, billable hours, convert time to invoices',
         'blurb' => 'Task timers & billable hours',
         'icon'  => 'clock',
+        'tier'  => 'starter',
     ],
     'tickets' => [
         'label' => 'Tickets / Helpdesk',
         'desc'  => 'Customer support tickets, public submission form, reply thread',
         'blurb' => 'Support tickets with a public submission form',
         'icon'  => 'chat',
+        'tier'  => 'starter',
     ],
     'loyalty' => [
         'label' => 'Customer Loyalty',
         'desc'  => 'Points, tiers, tenant-set earn/redeem rules, auto tier tagging',
         'blurb' => 'Points, tiers, rewards & win-back campaigns',
         'icon'  => 'gift',
+        'tier'  => 'pro',
     ],
 ];

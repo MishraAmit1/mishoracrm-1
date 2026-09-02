@@ -30,8 +30,9 @@
       <span class="v-logo-name" style="font-size:16px;">Milan <span>CRM</span></span>
     </a>
     <div class="pg-nav-links">
+      <a href="{{ route('contact-sales') }}" class="a-link">Contact sales</a>
       <a href="{{ route('login') }}" class="a-link">Log in</a>
-      <a href="{{ route('register') }}" class="btn-cta">Start free trial</a>
+      <a href="{{ route('register') }}" class="btn-cta">Get started</a>
       <button class="pg-theme-btn" onclick="toggleTheme()" title="Toggle theme" type="button">
         <svg id="ico-moon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/></svg>
         <svg id="ico-sun" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:none"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/></svg>
@@ -39,11 +40,13 @@
     </div>
   </nav>
 
+  @php $anyTrial = collect($plans)->contains(fn ($p) => (int) $p->trial_days > 0); @endphp
+
   {{-- ── Hero ── --}}
   <header class="pg-hero">
     <div class="card-tag"><div class="card-tag-dot"></div> Simple, honest pricing</div>
     <h1>Pricing that scales <em>with your business</em></h1>
-    <p>Every plan includes a 14-day free trial. No credit card to start, no hidden fees, cancel anytime.</p>
+    <p>{{ $anyTrial ? 'Try it free, no credit card to start.' : 'No credit card to start.' }} No hidden fees, cancel anytime.</p>
   </header>
 
   @if($monthlyBillingEnabled)
@@ -61,19 +64,20 @@
 
   {{-- ── Plans ── --}}
   @php $planCount = count($plans); @endphp
-  <div class="pg-plans-wrap" @if($planCount && $planCount <= 2) style="max-width:760px" @elseif($planCount === 3) style="max-width:980px" @endif>
+  <div class="pg-plans-wrap" @if($planCount && $planCount <= 2) style="max-width:760px" @elseif($planCount === 3) style="max-width:980px" @elseif($planCount >= 4) style="max-width:1180px" @endif>
     <div class="pg-plans-grid">
       @forelse($plans as $plan)
       @php
-          $isPopular    = $plan->slug === 'starter' || ($planCount <= 2 && $loop->last);
+          $isCustom     = $plan->is_custom;
+          $isPopular    = !$isCustom && ($plan->slug === 'starter' || ($planCount <= 2 && $loop->last));
           $monthlyPrice = (int) $plan->monthly_price;
           $yearlyPrice  = (int) $plan->yearly_price;
           $hasDiscount  = $plan->hasDiscount();
           $discMonthly  = (int) $plan->discountedMonthlyPrice();
           $discYearly   = (int) $plan->discountedYearlyPrice();
-          $leads        = $plan->getFeature('leads');
           $users        = $plan->getFeature('users');
-          $isFree       = $monthlyPrice == 0 && $yearlyPrice == 0;
+          $isFree       = !$isCustom && $monthlyPrice == 0 && $yearlyPrice == 0;
+          $trialDays    = (int) $plan->trial_days;
       @endphp
       <div class="pg-plan-card {{ $isPopular ? 'popular' : '' }}">
           @if($isPopular)
@@ -84,6 +88,9 @@
           <div class="pg-plan-desc">{{ $plan->description ?: 'Everything you need to run a growing team on Milan CRM.' }}</div>
 
           <div class="pg-plan-price">
+            @if($isCustom)
+              <span class="pg-price-amount">Custom</span>
+            @else
             <div class="pg-monthly-price" @if(!$monthlyBillingEnabled) style="display:none" @endif>
               @if($monthlyPrice == 0)
                 <span class="pg-price-amount">Free</span>
@@ -104,26 +111,41 @@
                 @if($hasDiscount)<span class="pg-discount-badge">{{ $plan->discount_percentage }}% off</span>@endif
               @endif
             </div>
+            @endif
           </div>
-          @if($yearlyPrice > 0)
+          @if($isCustom)
+          <div class="pg-price-yearly-note">Volume pricing for large teams</div>
+          @elseif($trialDays > 0)
+          <div class="pg-price-yearly-note">{{ $trialDays }}-day free trial included</div>
+          @elseif($yearlyPrice > 0)
           <div class="pg-price-yearly-note pg-yearly-only" @if($monthlyBillingEnabled) style="display:none" @endif>
             ≈ ₹{{ number_format(($hasDiscount ? $discYearly : $yearlyPrice) / 12, 0) }}/mo, billed annually
           </div>
           @endif
 
+          @if($isCustom)
+          <a href="{{ route('contact-sales') }}" class="pg-plan-cta btn-ghost">Talk to sales</a>
+          @else
           <a href="{{ route('register') }}" class="pg-plan-cta {{ $isPopular ? 'btn-cta' : 'btn-ghost' }}">
-            {{ $isFree ? 'Start free' : 'Start 14-day trial' }}
+            @if($trialDays > 0)
+              Start {{ $trialDays }}-day trial
+            @elseif($isFree)
+              Start free
+            @else
+              Get started
+            @endif
           </a>
+          @endif
 
           <div class="pg-feat-head">What's included</div>
           <ul class="pg-plan-features">
             <li>
               <svg class="feat-icon" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
-              {{ $leads == -1 ? 'Unlimited leads' : number_format($leads) . ' leads' }}
+              Unlimited leads &amp; contacts
             </li>
             <li>
               <svg class="feat-icon" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
-              {{ $users == -1 ? 'Unlimited team members' : number_format($users) . ' team members' }}
+              {{ $users == -1 ? 'Unlimited team members' : 'Up to ' . number_format($users) . ' team members' }}
             </li>
             <li class="{{ $plan->hasFeature('whatsapp') ? '' : 'disabled' }}">
               @if($plan->hasFeature('whatsapp'))
@@ -157,10 +179,21 @@
               </li>
               @endif
             @endforeach
+            @if($isCustom)
+            <li>
+              <svg class="feat-icon" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+              Guided onboarding &amp; data migration
+            </li>
+            <li>
+              <svg class="feat-icon" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+              Dedicated account manager &amp; priority SLA
+            </li>
+            @else
             <li>
               <svg class="feat-icon" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
               {{ $isPopular ? 'Priority support' : 'Email support' }}
             </li>
+            @endif
           </ul>
       </div>
       @empty
@@ -174,7 +207,8 @@
     <div class="pg-includes">
       <div class="pg-includes-t">Every plan includes</div>
       <ul class="pg-includes-grid">
-        <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>14-day free trial</li>
+        <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Unlimited leads &amp; contacts</li>
+        <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>{{ $anyTrial ? 'Free trial — no card needed' : 'No credit card to start' }}</li>
         <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>GST invoicing &amp; quotations</li>
         <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Deal pipeline &amp; tasks</li>
         <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Staff &amp; attendance tracking</li>
@@ -192,12 +226,20 @@
     </div>
     <div class="pg-faq">
       <details class="pg-faq-item">
-        <summary>Do I need a credit card to start the trial?</summary>
-        <p>No. You get full access to your chosen plan for 14 days without entering any payment details. We'll remind you before the trial ends, and you only pay if you decide to continue.</p>
+        <summary>Do I need a credit card to start?</summary>
+        <p>No. Plans that include a free trial give you full access with no payment details up front — we'll remind you before it ends, and you only pay if you continue. Plans without a trial simply take you to payment after you create your workspace.</p>
       </details>
       <details class="pg-faq-item">
         <summary>Can I change plans later?</summary>
-        <p>Yes, any time. Upgrade instantly to unlock more leads, users and features — or downgrade at the end of your billing cycle. Your data always stays intact.</p>
+        <p>Yes, any time. Upgrade instantly to add team members and unlock more modules — or downgrade at the end of your billing cycle. Your data always stays intact.</p>
+      </details>
+      <details class="pg-faq-item">
+        <summary>Is there a limit on how many leads I can add?</summary>
+        <p>No. Leads and contacts are unlimited on every plan. Plans differ by the number of team members and which premium modules are included.</p>
+      </details>
+      <details class="pg-faq-item">
+        <summary>What's included in the Enterprise plan?</summary>
+        <p>Enterprise is for larger teams that need more than the standard plans — a custom mix of modules, volume pricing, guided onboarding and data migration, a priority support SLA and a dedicated account manager. <a href="{{ route('contact-sales') }}">Talk to our team</a> and we'll put together a quote.</p>
       </details>
       <details class="pg-faq-item">
         <summary>What happens to my data if I cancel?</summary>
@@ -230,10 +272,10 @@
   <footer class="pg-footer">
     <div class="pg-footer-copy">© {{ now()->year }} Milan CRM. Built for Indian businesses.</div>
     <div class="pg-footer-links">
+      <a href="{{ route('contact-sales') }}">Contact sales</a>
       <a href="{{ route('login') }}">Log in</a>
       <a href="{{ route('register') }}">Get started</a>
-      <a href="/terms">Terms</a>
-      <a href="/privacy">Privacy</a>
+      <a href="{{ route('privacy-policy') }}">Privacy</a>
     </div>
   </footer>
 

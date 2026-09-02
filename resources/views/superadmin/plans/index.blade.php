@@ -119,7 +119,6 @@
                 @forelse($plans as $plan)
                 @php
                     $features = $plan->features ?? [];
-                    $leads = $features['leads'] ?? 0;
                     $users = $features['users'] ?? 0;
                 @endphp
                 <tr>
@@ -134,7 +133,9 @@
                     </td>
 
                     <td class="price-cell" data-label="Monthly Price">
-                        @if($plan->monthly_price == 0)
+                        @if($plan->is_custom)
+                            <div class="p-main">Custom</div>
+                        @elseif($plan->monthly_price == 0)
                             <div class="p-main">Free</div>
                         @else
                             <div class="p-main">
@@ -152,7 +153,9 @@
                     </td>
 
                     <td class="price-cell" data-label="Yearly Price">
-                        @if($plan->yearly_price == 0)
+                        @if($plan->is_custom)
+                            <div class="p-main">Custom</div>
+                        @elseif($plan->yearly_price == 0)
                             <div class="p-main">—</div>
                         @else
                             <div class="p-main">₹{{ number_format($plan->yearly_price) }}</div>
@@ -167,11 +170,13 @@
                     <td data-label="Features">
                         <div class="feat-list">
                             <span class="feat-tag on">
-                                {{ $leads == -1 ? '∞' : number_format($leads) }} Leads
-                            </span>
-                            <span class="feat-tag on">
                                 {{ $users == -1 ? '∞' : number_format($users) }} Users
                             </span>
+                            @if(!$plan->is_custom)
+                            <span class="feat-tag {{ (int) $plan->trial_days > 0 ? 'on' : 'off' }}">
+                                {{ (int) $plan->trial_days > 0 ? (int) $plan->trial_days . 'd trial' : 'No trial' }}
+                            </span>
+                            @endif
                             <span class="feat-tag {{ ($features['whatsapp'] ?? false) ? 'on' : 'off' }}">WhatsApp</span>
                             <span class="feat-tag {{ ($features['reports'] ?? false) ? 'on' : 'off' }}">Reports</span>
                             @if($features['social_leads'] ?? false)
@@ -195,6 +200,9 @@
                         <span class="badge {{ $plan->is_active ? 'badge-green' : 'badge-red' }}">
                             {{ $plan->is_active ? 'Active' : 'Inactive' }}
                         </span>
+                        @if($plan->is_custom)
+                            <span class="badge badge-blue" style="margin-top:4px">Custom</span>
+                        @endif
                     </td>
 
                     <td>

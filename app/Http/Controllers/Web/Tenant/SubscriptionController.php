@@ -48,6 +48,9 @@ class SubscriptionController extends Controller
 
         $plan = Plan::where('slug', $planSlug)->where('is_active', true)->firstOrFail();
 
+        // Custom (Enterprise) plans have no self-serve checkout — sales handles them.
+        abort_if($plan->is_custom, 404);
+
         if ($plan->monthly_price == 0) {
             return redirect()->route('tenant.subscription.plans')
                 ->with('info', 'Free plan already active hai.');

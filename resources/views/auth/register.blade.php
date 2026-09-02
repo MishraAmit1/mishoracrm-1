@@ -23,6 +23,7 @@
 </style>
 </head>
 <body>
+@php $anyTrial = collect($plans)->contains(fn ($p) => (int) $p->trial_days > 0); @endphp
 
 <div class="auth-shell">
 
@@ -41,7 +42,7 @@
 
       <div class="v-hero">
         <h2>Your workspace,<br/>ready in <em>3 minutes</em></h2>
-        <p>Join thousands of Indian businesses growing with Milan CRM. Free 14-day trial — no credit card required.</p>
+        <p>Join thousands of Indian businesses growing with Milan CRM.{{ $anyTrial ? ' Free trial available — no credit card required.' : ' No credit card required to start.' }}</p>
       </div>
 
       <div class="v-mock" style="max-width:400px">
@@ -69,7 +70,7 @@
       <div class="v-features">
         <div class="v-feature">
           <span class="v-feature-ico"><svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.76c0 1.6 1.123 2.994 2.707 3.227 1.068.157 2.148.279 3.238.364.466.037.893.281 1.153.671L12 21l2.652-3.978c.26-.39.687-.634 1.153-.67 1.09-.086 2.17-.208 3.238-.365 1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/></svg></span>
-          <span>Unlimited leads &amp; pipeline management</span>
+          <span>Unlimited leads &amp; contacts on every plan</span>
         </div>
         <div class="v-feature">
           <span class="v-feature-ico"><svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg></span>
@@ -88,7 +89,7 @@
           <span style="background:#f8b84e">AV</span>
           <span style="background:#a78bfa">PM</span>
         </div>
-        <div class="v-trust-txt"><b>14-day free trial</b> · cancel anytime</div>
+        <div class="v-trust-txt"><b>{{ $anyTrial ? 'Free trial' : 'No card to start' }}</b> · cancel anytime</div>
       </div>
 
     </div>
@@ -116,7 +117,7 @@
     <div class="auth-card">
 
       <div class="card-head">
-        <div class="card-tag"><div class="card-tag-dot"></div> Free 14-day trial</div>
+        <div class="card-tag"><div class="card-tag-dot"></div> {{ $anyTrial ? 'Free trial included' : 'Set up in minutes' }}</div>
         <h1>Create workspace</h1>
         <p>Step <span id="stepNum">1</span> of 3 — <span id="stepDesc">Company details</span></p>
       </div>
@@ -297,30 +298,37 @@
         <div class="step-panel" id="sp-3">
 
           <div class="plans-grid">
-            <label class="plan-opt is-selected" id="po-free" onclick="selectPlan('free')">
-              <input type="radio" name="plan" value="free" style="display:none" checked/>
-              <div class="plan-name">Trial</div>
-              <div class="plan-price">₹0<sub>/14d</sub></div>
-              <div class="plan-feats">50 leads<br/>2 users<br/>Basic CRM</div>
+            @php $moduleCount = count(config('modules')); @endphp
+            @foreach($plans as $plan)
+            @php
+                $pUsers   = $plan->getFeature('users');
+                $pModules = collect(array_keys(config('modules')))->filter(fn($k) => $plan->hasFeature($k))->count();
+                $pMonthly = (int) $plan->monthly_price;
+                $pTrial   = (int) $plan->trial_days;
+                $feats    = [
+                    $pUsers == -1 ? 'Unlimited users' : $pUsers . ' users',
+                    $plan->hasFeature('whatsapp') ? 'WhatsApp campaigns' : 'Core CRM',
+                    $pModules === 0
+                        ? 'Leads, deals & invoicing'
+                        : ($pModules >= $moduleCount ? 'All premium modules' : $pModules . ' add-on modules'),
+                    $pTrial > 0 ? $pTrial . '-day free trial' : ($pMonthly === 0 ? 'Free forever' : 'Pay to start'),
+                ];
+            @endphp
+            <label class="plan-opt {{ $loop->first ? 'is-selected' : '' }}" onclick="selectPlan(this)" style="position:relative;">
+              @if($plan->slug === 'starter')<div class="plan-badge">POPULAR</div>@endif
+              <input type="radio" name="plan" value="{{ $plan->slug }}" style="display:none" {{ $loop->first ? 'checked' : '' }}/>
+              <div class="plan-name">{{ $plan->name }}</div>
+              <div class="plan-price">
+                @if($pMonthly === 0)Free@else₹{{ number_format($pMonthly) }}<sub>/mo</sub>@endif
+              </div>
+              <div class="plan-feats">{!! implode('<br/>', $feats) !!}</div>
             </label>
-            <label class="plan-opt" id="po-starter" onclick="selectPlan('starter')" style="position:relative;">
-              <div class="plan-badge">POPULAR</div>
-              <input type="radio" name="plan" value="starter" style="display:none"/>
-              <div class="plan-name">Starter</div>
-              <div class="plan-price">₹999<sub>/mo</sub></div>
-              <div class="plan-feats">500 leads<br/>5 users<br/>WhatsApp ✓</div>
-            </label>
-            <label class="plan-opt" id="po-pro" onclick="selectPlan('pro')">
-              <input type="radio" name="plan" value="pro" style="display:none"/>
-              <div class="plan-name">Pro</div>
-              <div class="plan-price">₹2,499<sub>/mo</sub></div>
-              <div class="plan-feats">Unlimited<br/>All features<br/>Priority support</div>
-            </label>
+            @endforeach
           </div>
 
           <div class="terms-box" style="margin-bottom:16px">
             <input type="checkbox" name="terms" id="termsChk" required/>
-            <p>I agree to Milan CRM's <a href="/terms" target="_blank">Terms of Service</a> and <a href="/privacy" target="_blank">Privacy Policy</a>. Subscription charges apply after the trial period.</p>
+            <p>I agree to Milan CRM's <a href="/terms" target="_blank">Terms of Service</a> and <a href="/privacy" target="_blank">Privacy Policy</a>. Paid plans are billed after any free-trial period ends.</p>
           </div>
 
           <div class="btn-row">
@@ -403,10 +411,11 @@ function checkPwd(v) {
 }
 
 // Plan select
-function selectPlan(p) {
-  ['free','starter','pro'].forEach(x => document.getElementById('po-'+x).classList.remove('is-selected'));
-  document.getElementById('po-'+p).classList.add('is-selected');
-  document.querySelector(`input[value="${p}"]`).checked = true;
+function selectPlan(el) {
+  document.querySelectorAll('.plan-opt').forEach(x => x.classList.remove('is-selected'));
+  el.classList.add('is-selected');
+  const radio = el.querySelector('input[type=radio]');
+  if (radio) radio.checked = true;
 }
 
 // Eye toggle

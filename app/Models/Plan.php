@@ -19,6 +19,8 @@ class Plan extends Model
         'razorpay_yearly_plan_id',
         'features',
         'is_active',
+        'is_custom',
+        'trial_days',
         'sort_order',
     ];
 
@@ -28,6 +30,8 @@ class Plan extends Model
         'discount_percentage' => 'integer',
         'features'            => 'array',
         'is_active'           => 'boolean',
+        'is_custom'           => 'boolean',
+        'trial_days'          => 'integer',
     ];
 
     // ── Relationships ─────────────────────────────────────────────
@@ -69,6 +73,12 @@ class Plan extends Model
     public function isUnlimited(string $key): bool
     {
         return ($this->features[$key] ?? null) === -1;
+    }
+
+    // This plan is offered with a free trial period at signup.
+    public function hasTrial(): bool
+    {
+        return (int) $this->trial_days > 0;
     }
 
     public function getFormattedMonthlyPriceAttribute(): string
