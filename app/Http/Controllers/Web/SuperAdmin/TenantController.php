@@ -225,24 +225,18 @@ class TenantController extends Controller
     // ── Module access — generic (Subscriptions, Appointments, Time
     // Tracking, and any future module) so each new sub-feature doesn't
     // need its own copy-pasted toggle/clear method pair like
-    // manufacturing/service above did. Same tri-state override behavior. ──
-    private const TOGGLEABLE_MODULES = ['subscriptions', 'appointments', 'time_tracking', 'tickets', 'loyalty'];
-
+    // manufacturing/service above did. Same tri-state override behavior.
+    // The toggleable set is the premium module registry in config/modules.php
+    // (manufacturing/service also have dedicated methods above but are still
+    // valid here — both paths write the same settings['modules'][x]). ──
     private function moduleLabel(string $module): string
     {
-        return match ($module) {
-            'subscriptions' => 'Service Subscriptions',
-            'appointments'  => 'Appointments / Booking',
-            'time_tracking' => 'Time Tracking',
-            'tickets'       => 'Tickets / Helpdesk',
-            'loyalty'       => 'Customer Loyalty',
-            default         => ucfirst(str_replace('_', ' ', $module)),
-        };
+        return config("modules.{$module}.label", ucfirst(str_replace('_', ' ', $module)));
     }
 
     public function toggleModule(Tenant $tenant, string $module, Request $request): RedirectResponse
     {
-        abort_unless(in_array($module, self::TOGGLEABLE_MODULES, true), 404);
+        abort_unless(array_key_exists($module, config('modules')), 404);
         $request->validate(['enabled' => ['required', 'boolean']]);
 
         $settings = $tenant->settings ?? [];
@@ -256,7 +250,7 @@ class TenantController extends Controller
 
     public function clearModuleOverride(Tenant $tenant, string $module): RedirectResponse
     {
-        abort_unless(in_array($module, self::TOGGLEABLE_MODULES, true), 404);
+        abort_unless(array_key_exists($module, config('modules')), 404);
 
         $settings = $tenant->settings ?? [];
         unset($settings['modules'][$module]);

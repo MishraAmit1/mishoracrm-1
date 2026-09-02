@@ -103,15 +103,25 @@
         default     => 'muted',
     };
 
-    $moduleConfigs = [
-        'manufacturing' => ['label' => 'Manufacturing', 'desc' => 'Work Orders + Product Batches (production tracking)', 'icon' => 'cube', 'toggle_route' => 'superadmin.tenants.toggle-manufacturing', 'clear_route' => 'superadmin.tenants.clear-manufacturing-override', 'params' => [$tenant]],
-        'service' => ['label' => 'Service Catalog', 'desc' => 'Service line items in Quotations/Invoices', 'icon' => 'wrench', 'toggle_route' => 'superadmin.tenants.toggle-service', 'clear_route' => 'superadmin.tenants.clear-service-override', 'params' => [$tenant]],
-        'subscriptions' => ['label' => 'Service Subscriptions', 'desc' => 'Customer-level subscription tracking, expiry reminders, renewals', 'icon' => 'renew', 'toggle_route' => 'superadmin.tenants.toggle-module', 'clear_route' => 'superadmin.tenants.clear-module-override', 'params' => [$tenant, 'subscriptions']],
-        'appointments' => ['label' => 'Appointments / Booking', 'desc' => 'Public online booking link + staff appointment management', 'icon' => 'calendar', 'toggle_route' => 'superadmin.tenants.toggle-module', 'clear_route' => 'superadmin.tenants.clear-module-override', 'params' => [$tenant, 'appointments']],
-        'time_tracking' => ['label' => 'Time Tracking', 'desc' => 'Task timers, billable hours, convert time to invoices', 'icon' => 'clock', 'toggle_route' => 'superadmin.tenants.toggle-module', 'clear_route' => 'superadmin.tenants.clear-module-override', 'params' => [$tenant, 'time_tracking']],
-        'tickets' => ['label' => 'Tickets / Helpdesk', 'desc' => 'Customer support tickets, public submission form, reply thread', 'icon' => 'chat', 'toggle_route' => 'superadmin.tenants.toggle-module', 'clear_route' => 'superadmin.tenants.clear-module-override', 'params' => [$tenant, 'tickets']],
-        'loyalty' => ['label' => 'Customer Loyalty', 'desc' => 'Points, tiers, tenant-set earn/redeem rules, auto tier tagging', 'icon' => 'gift', 'toggle_route' => 'superadmin.tenants.toggle-module', 'clear_route' => 'superadmin.tenants.clear-module-override', 'params' => [$tenant, 'loyalty']],
+    // Module list is the premium registry in config/modules.php. manufacturing
+    // + service keep their dedicated toggle/clear routes; everything else uses
+    // the generic toggle-module / clear-module-override pair.
+    $dedicatedRoutes = [
+        'manufacturing' => ['superadmin.tenants.toggle-manufacturing', 'superadmin.tenants.clear-manufacturing-override'],
+        'service'       => ['superadmin.tenants.toggle-service', 'superadmin.tenants.clear-service-override'],
     ];
+    $moduleConfigs = [];
+    foreach (config('modules') as $modKey => $mod) {
+        [$toggleRoute, $clearRoute] = $dedicatedRoutes[$modKey] ?? ['superadmin.tenants.toggle-module', 'superadmin.tenants.clear-module-override'];
+        $moduleConfigs[$modKey] = [
+            'label'        => $mod['label'],
+            'desc'         => $mod['desc'],
+            'icon'         => $mod['icon'],
+            'toggle_route' => $toggleRoute,
+            'clear_route'  => $clearRoute,
+            'params'       => isset($dedicatedRoutes[$modKey]) ? [$tenant] : [$tenant, $modKey],
+        ];
+    }
 @endphp
 
 <div class="dsh dsh--sa">

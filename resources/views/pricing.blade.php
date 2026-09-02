@@ -149,6 +149,14 @@
               @endif
               Meta &amp; social lead capture
             </li>
+            @foreach(config('modules') as $modKey => $mod)
+              @if($plan->hasFeature($modKey))
+              <li>
+                <svg class="feat-icon" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                {{ $mod['blurb'] }}
+              </li>
+              @endif
+            @endforeach
             <li>
               <svg class="feat-icon" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
               {{ $isPopular ? 'Priority support' : 'Email support' }}

@@ -112,27 +112,23 @@ class PlanController extends Controller
         $users = $request->boolean('users_unlimited') ? -1 : (int) $request->input('users_count', 0);
 
         $features = [
-            'leads'   => $leads,
-            'users'   => $users,
+            'leads'        => $leads,
+            'users'        => $users,
             'whatsapp'     => $request->boolean('feat_whatsapp'),
             'reports'      => $request->boolean('feat_reports'),
             'social_leads' => $request->boolean('feat_social_leads'),
-            'manufacturing' => $request->boolean('feat_manufacturing'),
-            'service' => $request->boolean('feat_service'),
-            'subscriptions' => $request->boolean('feat_subscriptions'),
-            'appointments' => $request->boolean('feat_appointments'),
-            'time_tracking' => $request->boolean('feat_time_tracking'),
-            'tickets' => $request->boolean('feat_tickets'),
         ];
 
         // remove false booleans to keep JSON clean (optional features only when true)
         if (!$features['social_leads']) unset($features['social_leads']);
-        if (!$features['manufacturing']) unset($features['manufacturing']);
-        if (!$features['service']) unset($features['service']);
-        if (!$features['subscriptions']) unset($features['subscriptions']);
-        if (!$features['appointments']) unset($features['appointments']);
-        if (!$features['time_tracking']) unset($features['time_tracking']);
-        if (!$features['tickets']) unset($features['tickets']);
+
+        // Gated premium modules — single source of truth in config/modules.php.
+        // Only truthy keys get written, same "optional features only when true" rule.
+        foreach (array_keys(config('modules')) as $key) {
+            if ($request->boolean('feat_' . $key)) {
+                $features[$key] = true;
+            }
+        }
 
         return $features;
     }

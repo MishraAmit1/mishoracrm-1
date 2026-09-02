@@ -162,13 +162,11 @@
             ['key' => 'feat_whatsapp',    'field' => 'whatsapp',     'label' => 'WhatsApp Integration', 'sub' => 'Send messages via WhatsApp'],
             ['key' => 'feat_reports',     'field' => 'reports',      'label' => 'Advanced Reports',     'sub' => 'Analytics & revenue reports'],
             ['key' => 'feat_social_leads','field' => 'social_leads', 'label' => 'Social Media Leads',   'sub' => 'Facebook / Instagram lead capture'],
-            ['key' => 'feat_manufacturing','field' => 'manufacturing', 'label' => 'Manufacturing',       'sub' => 'Work Orders + Product Batches (production tracking)'],
-            ['key' => 'feat_service',      'field' => 'service',       'label' => 'Service Catalog',     'sub' => 'Service Catalog + Quotation/Invoice service line items'],
-            ['key' => 'feat_subscriptions','field' => 'subscriptions','label' => 'Service Subscriptions','sub' => 'Customer-level subscription tracking, expiry reminders, renewals'],
-            ['key' => 'feat_appointments', 'field' => 'appointments', 'label' => 'Appointments / Booking','sub' => 'Public online booking link + staff appointment management'],
-            ['key' => 'feat_time_tracking','field' => 'time_tracking','label' => 'Time Tracking',        'sub' => 'Task timers, billable hours, convert time to invoices'],
-            ['key' => 'feat_tickets',      'field' => 'tickets',      'label' => 'Tickets / Helpdesk',   'sub' => 'Customer support tickets, public submission form, reply thread'],
         ];
+        // Gated premium modules — single source of truth in config/modules.php
+        foreach (config('modules') as $modKey => $mod) {
+            $boolFeatures[] = ['key' => 'feat_' . $modKey, 'field' => $modKey, 'label' => $mod['label'], 'sub' => $mod['desc']];
+        }
     @endphp
     @foreach($boolFeatures as $feat)
     @php $checked = old($feat['key'], ($features[$feat['field']] ?? false) ? '1' : '0') == '1'; @endphp

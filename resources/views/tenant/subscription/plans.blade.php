@@ -338,6 +338,14 @@ input:checked + .toggle-slider:before { transform: translateX(22px); }
                     Social Media Leads
                 </li>
                 @endif
+                @foreach(config('modules') as $modKey => $mod)
+                    @if($plan->hasFeature($modKey))
+                    <li>
+                        <svg class="feat-icon" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                        {{ $mod['label'] }}
+                    </li>
+                    @endif
+                @endforeach
             </ul>
 
             @if($monthlyPrice == 0)

@@ -58,6 +58,7 @@ class PlanSeeder extends Seeder
                     'appointments'  => true,
                     'time_tracking' => true,
                     'tickets'       => true,
+                    'loyalty'       => true,
                 ]),
                 'sort_order'    => 2,
             ],
