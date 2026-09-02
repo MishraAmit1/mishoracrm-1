@@ -58,7 +58,7 @@ class EnterprisePlanTest extends TestCase
             ->assertOk()
             ->assertSee('Custom')
             ->assertSee(route('contact-sales'), false)
-            ->assertSee('Unlimited leads &amp; contacts', false);
+            ->assertDontSee('Unlimited leads', false); // dropped from the plan cards
     }
 
     public function test_register_page_excludes_custom_plans(): void

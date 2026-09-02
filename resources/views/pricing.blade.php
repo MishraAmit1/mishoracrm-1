@@ -141,10 +141,6 @@
           <ul class="pg-plan-features">
             <li>
               <svg class="feat-icon" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
-              Unlimited leads &amp; contacts
-            </li>
-            <li>
-              <svg class="feat-icon" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
               {{ $users == -1 ? 'Unlimited team members' : 'Up to ' . number_format($users) . ' team members' }}
             </li>
             <li class="{{ $plan->hasFeature('whatsapp') ? '' : 'disabled' }}">
@@ -207,7 +203,6 @@
     <div class="pg-includes">
       <div class="pg-includes-t">Every plan includes</div>
       <ul class="pg-includes-grid">
-        <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Unlimited leads &amp; contacts</li>
         <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>{{ $anyTrial ? 'Free trial — no card needed' : 'No credit card to start' }}</li>
         <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>GST invoicing &amp; quotations</li>
         <li><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Deal pipeline &amp; tasks</li>
@@ -232,10 +227,6 @@
       <details class="pg-faq-item">
         <summary>Can I change plans later?</summary>
         <p>Yes, any time. Upgrade instantly to add team members and unlock more modules — or downgrade at the end of your billing cycle. Your data always stays intact.</p>
-      </details>
-      <details class="pg-faq-item">
-        <summary>Is there a limit on how many leads I can add?</summary>
-        <p>No. Leads and contacts are unlimited on every plan. Plans differ by the number of team members and which premium modules are included.</p>
       </details>
       <details class="pg-faq-item">
         <summary>What's included in the Enterprise plan?</summary>
