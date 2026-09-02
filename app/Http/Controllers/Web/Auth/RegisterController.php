@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web\Auth;
  
 use App\Http\Controllers\Controller;
 use App\Models\Plan;
+use App\Models\PlatformSetting;
 use App\Models\Tenant;
 use App\Models\User;
 use Exception;
