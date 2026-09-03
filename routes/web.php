@@ -24,7 +24,8 @@ use Illuminate\Support\Facades\Route;
 // PUBLIC — Auth routes (base domain: saas-crm.test)
 // ══════════════════════════════════════════════════════════════════
 
-Route::get('/', fn() => view('welcome'))->name('home');
+// Route::get('/', fn() => view('welcome'))->name('home');
+Route::redirect('/', '/login', 301)->name('home');
 Route::get('/pricing', [PricingController::class, 'index'])->name('pricing');
 Route::get('/privacy-policy', fn() => view('legal.privacy-policy'))->name('privacy-policy');
 
