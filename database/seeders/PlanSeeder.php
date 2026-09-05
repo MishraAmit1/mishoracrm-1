@@ -75,7 +75,7 @@ class PlanSeeder extends Seeder
             [
                 'name'          => 'Pro',
                 'slug'          => 'pro',
-                'description'   => 'Our most popular plan — a bigger team plus Manufacturing, Service Catalog and Service Subscriptions.',
+                'description'   => 'Our most popular plan — a bigger team plus Service Catalog and Service Subscriptions.',
                 'monthly_price' => 2400,
                 'yearly_price'  => 23999,
                 'is_custom'     => false,
@@ -92,7 +92,7 @@ class PlanSeeder extends Seeder
             [
                 'name'          => 'Business',
                 'slug'          => 'business',
-                'description'   => 'For larger, multi-department teams — everything in Pro plus Customer Loyalty, and room for up to 50 team members.',
+                'description'   => 'For larger, multi-department teams — everything in Pro plus Manufacturing and Customer Loyalty, and room for up to 50 team members.',
                 'monthly_price' => 5000,
                 'yearly_price'  => 49999,
                 'is_custom'     => false,

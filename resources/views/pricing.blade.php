@@ -195,7 +195,13 @@
             @else
             <li>
               <svg class="feat-icon" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
-              {{ $isPopular ? 'Priority support' : 'Email support' }}
+              @if($plan->slug === 'business')
+                Priority support &amp; onboarding call
+              @elseif($isPopular)
+                Priority support
+              @else
+                Email support
+              @endif
             </li>
             @endif
           </ul>

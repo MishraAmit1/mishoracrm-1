@@ -31,7 +31,7 @@ return [
         'desc'  => 'Work Orders + Product Batches (production tracking)',
         'blurb' => 'Work orders, BOM costing & production batches',
         'icon'  => 'cube',
-        'tier'  => 'pro',
+        'tier'  => 'business',
     ],
     'service' => [
         'label' => 'Service Catalog',
