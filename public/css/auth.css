@@ -3,7 +3,7 @@
    Shared across: login, register, forgot-password
    ================================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Outfit:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
 
 /* ── Tokens ─────────────────────────────────────────────────────── */
 :root {
@@ -45,6 +45,7 @@
 
   /* Font */
   --font:   'Outfit', sans-serif;
+  --font-serif: 'Fraunces', 'Georgia', serif;
   --mono:   'DM Mono', monospace;
 
   /* Transitions */
@@ -103,18 +104,18 @@ body::after {
   opacity: 0.55;
 }
 
-/* ── Layout shell ───────────────────────────────────────────────── */
+/* ── Layout shell — single centered column ─────────────────────────
+   (the old two-column split-screen layout is retired; .auth-visual and
+   its .v-* content below are kept defined but unused, in case a future
+   page wants them.) */
 .auth-shell {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: 1fr 520px;
+  grid-template-columns: 1fr;
   min-height: 100vh;
 }
-@media (max-width: 1000px) {
-  .auth-shell { grid-template-columns: 1fr; }
-  .auth-visual { display: none !important; }
-}
+.auth-visual { display: none !important; }
 
 /* ── Visual panel (left) ────────────────────────────────────────── */
 .auth-visual {
@@ -210,10 +211,11 @@ body::after {
 /* Visual hero text */
 .v-hero { margin-top: 8px; }
 .v-hero h2 {
-  font-size: clamp(30px, 3vw, 40px);
-  font-weight: 800;
-  line-height: 1.12;
-  letter-spacing: -1.4px;
+  font-family: var(--font-serif);
+  font-size: clamp(34px, 3.4vw, 46px);
+  font-weight: 600;
+  line-height: 1.14;
+  letter-spacing: -0.5px;
   color: var(--text-100);
   margin-bottom: 14px;
 }
@@ -292,6 +294,41 @@ body::after {
 .v-mock-toast .tt { font-size: 11px; color: var(--text-300); font-weight: 600; }
 .v-mock-toast .tb { font-size: 12.5px; color: var(--text-100); font-weight: 700; font-family: var(--mono); }
 
+/* Testimonial quote — the visual centrepiece of the panel (replaces the old fake-dashboard mock) */
+.v-quote {
+  position: relative;
+  max-width: 420px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border-subtle);
+  background: linear-gradient(160deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015));
+  backdrop-filter: blur(8px);
+  padding: 28px 28px 24px 34px;
+  box-shadow: 0 30px 60px -28px rgba(0,0,0,0.5);
+}
+[data-theme="light"] .v-quote {
+  background: linear-gradient(160deg, rgba(255,255,255,0.9), rgba(255,255,255,0.65));
+  box-shadow: 0 30px 60px -30px rgba(60,70,130,0.22);
+}
+.v-quote::before {
+  content: '\201C';
+  position: absolute; top: 6px; left: 16px;
+  font-family: var(--font-serif);
+  font-size: 56px; line-height: 1;
+  color: var(--accent);
+  opacity: 0.45;
+}
+.v-quote p {
+  position: relative;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 18px; font-weight: 500;
+  color: var(--text-100); line-height: 1.5;
+  margin-bottom: 16px;
+}
+.v-quote-who { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-300); font-weight: 600; font-family: var(--font); }
+.v-quote-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+@media (max-height: 780px) { .auth-visual .v-quote { display: none; } }
+
 /* Trust strip */
 .v-trust { display: flex; align-items: center; gap: 12px; }
 .v-trust-avs { display: flex; }
@@ -313,52 +350,71 @@ body::after {
 .v-stat-num { font-size: 21px; font-weight: 800; color: var(--text-100); letter-spacing: -0.5px; font-family: var(--mono); }
 .v-stat-label { font-size: 11px; color: var(--text-300); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
 
-/* ── Auth form panel (right) ────────────────────────────────────── */
+/* ── Auth form panel — full-width centered stage ───────────────────
+   Single card, centered on the ambient page background. Used by login,
+   register and forgot-password alike. */
 .auth-form-panel {
   position: relative;
-  background: var(--bg-surface);
-  border-left: 1px solid var(--border-subtle);
+  background: var(--bg-base);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  padding: 30px 44px;
+  justify-content: center;
+  padding: 48px 24px;
+  min-height: 100vh;
   overflow-y: auto;
 }
 
-/* Top accent line */
+/* Soft radial glow behind the card */
+.auth-form-panel::after {
+  content: '';
+  position: absolute; inset: 0; z-index: 0;
+  background: radial-gradient(ellipse 55% 50% at 50% 28%, rgba(99,120,255,0.12) 0%, transparent 65%);
+  pointer-events: none;
+}
+[data-theme="light"] .auth-form-panel::after {
+  background: radial-gradient(ellipse 55% 50% at 50% 28%, rgba(99,120,255,0.08) 0%, transparent 65%);
+}
+.auth-form-panel > * { position: relative; z-index: 1; }
+
+/* Top accent line spans the full page width */
 .auth-form-panel::before {
   content: '';
   position: absolute; top: 0; left: 0; right: 0;
-  height: 2px;
+  height: 2px; z-index: 1;
   background: linear-gradient(90deg, transparent 0%, var(--accent) 50%, transparent 100%);
 }
 
-/* Persistent header / footer inside the form panel */
-.fp-head {
-  width: 100%; max-width: 396px;
-  display: flex; align-items: center; justify-content: space-between;
-  flex-shrink: 0;
+/* Fixed top-right actions: Pricing link + theme toggle */
+.top-actions {
+  position: fixed; top: 22px; right: 24px; z-index: 20;
+  display: flex; align-items: center; gap: 16px;
 }
-.fp-head .v-logo-name { font-size: 15px; }
-.fp-head .v-logo-icon { width: 30px; height: 30px; box-shadow: 0 4px 14px rgba(99,120,255,0.3); }
-.fp-head .v-logo-icon svg { width: 15px; height: 15px; }
-.fp-head-r { display: flex; align-items: center; gap: 12px; }
+.top-actions .theme-btn { position: static; }
 
-.fp-foot {
-  width: 100%; max-width: 396px;
-  flex-shrink: 0;
-  font-size: 11.5px; color: var(--text-400);
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+/* Logo centred above the card */
+.center-logo {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  margin-bottom: 28px;
+  text-decoration: none;
 }
-.fp-foot a { color: var(--text-300); text-decoration: none; }
-.fp-foot a:hover { color: var(--text-100); }
 
-/* The card centres itself in the space between header and footer */
-.auth-form-panel .auth-card { margin: auto 0; }
-@media (max-width: 1000px) {
-  .auth-form-panel { justify-content: flex-start; padding-top: 24px; }
-  .auth-form-panel .auth-card { margin: 30px 0; }
+/* Small centred footer line below the card */
+.center-foot {
+  margin-top: 28px;
+  font-size: 12px; color: var(--text-400);
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  text-align: center; flex-wrap: wrap;
+}
+.center-foot a { color: var(--text-300); text-decoration: none; }
+.center-foot a:hover { color: var(--text-100); }
+
+@media (max-width: 480px) {
+  .auth-form-panel { padding: 80px 16px 32px; }
+  .top-actions { top: 16px; right: 16px; gap: 12px; }
+}
+@media (max-width: 480px) {
+  .auth-form-panel { padding: 18px 16px 16px; }
 }
 
 /* Theme toggle */
@@ -367,7 +423,7 @@ body::after {
   width: 36px; height: 36px;
   background: var(--bg-elevated);
   border: 1px solid var(--border-default);
-  border-radius: var(--r-sm);
+  border-radius: var(--r-md);
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: border-color var(--t-fast) var(--ease), background var(--t-fast) var(--ease);
@@ -383,14 +439,32 @@ body::after {
 }
 @media (max-width: 960px) { .mobile-logo { display: flex; } }
 
-/* Form card */
+/* Form card — an elevated surface instead of bare text on the panel */
 .auth-card {
-  width: 100%; max-width: 396px;
+  width: 100%; max-width: 404px;
   animation: slideUp var(--t-slow) var(--ease) both;
+  position: relative;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-xl);
+  padding: 34px 32px;
+  box-shadow: 0 30px 70px -32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.02);
+}
+[data-theme="light"] .auth-card {
+  box-shadow: 0 30px 70px -34px rgba(60,70,130,0.18), inset 0 1px 0 rgba(255,255,255,0.6);
+}
+.auth-card::before {
+  content: '';
+  position: absolute; top: 0; left: 34px; right: 34px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-strong), transparent);
+  opacity: 0.7;
 }
 @keyframes slideUp {
   from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+@media (max-width: 480px) {
+  .auth-card { padding: 28px 22px; border-radius: var(--r-lg); }
 }
 
 /* Card header */
@@ -410,17 +484,19 @@ body::after {
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
 .card-head h1 {
-  font-size: 27px; font-weight: 800;
-  letter-spacing: -0.9px;
-  color: var(--text-100); line-height: 1.15;
-  margin-bottom: 7px;
+  font-family: var(--font-serif);
+  font-size: 30px; font-weight: 600;
+  letter-spacing: -0.4px;
+  color: var(--text-100); line-height: 1.18;
+  margin-bottom: 8px;
 }
 .card-head p { font-size: 14px; color: var(--text-200); line-height: 1.55; font-weight: 400; }
 
 /* Trust row under the CTA */
 .auth-trust {
   display: flex; align-items: center; justify-content: center; gap: 9px;
-  margin-top: 18px;
+  margin-top: 20px; padding-top: 18px;
+  border-top: 1px solid var(--border-subtle);
 }
 .auth-trust-avs { display: flex; }
 .auth-trust-avs span {
@@ -437,7 +513,7 @@ body::after {
 .alert {
   display: flex; align-items: flex-start; gap: 10px;
   padding: 12px 14px;
-  border-radius: var(--r-sm);
+  border-radius: var(--r-md);
   font-size: 13px; line-height: 1.5;
   margin-bottom: 20px;
   border: 1px solid;
@@ -470,7 +546,7 @@ body::after {
   padding: 11px 14px 11px 40px;
   background: var(--bg-input);
   border: 1.5px solid var(--border-default);
-  border-radius: var(--r-sm);
+  border-radius: var(--r-md);
   color: var(--text-100);
   font-family: var(--font); font-size: 14px; font-weight: 400;
   outline: none;
@@ -517,10 +593,10 @@ body::after {
   color: var(--text-300); font-size: 13px; font-weight: 500;
   white-space: nowrap; font-family: var(--mono);
 }
-.subdomain-pre { border-right: none; border-radius: var(--r-sm) 0 0 var(--r-sm); }
-.subdomain-suf { border-left: none; border-radius: 0 var(--r-sm) var(--r-sm) 0; }
+.subdomain-pre { border-right: none; border-radius: var(--r-md) 0 0 var(--r-md); }
+.subdomain-suf { border-left: none; border-radius: 0 var(--r-md) var(--r-md) 0; }
 .subdomain-input {
-  flex: 1; border-radius: 0;
+  flex: 1; min-width: 0; border-radius: 0;
   padding: 11px 12px;
   background: var(--bg-input);
   border: 1.5px solid var(--border-default);
@@ -534,6 +610,9 @@ body::after {
   border-color: var(--border-accent);
   background: var(--bg-input-focus);
   box-shadow: 0 0 0 3px var(--accent-dim);
+}
+@media (max-width: 400px) {
+  .subdomain-pre, .subdomain-suf { padding: 11px 8px; font-size: 12px; }
 }
 
 /* Strength meter */
@@ -555,7 +634,7 @@ body::after {
   background: var(--accent);
   color: #fff;
   font-family: var(--font); font-size: 14.5px; font-weight: 700;
-  border: none; border-radius: var(--r-sm);
+  border: none; border-radius: var(--r-md);
   cursor: pointer; letter-spacing: 0.1px;
   position: relative; overflow: hidden;
   transition: transform var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease), filter var(--t-fast) var(--ease);
@@ -577,7 +656,7 @@ body::after {
   color: var(--text-200);
   font-family: var(--font); font-size: 14px; font-weight: 500;
   border: 1.5px solid var(--border-default);
-  border-radius: var(--r-sm); cursor: pointer;
+  border-radius: var(--r-md); cursor: pointer;
   transition: border-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
   display: flex; align-items: center; justify-content: center; gap: 8px;
   text-decoration: none;
@@ -600,7 +679,7 @@ body::after {
   padding: 13px 14px;
   background: var(--bg-elevated);
   border: 1.5px solid var(--border-default);
-  border-radius: var(--r-sm); cursor: pointer;
+  border-radius: var(--r-md); cursor: pointer;
   transition: border-color var(--t-fast) var(--ease);
 }
 .terms-box:hover { border-color: var(--border-strong); }

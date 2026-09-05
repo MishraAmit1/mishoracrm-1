@@ -20,8 +20,9 @@
 //
 // `tier` = the lowest paid plan that bundles this module by default. Consumed
 // only by Database\Seeders\PlanSeeder to keep the module→plan mapping DRY:
-//   'starter' → included from the Starter plan up (Starter, Pro, Enterprise)
-//   'pro'     → included from the Pro plan up (Pro, Enterprise)
+//   'starter'  → included from the Starter plan up (Starter, Pro, Business, Enterprise)
+//   'pro'      → included from the Pro plan up (Pro, Business, Enterprise)
+//   'business' → included from the Business plan up (Business, Enterprise)
 // Superadmin can still add/remove any module on any plan in the plan editor.
 
 return [
@@ -72,6 +73,6 @@ return [
         'desc'  => 'Points, tiers, tenant-set earn/redeem rules, auto tier tagging',
         'blurb' => 'Points, tiers, rewards & win-back campaigns',
         'icon'  => 'gift',
-        'tier'  => 'pro',
+        'tier'  => 'business',
     ],
 ];

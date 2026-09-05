@@ -15,7 +15,7 @@
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="{{ asset('css/auth.css') }}"/>
+<link rel="stylesheet" href="{{ asset('css/auth.css') }}?v={{ @filemtime(public_path('css/auth.css')) ?: '1' }}"/>
 <style>
   body { overflow-x: hidden; }
   .pg-plans-wrap { padding-bottom: 0; }
@@ -64,12 +64,12 @@
 
   {{-- ── Plans ── --}}
   @php $planCount = count($plans); @endphp
-  <div class="pg-plans-wrap" @if($planCount && $planCount <= 2) style="max-width:760px" @elseif($planCount === 3) style="max-width:980px" @elseif($planCount >= 4) style="max-width:1180px" @endif>
+  <div class="pg-plans-wrap" @if($planCount && $planCount <= 2) style="max-width:760px" @elseif($planCount === 3) style="max-width:980px" @elseif($planCount === 4) style="max-width:1180px" @elseif($planCount >= 5) style="max-width:1500px" @endif>
     <div class="pg-plans-grid">
       @forelse($plans as $plan)
       @php
           $isCustom     = $plan->is_custom;
-          $isPopular    = !$isCustom && ($plan->slug === 'starter' || ($planCount <= 2 && $loop->last));
+          $isPopular    = !$isCustom && ($plan->slug === 'pro' || ($planCount <= 2 && $loop->last));
           $monthlyPrice = (int) $plan->monthly_price;
           $yearlyPrice  = (int) $plan->yearly_price;
           $hasDiscount  = $plan->hasDiscount();

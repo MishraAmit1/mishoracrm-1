@@ -261,7 +261,7 @@ input:checked + .toggle-slider:before { transform: translateX(22px); }
         @php
             $isCustom        = $plan->is_custom;
             $isCurrentPlan   = $currentSub && $currentSub->plan_id === $plan->id && $currentSub->isActive();
-            $isPopular       = !$isCustom && $plan->slug === 'starter';
+            $isPopular       = !$isCustom && $plan->slug === 'pro';
             $monthlyPrice    = (int) $plan->monthly_price;
             $yearlyPrice     = (int) $plan->yearly_price;
             $hasDiscount     = $plan->hasDiscount();

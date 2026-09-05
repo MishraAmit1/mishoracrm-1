@@ -14,15 +14,11 @@
 })();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="{{ asset('css/auth.css') }}"/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Outfit:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="{{ asset('css/auth.css') }}?v={{ @filemtime(public_path('css/auth.css')) ?: '1' }}"/>
 <style>
-/* Register-specific: the wizard card is a touch wider */
-.auth-card { max-width: 408px; }
-@media (max-height: 900px) {
-  .auth-form-panel { justify-content: flex-start; }
-  .auth-form-panel .auth-card { margin: 22px 0; }
-}
+/* Register-specific: the wizard card is a touch wider (fits the plan grid on step 3) */
+.auth-card { max-width: 520px; }
 </style>
 </head>
 <body>
@@ -30,90 +26,23 @@
 
 <div class="auth-shell">
 
-  {{-- ── Left visual panel ── --}}
-  <div class="auth-visual">
-    <div class="visual-grid"></div>
-
-    <div class="visual-content">
-
-      <div class="v-logo">
-        @include('components.brand-logo', ['h' => 30])
-      </div>
-
-      <div class="v-hero">
-        <h2>Your workspace,<br/>ready in <em>3 minutes</em></h2>
-        <p>Join thousands of Indian businesses growing with Milan CRM.{{ $anyTrial ? ' Free trial available — no credit card required.' : ' No credit card required to start.' }}</p>
-      </div>
-
-      <div class="v-mock" style="max-width:400px">
-        <div class="v-mock-row">
-          <div class="v-mock-tile">
-            <div class="v-mock-l">New leads today</div>
-            <div class="v-mock-n">23</div>
-            <div class="v-mock-d up">▲ 6 vs yesterday</div>
-          </div>
-          <div class="v-mock-tile">
-            <div class="v-mock-l">Revenue MTD</div>
-            <div class="v-mock-n">₹4.8L</div>
-            <div class="v-mock-bars"><i style="height:35%"></i><i style="height:55%"></i><i style="height:48%"></i><i style="height:100%"></i><i style="height:70%"></i><i style="height:90%"></i></div>
-          </div>
-        </div>
-        <div class="v-mock-toast">
-          <span class="tk"><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg></span>
-          <span>
-            <span class="tt">Invoice paid</span><br/>
-            <span class="tb">₹86,400</span>
-          </span>
-        </div>
-      </div>
-
-      <div class="v-features">
-        <div class="v-feature">
-          <span class="v-feature-ico"><svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.76c0 1.6 1.123 2.994 2.707 3.227 1.068.157 2.148.279 3.238.364.466.037.893.281 1.153.671L12 21l2.652-3.978c.26-.39.687-.634 1.153-.67 1.09-.086 2.17-.208 3.238-.365 1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/></svg></span>
-          <span>Unlimited leads &amp; contacts on every plan</span>
-        </div>
-        <div class="v-feature">
-          <span class="v-feature-ico"><svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg></span>
-          <span>GST invoicing &amp; payment tracking</span>
-        </div>
-        <div class="v-feature">
-          <span class="v-feature-ico"><svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 9.75a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 01.778-.332 48.294 48.294 0 005.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/></svg></span>
-          <span>WhatsApp bulk messaging with templates</span>
-        </div>
-      </div>
-
-      <div class="v-trust" style="margin-top:auto">
-        <div class="v-trust-avs">
-          <span style="background:#6378ff">RS</span>
-          <span style="background:#2dd4a0">NK</span>
-          <span style="background:#f8b84e">AV</span>
-          <span style="background:#a78bfa">PM</span>
-        </div>
-        <div class="v-trust-txt"><b>{{ $anyTrial ? 'Free trial' : 'No card to start' }}</b> · cancel anytime</div>
-      </div>
-
-    </div>
-  </div>
-
-  {{-- ── Right form panel ── --}}
   <div class="auth-form-panel">
 
-    <div class="fp-head">
-      <a href="{{ route('home') }}" style="display:flex;align-items:center;text-decoration:none">
-        @include('components.brand-logo', ['h' => 24])
-      </a>
-      <div class="fp-head-r">
-        <a href="{{ route('pricing') }}" class="a-link">Pricing</a>
-        <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme" type="button" style="position:static">
-          <svg id="ico-moon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/></svg>
-          <svg id="ico-sun" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:none"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/></svg>
-        </button>
-      </div>
+    <div class="top-actions">
+      <a href="{{ route('pricing') }}" class="a-link">Pricing</a>
+      <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme" type="button">
+        <svg id="ico-moon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/></svg>
+        <svg id="ico-sun" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:none"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/></svg>
+      </button>
     </div>
 
     <div class="auth-card">
 
-      <div class="card-head">
+      <a href="{{ route('home') }}" class="center-logo">
+        @include('components.brand-logo', ['h' => 28])
+      </a>
+
+      <div class="card-head" style="text-align:center">
         <div class="card-tag"><div class="card-tag-dot"></div> {{ $anyTrial ? 'Free trial included' : 'Set up in minutes' }}</div>
         <h1>Create workspace</h1>
         <p>Step <span id="stepNum">1</span> of 3 — <span id="stepDesc">Company details</span></p>
@@ -312,11 +241,11 @@
                 ];
             @endphp
             <label class="plan-opt {{ $loop->first ? 'is-selected' : '' }}" onclick="selectPlan(this)" style="position:relative;">
-              @if($plan->slug === 'starter')<div class="plan-badge">POPULAR</div>@endif
+              @if($plan->slug === 'pro')<div class="plan-badge">POPULAR</div>@endif
               <input type="radio" name="plan" value="{{ $plan->slug }}" style="display:none" {{ $loop->first ? 'checked' : '' }}/>
               <div class="plan-name">{{ $plan->name }}</div>
               <div class="plan-price">
-                @if($pMonthly === 0)Free@else₹{{ number_format($pMonthly) }}<sub>/mo</sub>@endif
+                @if($pMonthly === 0)Free @else ₹{{ number_format($pMonthly) }}<sub>/mo</sub> @endif
               </div>
               <div class="plan-feats">{!! implode('<br/>', $feats) !!}</div>
             </label>
@@ -342,9 +271,12 @@
 
     </div>
 
-    <div class="fp-foot">
+    <div class="center-foot">
       <span>© {{ now()->year }} Milan CRM</span>
-      <span><a href="/terms">Terms</a> · <a href="/privacy">Privacy</a></span>
+      <span>·</span>
+      <a href="/terms">Terms</a>
+      <span>·</span>
+      <a href="/privacy">Privacy</a>
     </div>
 
   </div>
