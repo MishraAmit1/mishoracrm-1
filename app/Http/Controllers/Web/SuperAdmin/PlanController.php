@@ -21,8 +21,9 @@ class PlanController extends Controller
 
         $totalActiveSubs = Subscription::where('status', 'active')->count();
         $monthlyBillingEnabled = PlatformSetting::get('monthly_billing_enabled', '0') === '1';
+        $gstPercentage = PlatformSetting::get('gst_percentage', '18');
 
-        return view('superadmin.plans.index', compact('plans', 'totalActiveSubs', 'monthlyBillingEnabled'));
+        return view('superadmin.plans.index', compact('plans', 'totalActiveSubs', 'monthlyBillingEnabled', 'gstPercentage'));
     }
 
     public function create(): View
@@ -80,6 +81,17 @@ class PlanController extends Controller
         PlatformSetting::set('monthly_billing_enabled', $enabled ? '0' : '1');
 
         return back()->with('success', 'Monthly billing is now ' . ($enabled ? 'disabled' : 'enabled') . ' on the pricing page.');
+    }
+
+    public function updateGst(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'gst_percentage' => 'required|numeric|min:0|max:100',
+        ]);
+
+        PlatformSetting::set('gst_percentage', (string) $data['gst_percentage']);
+
+        return back()->with('success', 'GST rate updated to ' . $data['gst_percentage'] . '% — applied on every new checkout.');
     }
 
     // ── Helpers ───────────────────────────────────────────────────

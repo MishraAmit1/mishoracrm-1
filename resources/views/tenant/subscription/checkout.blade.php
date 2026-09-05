@@ -181,13 +181,21 @@
                 <span class="value">− ₹{{ number_format($originalAmount - $amount) }}</span>
             </div>
             @endif
+            <div class="summary-row" id="row-subtotal">
+                <span class="label">Subtotal</span>
+                <span class="value">₹<span id="subtotal-display">{{ number_format($amount) }}</span></span>
+            </div>
             <div class="summary-row discount" id="row-discount" style="display:none">
                 <span class="label">Discount (<span id="discount-label"></span>)</span>
                 <span class="value">− ₹<span id="discount-amount">0</span></span>
             </div>
+            <div class="summary-row">
+                <span class="label">GST (<span id="gst-percent">{{ rtrim(rtrim(number_format($gstPercentage, 2), '0'), '.') }}</span>%)</span>
+                <span class="value">₹<span id="gst-display">{{ number_format($gstAmount) }}</span></span>
+            </div>
             <div class="summary-row total">
                 <span class="label">Total Amount</span>
-                <span class="value">₹<span id="total-display">{{ number_format($amount) }}</span></span>
+                <span class="value">₹<span id="total-display">{{ number_format($totalAmount) }}</span></span>
             </div>
 
             {{-- Coupon section --}}
@@ -201,7 +209,7 @@
             </div>
 
             <button class="pay-btn" id="rzp-pay-btn">
-                Pay ₹<span id="btn-amount">{{ number_format($amount) }}</span> with Razorpay
+                Pay ₹<span id="btn-amount">{{ number_format($totalAmount) }}</span> with Razorpay
             </button>
 
             {{-- Hidden form to POST payment details to verify route --}}
@@ -227,7 +235,7 @@
 @push('scripts')
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
-let currentAmount  = {{ $amount }};
+let currentAmount  = {{ $totalAmount }};
 let currentOrderId = "{{ $order['id'] }}";
 
 function buildRzpOptions() {
@@ -297,13 +305,14 @@ document.getElementById('coupon-apply-btn').addEventListener('click', function (
         btn.textContent = 'Apply';
 
         if (data.success) {
-            currentAmount  = data.final_amount;
+            currentAmount  = data.grand_total;
             currentOrderId = data.order_id;
 
             document.getElementById('discount-label').textContent  = data.discount_label;
             document.getElementById('discount-amount').textContent = Number(data.discount_amount).toLocaleString('en-IN');
-            document.getElementById('total-display').textContent   = Number(data.final_amount).toLocaleString('en-IN');
-            document.getElementById('btn-amount').textContent      = Number(data.final_amount).toLocaleString('en-IN');
+            document.getElementById('gst-display').textContent     = Number(data.gst_amount).toLocaleString('en-IN');
+            document.getElementById('total-display').textContent   = Number(data.grand_total).toLocaleString('en-IN');
+            document.getElementById('btn-amount').textContent      = Number(data.grand_total).toLocaleString('en-IN');
             document.getElementById('row-discount').style.display  = '';
 
             showCouponMsg('✓ ' + data.message, true);

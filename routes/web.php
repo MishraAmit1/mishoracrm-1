@@ -171,6 +171,7 @@ Route::prefix('superadmin')
             Route::delete('/{plan}',       'destroy')->name('destroy');
             Route::post('/{plan}/toggle',  'toggle')->name('toggle');
             Route::post('/toggle-monthly-billing', 'toggleMonthlyBilling')->name('toggle-monthly-billing');
+            Route::post('/update-gst', 'updateGst')->name('update-gst');
         });
 
         // Sales enquiries (public /contact-sales submissions)

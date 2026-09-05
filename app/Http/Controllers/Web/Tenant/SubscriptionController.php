@@ -61,11 +61,15 @@ class SubscriptionController extends Controller
             ? (int) $plan->discountedYearlyPrice()
             : (int) $plan->discountedMonthlyPrice();
 
+        $gstPercentage = (float) PlatformSetting::get('gst_percentage', '18');
+        $gstAmount     = (int) round($amount * $gstPercentage / 100);
+        $totalAmount   = $amount + $gstAmount;
+
         $user   = Auth::user();
         $tenant = $user->tenant;
 
         try {
-            $order = $this->razorpay->createOrder($amount, 'INR', [
+            $order = $this->razorpay->createOrder($totalAmount, 'INR', [
                 'tenant_id' => $tenant->id,
                 'plan_slug' => $plan->slug,
                 'cycle'     => $cycle,
@@ -83,6 +87,9 @@ class SubscriptionController extends Controller
                 'billing_cycle'     => $cycle,
                 'original_amount'   => $plan->hasDiscount() ? $originalAmount : null,
                 'discount_amount'   => $plan->hasDiscount() ? ($originalAmount - $amount) : 0,
+                'gst_percentage'    => $gstPercentage,
+                'gst_amount'        => $gstAmount,
+                'total_amount'      => $totalAmount,
                 'started_at'        => now(),
                 'ends_at'           => $cycle === 'yearly' ? now()->addYear() : now()->addMonth(),
             ]
@@ -93,6 +100,9 @@ class SubscriptionController extends Controller
             'cycle'          => $cycle,
             'amount'         => $amount,
             'originalAmount' => $originalAmount,
+            'gstPercentage'  => $gstPercentage,
+            'gstAmount'      => $gstAmount,
+            'totalAmount'    => $totalAmount,
             'order'          => $order,
             'razorpayKey'    => $this->razorpay->getKeyId(),
             'tenant'         => $tenant,
@@ -146,8 +156,12 @@ class SubscriptionController extends Controller
         $discountAmount = $coupon->calculateDiscount($baseAmount);
         $finalAmount    = max(0, $baseAmount - $discountAmount);
 
+        $gstPercentage = (float) PlatformSetting::get('gst_percentage', '18');
+        $gstAmount     = (int) round($finalAmount * $gstPercentage / 100);
+        $grandTotal    = $finalAmount + $gstAmount;
+
         try {
-            $order = $this->razorpay->createOrder((int) $finalAmount, 'INR', [
+            $order = $this->razorpay->createOrder((int) $grandTotal, 'INR', [
                 'tenant_id' => $tenant->id,
                 'plan_slug' => $plan->slug,
                 'cycle'     => $subscription->billing_cycle,
@@ -161,6 +175,9 @@ class SubscriptionController extends Controller
             'razorpay_order_id' => $order['id'],
             'coupon_id'         => $coupon->id,
             'discount_amount'   => $discountAmount,
+            'gst_percentage'    => $gstPercentage,
+            'gst_amount'        => $gstAmount,
+            'total_amount'      => $grandTotal,
         ]);
 
         return response()->json([
@@ -170,7 +187,10 @@ class SubscriptionController extends Controller
             'discount_label'  => $coupon->discount_label,
             'original_amount' => $baseAmount,
             'discount_amount' => (int) $discountAmount,
+            'gst_percentage'  => $gstPercentage,
+            'gst_amount'      => (int) $gstAmount,
             'final_amount'    => (int) $finalAmount,
+            'grand_total'     => (int) $grandTotal,
             'order_id'        => $order['id'],
         ]);
     }

@@ -70,6 +70,24 @@
         </form>
     </div>
 
+    <div class="table-card" style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;margin-bottom:24px;">
+        <div>
+            <div style="font-size:14px;font-weight:700;color:var(--text-100)">GST on Checkout</div>
+            <div style="font-size:12.5px;color:var(--text-400);margin-top:2px">
+                Added on top of the plan price at tenant checkout — currently <strong>{{ rtrim(rtrim(number_format((float) $gstPercentage, 2), '0'), '.') }}%</strong>.
+            </div>
+        </div>
+        <form action="{{ route('superadmin.plans.update-gst') }}" method="POST" style="display:flex;align-items:center;gap:8px;">
+            @csrf
+            <div class="input-prefix-wrap" style="width:100px">
+                <input type="number" name="gst_percentage" value="{{ $gstPercentage }}"
+                       class="form-control" min="0" max="100" step="0.01" style="text-align:right;padding-right:24px">
+                <span class="input-suffix" style="right:10px">%</span>
+            </div>
+            <button type="submit" class="btn btn-secondary btn-sm">Save</button>
+        </form>
+    </div>
+
     @if(session('success'))
     <div style="padding:12px 16px;background:var(--green-dim);border:1px solid rgba(29,158,117,.2);border-radius:var(--r-sm);font-size:13px;color:var(--green);margin-bottom:16px">
         ✓ {{ session('success') }}
