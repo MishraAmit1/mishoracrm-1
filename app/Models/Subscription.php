@@ -28,6 +28,9 @@ class Subscription extends Model
         'ends_at',
         'cancelled_at',
         'renewal_reminder_sent_at',
+        'invoice_number',
+        'invoice_issued_at',
+        'invoice_delivery',
     ];
 
     protected $casts = [
@@ -36,6 +39,8 @@ class Subscription extends Model
         'ends_at'                  => 'datetime',
         'cancelled_at'             => 'datetime',
         'renewal_reminder_sent_at' => 'datetime',
+        'invoice_issued_at'        => 'datetime',
+        'invoice_delivery'         => 'array',
     ];
 
     // ── Relationships ─────────────────────────────────────────────
@@ -139,5 +144,28 @@ class Subscription extends Model
         return $this->billing_cycle === 'yearly'
             ? round($this->plan->yearly_price / 12, 2)
             : (float) $this->plan->monthly_price;
+    }
+
+    // ── Tax invoice ───────────────────────────────────────────────
+
+    // A paid subscription term the tenant can pull a tax invoice for.
+    // Free plans, trials and not-yet-paid checkouts never qualify. Any
+    // activated paid term does — even a legacy row with no stored amount,
+    // since the amount is reconstructed from the plan price at render time.
+    public function isInvoiceable(): bool
+    {
+        if ($this->isFree() || $this->isTrial() || $this->status === 'pending_payment') {
+            return false;
+        }
+
+        return \in_array($this->status, ['active', 'cancelled', 'expired', 'past_due'], true)
+            || $this->razorpay_payment_id !== null
+            || (float) $this->total_amount > 0
+            || (float) $this->original_amount > 0;
+    }
+
+    public function hasInvoice(): bool
+    {
+        return $this->invoice_number !== null;
     }
 }

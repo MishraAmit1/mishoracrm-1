@@ -12,14 +12,29 @@
         $showBankDetails = $pdfSettings->show_bank_details ?? true;
         $showTaxSummary  = $pdfSettings->show_tax_summary ?? true;
         $fontFamily      = $pdfSettings->font_family ?? 'DejaVu Sans';
+
+        $isPaid    = $invoice->isPaid() && $invoice->paid_at;
+        $isOverdue = $invoice->isOverdue();
+        $isDraft   = $invoice->status === 'draft';
+
+        $watermarkText  = $isPaid ? 'PAID' : ($isOverdue ? 'OVERDUE' : ($isDraft ? 'DRAFT' : null));
+        $watermarkColor = $isPaid ? '#16a34a' : ($isOverdue ? '#dc2626' : '#94a3b8');
     @endphp
     <style>
         /* Vertical spacing is deliberately tight throughout (margins in
            the 4-14px range) so a typical invoice — a handful of items,
            full bank details, terms — renders on a single page instead
-           of spilling a lone signature block onto an otherwise-empty
-           page 2. Longer invoices still paginate correctly (items-table
-           thead repeats, rows/boxes never split) — see ITEMS TABLE below. */
+           of spilling onto a page 2. Longer invoices still paginate
+           correctly (items-table thead repeats, rows/boxes never split)
+           — see ITEMS TABLE below. Everything below the items table
+           (bank details, totals, signature) flows normally rather than
+           being pinned to a page's bottom edge — an earlier version
+           forced the signature against the bottom of whichever page it
+           landed on, which for a short invoice produced an almost-empty
+           trailing page. Letting it sit right after the content it
+           follows is both simpler and how real invoicing tools
+           (Zoho/QuickBooks/Xero) do it. */
+
         /* NOT a universal `*` reset: dompdf silently drops @page's
            margin-top when a `* { margin: 0 }` rule is present anywhere
            in the stylesheet (a dompdf cascade quirk, confirmed by testing
@@ -43,12 +58,11 @@
                invoicing tools — Zoho/QuickBooks/Xero all do this);
                continuation pages get a slim running strip folded into
                the items-table's thead instead (reliable, native repeat
-               mechanism). Only the branded footer bar is fixed/repeating
-               — the signature renders once, in normal flow, wherever the
-               last page's content actually ends (see SIGNATURE below). */
+               mechanism), plus the fixed footer bar on every page for
+               ongoing context. */
             margin-top: 0;
             margin-right: 0;
-            margin-bottom: 40px;
+            margin-bottom: 42px;
             margin-left: 0;
         }
 
@@ -58,6 +72,36 @@
             color: #1e293b;
             background: #ffffff;
             line-height: 1.5;
+        }
+
+        /* ─── STATUS WATERMARK ───
+             Fixed so it repeats, faint, on every page — the same effect
+             every mainstream invoicing tool uses for Paid/Overdue/Draft.
+             z-index:-1 keeps it behind normal content; verified in
+             isolation that dompdf composites a negative-z-index fixed
+             element beneath opaque page content correctly (it only shows
+             through the page's white/light backgrounds, exactly as
+             intended — it is not meant to show through solid bars). */
+        .watermark {
+            position: fixed;
+            top: 360px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            z-index: -1;
+        }
+        .watermark span {
+            display: inline-block;
+            transform: rotate(-27deg);
+            font-size: 76px;
+            font-weight: bold;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            color: {{ $watermarkColor }};
+            opacity: 0.10;
+            border: 5px solid {{ $watermarkColor }};
+            padding: 10px 34px;
+            border-radius: 10px;
         }
 
         /* ─── HEADER ───
@@ -86,9 +130,9 @@
              595.28pt, 30pt right margin → left ≈ 462pt ≈ 605px) and
              re-verified the same way (decoded content stream: text now
              starts at the intended position, comfortably inside the
-             page). If this text or its font-size/letter-spacing ever
-             changes, this value must be recalculated the same way —
-             don't assume `right`/percentage/table tricks will work. */
+             page). If this text, its font-size, or its letter-spacing
+             ever changes, this value must be recalculated the same way
+             — don't assume `right`/percentage/table tricks will work. */
         .header-bar {
             position: relative;
             background: {{ $primaryColor }};
@@ -108,29 +152,29 @@
             left: 605px;
             text-align: right;
             padding-left: 20px;
-            border-left: 1px solid rgba(255,255,255,0.28);
+            border-left: 1px solid rgba(255,255,255,0.3);
         }
 
-        .company-logo { max-height: 36px; max-width: 140px; vertical-align: middle; margin-right: 12px; }
-        .company-name { font-size: 19px; font-weight: bold; color: #ffffff; letter-spacing: 0.2px; vertical-align: middle; }
-        .company-tagline { font-size: 9px; color: #b8c4d9; margin-top: 3px; }
-        .company-contact { font-size: 9.5px; color: #cbd5e1; margin-top: 9px; }
+        .company-logo { max-height: 38px; max-width: 150px; vertical-align: middle; margin-right: 12px; }
+        .company-name { font-size: 20px; font-weight: bold; color: #ffffff; letter-spacing: 0.2px; vertical-align: middle; }
+        .company-tagline { font-size: 9px; color: #b8c4d9; margin-top: 4px; letter-spacing: 0.2px; }
+        .company-contact { font-size: 9.5px; color: #cbd5e1; margin-top: 10px; }
 
         .invoice-heading { font-size: 16px; font-weight: bold; color: #ffffff; letter-spacing: 2px; text-transform: uppercase; }
         .invoice-sub { font-size: 8.5px; color: #b8c4d9; margin-top: 5px; letter-spacing: 0.3px; }
 
         /* ─── META BAND ─── */
-        .meta-band { background: #f1f5f9; border-bottom: 1px solid #e2e8f0; padding: 9px 32px; }
+        .meta-band { background: #f1f5f9; border-bottom: 1px solid #e2e8f0; padding: 8px 32px; }
         .meta-inner { width: 100%; }
-        .meta-cell { padding-right: 20px; vertical-align: top; width: 25%; }
-        .meta-cell.last { padding-right: 0; text-align: right; }
+        .meta-cell { padding-right: 20px; vertical-align: top; width: 25%; border-right: 1px solid #e2e8f0; }
+        .meta-cell.last { padding-right: 0; padding-left: 20px; text-align: right; border-right: none; }
         .meta-label { font-size: 8.5px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; }
-        .meta-value { font-size: 12.5px; font-weight: bold; color: #1e293b; margin-top: 4px; }
+        .meta-value { font-size: 13px; font-weight: bold; color: #1e293b; margin-top: 4px; }
         .meta-value.overdue { color: #dc2626; }
 
         .status-badge {
             display: inline-block;
-            padding: 3px 11px;
+            padding: 3px 12px;
             border-radius: 9px;
             font-size: 10px;
             font-weight: bold;
@@ -146,7 +190,7 @@
         .body-content { padding: 13px 32px 4px 32px; }
 
         /* Unified small "sub-header" label used inside every box below
-           (Billed By/To, Bank Details, Amount in Words, Notes, Terms,
+           (Billed To, Bank Details, Amount in Words, Notes, Terms,
            Payment Received) — one consistent look everywhere instead of
            several slightly different label styles. */
         .block-label {
@@ -154,7 +198,7 @@
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 1px;
-            color: #94a3b8;
+            color: {{ $primaryColor }};
             margin-bottom: 7px;
         }
 
@@ -167,7 +211,7 @@
             color: {{ $primaryColor }};
             border-bottom: 2px solid {{ $primaryColor }};
             padding-bottom: 5px;
-            margin-top: 16px;
+            margin-top: 15px;
             margin-bottom: 9px;
         }
         .section-heading.first { margin-top: 0; }
@@ -176,17 +220,18 @@
         .party-box {
             border: 1px solid #e2e8f0;
             border-top: 3px solid {{ $primaryColor }};
-            padding: 10px 14px;
+            border-radius: 6px;
+            padding: 10px 15px;
             page-break-inside: avoid;
         }
-        .party-box-single { width: 55%; }
+        .party-box-single { width: 58%; }
         .party-box.buyer { border-top-color: {{ $accentColor }}; }
-        .party-name    { font-size: 13.5px; font-weight: bold; color: #0f172a; margin-bottom: 3px; }
+        .party-name    { font-size: 14px; font-weight: bold; color: #0f172a; margin-bottom: 3px; }
         .party-company { font-size: 11.5px; font-weight: bold; color: #334155; margin-bottom: 3px; }
-        .party-detail  { font-size: 10.5px; color: #64748b; line-height: 1.55; }
+        .party-detail  { font-size: 10.5px; color: #64748b; line-height: 1.6; }
         .party-gst {
-            margin-top: 6px;
-            padding-top: 6px;
+            margin-top: 7px;
+            padding-top: 7px;
             border-top: 1px dashed #e2e8f0;
             font-size: 10.5px;
             color: #475569;
@@ -204,12 +249,13 @@
             width: 100%;
             border-collapse: collapse;
             font-family: "DejaVu Sans", sans-serif;
+            border: 1px solid #e2e8f0;
         }
         .items-table thead { display: table-header-group; }
         .items-table tbody { display: table-row-group; }
         .items-table thead tr { background: {{ $primaryColor }}; }
         .items-table thead th {
-            padding: 6px 8px;
+            padding: 6px 9px;
             font-size: 9px;
             font-weight: bold;
             text-transform: uppercase;
@@ -223,17 +269,19 @@
 
         /* Repeats on every page via the same thead mechanism as the
            column headers above — the only reliable way to show running
-           context (company + invoice #) on continuation pages, since
-           dompdf can't repeat a second fixed element alongside the
-           bottom-fixed signature/footer stack (see @page comment). */
+           context (company + invoice #) on continuation pages, since a
+           separate top-fixed strip would double up with the full header
+           on page 1. A little extra vertical padding here (vs. the
+           column-header row) also gives every page — page 1 included —
+           a touch of breathing room above the table. */
         .items-table thead tr.running-strip-row { background: {{ $accentColor }}; }
-        .running-strip { padding: 3px 8px; font-size: 8px; font-weight: normal; text-transform: none; letter-spacing: 0.2px; color: #ffffff; text-align: left; }
+        .running-strip { padding: 4px 9px; font-size: 8px; font-weight: normal; text-transform: none; letter-spacing: 0.2px; color: #ffffff; text-align: left; }
 
         .items-table tbody tr { border-bottom: 1px solid #f1f5f9; page-break-inside: avoid; }
         .items-table tbody tr:nth-child(even) { background: #f8fafc; }
-        .items-table tbody tr:last-child { border-bottom: 2px solid #e2e8f0; }
+        .items-table tbody tr:last-child { border-bottom: none; }
 
-        .items-table tbody td { padding: 5.5px 8px; font-size: 10.5px; color: #334155; vertical-align: top; }
+        .items-table tbody td { padding: 6px 9px; font-size: 10.5px; color: #334155; vertical-align: top; }
         .items-table tbody td.r { text-align: right; }
         .items-table tbody td.c { text-align: center; }
 
@@ -243,28 +291,17 @@
         .item-hsn       { font-size: 9.5px; color: #64748b; margin-top: 2px; }
         .item-total     { font-weight: bold; color: #0f172a; }
 
-        /* ─── BANK DETAILS + TOTALS ─── */
-        .bottom-section { width: 100%; margin-top: 12px; }
+        /* ─── AMOUNT IN WORDS / QUOTATION REF ─── */
+        .bottom-section { width: 100%; margin-top: 10px; }
         .bank-cell   { width: 52%; vertical-align: top; padding-right: 18px; }
         .totals-cell { width: 48%; vertical-align: top; }
-
-        .bank-box {
-            border: 1px solid #e2e8f0;
-            border-left: 3px solid {{ $primaryColor }};
-            padding: 10px 14px;
-            margin-bottom: 12px;
-            background: #f8fafc;
-            page-break-inside: avoid;
-        }
-        .bank-row { font-size: 10.5px; color: #475569; padding: 1px 0; }
-        .bank-row span { font-weight: bold; color: #1e293b; min-width: 95px; display: inline-block; }
 
         .amount-words {
             background: #f1f5f9;
             border: 1px solid #e2e8f0;
             border-left: 3px solid {{ $accentColor }};
+            border-radius: 6px;
             padding: 7px 14px;
-            margin-top: 8px;
             page-break-inside: avoid;
         }
         .amount-words-text { font-size: 11px; font-weight: bold; color: #1e293b; font-style: italic; line-height: 1.4; }
@@ -272,8 +309,15 @@
         .quotation-ref { margin-top: 12px; font-size: 9.5px; color: #94a3b8; }
         .quotation-ref strong { color: {{ $primaryColor }}; }
 
+        /* ─── TOTALS CARD ─── */
+        .totals-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 4px;
+            page-break-inside: avoid;
+        }
         .totals-table { width: 100%; border-collapse: collapse; font-family: "DejaVu Sans", sans-serif; }
-        .totals-table td { padding: 5px 12px; font-size: 11px; }
+        .totals-table td { padding: 5px 10px; font-size: 11px; }
         .totals-table tr { border-bottom: 1px solid #f1f5f9; }
         .t-label     { color: #64748b; }
         .t-value     { text-align: right; font-weight: bold; color: #1e293b; }
@@ -281,7 +325,12 @@
         .t-sub-label { color: #64748b; font-size: 10px; }
         .t-sub-value { text-align: right; font-weight: bold; color: #64748b; font-size: 10px; }
 
-        .total-final-row td { background: {{ $primaryColor }}; color: #ffffff; font-size: 13px; font-weight: bold; padding: 10px 12px; }
+        /* No border-radius on these full-bleed row backgrounds: each <td>
+           would round independently and the straight edge of the row
+           above/below it then pokes past that rounding — a visible
+           notch at the seam (confirmed by rendering). Square corners
+           here, radius only on the .totals-card wrapper, look clean. */
+        .total-final-row td { background: {{ $primaryColor }}; color: #ffffff; font-size: 13.5px; font-weight: bold; padding: 10px 12px; }
         .total-final-row .t-value { color: #ffffff; }
 
         .balance-row td { background: #fef2f2; color: #991b1b; font-weight: bold; padding: 8px 12px; font-size: 12px; }
@@ -295,8 +344,9 @@
             background: #f0fdf4;
             border: 1px solid #86efac;
             border-left: 3px solid #16a34a;
-            padding: 9px 14px;
-            margin-top: 12px;
+            border-radius: 6px;
+            padding: 7px 14px;
+            margin-top: 10px;
             page-break-inside: avoid;
             font-family: "DejaVu Sans", sans-serif;
         }
@@ -312,68 +362,53 @@
             font-size: 10.5px;
             color: #334155;
             line-height: 1.6;
-            padding: 9px 13px;
+            padding: 8px 13px;
             background: #f8fafc;
             border: 1px solid #e2e8f0;
+            border-radius: 6px;
             page-break-inside: avoid;
         }
         .tenant-note {
-            margin-top: 12px;
+            margin-top: 14px;
             white-space: pre-line;
         }
 
-        /* ─── SIGNATURE ───
-             Ordinary flow content (not fixed) — it renders exactly once,
-             wherever the last page's content ends, instead of repeating
-             on every page. page-break-inside:avoid keeps it from ever
-             being split across a page boundary. */
-        /* Guaranteed bottom-anchor: .signature-wrap is a fixed-height
-           box and .signature-section sits inside it via
-           `position:absolute; top:` — NOT `vertical-align:bottom`.
-           Verified both ways by rendering isolated test cases and
-           decoding the actual PDF content stream: dompdf DOES honour an
-           explicit `height` on a container, but `vertical-align:bottom`
-           on a table cell is NOT respected (content stayed pinned to
-           the cell's top regardless). `position:absolute; top:` *is*
-           honoured (same mechanism already verified for the header's
-           "TAX INVOICE"), so `top` is set directly to
-           (wrap height − measured content height − bottom breathing
-           room) = 1080 − 99 − 20 = 961px. Wrap height is the page's
-           full usable content height (page height 841.89pt / 0.75 =
-           1122.52px, minus the 40px @page bottom margin reserved for
-           the footer, minus a small rounding buffer) — NOT an arbitrary
-           smaller number: an earlier 860px version left a visible gap
-           below the signature because it fell short of the page's
-           actual usable height. 99px is this exact content's own
-           measured height (declaration + sig-box), decoded from a real
-           rendered PDF the same way.
-           dompdf has no way to ask "how much space is left on this
-           page," so the only way to pin content to a page's bottom is
-           to make its container tall enough to force it there — a
-           deliberate tradeoff: a short invoice that would otherwise fit
-           on one page may now take a second, mostly-blank page, because
-           the signature no longer fits in whatever space is left after
-           the rest of the content. */
-        .signature-wrap { position: relative; width: 100%; height: 1080px; }
-        /* `top` is set inline per-invoice (not here) since adding the
-           bank-details box (see below) makes this block noticeably
-           taller — a fixed value here would leave a gap under the
-           bottom-anchor when bank details show. Both values were
-           measured the same way (decoded PDF content stream) as the
-           "TAX INVOICE" and no-bank-details positions above. */
-        .signature-section { position: absolute; left: 0; width: 100%; padding-top: 10px; border-top: 1px solid #e2e8f0; page-break-inside: avoid; }
+        /* ─── BANK DETAILS + SIGNATURE ───
+             Ordinary flow content — it renders wherever the preceding
+             content ends, not forced to a page's bottom edge (see the
+             top-of-file note on why). page-break-inside:avoid keeps each
+             box, and the signature row itself, from splitting across a
+             page boundary; if the whole row doesn't fit in the space
+             left on a page, dompdf pushes it to the next one — normal,
+             expected behaviour for a document this shape. */
+        .signature-section { width: 100%; margin-top: 8px; padding-top: 7px; border-top: 1px solid #e2e8f0; }
         .sig-table { width: 100%; }
         .sig-left  { width: 55%; vertical-align: bottom; }
         .sig-right { width: 45%; vertical-align: bottom; text-align: right; }
+
+        .bank-box {
+            border: 1px solid #e2e8f0;
+            border-left: 3px solid {{ $primaryColor }};
+            border-radius: 6px;
+            padding: 11px 15px;
+            margin-bottom: 12px;
+            background: #f8fafc;
+            page-break-inside: avoid;
+        }
+        .bank-row { font-size: 10.5px; color: #475569; padding: 1.5px 0; }
+        .bank-row span { font-weight: bold; color: #1e293b; min-width: 95px; display: inline-block; }
+
         .sig-box {
             border: 1px solid #e2e8f0;
-            padding: 8px 18px;
+            border-radius: 6px;
+            padding: 7px 18px;
             display: inline-block;
             text-align: center;
-            min-width: 185px;
+            min-width: 190px;
+            page-break-inside: avoid;
         }
-        .declaration { font-size: 9.5px; color: #94a3b8; line-height: 1.5; }
-        .sig-space { height: 26px; border-bottom: 1px solid #cbd5e1; margin: 4px 0; }
+        .declaration { font-size: 9.5px; color: #94a3b8; line-height: 1.5; page-break-inside: avoid; }
+        .sig-space { height: 24px; border-bottom: 1px solid #cbd5e1; margin: 3px 0; }
         .sig-name { font-size: 11px; font-weight: bold; color: #1e293b; }
         .sig-designation { font-size: 9.5px; color: #94a3b8; }
 
@@ -387,7 +422,7 @@
              configured 96dpi is 841.89pt / 0.75 = 1122.52px; anchoring
              34px (this bar's own height) up from that edge keeps it
              flush on every page. */
-        .footer-bar { position: fixed; top: 1088.52px; left: 0; right: 0; height: 34px; background: {{ $primaryColor }}; padding: 8px 32px; }
+        .footer-bar { position: fixed; top: 1088.52px; left: 0; right: 0; height: 34px; background: {{ $primaryColor }}; border-top: 2px solid {{ $accentColor }}; padding: 8px 32px; }
         .footer-inner { width: 100%; }
         .footer-left  { width: 62%; vertical-align: middle; }
         .footer-right { width: 38%; vertical-align: middle; text-align: right; }
@@ -396,6 +431,10 @@
     </style>
 </head>
 <body>
+
+    @if($watermarkText)
+    <div class="watermark"><span>{{ $watermarkText }}</span></div>
+    @endif
 
     {{-- ════════════════════════════════════════════
          HEADER
@@ -537,14 +576,14 @@
             </tbody>
         </table>
 
-        {{-- ── BANK DETAILS  +  TOTALS ── --}}
+        {{-- ── AMOUNT IN WORDS  +  TOTALS ── --}}
         <table class="bottom-section">
             <tr>
                 <td class="bank-cell">
 
                     @php $hasBankDetails = $showBankDetails && (isset($tenant->settings['bank_name']) || isset($tenant->settings['account_number'])); @endphp
 
-                    <div class="amount-words" style="margin-top:0;">
+                    <div class="amount-words">
                         <div class="block-label">Total Amount (in words)</div>
                         <div class="amount-words-text">{{ \App\Helpers\NumberToWords::convert($invoice->total) }} Only</div>
                     </div>
@@ -556,6 +595,7 @@
                 </td>
 
                 <td class="totals-cell">
+                    <div class="totals-card">
                     <table class="totals-table">
                         <tr>
                             <td class="t-label">Subtotal</td>
@@ -613,6 +653,7 @@
                         </tr>
                         @endif
                     </table>
+                    </div>
                 </td>
             </tr>
         </table>
@@ -661,61 +702,52 @@
         <div class="block-body tenant-note">{{ $footerNote }}</div>
         @endif
 
-        {{-- ── SIGNATURE SECTION ──
-             Renders exactly once, wherever the last page's content ends
-             — but the tall .signature-wrap + absolutely-positioned
-             .signature-section below forces it against that page's
-             bottom edge. `top` is measured content-height-aware: the
-             bank-details box (moved here, next to the signature, per
-             request) makes this block ~98px taller when shown, so `top`
-             is pulled up by the same amount to keep the bottom flush
-             either way (1080 − 197 − 20 = 863 with bank details,
-             1080 − 99 − 20 = 961 without — both measured from a decoded
-             rendered PDF, same method as "TAX INVOICE" above). --}}
-        <div class="signature-wrap">
-            <div class="signature-section" style="top: {{ $hasBankDetails ? '863' : '961' }}px;">
-                <table class="sig-table">
-                    <tr>
-                        <td class="sig-left">
-                            @if($hasBankDetails)
-                            <div class="bank-box">
-                                <div class="block-label">Payment / Bank Details</div>
-                                @if(isset($tenant->settings['bank_name']))
-                                    <div class="bank-row"><span>Bank Name</span> {{ $tenant->settings['bank_name'] }}</div>
-                                @endif
-                                @if(isset($tenant->settings['account_name']))
-                                    <div class="bank-row"><span>Account Name</span> {{ $tenant->settings['account_name'] }}</div>
-                                @endif
-                                @if(isset($tenant->settings['account_number']))
-                                    <div class="bank-row"><span>Account No.</span> {{ $tenant->settings['account_number'] }}</div>
-                                @endif
-                                @if(isset($tenant->settings['ifsc']))
-                                    <div class="bank-row"><span>IFSC Code</span> {{ $tenant->settings['ifsc'] }}</div>
-                                @endif
-                                @if(isset($tenant->settings['upi']))
-                                    <div class="bank-row"><span>UPI</span> {{ $tenant->settings['upi'] }}</div>
-                                @endif
-                            </div>
+        {{-- ── BANK DETAILS + SIGNATURE ──
+             Flows right after whatever precedes it (see the CSS comment
+             above .signature-section) instead of being pinned to the
+             page's bottom edge. --}}
+        <div class="signature-section">
+            <table class="sig-table">
+                <tr>
+                    <td class="sig-left">
+                        @if($hasBankDetails)
+                        <div class="bank-box">
+                            <div class="block-label">Payment / Bank Details</div>
+                            @if(isset($tenant->settings['bank_name']))
+                                <div class="bank-row"><span>Bank Name</span> {{ $tenant->settings['bank_name'] }}</div>
                             @endif
-                            <div class="declaration">
-                                We declare that this invoice shows the actual price of the goods/services and that all
-                                particulars are true and correct. <em>Subject to jurisdiction of local courts only.</em>
-                                E &amp; O.E. — computer generated invoice, no signature required.
-                            </div>
-                        </td>
-                        <td class="sig-right">
-                            <div class="sig-box">
-                                <div class="block-label" style="margin-bottom:0;">For {{ $tenant->name }}</div>
-                                <div class="sig-space"></div>
-                                <div class="sig-name">Authorised Signatory</div>
-                                @if($invoice->createdBy)
-                                    <div class="sig-designation">{{ $invoice->createdBy->name }}</div>
-                                @endif
-                            </div>
-                        </td>
-                    </tr>
-                </table>
-            </div>
+                            @if(isset($tenant->settings['account_name']))
+                                <div class="bank-row"><span>Account Name</span> {{ $tenant->settings['account_name'] }}</div>
+                            @endif
+                            @if(isset($tenant->settings['account_number']))
+                                <div class="bank-row"><span>Account No.</span> {{ $tenant->settings['account_number'] }}</div>
+                            @endif
+                            @if(isset($tenant->settings['ifsc']))
+                                <div class="bank-row"><span>IFSC Code</span> {{ $tenant->settings['ifsc'] }}</div>
+                            @endif
+                            @if(isset($tenant->settings['upi']))
+                                <div class="bank-row"><span>UPI</span> {{ $tenant->settings['upi'] }}</div>
+                            @endif
+                        </div>
+                        @endif
+                        <div class="declaration">
+                            We declare that this invoice shows the actual price of the goods/services and that all
+                            particulars are true and correct. <em>Subject to jurisdiction of local courts only.</em>
+                            E &amp; O.E. — computer generated invoice, no signature required.
+                        </div>
+                    </td>
+                    <td class="sig-right">
+                        <div class="sig-box">
+                            <div class="block-label" style="margin-bottom:0;">For {{ $tenant->name }}</div>
+                            <div class="sig-space"></div>
+                            <div class="sig-name">Authorised Signatory</div>
+                            @if($invoice->createdBy)
+                                <div class="sig-designation">{{ $invoice->createdBy->name }}</div>
+                            @endif
+                        </div>
+                    </td>
+                </tr>
+            </table>
         </div>
 
     </div>{{-- /body-content --}}

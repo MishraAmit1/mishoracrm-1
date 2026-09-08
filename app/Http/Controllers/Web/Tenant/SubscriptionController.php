@@ -8,12 +8,15 @@ use App\Models\Plan;
 use App\Models\PlatformSetting;
 use App\Models\Subscription;
 use App\Services\RazorpayService;
+use App\Services\SubscriptionInvoiceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 
 class SubscriptionController extends Controller
 {
@@ -32,13 +35,36 @@ class SubscriptionController extends Controller
     // ── Current subscription ──────────────────────────────────────
     public function current(): View|RedirectResponse
     {
-        $subscription = Auth::user()->tenant->subscription;
+        $tenant       = Auth::user()->tenant;
+        $subscription = $tenant->subscription;
 
         if (!$subscription) {
             return redirect()->route('tenant.subscription.plans');
         }
 
-        return view('tenant.subscription.current', compact('subscription'));
+        // Billing history — every term money was actually paid on, newest first.
+        $invoices = $tenant->subscriptions()
+            ->with('plan')
+            ->latest('started_at')
+            ->get()
+            ->filter->isInvoiceable()
+            ->values();
+
+        $canManageBilling = Auth::user()->user_type === 'tenant_admin';
+
+        return view('tenant.subscription.current', compact('subscription', 'invoices', 'canManageBilling'));
+    }
+
+    // ── Download a subscription tax invoice ───────────────────────
+    public function invoice(Subscription $subscription, SubscriptionInvoiceService $invoices): Response
+    {
+        // Never let one tenant pull another tenant's billing document.
+        abort_unless($subscription->tenant_id === Auth::user()->tenant_id, 404);
+        abort_unless($subscription->isInvoiceable(), 404, 'No invoice is available for this subscription.');
+
+        $invoices->issue($subscription);
+
+        return $invoices->pdf($subscription)->download($invoices->filename($subscription));
     }
 
     // ── Initiate checkout ─────────────────────────────────────────
@@ -211,7 +237,7 @@ class SubscriptionController extends Controller
 
         $tenant = Auth::user()->tenant;
 
-        DB::transaction(function () use ($data, $tenant) {
+        $paidSub = DB::transaction(function () use ($data, $tenant) {
             $tenant->subscriptions()
                 ->whereIn('status', ['active', 'trial', 'pending_payment'])
                 ->update(['status' => 'cancelled', 'cancelled_at' => now()]);
@@ -233,7 +259,19 @@ class SubscriptionController extends Controller
                     Coupon::where('id', $sub->coupon_id)->increment('used_count');
                 }
             }
+
+            return $sub;
         });
+
+        // Issue + email/WhatsApp the tax invoice — best-effort, never block
+        // the success screen on a delivery hiccup.
+        if ($paidSub) {
+            try {
+                app(SubscriptionInvoiceService::class)->issueAndDeliver($paidSub->fresh());
+            } catch (\Throwable $e) {
+                Log::error('Subscription invoice pipeline failed: ' . $e->getMessage(), ['subscription_id' => $paidSub->id]);
+            }
+        }
 
         return redirect()->route('tenant.subscription.success')
             ->with('payment_id', $data['razorpay_payment_id']);

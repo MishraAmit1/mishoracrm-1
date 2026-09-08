@@ -122,7 +122,9 @@
                 @php
                     $sub        = $tenant->subscription;
                     $plan       = $sub?->plan;
-                    $maxUsers   = $plan ? (int)($plan->features['users'] ?? 0) : 0;
+                    $effSeats   = $tenant->userSeatLimit();          // superadmin override, else plan
+                    $maxUsers   = $effSeats > 0 ? $effSeats : 0;     // 0 / -1 → unlimited
+                    $seatOverridden = $tenant->userSeatLimitOverride() !== null;
                     $userCount  = $tenant->user_count ?? 0;
                     $lastLogin  = $lastLogins[$tenant->id]?->last_login_at ?? null;
                     $pct        = $maxUsers > 0 ? min(100, round($userCount / $maxUsers * 100)) : 0;
@@ -147,6 +149,9 @@
                     <td style="min-width:110px;" data-label="Users">
                         <div class="quota-text">
                             {{ $userCount }}{{ $maxUsers > 0 ? ' / '.$maxUsers : '' }}
+                            @if($seatOverridden)
+                                <span title="Seat limit manually overridden by superadmin" style="color:var(--accent);font-weight:700">*</span>
+                            @endif
                         </div>
                         @if($maxUsers > 0)
                             <div class="quota-bar">

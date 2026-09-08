@@ -9,6 +9,7 @@ use App\Observers\LeadObserver;
 use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -26,6 +27,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Production sits behind a reverse proxy that terminates SSL and
+        // forwards plain HTTP to the app, so $request->getScheme() (and
+        // every url()/route() call built from it — including the Meta
+        // OAuth/webhook callback URLs shown in Superadmin > Platform
+        // Settings) reports "http" even though the browser used https.
+        // Force https whenever APP_URL is configured as https, regardless
+        // of what scheme the request actually arrived on.
+        if (str_starts_with(config('app.url'), 'https://')) {
+            URL::forceScheme('https');
+        }
+
         // App CSS has no Tailwind utilities, so Laravel's default pagination
         // view (Tailwind SVG chevrons) renders unstyled and huge. Bootstrap's
         // markup (.pagination/.page-item/.page-link) is plain text arrows and

@@ -8,10 +8,12 @@ use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Services\SubscriptionInvoiceService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 
 class TenantController extends Controller
 {
@@ -71,10 +73,10 @@ class TenantController extends Controller
             ->orderByDesc('last_login_at')
             ->get();
 
-        $userCount     = $users->count();
-        $planUserLimit = $tenant->subscription?->plan
-            ? (int) ($tenant->subscription->plan->features['users'] ?? 0)
-            : null;
+        $userCount = $users->count();
+        // Effective seat limit — the superadmin override if one is set,
+        // otherwise the plan's features['users'] (see Tenant::userSeatLimit()).
+        $seatLimit = $tenant->userSeatLimit();
 
         $allPlans = Plan::orderBy('sort_order')->get();
 
@@ -83,7 +85,7 @@ class TenantController extends Controller
             'paymentHistory',
             'users',
             'userCount',
-            'planUserLimit',
+            'seatLimit',
             'allPlans'
         ));
     }
@@ -257,5 +259,101 @@ class TenantController extends Controller
         $tenant->update(['settings' => $settings]);
 
         return back()->with('success', $this->moduleLabel($module) . " access for {$tenant->name} now follows their plan.");
+    }
+
+    // ── User seat limit — per-tenant override of the plan's features['users'] ──
+    // Same tri-state idea as the module overrides above: superadmin can pin a
+    // tenant to a fixed number of seats (or unlimited), regardless of what
+    // their plan sells. Stored at settings['limits']['users'] — see
+    // Tenant::userSeatLimit(). Existing users are never removed; the limit
+    // only gates adding new ones (enforced in StaffController::store()).
+    public function updateSeatLimit(Tenant $tenant, Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'mode'  => ['required', Rule::in(['fixed', 'unlimited'])],
+            'seats' => ['nullable', 'integer', 'min:1', 'max:100000', 'required_if:mode,fixed'],
+        ]);
+
+        $value = $data['mode'] === 'unlimited' ? -1 : (int) $data['seats'];
+
+        $settings = $tenant->settings ?? [];
+        $settings['limits']['users'] = $value;
+        $tenant->update(['settings' => $settings]);
+
+        $label = $value === -1 ? 'unlimited seats' : "{$value} seat(s)";
+
+        AuditLog::record([
+            'tenant_id'   => $tenant->id,
+            'action'      => 'seat_limit_set',
+            'model_type'  => Tenant::class,
+            'model_id'    => $tenant->id,
+            'model_label' => $tenant->name,
+            'description' => "Superadmin set {$tenant->name}'s user seat limit to {$label}",
+        ]);
+
+        return back()->with('success', "User seat limit for {$tenant->name} set to {$label}.");
+    }
+
+    public function clearSeatLimit(Tenant $tenant): RedirectResponse
+    {
+        $settings = $tenant->settings ?? [];
+        unset($settings['limits']['users']);
+        if (empty($settings['limits'])) {
+            unset($settings['limits']);
+        }
+        $tenant->update(['settings' => $settings]);
+
+        AuditLog::record([
+            'tenant_id'   => $tenant->id,
+            'action'      => 'seat_limit_reset',
+            'model_type'  => Tenant::class,
+            'model_id'    => $tenant->id,
+            'model_label' => $tenant->name,
+            'description' => "Superadmin cleared {$tenant->name}'s user seat override — now follows their plan",
+        ]);
+
+        return back()->with('success', "User seat limit for {$tenant->name} now follows their plan.");
+    }
+
+    // ── Subscription tax invoices ────────────────────────────────
+
+    private function tenantSubscription(Tenant $tenant, Subscription $subscription): Subscription
+    {
+        abort_unless($subscription->tenant_id === $tenant->id, 404);
+        abort_unless($subscription->isInvoiceable(), 404, 'No invoice is available for this subscription.');
+
+        return $subscription;
+    }
+
+    public function invoiceDownload(Tenant $tenant, Subscription $subscription, SubscriptionInvoiceService $invoices): Response
+    {
+        $subscription = $this->tenantSubscription($tenant, $subscription);
+        $invoices->issue($subscription);
+
+        return $invoices->pdf($subscription)->download($invoices->filename($subscription));
+    }
+
+    public function invoiceResend(Tenant $tenant, Subscription $subscription, SubscriptionInvoiceService $invoices): RedirectResponse
+    {
+        $subscription = $this->tenantSubscription($tenant, $subscription);
+
+        $result = $invoices->issueAndDeliver($subscription);
+
+        $parts = [];
+        $parts[] = ($result['email'] ?? false) ? 'email sent' : 'email failed';
+        if ($result['whatsapp'] !== null) {
+            $parts[] = $result['whatsapp'] ? 'WhatsApp sent' : 'WhatsApp failed';
+        }
+
+        AuditLog::record([
+            'tenant_id'   => $tenant->id,
+            'action'      => 'subscription_invoice_resent',
+            'model_type'  => Subscription::class,
+            'model_id'    => $subscription->id,
+            'model_label' => $tenant->name,
+            'description' => "Superadmin re-sent invoice {$subscription->invoice_number} to {$tenant->name} — " . implode(', ', $parts),
+        ]);
+
+        return back()->with('success', "Invoice {$subscription->invoice_number} — " . implode(', ', $parts) . '.');
     }
 }

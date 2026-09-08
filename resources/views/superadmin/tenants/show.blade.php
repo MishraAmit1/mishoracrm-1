@@ -36,6 +36,19 @@
         }
         .th-badge svg { width: 12px; height: 12px; }
         .th-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+        /* Invoice actions inside the Payment History list */
+        .inv-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+        .inv-btn {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: 11px; font-weight: 600; font-family: var(--font);
+            padding: 5px 9px; border-radius: 8px; cursor: pointer;
+            border: 1px solid var(--border-default); background: var(--bg-elevated);
+            color: var(--text-200); text-decoration: none; transition: border-color .15s, color .15s;
+        }
+        .inv-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .inv-btn svg { width: 13px; height: 13px; }
+        .inv-btn.primary { background: var(--accent-dim); border-color: transparent; color: var(--accent); }
     </style>
 @endpush
 
@@ -63,7 +76,11 @@
     $sub  = $tenant->subscription;
     $plan = $sub?->plan;
 
-    $maxUsers = $plan ? (int) ($plan->features['users'] ?? 0) : 0;
+    // Effective seat limit = superadmin override if set, else the plan's.
+    $planSeats    = $tenant->planUserSeatLimit();       // what the plan alone allows (0 = none)
+    $seatOverride = $tenant->userSeatLimitOverride();   // null = follows plan, -1 = unlimited, >=1 = fixed
+    $effSeats     = $tenant->userSeatLimit();           // -1 / 0 = no cap
+    $maxUsers     = $effSeats > 0 ? $effSeats : 0;      // 0 → treated as "unlimited" everywhere below
     $userPct  = $maxUsers > 0 ? min(100, round($userCount / $maxUsers * 100)) : 0;
     $fillCls  = $userPct >= 100 ? 'full' : ($userPct >= 80 ? 'warn' : '');
 
@@ -138,6 +155,13 @@
         </div>
     @endif
 
+    @if(session('error') || $errors->any())
+        <div class="dalert" style="--a:var(--red);--a-bg:var(--red-dim);margin-bottom:14px">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9.303 3.376c.866 1.5-.217 3.374-1.948 3.374H4.645c-1.73 0-2.813-1.874-1.948-3.374l7.028-12.124c.866-1.5 3.032-1.5 3.898 0l7.027 12.124z"/></svg>
+            <span>{{ session('error') ?? $errors->first() }}</span>
+        </div>
+    @endif
+
     {{-- ── Hero ───────────────────────────────────────────────────── --}}
     <div class="th-hero">
         <div class="th-hero-l">
@@ -189,7 +213,7 @@
                 <span class="klabel">Team Members</span>
             </div>
             <div class="kmid"><span class="knum">{{ $userCount }}{{ $maxUsers > 0 ? ' / ' . $maxUsers : '' }}</span></div>
-            <div class="kfoot"><span class="knote">{{ $maxUsers > 0 ? $userPct . '% of plan seats used' : 'Unlimited seats' }}</span></div>
+            <div class="kfoot"><span class="knote">{{ $maxUsers > 0 ? $userPct . '% of ' . ($seatOverride !== null ? 'the seat limit' : 'plan seats') . ' used' : 'Unlimited seats' }}</span></div>
         </div>
 
         <div class="kcard" style="--k:#a78bfa;--kw:rgba(167,139,250,.12)">
@@ -286,7 +310,7 @@
                     <div style="margin-top:12px">
                         <div class="dquota-bar"><div class="dquota-fill {{ $fillCls }}" style="width:{{ $userPct }}%"></div></div>
                         <div style="font-size:11px;margin-top:5px;color:{{ $userPct >= 100 ? 'var(--red)' : ($userPct >= 80 ? 'var(--amber)' : 'var(--text-400)') }}">
-                            {{ $userPct }}% of plan seats used{{ $userPct >= 100 ? ' — FULL' : '' }}
+                            {{ $userPct }}% of {{ $seatOverride !== null ? 'the seat limit' : 'plan seats' }} used{{ $userPct >= 100 ? ' — FULL' : '' }}
                         </div>
                     </div>
                     @endif
@@ -388,6 +412,57 @@
         </div>
     </div>
 
+    {{-- ── User seats ────────────────────────────────────────────── --}}
+    <div class="dcard" style="margin-top:12px">
+        <div class="dcard-h">
+            <div class="dcard-ht">
+                <span class="dcard-ico" style="--c:var(--accent);--cw:var(--accent-dim)"><svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $icons['users'] }}"/></svg></span>
+                <div>
+                    <div class="dcard-t">User Seats</div>
+                    <div class="dcard-s">How many active users this tenant can create — overrides the plan's seat count</div>
+                </div>
+            </div>
+            <span class="dpill {{ $seatOverride !== null ? 'info' : 'muted' }}">
+                @if($seatOverride === null) Follows plan
+                @elseif($seatOverride === -1) Override · Unlimited
+                @else Override · {{ $seatOverride }} seats @endif
+            </span>
+        </div>
+        <div class="dcard-b">
+            <div class="mcard-note" style="margin-bottom:14px">
+                @if($seatOverride === null)
+                    Seats follow the <strong>{{ $plan?->name ?? 'current' }}</strong> plan —
+                    <strong>{{ $planSeats > 0 ? $planSeats . ' seat(s)' : 'unlimited' }}</strong>.
+                    Currently using <strong>{{ $userCount }}</strong>.
+                @elseif($seatOverride === -1)
+                    Manually set to <strong>unlimited seats</strong>{{ $planSeats > 0 ? ", overriding the plan's {$planSeats}" : '' }}.
+                    Currently using <strong>{{ $userCount }}</strong>.
+                @else
+                    Manually capped at <strong>{{ $seatOverride }} seat(s)</strong>{{ $planSeats > 0 ? " — plan allows {$planSeats}" : '' }}.
+                    Currently using <strong>{{ $userCount }}</strong>.
+                    @if($userCount > $seatOverride)
+                        <span style="color:var(--amber)">Already above the cap — existing users keep access, but no new ones can be added until usage drops below {{ $seatOverride }}.</span>
+                    @endif
+                @endif
+            </div>
+
+            <form method="POST" action="{{ route('superadmin.tenants.update-seat-limit', $tenant) }}"
+                  style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px">
+                @csrf
+                <label class="dfield" style="max-width:180px">
+                    <span>Fixed seat limit</span>
+                    <input type="number" name="seats" min="1" max="100000" class="dinput"
+                           value="{{ $seatOverride && $seatOverride > 0 ? $seatOverride : ($planSeats > 0 ? $planSeats : 5) }}">
+                </label>
+                <button type="submit" name="mode" value="fixed" class="dbtn dbtn-accent">Set limit</button>
+                <button type="submit" name="mode" value="unlimited" class="dbtn dbtn-sm">Set unlimited</button>
+                @if($seatOverride !== null)
+                    <button type="submit" formaction="{{ route('superadmin.tenants.clear-seat-limit', $tenant) }}" class="dbtn dbtn-sm">Reset to plan</button>
+                @endif
+            </form>
+        </div>
+    </div>
+
     {{-- ── Users ──────────────────────────────────────────────────── --}}
     <div class="dcard" style="margin-top:14px">
         <div class="dcard-h">
@@ -395,7 +470,7 @@
                 <span class="dcard-ico"><svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $icons['users'] }}"/></svg></span>
                 <div>
                     <div class="dcard-t">Users</div>
-                    <div class="dcard-s">{{ $userCount }} user{{ $userCount !== 1 ? 's' : '' }}{{ $planUserLimit && $planUserLimit > 0 ? ' of ' . $planUserLimit . ' allowed' : '' }}</div>
+                    <div class="dcard-s">{{ $userCount }} user{{ $userCount !== 1 ? 's' : '' }}{{ $maxUsers > 0 ? ' of ' . $maxUsers . ' allowed' : '' }}</div>
                 </div>
             </div>
         </div>
@@ -450,6 +525,7 @@
             @forelse($paymentHistory as $payment)
             @php
                 $isPaid = !empty($payment->razorpay_payment_id);
+                $isInvoiceable = $payment->isInvoiceable();
                 $amount = $payment->original_amount ?? ($payment->billing_cycle === 'yearly'
                     ? $payment->plan?->yearly_price
                     : $payment->plan?->monthly_price);
@@ -476,6 +552,7 @@
                         @endif
                         @if($payment->razorpay_payment_id) · ID: {{ $payment->razorpay_payment_id }} @endif
                         @if($payment->coupon) · Coupon: {{ $payment->coupon->code }} @endif
+                        @if($payment->invoice_number) · Invoice: {{ $payment->invoice_number }} @endif
                     </div>
                 </div>
                 <div class="dlist-amt">
@@ -488,6 +565,22 @@
                         <span style="color:var(--text-400);font-size:12px;font-weight:500">Free / Trial</span>
                     @endif
                 </div>
+                @if($isInvoiceable)
+                <div class="inv-actions">
+                    <a href="{{ route('superadmin.tenants.invoice-download', [$tenant, $payment]) }}" class="inv-btn primary" title="Download tax invoice PDF">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+                        Invoice
+                    </a>
+                    <form action="{{ route('superadmin.tenants.invoice-resend', [$tenant, $payment]) }}" method="POST"
+                          onsubmit="return confirm('Re-send invoice {{ $payment->invoice_number ?? '(new)' }} to {{ $tenant->name }} by email/WhatsApp?')">
+                        @csrf
+                        <button type="submit" class="inv-btn" title="Re-send invoice to tenant admins">
+                            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"/></svg>
+                            Resend
+                        </button>
+                    </form>
+                </div>
+                @endif
             </div>
             @empty
             <div class="dempty">No payment records found.</div>

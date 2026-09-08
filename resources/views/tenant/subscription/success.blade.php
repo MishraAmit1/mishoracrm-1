@@ -103,8 +103,19 @@
     </div>
     @endif
 
+    @if($subscription && $subscription->isInvoiceable())
+    <p style="font-size:13px;color:var(--text-400);margin-bottom:14px">
+        Aapka tax invoice email par bhej diya gaya hai. Yahan se bhi download kar sakte hain.
+    </p>
+    <div class="action-btns" style="margin-bottom:14px">
+        <a href="{{ route('tenant.subscription.invoice', $subscription) }}" class="btn-go primary">
+            Download Invoice
+        </a>
+    </div>
+    @endif
+
     <div class="action-btns">
-        <a href="{{ route('tenant.dashboard') }}" class="btn-go primary">Go to Dashboard</a>
+        <a href="{{ route('tenant.dashboard') }}" class="btn-go {{ ($subscription && $subscription->isInvoiceable()) ? 'outline' : 'primary' }}">Go to Dashboard</a>
         <a href="{{ route('tenant.subscription.current') }}" class="btn-go outline">View Subscription</a>
     </div>
 

@@ -128,6 +128,47 @@ class Tenant extends Model
         return (bool) $this->subscription?->plan?->hasFeature($module);
     }
 
+    // ── User seat limit — plan entitlement with a superadmin override ──
+    // settings['limits']['users']:
+    //   absent/null → inherit from the Plan (features['users'])
+    //   -1          → unlimited (superadmin override)
+    //   >= 1        → exactly that many active users (superadmin override)
+    // Same "unset is meaningfully distinct from a value" idea as the
+    // settings['modules'][x] tri-state above — superadmin can raise the cap
+    // above what the plan sells, or pin it below. Any effective value <= 0
+    // means "no cap" (matches StaffController's historic `> 0` gate).
+    public function userSeatLimit(): int
+    {
+        $override = $this->userSeatLimitOverride();
+
+        if ($override !== null) {
+            return $override;
+        }
+
+        return $this->planUserSeatLimit();
+    }
+
+    // Null = no superadmin override (seats follow the plan).
+    // -1 = unlimited, >= 1 = a fixed seat count — both set by superadmin.
+    public function userSeatLimitOverride(): ?int
+    {
+        $value = $this->settings['limits']['users'] ?? null;
+
+        return $value === null ? null : (int) $value;
+    }
+
+    // What the plan alone would allow (0 when there's no plan / no cap).
+    public function planUserSeatLimit(): int
+    {
+        return (int) ($this->subscription?->plan?->getFeature('users') ?? 0);
+    }
+
+    // True when the effective seat limit actually caps new users.
+    public function enforcesUserSeatLimit(): bool
+    {
+        return $this->userSeatLimit() > 0;
+    }
+
     // ── Tenant-controlled preferences (opt-in, off by default) ──────
     // settings['preferences'][$key] — same array-in-JSON convention as
     // settings['modules']/settings['integrations'], but tenant-admin

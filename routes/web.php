@@ -159,6 +159,10 @@ Route::prefix('superadmin')
             Route::post('/{tenant}/clear-service-override', 'clearServiceOverride')->name('clear-service-override');
             Route::post('/{tenant}/modules/{module}/toggle', 'toggleModule')->name('toggle-module');
             Route::post('/{tenant}/modules/{module}/clear', 'clearModuleOverride')->name('clear-module-override');
+            Route::post('/{tenant}/seat-limit',       'updateSeatLimit')->name('update-seat-limit');
+            Route::post('/{tenant}/seat-limit/clear', 'clearSeatLimit')->name('clear-seat-limit');
+            Route::get('/{tenant}/invoices/{subscription}',        'invoiceDownload')->name('invoice-download');
+            Route::post('/{tenant}/invoices/{subscription}/resend', 'invoiceResend')->name('invoice-resend');
         });
 
         // Plan management
@@ -172,6 +176,12 @@ Route::prefix('superadmin')
             Route::post('/{plan}/toggle',  'toggle')->name('toggle');
             Route::post('/toggle-monthly-billing', 'toggleMonthlyBilling')->name('toggle-monthly-billing');
             Route::post('/update-gst', 'updateGst')->name('update-gst');
+        });
+
+        // Platform billing identity + invoice defaults + platform WhatsApp sender
+        Route::controller(SuperAdmin\BillingProfileController::class)->group(function () {
+            Route::get('/billing-profile',  'edit')->name('billing-profile.edit');
+            Route::put('/billing-profile',  'update')->name('billing-profile.update');
         });
 
         // Sales enquiries (public /contact-sales submissions)
@@ -291,6 +301,7 @@ Route::middleware(['tenant', 'auth'])
             Route::post('/subscription/verify',       [SubscriptionController::class, 'verify'])->name('subscription.verify');
             Route::post('/subscription/cancel',       [SubscriptionController::class, 'cancel'])->name('subscription.cancel');
             Route::post('/subscription/apply-coupon', [SubscriptionController::class, 'applyCoupon'])->name('subscription.apply-coupon');
+            Route::get('/subscription/invoice/{subscription}', [SubscriptionController::class, 'invoice'])->name('subscription.invoice');
         });
     });
 
