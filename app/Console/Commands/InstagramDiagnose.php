@@ -27,20 +27,20 @@ class InstagramDiagnose extends Command
         $this->newLine();
 
         $this->info('=== APP-LEVEL WEBHOOK SUBSCRIPTIONS (Meta dashboard config) ===');
-        if ($igId && $igSecret) {
-            $appToken = $igId . '|' . $igSecret;
-            $subs = Http::get("https://graph.facebook.com/v23.0/{$igId}/subscriptions", [
-                'access_token' => $appToken,
+        $fbId     = PlatformSetting::get('meta_app_id');
+        $fbSecret = PlatformSetting::get('meta_app_secret');
+        foreach ([[$fbId, $fbSecret, 'facebook app id'], [$igId, $igSecret, 'instagram app id']] as [$id, $sec, $label]) {
+            if (!$id || !$sec) continue;
+            $subs = Http::get("https://graph.facebook.com/v23.0/{$id}/subscriptions", [
+                'access_token' => $id . '|' . $sec,
             ])->json();
-            $this->line(json_encode($subs));
+            $this->line("[{$label}={$id}] " . json_encode($subs));
             foreach ($subs['data'] ?? [] as $row) {
                 if (($row['object'] ?? '') === 'instagram') {
                     $fields = collect($row['fields'] ?? [])->map(fn ($f) => is_array($f) ? $f['name'] : $f)->implode(',');
                     $this->line("  instagram -> callback={$row['callback_url']} active=" . var_export($row['active'] ?? null, true) . " fields={$fields}");
                 }
             }
-        } else {
-            $this->warn('  cannot check — app id/secret missing');
         }
         $this->newLine();
 
