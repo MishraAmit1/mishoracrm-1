@@ -469,28 +469,35 @@ class InstagramController extends Controller
             $expiresIn = $longJson['expires_in'] ?? null;
             $debugContext['long_token_exchange'] = $this->redactTokens($longJson);
 
-            // 3) Load the authorized Instagram Professional account
+            // 3) Load the authorized Instagram Professional account.
+            //    Instagram Login exposes two IDs: user_id (IGSID, used as the
+            //    messaging sender/recipient id) and id (app-scoped). Meta's
+            //    webhook payloads key entry.id on either shape depending on the
+            //    event, so we keep BOTH and match on either at delivery time.
             $accountRes = Http::get('https://graph.instagram.com/v23.0/me', [
-                'fields'       => 'user_id,username,account_type',
+                'fields'       => 'user_id,id,username,account_type',
                 'access_token' => $longToken,
             ]);
 
             $accountJson = $accountRes->json();
             $debugContext['account_response'] = $this->redactTokens($accountJson);
 
-            $igUserId = (string) ($accountJson['user_id'] ?? $igUserId);
+            $igUserId  = (string) ($accountJson['user_id'] ?? $igUserId);
+            $igAppId   = (string) ($accountJson['id'] ?? '');
 
             if (!$accountRes->successful() || $igUserId === '') {
                 throw new \Exception($accountJson['error']['message'] ?? ('Failed to load Instagram account details (HTTP ' . $accountRes->status() . ').'));
             }
 
-            $this->persistInstagramConnection($data['tenant_id'], [
+            $subscription = $this->persistInstagramConnection($data['tenant_id'], [
                 'access_token'         => $longToken,
                 'instagram_account_id' => $igUserId,
+                'secondary_id'         => $igAppId !== '' && $igAppId !== $igUserId ? $igAppId : null,
                 'username'             => $accountJson['username'] ?? null,
                 'account_type'         => $accountJson['account_type'] ?? null,
                 'expires_in'           => $expiresIn,
             ]);
+            $debugContext['webhook_subscription'] = $this->redactTokens($subscription);
 
             cache()->put("ig_oauth_done_{$state}", true, now()->addMinutes(5));
             cache()->forget("ig_oauth_state_{$state}");
@@ -516,13 +523,17 @@ class InstagramController extends Controller
     }
 
     // ── OAuth — persist the connected Instagram Professional account ──
-    private function persistInstagramConnection(int $tenantId, array $chosen): void
+    //    Returns the raw webhook-subscription response so the callback can log it.
+    private function persistInstagramConnection(int $tenantId, array $chosen): array
     {
         $settings = InstagramSetting::firstOrNew(['tenant_id' => $tenantId]);
         $settings->tenant_id            = $tenantId;
         $settings->access_token         = $chosen['access_token'];
         $settings->instagram_account_id = $chosen['instagram_account_id'];
-        $settings->page_id              = null; // Instagram Login has no Facebook Page
+        // No Facebook Page in the Instagram Login flow — reuse this column to
+        // hold the account's secondary (app-scoped) ID so webhook delivery can
+        // match on either shape. Null when Meta returns a single ID.
+        $settings->page_id              = $chosen['secondary_id'] ?? null;
         $settings->is_connected         = true;
         if (!empty($chosen['expires_in'])) {
             $settings->token_expires_at = now()->addSeconds((int) $chosen['expires_in']);
@@ -532,7 +543,18 @@ class InstagramController extends Controller
         }
         $settings->save();
 
-        InstagramService::forTenant($tenantId)->subscribeWebhook();
+        $subscription = InstagramService::forTenant($tenantId)->subscribeWebhookDetailed();
+
+        InstagramLog::create([
+            'tenant_id'     => $tenantId,
+            'event_type'    => 'oauth_connect',
+            'status'        => $subscription['success'] ? 'success' : 'failed',
+            'outgoing_text' => 'Webhook subscribe (me/subscribed_apps): ' . ($subscription['success'] ? 'OK' : 'FAILED'),
+            'error_message' => $subscription['success'] ? null : json_encode($this->redactTokens($subscription['body'])),
+            'raw_payload'   => $this->redactTokens($subscription['body']),
+        ]);
+
+        return $subscription;
     }
 
     // ── Strip access tokens out of a Graph API response before it gets

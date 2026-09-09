@@ -95,7 +95,9 @@ class InstagramWebhookController extends Controller
         $messageText = $messaging['message']['text'] ?? null;
 
         if (!$senderId || !$messageText) return;
+        if (!empty($messaging['message']['is_echo'])) return;   // our own outbound copy
         if ($senderId === $setting->instagram_account_id) return; // own messages
+        if ($senderId === $setting->page_id) return;             // own messages (secondary id)
 
         // Log incoming DM
         $log = InstagramLog::create([
