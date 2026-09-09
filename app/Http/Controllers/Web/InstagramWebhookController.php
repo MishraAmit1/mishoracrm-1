@@ -63,25 +63,38 @@ class InstagramWebhookController extends Controller
         }
 
         foreach ($payload['entry'] ?? [] as $entry) {
-            // Meta's Instagram webhook payloads send the Instagram Business
-            // Account ID as entry.id (not the linked Facebook Page ID) —
-            // match on either so both event shapes resolve to a tenant.
-            $entryId = $entry['id'] ?? null;
+            // Instagram Login exposes two IDs for the same account (user_id /
+            // IGSID and the app-scoped id). Meta keys entry.id — and the
+            // recipient.id inside DM events — on either shape depending on the
+            // event, so gather every candidate and match a tenant on any of
+            // them (we persist both in instagram_account_id + page_id).
+            $candidates = array_filter(array_unique(array_merge(
+                [$entry['id'] ?? null],
+                array_map(fn ($m) => $m['recipient']['id'] ?? null, $entry['messaging'] ?? []),
+            )));
 
-            $setting = InstagramSetting::where('instagram_account_id', $entryId)
-                ->orWhere('page_id', $entryId)
-                ->first();
+            $setting = InstagramSetting::where(function ($q) use ($candidates) {
+                $q->whereIn('instagram_account_id', $candidates)
+                  ->orWhereIn('page_id', $candidates);
+            })->first();
+
             if (!$setting) continue;
 
-            // Handle messaging (DMs)
+            // Handle messaging (DMs) — the standard Messenger-style shape
             foreach ($entry['messaging'] ?? [] as $messaging) {
                 $this->handleDm($setting, $messaging);
             }
 
-            // Handle changes (comments)
+            // Handle changes: comments, and (defensively) DMs delivered under
+            // the changes[] shape instead of messaging[].
             foreach ($entry['changes'] ?? [] as $change) {
-                if (($change['field'] ?? '') === 'comments') {
-                    $this->handleComment($setting, $change['value'] ?? []);
+                $field = $change['field'] ?? '';
+                $value = $change['value'] ?? [];
+
+                if ($field === 'comments') {
+                    $this->handleComment($setting, $value);
+                } elseif ($field === 'messages' && isset($value['sender']['id'], $value['message'])) {
+                    $this->handleDm($setting, $value);
                 }
             }
         }
@@ -165,7 +178,7 @@ class InstagramWebhookController extends Controller
         $fromId      = $value['from']['id'] ?? null;
 
         if (!$commentId || !$commentText) return;
-        if ($fromId === $setting->instagram_account_id) return; // own comments
+        if ($fromId && in_array($fromId, [$setting->instagram_account_id, $setting->page_id], true)) return; // own comments
 
         $log = InstagramLog::create([
             'tenant_id'         => $setting->tenant_id,
