@@ -76,7 +76,11 @@
         <div style="font-size:13px;color:var(--text-300);margin-top:6px;max-width:400px;margin-left:auto;margin-right:auto;">
             Scan this QR code with your phone to connect your Instagram Business account automatically — no need to copy tokens manually.
         </div>
+    @endif
 
+    {{-- Shared QR machinery — always in the DOM so "Reconnect" works from the
+         connected state too (JS toggles visibility). --}}
+    <div>
         {{-- QR display area --}}
         <div id="qrArea" style="display:none;margin-top:16px;">
             <div class="qr-wrap"><img id="qrImg" src="" alt="QR Code" style="width:200px;height:200px;display:block;"></div>
@@ -104,13 +108,13 @@
         </div>
 
         {{-- Buttons --}}
-        <div id="qrGenerateBtn" style="margin-top:16px;">
+        <div id="qrGenerateBtn" style="margin-top:16px;{{ $settings->is_connected ? 'display:none;' : '' }}">
             <button type="button" class="btn btn-primary" onclick="startQrFlow()">Generate QR Code</button>
         </div>
         <div id="qrRefreshBtn" style="display:none;margin-top:12px;">
             <button type="button" class="btn btn-ghost btn-sm" onclick="startQrFlow()">Generate New QR</button>
         </div>
-    @endif
+    </div>
 </div>
 
 {{-- Connection status --}}
