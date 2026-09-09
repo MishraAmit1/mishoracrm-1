@@ -159,6 +159,31 @@
                         @endif
                     </div>
 
+                    <div style="border-top:1px solid var(--border-subtle);padding-top:16px;margin-bottom:16px;">
+                        <div class="section-label" style="padding:0 0 8px;">Instagram Login credentials</div>
+                        <p style="font-size:12px;color:var(--text-300);margin-bottom:14px;">
+                            <span class="tag tag-ig">Instagram</span>
+                            From <strong>App → Instagram → API setup with Instagram login</strong>.
+                            Leave blank to reuse the Facebook App ID / Secret above.
+                        </p>
+
+                        <div class="form-group" style="margin-bottom:14px;">
+                            <label class="form-label">Instagram App ID</label>
+                            <input type="text" name="ig_app_id" class="form-input"
+                                value="{{ old('ig_app_id', $ig_app_id) }}"
+                                placeholder="e.g. 1234567890123456">
+                        </div>
+
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label class="form-label">Instagram App Secret</label>
+                            <input type="password" name="ig_app_secret" class="form-input"
+                                placeholder="{{ $ig_app_secret ? '••••••• (saved — leave blank to keep)' : 'Paste Instagram App Secret here' }}">
+                            @if($ig_app_secret)
+                                <span class="form-hint" style="color:#6FEC9D;">Secret saved — leave blank to keep current.</span>
+                            @endif
+                        </div>
+                    </div>
+
                     <button type="submit" class="btn btn-primary" style="width:100%;">Save Credentials</button>
                 </form>
 
@@ -373,15 +398,18 @@
                             <div class="step-num purple">4</div>
                         </div>
                         <div class="step-body">
-                            <div class="step-title">Add Instagram Product <span class="tag tag-ig" style="margin-left:4px;">Instagram</span></div>
+                            <div class="step-title">Add Instagram Product — "API setup with Instagram login" <span class="tag tag-ig" style="margin-left:4px;">Instagram</span></div>
                             <div class="step-desc">
-                                Enables tenants to connect their Instagram Business accounts.
+                                Enables tenants to connect their Instagram Professional (Business/Creator) accounts
+                                <strong>directly</strong> — no Facebook Page required.
                             </div>
                             <ul class="sub-steps">
-                                <li>App dashboard → <strong>Add a Product</strong></li>
-                                <li>Find <strong>"Instagram"</strong> (or "Instagram Graph API") → <strong>Set up</strong></li>
-                                <li>Go to <strong>Instagram → Settings</strong></li>
-                                <li>Under <strong>Webhook</strong> → Callback URL:</li>
+                                <li>App dashboard → <strong>Add a Product</strong> → <strong>Instagram</strong> → <strong>Set up</strong></li>
+                                <li>Open <strong>Instagram → API setup with Instagram login</strong> (NOT the Facebook-Page "Instagram Graph API" path)</li>
+                                <li>Section <strong>3. Set up Instagram business login</strong> → <strong>Business login settings</strong>:</li>
+                                <li>Add <strong>OAuth redirect URI</strong>: <code>{{ url('/instagram/oauth/callback') }}</code></li>
+                                <li>Copy the <strong>Instagram app ID</strong> + <strong>Instagram app secret</strong> shown here into the form on the left</li>
+                                <li>Section <strong>2. Configure webhooks</strong> → Callback URL:</li>
                             </ul>
                             <div class="url-box" style="margin-top:8px;">
                                 <code>{{ url('/webhook/instagram') }}</code>
@@ -390,9 +418,13 @@
                                 </button>
                             </div>
                             <ul class="sub-steps" style="margin-top:8px;">
-                                <li>Subscribe to fields: <strong>messages</strong>, <strong>comments</strong>, <strong>mentions</strong></li>
+                                <li>Subscribe to fields: <strong>messages</strong>, <strong>comments</strong></li>
                                 <li>Use the tenant's Verify Token from their Instagram Settings page</li>
                             </ul>
+                            <div class="step-note info" style="margin-top:8px;">
+                                <svg viewBox="0 0 20 20" fill="currentColor" style="width:15px;height:15px;flex-shrink:0;margin-top:1px;"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+                                <span>Each connected account is auto-subscribed by MilanCRM via the API right after the tenant scans the QR — this dashboard step only covers the one-time callback verification handshake.</span>
+                            </div>
                         </div>
                     </div>
 
@@ -414,14 +446,11 @@
                                 </div>
                             </div>
                             <div>
-                                <div style="font-size:11px;color:var(--text-400);margin-bottom:5px;">For Instagram:</div>
+                                <div style="font-size:11px;color:var(--text-400);margin-bottom:5px;">For Instagram (Instagram Login — no Facebook Page permissions):</div>
                                 <div class="perm-chips">
-                                    <span class="perm-chip">pages_show_list</span>
-                                    <span class="perm-chip">instagram_basic</span>
-                                    <span class="perm-chip">instagram_manage_messages</span>
-                                    <span class="perm-chip">instagram_manage_comments</span>
-                                    <span class="perm-chip">pages_read_engagement</span>
-                                    <span class="perm-chip">pages_manage_metadata</span>
+                                    <span class="perm-chip">instagram_business_basic</span>
+                                    <span class="perm-chip">instagram_business_manage_messages</span>
+                                    <span class="perm-chip">instagram_business_manage_comments</span>
                                 </div>
                             </div>
                             <div class="step-note info" style="margin-top:10px;">

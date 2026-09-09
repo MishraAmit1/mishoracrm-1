@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Crypt;
 
 class InstagramSetting extends Model
 {
@@ -28,5 +29,51 @@ class InstagramSetting extends Model
     public static function forTenant(int $tenantId): self
     {
         return static::firstOrNew(['tenant_id' => $tenantId]);
+    }
+
+    public function getAccessTokenAttribute(?string $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        try {
+            return Crypt::decryptString($value);
+        } catch (\Throwable) {
+            return $value;
+        }
+    }
+
+    public function setAccessTokenAttribute(?string $value): void
+    {
+        if ($value === null || $value === '') {
+            $this->attributes['access_token'] = null;
+            return;
+        }
+
+        $this->attributes['access_token'] = Crypt::encryptString($value);
+    }
+
+    public function getAppSecretAttribute(?string $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        try {
+            return Crypt::decryptString($value);
+        } catch (\Throwable) {
+            return $value;
+        }
+    }
+
+    public function setAppSecretAttribute(?string $value): void
+    {
+        if ($value === null || $value === '') {
+            $this->attributes['app_secret'] = null;
+            return;
+        }
+
+        $this->attributes['app_secret'] = Crypt::encryptString($value);
     }
 }

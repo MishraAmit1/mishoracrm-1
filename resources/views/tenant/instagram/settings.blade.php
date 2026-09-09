@@ -62,7 +62,7 @@
             @if($accountInfo['followers_count'] ?? null)
                 {{ number_format($accountInfo['followers_count']) }} followers &nbsp;|&nbsp;
             @endif
-            Account ID: {{ $settings->instagram_account_id }} &nbsp;|&nbsp; Page ID: {{ $settings->page_id }}
+            Instagram Account ID: {{ $settings->instagram_account_id }}
         </div>
         <button type="button" class="btn btn-sm" style="margin-top:14px;" onclick="startQrFlow()">Reconnect / Change Account</button>
     @else
@@ -87,8 +87,8 @@
         <div id="qrSteps" style="display:none;">
             <div class="qr-steps">
                 <div class="qr-step"><div class="qr-step-num">1</div><div class="qr-step-text">Open your phone camera and scan the QR code above</div></div>
-                <div class="qr-step"><div class="qr-step-num">2</div><div class="qr-step-text">Log in with your Facebook account that owns the Instagram Business page</div></div>
-                <div class="qr-step"><div class="qr-step-num">3</div><div class="qr-step-text">Allow the requested permissions and this page will update automatically</div></div>
+                <div class="qr-step"><div class="qr-step-num">2</div><div class="qr-step-text">Log in with the Instagram Professional account you want to connect</div></div>
+                <div class="qr-step"><div class="qr-step-num">3</div><div class="qr-step-text">Approve the Instagram permissions and MilanCRM will connect automatically</div></div>
             </div>
         </div>
 
@@ -139,19 +139,13 @@
         <div class="card-header"><h3 class="card-title">Account Details</h3></div>
         <div class="card-body">
             @if($settings->is_connected)
-                <div style="display:flex;gap:24px;flex-wrap:wrap;">
-                    <div class="form-group" style="flex:1;min-width:200px;">
-                        <label class="form-label">Page ID</label>
-                        <input type="text" name="page_id" class="form-input" value="{{ $settings->page_id }}" placeholder="Auto-filled on QR connect">
-                    </div>
-                    <div class="form-group" style="flex:1;min-width:200px;">
-                        <label class="form-label">Instagram Account ID</label>
-                        <input type="text" name="instagram_account_id" class="form-input" value="{{ $settings->instagram_account_id }}" placeholder="Auto-filled on QR connect">
-                    </div>
+                <div class="form-group" style="max-width:320px;">
+                    <label class="form-label">Instagram Account ID</label>
+                    <input type="text" name="instagram_account_id" class="form-input" value="{{ $settings->instagram_account_id }}" placeholder="Auto-filled on QR connect" readonly>
                 </div>
-                <p style="font-size:12px;color:var(--text-300);margin-top:8px;">These are filled automatically when you connect via QR code. Edit only if needed.</p>
+                <p style="font-size:12px;color:var(--text-300);margin-top:8px;">Filled automatically when you connect via QR code.</p>
             @else
-                <p style="font-size:13px;color:var(--text-300);">Use the <strong>QR code above</strong> to connect your Instagram account. Page ID and Account ID will be filled automatically.</p>
+                <p style="font-size:13px;color:var(--text-300);">Use the <strong>QR code above</strong> to connect your Instagram account. The Account ID is filled automatically.</p>
             @endif
         </div>
     </div>
@@ -179,7 +173,7 @@
                     </svg>
                 </button>
             </div>
-            <p style="font-size:12px;color:var(--text-300);margin-top:8px;">Subscribe to: <strong>messages</strong>, <strong>comments</strong>, <strong>mention</strong></p>
+            <p style="font-size:12px;color:var(--text-300);margin-top:8px;">Subscribe to: <strong>messages</strong>, <strong>comments</strong>. MilanCRM also subscribes your account automatically right after you connect.</p>
         </div>
     </div>
 </div>

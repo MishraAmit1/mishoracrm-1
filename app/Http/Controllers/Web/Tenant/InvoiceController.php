@@ -428,12 +428,55 @@ class InvoiceController extends Controller
             ])->setPaper('a4', 'portrait');
         }
 
-        return Pdf::loadView('tenant.invoices.pdf', [
+        $pdf = Pdf::loadView('tenant.invoices.pdf', [
                     'invoice'     => $invoice,
                     'tenant'      => $tenant,
                     'pdfSettings' => $pdfSettings,
                   ])
                   ->setPaper('a4', 'portrait');
+
+        return $this->withPageNumbers($pdf, $pdfSettings->accent_color ?? '#3b82f6');
+    }
+
+    // ── Draw "Page N of M" into the footer of the default template ──
+    // dompdf has no built-in CSS `counter(pages)` — reading its own
+    // source confirms it: "page" is a real, tracked counter but "pages"
+    // (total) is not special-cased anywhere, so `counter(pages)` in the
+    // blade view's CSS silently renders as 0 always. The only way dompdf
+    // actually knows the total page count is via its canvas-level
+    // page_script()/page_text() API, which runs once rendering has
+    // finished laying out every page (confirmed by reading
+    // CPDF::processPageScript — it loops the already-built page list
+    // immediately, it is not a deferred/lazy callback). So `render()`
+    // must be called explicitly first; PDF::output()/download() then
+    // see the wrapper's already-rendered flag and skip re-rendering,
+    // serializing the pages this already drew into.
+    //
+    // Coordinates are physical PDF points (this API bypasses the CSS
+    // margin/fixed-position layer entirely) chosen to right-align inside
+    // the footer bar's right-hand cell in tenant.invoices.pdf — re-
+    // verified by rendering and reading the exact text coordinates back
+    // out of a produced PDF, the same way as that view's other
+    // pixel-calculated fixed elements.
+    private function withPageNumbers($pdf, string $accentColor)
+    {
+        $pdf->render();
+
+        $canvas = $pdf->getDomPDF()->getCanvas();
+        $rightEdge = 571.28; // page width 595.28pt − 32px (24pt) right padding
+        $top       = 817.0;  // footer bar's physical top (810.39pt) + its 9px (6.75pt) padding-top
+        $size      = 6.75;   // 9px
+        [$r, $g, $b] = sscanf($accentColor, "#%02x%02x%02x") ?: [59, 130, 246];
+        $color = [$r / 255, $g / 255, $b / 255];
+
+        $canvas->page_script(function ($pageNumber, $pageCount, $canvas, $fontMetrics) use ($rightEdge, $top, $size, $color) {
+            $font  = $fontMetrics->getFont('DejaVu Sans', 'bold');
+            $text  = "Page {$pageNumber} of {$pageCount}";
+            $width = $fontMetrics->getTextWidth($text, $font, $size);
+            $canvas->text($rightEdge - $width, $top, $text, $font, $size, $color);
+        });
+
+        return $pdf;
     }
 
     // ── Download PDF ──────────────────────────────────────────────

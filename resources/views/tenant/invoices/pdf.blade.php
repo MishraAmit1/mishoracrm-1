@@ -53,16 +53,28 @@
            So every emphasised amount/label below is either default weight
            or explicit `bold`, never a numeric weight. */
 
+        /* ─── PAGE MARGINS ───
+             The full branded header (logo/name/meta band) now repeats on
+             every page via a `position:fixed` block — see .page-header-
+             fixed below. Key dompdf quirk this depends on, confirmed by
+             rendering an isolated test case and reading back the exact
+             text/fill coordinates from the produced PDF: a fixed
+             element's `top` is NOT measured from the physical page edge —
+             it's measured from the top of the page's *margin box*, i.e.
+             offset by whatever @page margin-top is. So a fixed element
+             meant to sit flush at the true physical top must use
+             `top: -{margin-top value}` to cancel that offset back out.
+             margin-top here (214px) is the header block's own measured
+             rendered height (198.5px, header-bar + meta-band) plus a
+             small buffer for breathing room and for tenant data that
+             wraps a touch taller than the measurement case tested.
+             margin-bottom (46px) reserves room for the fixed footer the
+             same way — see FOOTER below for its own top calculation,
+             which must account for this same offset rule. */
         @page {
-            /* The full header only renders on page 1 (standard for
-               invoicing tools — Zoho/QuickBooks/Xero all do this);
-               continuation pages get a slim running strip folded into
-               the items-table's thead instead (reliable, native repeat
-               mechanism), plus the fixed footer bar on every page for
-               ongoing context. */
-            margin-top: 0;
+            margin-top: 214px;
             margin-right: 0;
-            margin-bottom: 42px;
+            margin-bottom: 46px;
             margin-left: 0;
         }
 
@@ -84,7 +96,7 @@
              intended — it is not meant to show through solid bars). */
         .watermark {
             position: fixed;
-            top: 360px;
+            top: 230px;
             left: 0;
             width: 100%;
             text-align: center;
@@ -104,11 +116,12 @@
             border-radius: 10px;
         }
 
-        /* ─── HEADER ───
-             Renders once at the top of page 1 (standard across invoicing
-             tools — Zoho/QuickBooks/Xero don't repeat the full branded
-             header either). Continuation pages get a slim running strip
-             instead — see the items-table thead's extra row below.
+        /* ─── HEADER (+ META BAND) — repeats on every page ───
+             Wrapped together in .page-header-fixed, `position:fixed`, so
+             the full branded header and the invoice-number/date/status
+             strip both appear identically on every page — not just page
+             1. See the @page comment above for the margin-offset math
+             this depends on.
 
              "TAX INVOICE" is positioned with `position:absolute; left:`
              — deliberately `left`, not `right`. Read dompdf's own
@@ -133,6 +146,12 @@
              page). If this text, its font-size, or its letter-spacing
              ever changes, this value must be recalculated the same way
              — don't assume `right`/percentage/table tricks will work. */
+        .page-header-fixed {
+            position: fixed;
+            top: -214px; /* cancels @page margin-top — see comment above */
+            left: 0;
+            right: 0;
+        }
         .header-bar {
             position: relative;
             background: {{ $primaryColor }};
@@ -187,7 +206,7 @@
         .status-badge.status-overdue { background: #fee2e2; color: #dc2626; }
 
         /* ─── BODY ─── */
-        .body-content { padding: 13px 32px 4px 32px; }
+        .body-content { padding: 6px 32px 4px 32px; }
 
         /* Unified small "sub-header" label used inside every box below
            (Billed To, Bank Details, Amount in Words, Notes, Terms,
@@ -266,16 +285,6 @@
         }
         .items-table thead th.r { text-align: right; }
         .items-table thead th.c { text-align: center; }
-
-        /* Repeats on every page via the same thead mechanism as the
-           column headers above — the only reliable way to show running
-           context (company + invoice #) on continuation pages, since a
-           separate top-fixed strip would double up with the full header
-           on page 1. A little extra vertical padding here (vs. the
-           column-header row) also gives every page — page 1 included —
-           a touch of breathing room above the table. */
-        .items-table thead tr.running-strip-row { background: {{ $accentColor }}; }
-        .running-strip { padding: 4px 9px; font-size: 8px; font-weight: normal; text-transform: none; letter-spacing: 0.2px; color: #ffffff; text-align: left; }
 
         .items-table tbody tr { border-bottom: 1px solid #f1f5f9; page-break-inside: avoid; }
         .items-table tbody tr:nth-child(even) { background: #f8fafc; }
@@ -413,21 +422,48 @@
         .sig-designation { font-size: 9.5px; color: #94a3b8; }
 
         /* ─── RUNNING FOOTER ───
-             The one fixed/repeating element. `top` (not `bottom`) is
-             deliberate: dompdf's positioner for a fixed block-level
-             element only ever reads `top`/`left` — a `bottom` offset is
-             silently ignored and renders the element once instead of on
-             every page (confirmed by reading dompdf's own
-             Positioner\Absolute::position()). A4 page height at the
-             configured 96dpi is 841.89pt / 0.75 = 1122.52px; anchoring
-             34px (this bar's own height) up from that edge keeps it
-             flush on every page. */
-        .footer-bar { position: fixed; top: 1088.52px; left: 0; right: 0; height: 34px; background: {{ $primaryColor }}; border-top: 2px solid {{ $accentColor }}; padding: 8px 32px; }
+             The one other fixed/repeating element (besides the header).
+             `top` (not `bottom`) is deliberate: dompdf's positioner for
+             a fixed block-level element only ever reads `top`/`left` —
+             a `bottom` offset is silently ignored and renders the
+             element once instead of on every page (confirmed by reading
+             dompdf's own Positioner\Absolute::position()).
+
+             An earlier version of this bar tried to fit the tenant's
+             full name + email + phone + GSTIN on one line inside a
+             fixed 34px-tall box — for longer tenant data that line
+             wrapped to two, and since the box's height was fixed the
+             second line had nowhere to go but past the page edge,
+             getting visibly clipped. Two fixes: the content is now
+             short, fixed-shape data only (invoice number, generated
+             date, page count — no free-length tenant fields, since the
+             repeating header above already shows the full company
+             identity on every page), and the box is tall enough for a
+             comfortable single line with room to spare regardless.
+
+             Top offset accounts for the same margin-box-relative
+             quirk documented above the @page rule: a fixed element's
+             `top` is offset by @page's margin-top. Physically the bar's
+             own top edge must sit at (page height − bar height) so its
+             bottom edge lands flush with the true page bottom edge —
+             A4 page height at 96dpi is 841.89pt / 0.75 = 1122.52px, bar
+             height 42px, so physical top = 1080.52px; subtracting the
+             214px margin-top offset gives the 866.52px used here. Both
+             values were re-verified the same way as the header block:
+             rendering an isolated test case and reading the exact fill
+             rectangle coordinates back out of the produced PDF. */
+        .footer-bar { position: fixed; top: 866.52px; left: 0; right: 0; height: 42px; background: {{ $primaryColor }}; border-top: 2px solid {{ $accentColor }}; padding: 9px 32px; }
         .footer-inner { width: 100%; }
-        .footer-left  { width: 62%; vertical-align: middle; }
-        .footer-right { width: 38%; vertical-align: middle; text-align: right; }
-        .footer-text  { font-size: 8.5px; color: #b8c4d9; line-height: 1.6; }
-        .footer-pagenum:after { content: "Page " counter(page) " of " counter(pages); }
+        .footer-left  { width: 60%; vertical-align: middle; }
+        .footer-right { width: 40%; vertical-align: middle; text-align: right; }
+        .footer-text  { font-size: 9px; color: #b8c4d9; line-height: 1.4; white-space: nowrap; }
+        .footer-text strong { color: #ffffff; }
+        /* "Page N of M" is NOT rendered here: dompdf has no built-in CSS
+           counter(pages) (confirmed by reading its source — "page" is a
+           real tracked counter, "pages" is not special-cased anywhere
+           and silently evaluates to 0). It's drawn as a canvas overlay
+           instead, right-aligned into this same footer-right cell's
+           space — see InvoiceController::withPageNumbers(). */
     </style>
 </head>
 <body>
@@ -437,64 +473,63 @@
     @endif
 
     {{-- ════════════════════════════════════════════
-         HEADER
+         HEADER + META BAND — fixed, repeats on every page.
     ════════════════════════════════════════════ --}}
-    <div class="header-bar">
-        <div class="title-block">
-            <div class="invoice-heading">Tax Invoice</div>
-            <div class="invoice-sub">Original for Recipient</div>
+    <div class="page-header-fixed">
+        <div class="header-bar">
+            <div class="title-block">
+                <div class="invoice-heading">Tax Invoice</div>
+                <div class="invoice-sub">Original for Recipient</div>
+            </div>
+            <div class="brand-block">
+                @if($tenant->logo)
+                    <img src="{{ public_path('storage/' . $tenant->logo) }}" alt="{{ $tenant->name }}" class="company-logo">
+                @endif
+                <span class="company-name">{{ $tenant->name }}</span>
+                @if(isset($tenant->settings['tagline']))
+                    <div class="company-tagline">{{ $tenant->settings['tagline'] }}</div>
+                @endif
+                @php
+                    $headerContactLine = collect([
+                        $tenant->email,
+                        $tenant->phone,
+                        $tenant->settings['address'] ?? null,
+                        isset($tenant->settings['gstin']) ? 'GSTIN: ' . $tenant->settings['gstin'] : null,
+                        isset($tenant->settings['pan']) ? 'PAN: ' . $tenant->settings['pan'] : null,
+                    ])->filter()->join('  ·  ');
+                @endphp
+                @if($headerContactLine)
+                    <div class="company-contact">{{ $headerContactLine }}</div>
+                @endif
+            </div>
         </div>
-        <div class="brand-block">
-            @if($tenant->logo)
-                <img src="{{ public_path('storage/' . $tenant->logo) }}" alt="{{ $tenant->name }}" class="company-logo">
-            @endif
-            <span class="company-name">{{ $tenant->name }}</span>
-            @if(isset($tenant->settings['tagline']))
-                <div class="company-tagline">{{ $tenant->settings['tagline'] }}</div>
-            @endif
-            @php
-                $headerContactLine = collect([
-                    $tenant->email,
-                    $tenant->phone,
-                    $tenant->settings['address'] ?? null,
-                    isset($tenant->settings['gstin']) ? 'GSTIN: ' . $tenant->settings['gstin'] : null,
-                    isset($tenant->settings['pan']) ? 'PAN: ' . $tenant->settings['pan'] : null,
-                ])->filter()->join('  ·  ');
-            @endphp
-            @if($headerContactLine)
-                <div class="company-contact">{{ $headerContactLine }}</div>
-            @endif
-        </div>
-    </div>
 
-    {{-- ════════════════════════════════════════════
-         META BAND — Invoice # / Date / Due / Status
-    ════════════════════════════════════════════ --}}
-    <div class="meta-band">
-        <table class="meta-inner">
-            <tr>
-                <td class="meta-cell">
-                    <div class="meta-label">Invoice No.</div>
-                    <div class="meta-value">{{ $invoice->number }}</div>
-                </td>
-                <td class="meta-cell">
-                    <div class="meta-label">Invoice Date</div>
-                    <div class="meta-value">{{ $invoice->date->format('d M Y') }}</div>
-                </td>
-                <td class="meta-cell">
-                    <div class="meta-label">Due Date</div>
-                    <div class="meta-value {{ $invoice->isOverdue() ? 'overdue' : '' }}">{{ $invoice->due_date->format('d M Y') }}</div>
-                </td>
-                <td class="meta-cell last">
-                    <div class="meta-label">Status</div>
-                    <div class="meta-value" style="margin-top:5px;">
-                        <span class="status-badge status-{{ $invoice->status }}">{{ strtoupper($invoice->status) }}</span>
-                        @if($invoice->isOverdue()) &nbsp;⚠ @endif
-                    </div>
-                </td>
-            </tr>
-        </table>
-    </div>
+        <div class="meta-band">
+            <table class="meta-inner">
+                <tr>
+                    <td class="meta-cell">
+                        <div class="meta-label">Invoice No.</div>
+                        <div class="meta-value">{{ $invoice->number }}</div>
+                    </td>
+                    <td class="meta-cell">
+                        <div class="meta-label">Invoice Date</div>
+                        <div class="meta-value">{{ $invoice->date->format('d M Y') }}</div>
+                    </td>
+                    <td class="meta-cell">
+                        <div class="meta-label">Due Date</div>
+                        <div class="meta-value {{ $invoice->isOverdue() ? 'overdue' : '' }}">{{ $invoice->due_date->format('d M Y') }}</div>
+                    </td>
+                    <td class="meta-cell last">
+                        <div class="meta-label">Status</div>
+                        <div class="meta-value" style="margin-top:5px;">
+                            <span class="status-badge status-{{ $invoice->status }}">{{ strtoupper($invoice->status) }}</span>
+                            @if($invoice->isOverdue()) &nbsp;⚠ @endif
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>{{-- /page-header-fixed --}}
 
     {{-- ════════════════════════════════════════════
          BODY
@@ -533,9 +568,6 @@
         <div class="section-heading">Particulars of Supply</div>
         <table class="items-table">
             <thead>
-                <tr class="running-strip-row">
-                    <th colspan="8" class="running-strip">{{ $tenant->name }} &nbsp;—&nbsp; Invoice #{{ $invoice->number }}</th>
-                </tr>
                 <tr>
                     <th style="width:3%;">#</th>
                     <th style="width:34%;">Description</th>
@@ -759,19 +791,9 @@
         <table class="footer-inner">
             <tr>
                 <td class="footer-left">
-                    <div class="footer-text">
-                        {{ $tenant->name }}
-                        @if($tenant->email) &nbsp;|&nbsp; {{ $tenant->email }} @endif
-                        @if($tenant->phone) &nbsp;|&nbsp; {{ $tenant->phone }} @endif
-                        @if(isset($tenant->settings['gstin'])) &nbsp;|&nbsp; GSTIN: {{ $tenant->settings['gstin'] }} @endif
-                    </div>
+                    <div class="footer-text"><strong>Invoice #{{ $invoice->number }}</strong> &nbsp;·&nbsp; Generated {{ now()->format('d M Y') }}</div>
                 </td>
-                <td class="footer-right">
-                    <div class="footer-text">
-                        Invoice #{{ $invoice->number }} &nbsp;|&nbsp; Generated {{ now()->format('d M Y') }}
-                        &nbsp;|&nbsp; <span class="footer-pagenum"></span>
-                    </div>
-                </td>
+                <td class="footer-right"></td>
             </tr>
         </table>
     </div>

@@ -13,23 +13,35 @@ class PlatformSettingController extends Controller
     public function metaApp(): View
     {
         return view('superadmin.platform-settings.meta', [
-            'app_id'     => PlatformSetting::get('meta_app_id'),
-            'app_secret' => PlatformSetting::get('meta_app_secret'),
+            'app_id'        => PlatformSetting::get('meta_app_id'),
+            'app_secret'    => PlatformSetting::get('meta_app_secret'),
+            'ig_app_id'     => PlatformSetting::get('meta_ig_app_id'),
+            'ig_app_secret' => PlatformSetting::get('meta_ig_app_secret'),
         ]);
     }
 
     public function saveMetaApp(Request $request): RedirectResponse
     {
-        $existing = PlatformSetting::get('meta_app_secret');
+        $existing   = PlatformSetting::get('meta_app_secret');
+        $existingIg = PlatformSetting::get('meta_ig_app_secret');
 
         $request->validate([
-            'app_id'     => ['required', 'string', 'max:255'],
-            'app_secret' => [$existing ? 'nullable' : 'required', 'string', 'max:255'],
+            'app_id'        => ['required', 'string', 'max:255'],
+            'app_secret'    => [$existing ? 'nullable' : 'required', 'string', 'max:255'],
+            // Instagram API "with Instagram Login" uses its own App ID / Secret,
+            // shown under Meta App → Instagram → API setup with Instagram login.
+            // Optional — falls back to the Facebook app credentials when blank.
+            'ig_app_id'     => ['nullable', 'string', 'max:255'],
+            'ig_app_secret' => ['nullable', 'string', 'max:255'],
         ]);
 
         PlatformSetting::set('meta_app_id', $request->app_id);
         if ($request->filled('app_secret')) {
             PlatformSetting::set('meta_app_secret', $request->app_secret);
+        }
+        PlatformSetting::set('meta_ig_app_id', $request->ig_app_id ?? '');
+        if ($request->filled('ig_app_secret')) {
+            PlatformSetting::set('meta_ig_app_secret', $request->ig_app_secret);
         }
 
         return back()->with('success', 'Meta App credentials saved.');

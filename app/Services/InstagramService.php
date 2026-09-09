@@ -8,7 +8,9 @@ use Illuminate\Support\Facades\Log;
 
 class InstagramService
 {
-    private const GRAPH_URL = 'https://graph.facebook.com/v21.0';
+    // Instagram API "with Instagram Login" — calls go to graph.instagram.com
+    // with the Instagram User access token (NOT graph.facebook.com / a Page token).
+    private const GRAPH_URL = 'https://graph.instagram.com/v23.0';
 
     private InstagramSetting $settings;
 
@@ -33,11 +35,10 @@ class InstagramService
     // callers can store the actual failure reason instead of a flat bool.
     public function sendDmDetailed(string $recipientIgId, string $message): array
     {
-        $response = Http::post(self::GRAPH_URL . '/' . $this->settings->instagram_account_id . '/messages', [
-            'recipient'          => ['id' => $recipientIgId],
-            'message'            => ['text' => $message],
-            'access_token'       => $this->settings->access_token,
-            'messaging_type'     => 'RESPONSE',
+        $response = Http::post(self::GRAPH_URL . '/me/messages', [
+            'recipient'      => ['id' => $recipientIgId],
+            'message'        => ['text' => $message],
+            'access_token'   => $this->settings->access_token,
         ]);
 
         if ($response->failed()) {
@@ -87,7 +88,7 @@ class InstagramService
     // Get recent posts/media for the automation post picker
     public function getRecentMedia(int $limit = 25): array
     {
-        $response = Http::get(self::GRAPH_URL . '/' . $this->settings->instagram_account_id . '/media', [
+        $response = Http::get(self::GRAPH_URL . '/me/media', [
             'fields'       => 'id,caption,media_type,media_url,thumbnail_url,permalink,timestamp',
             'limit'        => $limit,
             'access_token' => $this->settings->access_token,
@@ -107,17 +108,24 @@ class InstagramService
     // Get Instagram account info
     public function getAccountInfo(): ?array
     {
-        $response = Http::get(self::GRAPH_URL . '/' . $this->settings->instagram_account_id, [
-            'fields'       => 'id,name,username,followers_count,profile_picture_url',
+        $response = Http::get(self::GRAPH_URL . '/me', [
+            'fields'       => 'user_id,username,name,followers_count,profile_picture_url,account_type',
             'access_token' => $this->settings->access_token,
         ]);
 
         if ($response->failed()) return null;
 
-        return $response->json();
+        $data = $response->json();
+
+        // Older callers / views read ['id']; graph.instagram.com/me returns 'user_id'.
+        if (isset($data['user_id']) && !isset($data['id'])) {
+            $data['id'] = $data['user_id'];
+        }
+
+        return $data;
     }
 
-    // Subscribe page to webhooks
+    // Subscribe the connected Instagram Professional account to webhooks.
     public function subscribeWebhook(): bool
     {
         return $this->subscribeWebhookDetailed()['success'];
@@ -127,10 +135,20 @@ class InstagramService
     // so callers can surface the actual error instead of a flat true/false.
     public function subscribeWebhookDetailed(): array
     {
-        $response = Http::post(self::GRAPH_URL . '/' . $this->settings->page_id . '/subscribed_apps', [
-            'subscribed_fields' => 'messages,feed,mention',
+        // With Instagram Login the subscription lives on the Instagram User node
+        // (/me/subscribed_apps) authorised by the Instagram User token — no Page.
+        $response = Http::post(self::GRAPH_URL . '/me/subscribed_apps', [
+            'subscribed_fields' => 'messages,comments',
             'access_token'      => $this->settings->access_token,
         ]);
+
+        if ($response->failed()) {
+            Log::error('Instagram webhook subscription failed', [
+                'tenant_id'            => $this->settings->tenant_id,
+                'instagram_account_id' => $this->settings->instagram_account_id,
+                'error'                => $response->json(),
+            ]);
+        }
 
         return [
             'success' => $response->successful(),

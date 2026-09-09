@@ -57,7 +57,7 @@
 
 /* ── Kanban ─────────────────────────────────────────────────────── */
 .kanban-scroll { overflow-x: auto; padding-bottom: 8px; -webkit-overflow-scrolling: touch; }
-.kanban-board  { display: flex; gap: 14px; min-width: max-content; padding: 2px 0 6px; align-items: flex-start; }
+.kanban-board  { display: flex; gap: 14px; min-width: max-content; padding: 2px 0 6px; align-items: stretch; }
 
 .k-col {
     width: 290px; flex-shrink: 0; display: flex; flex-direction: column;
@@ -114,6 +114,16 @@
 }
 .tc-view-btn:hover { background: var(--accent); color: #fff; }
 .k-empty { text-align:center; padding:24px 12px; font-size:12px; color:var(--text-400); line-height:1.5; }
+
+/* Per-card status picker — works on touch / desktop / webview without drag */
+.tc-status-row { margin-top: 10px; }
+.tc-status-select {
+    width: 100%; padding: 6px 8px; font-size: 11.5px;
+    background: var(--bg-elevated); border: 1px solid var(--border-default);
+    border-radius: 6px; color: var(--text-200); font-family: var(--font);
+    cursor: pointer; outline: none;
+}
+.tc-status-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
 .k-add-btn {
     display:flex; align-items:center; justify-content:center; gap:5px;
     margin: 0 10px 10px; padding: 8px;
@@ -263,7 +273,7 @@
         @foreach($cfgStages as $slug => $stage)
         @php
             $ss   = $stageSummary->get($slug);
-            $sc   = $ss?->count ?? 0;
+            $sc   = is_object($ss) ? ($ss->count ?? 0) : (int) ($ss ?? 0);
             $pct  = $allCount > 0 ? round(($sc / $allCount) * 100) : 0;
         @endphp
         <a href="{{ route('tenant.tasks.index', array_merge(request()->except(['stage','page']), ['stage'=>$slug,'view'=>$currentView])) }}"
@@ -378,7 +388,11 @@
             @foreach($cfgStages as $slug => $stage)
             @php $colTasks = $kanbanTasks->get($slug, collect()); @endphp
 
-            <div class="k-col" data-stage="{{ $slug }}">
+            <div class="k-col" data-stage="{{ $slug }}"
+                 ondragover="taskDragOver(event)"
+                 ondragenter="taskDragEnter(event)"
+                 ondragleave="taskDragLeave(event)"
+                 ondrop="taskDrop(event)">
 
                 {{-- Column header --}}
                 <div class="k-col-head" style="border-top:3px solid {{ $stage['color'] }}">
@@ -421,7 +435,9 @@
                          data-task-id="{{ $task->id }}"
                          data-stage="{{ $slug }}"
                          data-title="{{ e($task->title) }}"
-                         style="border-left-color:{{ $stage['color'] }}">
+                         style="border-left-color:{{ $stage['color'] }}"
+                         ondragstart="taskDragStart(event)"
+                         ondragend="taskDragEnd(event)">
 
                         <div class="tc-top">
                             <div class="tc-title">
@@ -450,6 +466,18 @@
                             </span>
                         </div>
                         @endif
+
+                        {{-- Status picker — reliable alternative to drag (touch / webview) --}}
+                        <div class="tc-status-row">
+                            <select class="tc-status-select no-select2" aria-label="Change status"
+                                    draggable="false" onmousedown="event.stopPropagation()">
+                                @foreach($cfgStages as $sSlug => $sStage)
+                                <option value="{{ $sSlug }}" {{ $sSlug === $slug ? 'selected' : '' }}>
+                                    {{ $sStage['label'] }}
+                                </option>
+                                @endforeach
+                            </select>
+                        </div>
 
                         <div class="tc-sep"></div>
 
@@ -769,42 +797,23 @@
     'use strict';
 
     // ── Config from PHP ───────────────────────────────────────────
-    const CSRF    = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
-    const STAGES  = @json(config('task_fields.stages'));
+    const CSRF     = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+    const STAGES   = @json(config('task_fields.stages'));
+    // Absolute URL template — {id} placeholder swapped per card. Built from the
+    // named route so it works no matter what path the board is viewed at.
+    const STAGE_URL_TPL = @json(route('tenant.tasks.update_stage', ['id' => '__ID__']));
 
-    // ── Build update URL ──────────────────────────────────────────
-    // Route: tasks/{id}/stage  (PATCH)
     function stageUrl(taskId) {
-        return 'tasks/' + taskId + '/update-stage';
+        return STAGE_URL_TPL.replace('__ID__', encodeURIComponent(taskId));
     }
 
     // ── Drag state ────────────────────────────────────────────────
-    let dragCard   = null;
-    let dragStage  = null;
-    let dragZone   = null;
-
-    // ── Attach listeners to all cards ─────────────────────────────
-    function attachCardListeners() {
-        document.querySelectorAll('.task-card').forEach(card => {
-            card.removeEventListener('dragstart', onDragStart);
-            card.removeEventListener('dragend',   onDragEnd);
-            card.addEventListener('dragstart', onDragStart);
-            card.addEventListener('dragend',   onDragEnd);
-        });
-    }
-
-    // ── Attach listeners to all zones ─────────────────────────────
-    function attachZoneListeners() {
-        document.querySelectorAll('.k-drop-zone').forEach(zone => {
-            zone.addEventListener('dragover',  onDragOver);
-            zone.addEventListener('dragenter', onDragEnter);
-            zone.addEventListener('dragleave', onDragLeave);
-            zone.addEventListener('drop',      onDrop);
-        });
-    }
+    let dragCard  = null;
+    let dragStage = null;
+    let dragZone  = null;
 
     // ── DragStart ─────────────────────────────────────────────────
-    function onDragStart(e) {
+    window.taskDragStart = function (e) {
         dragCard  = e.currentTarget;
         dragStage = dragCard.dataset.stage;
         dragZone  = dragCard.closest('.k-drop-zone');
@@ -812,99 +821,100 @@
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('text/plain', dragCard.dataset.taskId);
 
-        // Delay so the ghost image renders before we add class
-        requestAnimationFrame(() => {
-            dragCard.classList.add('is-dragging');
-        });
-    }
+        requestAnimationFrame(() => dragCard?.classList.add('is-dragging'));
+    };
 
     // ── DragEnd ───────────────────────────────────────────────────
-    function onDragEnd(e) {
+    window.taskDragEnd = function () {
         if (dragCard) dragCard.classList.remove('is-dragging');
         document.querySelectorAll('.k-drop-zone').forEach(z => z.classList.remove('drag-over'));
-        dragCard  = null;
+        dragCard = null;
         dragStage = null;
-        dragZone  = null;
-    }
+        dragZone = null;
+    };
 
     // ── DragOver ──────────────────────────────────────────────────
-    function onDragOver(e) {
+    window.taskDragOver = function (e) {
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
-    }
+    };
 
     // ── DragEnter ─────────────────────────────────────────────────
-    function onDragEnter(e) {
+    window.taskDragEnter = function (e) {
         e.preventDefault();
-        e.currentTarget.classList.add('drag-over');
-    }
+        e.currentTarget.querySelector('.k-drop-zone')?.classList.add('drag-over');
+    };
 
     // ── DragLeave ─────────────────────────────────────────────────
-    function onDragLeave(e) {
-        // Only remove if leaving the zone itself, not a child element
+    window.taskDragLeave = function (e) {
         if (!e.currentTarget.contains(e.relatedTarget)) {
-            e.currentTarget.classList.remove('drag-over');
+            e.currentTarget.querySelector('.k-drop-zone')?.classList.remove('drag-over');
         }
-    }
+    };
 
     // ── Drop ──────────────────────────────────────────────────────
-    async function onDrop(e) {
+    // Handler is bound to the whole .k-col so a drop anywhere in the column
+    // (header, empty space, on a card, the "Add Task" button) still counts.
+    window.taskDrop = function (e) {
         e.preventDefault();
 
-        const targetZone = e.currentTarget;
-        targetZone.classList.remove('drag-over');
+        const zone = e.currentTarget.querySelector('.k-drop-zone');
+        if (zone) zone.classList.remove('drag-over');
 
         const taskId   = e.dataTransfer.getData('text/plain');
-        const newStage = targetZone.dataset.stage;
+        const newStage = e.currentTarget.dataset.stage;
+        const card     = dragCard || (taskId && document.getElementById('card_' + taskId));
 
-        // Nothing changed
-        if (!taskId || !dragCard || newStage === dragStage) return;
+        if (!card || !newStage) return;
+        persistStage(card, newStage, card.dataset.stage);
+    };
 
-        const oldStage = dragStage;
-        const oldZone  = dragZone;
-        const card     = dragCard;
+    // ── Move a card to a new stage + persist (shared by drag AND the
+    //    per-card <select>). Optimistic, reverts on failure. ─────────
+    async function persistStage(card, newStage, oldStage) {
+        if (!newStage || newStage === oldStage) return;
+
+        const oldZone = document.getElementById('zone_' + oldStage);
+        const newZone = document.getElementById('zone_' + newStage);
+        if (!newZone) return;
+
+        const sel       = card.querySelector('.tc-status-select');
         const cardTitle = card.dataset.title;
+        const cfg       = STAGES[newStage];
 
         // ── Optimistic UI update ──────────────────────────────────
-
-        // Remove from old zone
-        card.remove();
-
-        // Append to new zone (before the k-empty div)
-        const emptyNew = targetZone.querySelector('.k-empty');
-        targetZone.insertBefore(card, emptyNew);
-
-        // Update card stage data + accent color
+        newZone.insertBefore(card, newZone.querySelector('.k-empty'));
         card.dataset.stage = newStage;
-        const stageConfig = STAGES[newStage];
-        if (stageConfig) {
-            card.style.borderLeftColor = stageConfig.color;
-        }
+        if (cfg) card.style.borderLeftColor = cfg.color;
+        if (sel) sel.value = newStage;
 
-        // Show/hide empty states
-        updateEmptyState(targetZone, newStage);
+        updateEmptyState(newZone, newStage);
         if (oldZone) updateEmptyState(oldZone, oldStage);
-
-        // Update column counts
         updateCount(oldStage);
         updateCount(newStage);
 
-        showToast('"' + cardTitle + '" moved to ' + (stageConfig?.label ?? newStage));
+        showToast('"' + cardTitle + '" moved to ' + (cfg?.label ?? newStage));
 
-        // ── API call ──────────────────────────────────────────────
+        // ── API call — POST + method spoof (mirrors the deals board) ──
         try {
-            const resp = await fetch(stageUrl(taskId), {
-                method: 'PATCH',
+            const fd = new FormData();
+            fd.append('_token', CSRF);
+            fd.append('_method', 'PATCH');
+            fd.append('status', newStage);
+
+            const resp = await fetch(stageUrl(card.dataset.taskId), {
+                method: 'POST',
                 headers: {
-                    'Content-Type':  'application/json',
-                    'X-CSRF-TOKEN':  CSRF,
-                    'Accept':        'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': CSRF,
                     'X-Requested-With': 'XMLHttpRequest',
                 },
-                body: JSON.stringify({ status: newStage }),
+                body: fd,
             });
 
-            if (!resp.ok) {
+            // A followed redirect (login / subscription page) means the write
+            // never happened — treat it as a failure.
+            if (!resp.ok || resp.redirected) {
                 let message = 'Server error: ' + resp.status;
                 try {
                     const body = await resp.json();
@@ -916,15 +926,14 @@
         } catch (err) {
             console.error('Stage update failed:', err);
 
-            // Revert optimistic update
             if (oldZone) {
-                card.remove();
-                oldZone.appendChild(card);
+                oldZone.insertBefore(card, oldZone.querySelector('.k-empty'));
                 card.dataset.stage = oldStage;
                 const oldConfig = STAGES[oldStage];
                 if (oldConfig) card.style.borderLeftColor = oldConfig.color;
+                if (sel) sel.value = oldStage;
                 updateEmptyState(oldZone, oldStage);
-                updateEmptyState(targetZone, newStage);
+                updateEmptyState(newZone, newStage);
                 updateCount(oldStage);
                 updateCount(newStage);
             }
@@ -933,13 +942,19 @@
         }
     }
 
-    // ── Helpers ───────────────────────────────────────────────────
+    // ── Per-card status <select> — the drag-free way to change status ──
+    document.addEventListener('change', function (e) {
+        const sel = e.target.closest && e.target.closest('.tc-status-select');
+        if (!sel) return;
+        const card = sel.closest('.task-card');
+        if (card) persistStage(card, sel.value, card.dataset.stage);
+    });
 
+    // ── Helpers ───────────────────────────────────────────────────
     function updateEmptyState(zone, stage) {
         const empty = document.getElementById('empty_' + stage);
         if (!empty) return;
-        const cards = zone.querySelectorAll('.task-card');
-        empty.style.display = cards.length === 0 ? 'block' : 'none';
+        empty.style.display = zone.querySelectorAll('.task-card').length === 0 ? 'block' : 'none';
     }
 
     function updateCount(stage) {
@@ -961,10 +976,6 @@
         clearTimeout(toast._timer);
         toast._timer = setTimeout(() => toast.classList.remove('show'), 3000);
     }
-
-    // ── Init ──────────────────────────────────────────────────────
-    attachCardListeners();
-    attachZoneListeners();
 
     // ── Search debounce ───────────────────────────────────────────
     const searchInput = document.querySelector('.di-fi-s');

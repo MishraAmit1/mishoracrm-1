@@ -23,6 +23,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class TaskController extends Controller
 {
@@ -503,22 +504,27 @@ class TaskController extends Controller
         return redirect()->route('tenant.tasks.index')->with('success', 'Task deleted successfully.');
     }
 
-    // method to update task status via AJAX
+    // method to update task status via AJAX (Kanban drag-and-drop)
     public function updateStatus(Request $request, int|string $id)
     {
         $task = $this->findTask($id);
         $this->authorize('modify', $task);
 
+        $validated = $request->validate([
+            'status' => ['required', 'string', Rule::in(array_keys(config('task_fields.stages')))],
+        ]);
+
+        $newStatus    = $validated['status'];
         $wasCompleted = $task->status === 'completed';
 
-        if ($request->status === 'completed' && $task->hasIncompleteDependencies()) {
+        if ($newStatus === 'completed' && $task->hasIncompleteDependencies()) {
             return response()->json([
                 'success' => false,
                 'message' => 'This task is blocked by incomplete dependencies and cannot be marked completed yet.',
             ], 422);
         }
 
-        $task->status = $request->status;
+        $task->status = $newStatus;
         if ($task->status === 'completed' && empty($task->completed_at)) {
             $task->completed_at = now()->toDateString();
         }
@@ -529,7 +535,7 @@ class TaskController extends Controller
             $task->createNextOccurrence();
         }
 
-        return response()->json(['success' => true]);
+        return response()->json(['success' => true, 'status' => $task->status]);
     }
 
     // ═══════════════════════════════════════════════════════════════

@@ -129,7 +129,6 @@ Route::post('/webhook/leads/{token}', [LeadWebhookController::class, 'handle'])-
 // ── Instagram OAuth (no auth — phone browser redirected here by Meta) ──
 Route::get('/instagram/oauth/start',       [Tenant\InstagramController::class, 'oauthStart'])->name('instagram.oauth.start');
 Route::get('/instagram/oauth/callback',    [Tenant\InstagramController::class, 'oauthCallback'])->name('instagram.oauth.callback');
-Route::get('/instagram/oauth/select-page', [Tenant\InstagramController::class, 'oauthSelectPage'])->name('instagram.oauth.select-page');
 
 // ── WhatsApp OAuth (no auth — phone browser redirected here by Meta) ──
 Route::get('/whatsapp/oauth/start',    [Tenant\WhatsappChatbotController::class, 'oauthStart'])->name('whatsapp.oauth.start');
