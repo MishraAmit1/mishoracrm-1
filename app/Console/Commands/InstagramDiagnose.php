@@ -65,6 +65,13 @@ class InstagramDiagnose extends Command
                     'access_token' => $s->access_token,
                 ])->json();
                 $this->line('  /me/subscribed_apps  = ' . json_encode($subs));
+
+                // Can the API see DMs at all? (Conversations API — independent of webhooks)
+                $conv = Http::get('https://graph.instagram.com/v23.0/me/conversations', [
+                    'fields'       => 'id,updated_time,participants',
+                    'access_token' => $s->access_token,
+                ])->json();
+                $this->line('  /me/conversations    = ' . mb_substr(json_encode($conv), 0, 800));
             }
             $this->newLine();
         }

@@ -95,10 +95,11 @@ class InstagramWebhookController extends Controller
             // recipient.id inside DM events — on either shape depending on the
             // event, so gather every candidate and match a tenant on any of
             // them (we persist both in instagram_account_id + page_id).
-            $candidates = array_filter(array_unique(array_merge(
+            $candidates = array_values(array_unique(array_filter(array_merge(
                 [$entry['id'] ?? null],
                 array_map(fn ($m) => $m['recipient']['id'] ?? null, $entry['messaging'] ?? []),
-            )));
+                array_map(fn ($c) => $c['value']['recipient']['id'] ?? null, $entry['changes'] ?? []),
+            ), fn ($v) => $v !== null && $v !== '')));
 
             $setting = $candidates ? InstagramSetting::where(function ($q) use ($candidates) {
                 $q->whereIn('instagram_account_id', $candidates)

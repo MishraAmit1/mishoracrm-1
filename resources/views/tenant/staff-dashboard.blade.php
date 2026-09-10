@@ -175,6 +175,415 @@
     padding: 28px 18px; text-align: center;
     color: var(--text-400); font-size: 13px; font-style: italic;
 }
+
+/* =========================================================
+   MilanCRM — Mobile Responsive UI Enhancement
+   Keeps desktop layout intact; optimizes tablet + phone.
+   ========================================================= */
+@media (max-width: 1000px) {
+    .sd-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .sd-page {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        overflow-x: hidden;
+    }
+
+    /* Header */
+    .sd-page .page-head {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+        margin-bottom: 16px !important;
+    }
+
+    .sd-page .page-head > div:first-child {
+        min-width: 0;
+    }
+
+    .sd-page .page-title {
+        font-size: clamp(20px, 6vw, 25px) !important;
+        line-height: 1.2 !important;
+        word-break: break-word;
+    }
+
+    .sd-page .page-sub {
+        font-size: 11px !important;
+        line-height: 1.45;
+    }
+
+    .sd-page .page-head > div:last-child {
+        width: 100%;
+    }
+
+    .sd-page .page-head .btn {
+        width: 100% !important;
+        min-height: 44px;
+        justify-content: center;
+    }
+
+    /* KPI cards: 2 columns on normal phones */
+    .sd-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 9px !important;
+        margin-bottom: 12px !important;
+    }
+
+    .sd-stat {
+        min-width: 0;
+        padding: 13px 12px !important;
+        border-radius: 12px !important;
+    }
+
+    .sd-stat-icon {
+        width: 32px !important;
+        height: 32px !important;
+        margin-bottom: 9px !important;
+    }
+
+    .sd-stat-icon svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .sd-stat-num {
+        font-size: clamp(20px, 7vw, 25px) !important;
+        letter-spacing: -0.8px;
+        white-space: nowrap;
+    }
+
+    .sd-stat-label {
+        font-size: 10.5px !important;
+        line-height: 1.25;
+        min-height: 26px;
+    }
+
+    .sd-stat-sub {
+        font-size: 9.5px !important;
+        line-height: 1.25;
+        white-space: normal;
+    }
+
+    /* Main/sidebar become one clean mobile flow */
+    .sd-layout {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+        width: 100%;
+    }
+
+    .sd-main,
+    .sd-sidebar {
+        width: 100%;
+        min-width: 0;
+        gap: 12px !important;
+    }
+
+    .sd-card {
+        width: 100%;
+        min-width: 0;
+        border-radius: 12px !important;
+    }
+
+    .sd-card-head {
+        min-height: 52px;
+        padding: 12px 13px !important;
+        gap: 8px;
+    }
+
+    .sd-card-head > div:first-child {
+        min-width: 0;
+    }
+
+    .sd-card-title {
+        font-size: 13px !important;
+    }
+
+    .sd-card-sub {
+        font-size: 10.5px !important;
+        line-height: 1.35;
+    }
+
+    .sd-card-head .btn {
+        flex: 0 0 auto;
+        min-height: 38px;
+        white-space: nowrap;
+    }
+
+    /* Leads: turn wide table into compact cards */
+    .sd-table {
+        display: block;
+        width: 100%;
+    }
+
+    .sd-table thead {
+        display: none;
+    }
+
+    .sd-table tbody,
+    .sd-table tr {
+        display: block;
+        width: 100%;
+    }
+
+    .sd-table tr {
+        position: relative;
+        padding: 12px 13px 11px;
+        border-bottom: 1px solid var(--border-subtle);
+        background: var(--bg-surface);
+    }
+
+    .sd-table tr:last-child {
+        border-bottom: none;
+    }
+
+    .sd-table td {
+        display: flex !important;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        width: 100%;
+        padding: 3px 0 !important;
+        border: 0 !important;
+        font-size: 11.5px !important;
+        line-height: 1.45;
+        text-align: right;
+        min-width: 0;
+    }
+
+    .sd-table td[data-label]::before {
+        content: attr(data-label);
+        flex: 0 0 auto;
+        color: var(--text-400);
+        font-size: 9.5px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .45px;
+        text-align: left;
+    }
+
+    .sd-table td.sd-td-name {
+        display: block !important;
+        padding: 0 0 6px !important;
+        padding-right: 52px !important;
+        font-size: 14px !important;
+        text-align: left !important;
+        font-weight: 600 !important;
+    }
+
+    .sd-table td.sd-td-name::before {
+        display: none;
+    }
+
+    .sd-table td:last-child {
+        position: absolute;
+        top: 12px;
+        right: 13px;
+        width: auto !important;
+        padding: 0 !important;
+    }
+
+    .sd-table td:last-child::before {
+        display: none;
+    }
+
+    .sd-table td:last-child a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 34px;
+        padding: 6px 8px;
+        border-radius: 8px;
+        background: var(--accent-dim);
+        color: var(--accent) !important;
+        font-weight: 600;
+    }
+
+    .sd-badge {
+        font-size: 10px !important;
+        padding: 4px 8px !important;
+    }
+
+    /* Remove table wrapper horizontal scrolling on mobile */
+    .sd-card > div[style*="overflow-x:auto"] {
+        overflow-x: visible !important;
+    }
+
+    /* Agenda / task rows */
+    .sd-task {
+        min-height: 52px;
+        padding: 10px 13px !important;
+        gap: 8px !important;
+        align-items: flex-start !important;
+    }
+
+    .sd-task-check {
+        width: 20px !important;
+        height: 20px !important;
+        margin-top: 1px;
+    }
+
+    .sd-task-prio {
+        margin-top: 8px;
+    }
+
+    .sd-task-text {
+        min-width: 0;
+        font-size: 12px !important;
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+    }
+
+    .sd-task-due {
+        font-size: 10px !important;
+        white-space: nowrap;
+        padding-top: 2px;
+    }
+
+    /* Quick actions: comfortable 2x2 grid */
+    .sd-qa-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 8px !important;
+        padding: 11px !important;
+    }
+
+    .sd-qa-btn {
+        min-height: 48px;
+        padding: 9px !important;
+        font-size: 11.5px !important;
+        gap: 7px !important;
+        min-width: 0;
+    }
+
+    .sd-qa-icon {
+        width: 28px !important;
+        height: 28px !important;
+    }
+
+    /* Pipeline rows */
+    .sd-deal-item {
+        min-height: 48px;
+        padding: 10px 13px !important;
+        gap: 8px !important;
+    }
+
+    .sd-deal-label {
+        min-width: 0;
+        font-size: 12px !important;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .sd-deal-count {
+        font-size: 12px !important;
+        white-space: nowrap;
+    }
+
+    .sd-deal-amount {
+        font-size: 10px !important;
+        white-space: nowrap;
+    }
+
+    /* Performance rows */
+    .sd-perf-row {
+        min-height: 44px;
+        padding: 9px 13px !important;
+        gap: 12px;
+        font-size: 12px !important;
+    }
+
+    .sd-perf-key {
+        min-width: 0;
+    }
+
+    .sd-perf-val {
+        white-space: nowrap;
+        font-size: 11.5px !important;
+    }
+
+    .sd-empty {
+        padding: 24px 13px !important;
+        font-size: 12px !important;
+    }
+
+    /* Make links/buttons touch-friendly */
+    .sd-page a,
+    .sd-page button {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Prevent long values from breaking the viewport */
+    .sd-page img,
+    .sd-page svg,
+    .sd-page input,
+    .sd-page select,
+    .sd-page textarea {
+        max-width: 100%;
+    }
+}
+
+/* Very small Android phones */
+@media (max-width: 380px) {
+    .sd-stats {
+        gap: 7px !important;
+    }
+
+    .sd-stat {
+        padding: 11px 10px !important;
+    }
+
+    .sd-stat-num {
+        font-size: 19px !important;
+    }
+
+    .sd-stat-label {
+        font-size: 10px !important;
+    }
+
+    .sd-stat-sub {
+        font-size: 9px !important;
+    }
+
+    .sd-card-head {
+        padding: 10px 11px !important;
+    }
+
+    .sd-card-head .btn {
+        font-size: 10px !important;
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+    }
+
+    .sd-task-due {
+        font-size: 9px !important;
+    }
+
+    .sd-deal-amount {
+        display: none;
+    }
+
+    .sd-qa-btn {
+        font-size: 10.5px !important;
+    }
+}
+
+/* Extra narrow screens: single-column stats rather than cramped cards */
+@media (max-width: 320px) {
+    .sd-stats {
+        grid-template-columns: 1fr !important;
+    }
+
+    .sd-stat-label {
+        min-height: 0;
+    }
+}
+
 </style>
 @endpush
 
