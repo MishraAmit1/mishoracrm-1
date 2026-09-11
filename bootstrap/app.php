@@ -19,6 +19,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'webhook/instagram',
             'webhook/whatsapp',
             'webhook/leads/*',   // Meta Lead Ads, JustDial, TradeIndia, Sulekha
+            'instagram/deauthorize',    // Meta-required callback — signed_request, not a session
+            'instagram/data-deletion',  // Meta-required callback — signed_request, not a session
         ]);
 
         $middleware->alias([

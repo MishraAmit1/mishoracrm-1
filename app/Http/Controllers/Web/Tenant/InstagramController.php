@@ -396,6 +396,124 @@ class InstagramController extends Controller
         return redirect()->away($authUrl);
     }
 
+    // ── Deauthorize Callback (public — Meta POSTs here when a user
+    //    revokes the app from their Instagram account) ─────────────
+    public function deauthorize(Request $request): JsonResponse
+    {
+        [, $appSecret] = $this->igCredentials();
+        $data = $appSecret ? $this->parseSignedRequest((string) $request->input('signed_request'), $appSecret) : null;
+        $igUserId = $data['user_id'] ?? null;
+
+        if ($igUserId) {
+            $setting = InstagramSetting::where('instagram_account_id', $igUserId)->first();
+
+            if ($setting) {
+                InstagramLog::create([
+                    'tenant_id'         => $setting->tenant_id,
+                    'event_type'        => 'oauth_deauthorize',
+                    'instagram_user_id' => $igUserId,
+                    'status'            => 'success',
+                    'raw_payload'       => $data,
+                ]);
+
+                $setting->update([
+                    'is_connected'     => false,
+                    'access_token'     => null,
+                    'token_expires_at' => null,
+                ]);
+            }
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    // ── Data Deletion Request (public — Meta POSTs here when a user
+    //    requests their data be deleted). Must respond with a status-
+    //    check URL + confirmation code per Meta's spec. ─────────────
+    public function dataDeletion(Request $request): JsonResponse
+    {
+        [, $appSecret] = $this->igCredentials();
+        $data = $appSecret ? $this->parseSignedRequest((string) $request->input('signed_request'), $appSecret) : null;
+        $igUserId = $data['user_id'] ?? null;
+        $confirmationCode = Str::random(24);
+
+        if ($igUserId) {
+            $setting = InstagramSetting::where('instagram_account_id', $igUserId)->first();
+
+            if ($setting) {
+                InstagramLog::create([
+                    'tenant_id'         => $setting->tenant_id,
+                    'event_type'        => 'data_deletion_request',
+                    'instagram_user_id' => $igUserId,
+                    'status'            => 'success',
+                    'raw_payload'       => ($data ?? []) + ['confirmation_code' => $confirmationCode],
+                ]);
+
+                // Purge the stored connection — token, account id, page id.
+                // Automations/chatbot flow configs are the tenant's own CRM
+                // data (not Instagram's), so they are left intact.
+                $setting->update([
+                    'is_connected'         => false,
+                    'access_token'         => null,
+                    'instagram_account_id' => null,
+                    'page_id'              => null,
+                    'token_expires_at'     => null,
+                ]);
+            }
+        }
+
+        cache()->put("ig_data_deletion_{$confirmationCode}", true, now()->addDays(30));
+
+        return response()->json([
+            'url'               => route('instagram.data-deletion.status', ['code' => $confirmationCode]),
+            'confirmation_code' => $confirmationCode,
+        ]);
+    }
+
+    // ── Data Deletion — status check page Meta links users to ──────
+    public function dataDeletionStatus(string $code): View
+    {
+        $done = (bool) cache("ig_data_deletion_{$code}");
+
+        return view('tenant.instagram.data_deletion_status', [
+            'code' => $code,
+            'done' => $done,
+        ]);
+    }
+
+    // ── Verify + decode a Meta "signed_request" payload (used by both
+    //    the deauthorize and data-deletion callbacks) ────────────────
+    private function parseSignedRequest(string $signedRequest, string $appSecret): ?array
+    {
+        $parts = explode('.', $signedRequest, 2);
+
+        if (count($parts) !== 2) {
+            return null;
+        }
+
+        [$encodedSig, $encodedPayload] = $parts;
+
+        $sig     = $this->base64UrlDecode($encodedSig);
+        $payload = json_decode($this->base64UrlDecode($encodedPayload), true);
+
+        if (!is_array($payload)) {
+            return null;
+        }
+
+        $expectedSig = hash_hmac('sha256', $encodedPayload, $appSecret, true);
+
+        if (!hash_equals($expectedSig, $sig)) {
+            return null;
+        }
+
+        return $payload;
+    }
+
+    private function base64UrlDecode(string $input): string
+    {
+        return base64_decode(strtr($input, '-_', '+/')) ?: '';
+    }
+
     // ── OAuth — Callback (public — Meta redirects here) ──────────
     public function oauthCallback(Request $request): View|Response
     {

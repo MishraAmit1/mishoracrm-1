@@ -130,6 +130,12 @@ Route::post('/webhook/leads/{token}', [LeadWebhookController::class, 'handle'])-
 Route::get('/instagram/oauth/start',       [Tenant\InstagramController::class, 'oauthStart'])->name('instagram.oauth.start');
 Route::get('/instagram/oauth/callback',    [Tenant\InstagramController::class, 'oauthCallback'])->name('instagram.oauth.callback');
 
+// ── Instagram Deauthorize + Data Deletion (Meta App Dashboard required
+//    fields — no auth, no CSRF; Meta POSTs a signed_request here) ──
+Route::post('/instagram/deauthorize',                  [Tenant\InstagramController::class, 'deauthorize'])->name('instagram.deauthorize');
+Route::post('/instagram/data-deletion',                [Tenant\InstagramController::class, 'dataDeletion'])->name('instagram.data-deletion');
+Route::get('/instagram/data-deletion/status/{code}',   [Tenant\InstagramController::class, 'dataDeletionStatus'])->name('instagram.data-deletion.status');
+
 // ── WhatsApp OAuth (no auth — phone browser redirected here by Meta) ──
 Route::get('/whatsapp/oauth/start',    [Tenant\WhatsappChatbotController::class, 'oauthStart'])->name('whatsapp.oauth.start');
 Route::get('/whatsapp/oauth/callback', [Tenant\WhatsappChatbotController::class, 'oauthCallback'])->name('whatsapp.oauth.callback');
