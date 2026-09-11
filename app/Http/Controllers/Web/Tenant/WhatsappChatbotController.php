@@ -197,6 +197,11 @@ class WhatsappChatbotController extends Controller
             }
             $settings->save();
 
+            // Subscribe our app to this WABA so Meta actually sends webhook events for it
+            Http::post("https://graph.facebook.com/v19.0/{$wabaId}/subscribed_apps", [
+                'access_token' => $longToken,
+            ]);
+
             cache()->put("wa_oauth_done_{$state}", true, now()->addMinutes(5));
             cache()->forget("wa_oauth_{$state}");
 
