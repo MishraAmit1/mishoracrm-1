@@ -241,21 +241,34 @@ class InstagramWebhookController extends Controller
 
         // Find matching automation
         $automations = InstagramAutomation::where('tenant_id', $setting->tenant_id)
-            ->where('is_active', true)
             ->whereIn('trigger_type', ['any_post_comment', 'specific_post_comment'])
             ->get();
 
+        $reasons = [];
+
         foreach ($automations as $automation) {
-            if ($automation->trigger_type === 'specific_post_comment' && $automation->post_id !== $postId) {
+            if (!$automation->is_active) {
+                $reasons[] = "'{$automation->name}': inactive";
                 continue;
             }
-            if (!$automation->matchesComment($commentText)) continue;
+            if ($automation->trigger_type === 'specific_post_comment'
+                && trim((string) $automation->post_id) !== trim((string) $postId)) {
+                $reasons[] = "'{$automation->name}': post_id mismatch (expected {$automation->post_id}, comment was on " . ($postId ?? 'unknown') . ')';
+                continue;
+            }
+            if (!$automation->matchesComment($commentText)) {
+                $reasons[] = "'{$automation->name}': keyword didn't match \"{$commentText}\" (keywords: " . implode(',', $automation->trigger_keywords ?? []) . ')';
+                continue;
+            }
 
             $this->executeAutomation($setting, $automation, $fromId, $commentId, $commentText, $log);
             return; // only first matching automation
         }
 
-        $log->update(['status' => 'skipped']);
+        $log->update([
+            'status'        => 'skipped',
+            'error_message' => $reasons ? implode(' | ', $reasons) : 'No comment automation configured for this tenant.',
+        ]);
     }
 
     private function executeAutomation(
