@@ -146,16 +146,33 @@ class WhatsappChatbotController extends Controller
 
             $longToken = $longRes['access_token'] ?? $tokenRes['access_token'];
 
-            // Get WhatsApp Business Account
-            $wabaRes = Http::get('https://graph.facebook.com/v19.0/me/whatsapp_business_accounts', [
+            // Get Businesses this user administers
+            $businessRes = Http::get('https://graph.facebook.com/v19.0/me/businesses', [
                 'access_token' => $longToken,
             ])->json();
 
-            if (empty($wabaRes['data'])) {
-                throw new \Exception('No WhatsApp Business Account found for this Facebook account.');
+            if (empty($businessRes['data'])) {
+                throw new \Exception('No Business account found for this Facebook account.');
             }
 
-            $wabaId = $wabaRes['data'][0]['id'];
+            // Find the first WhatsApp Business Account (owned or shared) across those businesses
+            $wabaId = null;
+            foreach ($businessRes['data'] as $business) {
+                foreach (['owned_whatsapp_business_accounts', 'client_whatsapp_business_accounts'] as $edge) {
+                    $wabaRes = Http::get("https://graph.facebook.com/v19.0/{$business['id']}/{$edge}", [
+                        'access_token' => $longToken,
+                    ])->json();
+
+                    if (!empty($wabaRes['data'])) {
+                        $wabaId = $wabaRes['data'][0]['id'];
+                        break 2;
+                    }
+                }
+            }
+
+            if (!$wabaId) {
+                throw new \Exception('No WhatsApp Business Account found for this Facebook account.');
+            }
 
             // Get Phone Numbers under this WABA
             $phoneRes = Http::get("https://graph.facebook.com/v19.0/{$wabaId}/phone_numbers", [
