@@ -74,13 +74,13 @@
 .tmpl-icon.pink   { background: #fce7f3; color: #be185d; }
 .tmpl-icon.teal   { background: #ccfbf1; color: #0f766e; }
 .tmpl-icon.yellow { background: #fefce8; color: #854d0e; }
-[data-theme="dark"] .tmpl-icon.blue   { background: rgba(59,130,246,.15);  color: #60a5fa; }
-[data-theme="dark"] .tmpl-icon.purple { background: rgba(139,92,246,.15);  color: #a78bfa; }
-[data-theme="dark"] .tmpl-icon.green  { background: rgba(34,197,94,.15);   color: #4ade80; }
-[data-theme="dark"] .tmpl-icon.orange { background: rgba(249,115,22,.15);  color: #fb923c; }
-[data-theme="dark"] .tmpl-icon.pink   { background: rgba(236,72,153,.15);  color: #f472b6; }
-[data-theme="dark"] .tmpl-icon.teal   { background: rgba(20,184,166,.15);  color: #2dd4bf; }
-[data-theme="dark"] .tmpl-icon.yellow { background: rgba(234,179,8,.15);   color: #facc15; }
+[data-theme="light"] .tmpl-icon.blue   { background: rgba(59,130,246,.15);  color: #60a5fa; }
+[data-theme="light"] .tmpl-icon.purple { background: rgba(139,92,246,.15);  color: #a78bfa; }
+[data-theme="light"] .tmpl-icon.green  { background: rgba(34,197,94,.15);   color: #4ade80; }
+[data-theme="light"] .tmpl-icon.orange { background: rgba(249,115,22,.15);  color: #fb923c; }
+[data-theme="light"] .tmpl-icon.pink   { background: rgba(236,72,153,.15);  color: #f472b6; }
+[data-theme="light"] .tmpl-icon.teal   { background: rgba(20,184,166,.15);  color: #2dd4bf; }
+[data-theme="light"] .tmpl-icon.yellow { background: rgba(234,179,8,.15);   color: #facc15; }
 
 .tmpl-meta h3 { font-size: 14px; font-weight: 700; color: var(--text-100); margin-bottom: 4px; }
 .tmpl-meta p  { font-size: 12.5px; color: var(--text-300); line-height: 1.55; }

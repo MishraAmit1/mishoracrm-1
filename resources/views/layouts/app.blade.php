@@ -166,8 +166,8 @@
             localStorage.setItem('crm_theme', next);
             const moon = document.getElementById('ico-moon');
             const sun = document.getElementById('ico-sun');
-            if (moon) moon.style.display = isDark ? 'none' : '';
-            if (sun) sun.style.display = isDark ? '' : 'none';
+            if (moon) moon.style.display = isDark ? '' : 'none';
+            if (sun) sun.style.display = isDark ? 'none' : '';
 
             // Persist the preference to the user's account so it follows them to any device/browser.
             fetch('{{ route('tenant.settings.theme') }}', {
@@ -184,8 +184,8 @@
             if (document.documentElement.dataset.theme === 'light') {
                 const moon = document.getElementById('ico-moon');
                 const sun = document.getElementById('ico-sun');
-                if (moon) moon.style.display = 'none';
-                if (sun) sun.style.display = '';
+                if (moon) moon.style.display = '';
+                if (sun) sun.style.display = 'none';
             }
         })();
 
