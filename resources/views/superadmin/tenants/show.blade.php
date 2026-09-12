@@ -207,7 +207,7 @@
 
     {{-- ── Stats ──────────────────────────────────────────────────── --}}
     <div class="kgrid">
-        <div class="kcard" style="--k:#6378ff;--kw:rgba(99,120,255,.12)">
+        <div class="kcard" style="--k:#FF7A59;--kw:rgba(255,122,89,.12)">
             <div class="khead">
                 <span class="kico"><svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $icons['users'] }}"/></svg></span>
                 <span class="klabel">Team Members</span>
@@ -216,7 +216,7 @@
             <div class="kfoot"><span class="knote">{{ $maxUsers > 0 ? $userPct . '% of ' . ($seatOverride !== null ? 'the seat limit' : 'plan seats') . ' used' : 'Unlimited seats' }}</span></div>
         </div>
 
-        <div class="kcard" style="--k:#a78bfa;--kw:rgba(167,139,250,.12)">
+        <div class="kcard" style="--k:#7C6FEF;--kw:rgba(124,111,239,.12)">
             <div class="khead">
                 <span class="kico"><svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $icons['card'] }}"/></svg></span>
                 <span class="klabel">Current Plan</span>
@@ -240,7 +240,7 @@
             <div class="kfoot"><span class="knote">{{ $subSubtext }}</span></div>
         </div>
 
-        <div class="kcard" style="--k:#2dd4a0;--kw:rgba(45,212,160,.12)">
+        <div class="kcard" style="--k:#00A38C;--kw:rgba(0,163,140,.12)">
             <div class="khead">
                 <span class="kico"><svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $icons['cash'] }}"/></svg></span>
                 <span class="klabel">Lifetime Revenue</span>

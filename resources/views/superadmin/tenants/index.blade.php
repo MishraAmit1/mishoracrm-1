@@ -34,7 +34,7 @@
 /* Sub status pill */
 .sub-pill { font-size:11px; font-weight:600; padding:2px 8px; border-radius:20px; }
 .sub-active   { background:var(--green-dim); color:var(--green); }
-.sub-trial    { background:rgba(99,120,255,0.1); color:#6378ff; }
+.sub-trial    { background:var(--accent-dim); color:var(--accent); }
 .sub-expired  { background:var(--red-dim); color:var(--red); }
 .sub-cancelled{ background:var(--border-subtle); color:var(--text-400); }
 

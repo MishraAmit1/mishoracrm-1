@@ -75,7 +75,7 @@
     {{-- ── KPI row ────────────────────────────────────────────────── --}}
     <div class="kgrid">
 
-        <div class="kcard" style="--k:#6378ff;--kw:rgba(99,120,255,.12);--kb:rgba(99,120,255,.4)">
+        <div class="kcard" style="--k:#FF7A59;--kw:rgba(255,122,89,.12);--kb:rgba(255,122,89,.4)">
             <div class="khead">
                 <span class="kico"><svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $icons['building'] }}"/></svg></span>
                 <span class="klabel">Tenants</span>
@@ -93,7 +93,7 @@
             </div>
         </div>
 
-        <div class="kcard" style="--k:#2dd4a0;--kw:rgba(45,212,160,.12);--kb:rgba(45,212,160,.4)">
+        <div class="kcard" style="--k:#00A38C;--kw:rgba(0,163,140,.12);--kb:rgba(0,163,140,.4)">
             <div class="khead">
                 <span class="kico"><svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $icons['cash'] }}"/></svg></span>
                 <span class="klabel">Monthly Revenue</span>
@@ -107,7 +107,7 @@
             </div>
         </div>
 
-        <div class="kcard" style="--k:#a78bfa;--kw:rgba(167,139,250,.12);--kb:rgba(167,139,250,.4)">
+        <div class="kcard" style="--k:#7C6FEF;--kw:rgba(124,111,239,.12);--kb:rgba(124,111,239,.4)">
             <div class="khead">
                 <span class="kico"><svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $icons['users'] }}"/></svg></span>
                 <span class="klabel">Users</span>
@@ -120,7 +120,7 @@
             </div>
         </div>
 
-        <div class="kcard" style="--k:#f8b84e;--kw:rgba(248,184,78,.14);--kb:rgba(248,184,78,.4)">
+        <div class="kcard" style="--k:#F5B942;--kw:rgba(245,185,66,.14);--kb:rgba(245,185,66,.4)">
             <div class="khead">
                 <span class="kico"><svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $icons['clock'] }}"/></svg></span>
                 <span class="klabel">Trials</span>
@@ -189,7 +189,7 @@
                             <tr>
                                 <td data-label="Company">
                                     <div class="rname">
-                                        <span class="rav rav-sq" style="background:#6378ff">{{ strtoupper(substr($t['name'], 0, 2)) }}</span>
+                                        <span class="rav rav-sq" style="background:#FF7A59">{{ strtoupper(substr($t['name'], 0, 2)) }}</span>
                                         <span>
                                             <span class="rn">{{ $t['name'] }}</span>
                                             <div class="rsub">{{ $t['email'] }}</div>
@@ -369,12 +369,12 @@
     function cssVar(n, f) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim() || f; }
     function toRgba(c, a) { const m = resolveColor(c).match(/\d+(\.\d+)?/g); return m ? `rgba(${m[0]},${m[1]},${m[2]},${a})` : c; }
 
-    const C_TEXT  = resolveColor(cssVar('--text-100', '#0d0f1a'));
-    const C_MUTE  = resolveColor(cssVar('--text-300', '#7b84a8'));
+    const C_TEXT  = resolveColor(cssVar('--text-100', '#33475B'));
+    const C_MUTE  = resolveColor(cssVar('--text-300', '#7C98B6'));
     const C_SURF  = resolveColor(cssVar('--bg-surface', '#fff'));
-    const C_LINE  = toRgba(cssVar('--text-400', '#b0b8d4'), 0.28);
-    const C_ACC   = resolveColor(cssVar('--accent', '#6378ff'));
-    const C_GREEN = resolveColor(cssVar('--green', '#2dd4a0'));
+    const C_LINE  = toRgba(cssVar('--text-400', '#A9BED4'), 0.28);
+    const C_ACC   = resolveColor(cssVar('--accent', '#FF7A59'));
+    const C_GREEN = resolveColor(cssVar('--green', '#00A38C'));
     Chart.defaults.color = C_MUTE;
 
     const months      = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
