@@ -285,6 +285,37 @@ button, a, .btn, .sb-item, .drop-item, .vt-btn, .tb-btn { -webkit-tap-highlight-
 .sb-item.sub-open .sb-arrow { transform: rotate(90deg); }
 .sidebar.collapsed .sb-arrow { opacity: 0; }
 
+/* Collapsed-state flyout: reveal a submenu beside its icon on hover/focus,
+   instead of the inline max-height accordion (which has no room when
+   labels are hidden). Reuses the same .sb-sub/.open state as the
+   expanded accordion — no JS changes needed. */
+.sidebar.collapsed .sb-sub {
+  position: fixed;
+  left: var(--sidebar-w-col);
+  max-height: none;
+  width: 200px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-lg);
+  padding: 6px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-6px);
+  pointer-events: none;
+  transition: opacity 0.15s var(--ease), transform 0.15s var(--ease), visibility 0.15s;
+}
+.sidebar.collapsed .sb-item[onclick*="toggleSub"]:hover + .sb-sub,
+.sidebar.collapsed .sb-item[onclick*="toggleSub"]:focus + .sb-sub,
+.sidebar.collapsed .sb-sub:hover,
+.sidebar.collapsed .sb-sub.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+.sidebar.collapsed .sb-sub .sb-item { padding-left: 12px; }
+
 /* Sidebar divider */
 .sb-divider { height: 1px; background: var(--border-subtle); margin: 6px 16px; }
 
