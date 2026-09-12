@@ -5,8 +5,8 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>Tax Invoice – {{ $invoice->number }}</title>
     @php
-        $primaryColor    = $pdfSettings->primary_color ?? '#1e3a5f';
-        $accentColor     = $pdfSettings->accent_color  ?? '#3b82f6';
+        $primaryColor    = $pdfSettings->primary_color ?? '#33475B';
+        $accentColor     = $pdfSettings->accent_color  ?? '#FF7A59';
         $logoPosition    = $pdfSettings->logo_position ?? 'left';
         $footerNote      = $pdfSettings->footer_note ?? null;
         $showBankDetails = $pdfSettings->show_bank_details ?? true;

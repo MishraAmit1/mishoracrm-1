@@ -5,8 +5,8 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 <title>Tax Invoice — {{ $inv['invoice_number'] }}</title>
 @php
-    $primary = $inv['primary_color'] ?? '#1e293b';
-    $accent  = $inv['accent_color']  ?? '#4f46e5';
+    $primary = $inv['primary_color'] ?? '#33475B';
+    $accent  = $inv['accent_color']  ?? '#FF7A59';
     $cur     = $inv['currency'] ?? '₹';
     $seller  = $inv['seller'];
     $buyer   = $inv['buyer'];
