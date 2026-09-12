@@ -250,9 +250,7 @@
         ────────────────────────────────────────────── */
         function dismissFlash(btn) {
             const el = btn.closest('[data-flash]');
-            el.style.transition = 'opacity 0.3s, transform 0.3s';
-            el.style.opacity = '0';
-            el.style.transform = 'translateY(-6px)';
+            el.classList.add('flash-dismiss');
             setTimeout(() => el.remove(), 300);
         }
         // Auto-dismiss after 5s

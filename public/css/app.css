@@ -111,6 +111,15 @@ body {
 }
 button, a, .btn, .sb-item, .drop-item, .vt-btn, .tb-btn { -webkit-tap-highlight-color: transparent; }
 
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* ── Scrollbar ──────────────────────────────────────────────────── */
 ::-webkit-scrollbar       { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -467,6 +476,7 @@ button, a, .btn, .sb-item, .drop-item, .vt-btn, .tb-btn { -webkit-tap-highlight-
   from { opacity: 0; transform: translateY(-6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+.flash-dismiss { opacity: 0; transform: translateY(-6px); transition: opacity 0.3s, transform 0.3s; }
 .flash-icon {
   width: 28px; height: 28px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;

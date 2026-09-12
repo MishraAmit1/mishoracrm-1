@@ -174,7 +174,7 @@
     border-left: 3px solid transparent;
     word-break: break-word;
 }
-.deal-card:hover { border-color: var(--border-strong); box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+.deal-card:hover { border-color: var(--border-strong); box-shadow: 0 2px 12px rgba(0,0,0,.08); transform: translateY(-2px); }
 .deal-card.dragging { opacity: .35; cursor: grabbing; transform: scale(.97); }
 
 .dc-top     { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; margin-bottom: 6px; }

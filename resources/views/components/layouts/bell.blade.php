@@ -55,7 +55,8 @@
 }
 .bell-item:last-child { border-bottom:none; }
 .bell-item:hover { background:var(--bg-elevated); }
-.bell-item.unread { background:rgba(99,120,255,.04); }
+.bell-item.unread { background:rgba(255,122,89,.04); }
+#bellDropdown.bell-open { animation: fadeUp 0.15s var(--ease-out) both; }
 .bell-icon { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 .bell-icon svg { width:15px; height:15px; }
 .bell-title { font-size:13px; font-weight:600; color:var(--text-100); margin-bottom:2px; line-height:1.3; }
@@ -71,14 +72,18 @@ let bellOpen = false;
 function toggleBell(e) {
     e.stopPropagation();
     bellOpen = !bellOpen;
-    document.getElementById('bellDropdown').style.display = bellOpen ? 'block' : 'none';
+    const dropdown = document.getElementById('bellDropdown');
+    dropdown.style.display = bellOpen ? 'block' : 'none';
+    dropdown.classList.toggle('bell-open', bellOpen);
     if (bellOpen) loadNotifications();
 }
 
 document.addEventListener('click', function(e) {
     if (!document.getElementById('notifBell').contains(e.target)) {
         bellOpen = false;
-        document.getElementById('bellDropdown').style.display = 'none';
+        const dropdown = document.getElementById('bellDropdown');
+        dropdown.style.display = 'none';
+        dropdown.classList.remove('bell-open');
     }
 });
 
