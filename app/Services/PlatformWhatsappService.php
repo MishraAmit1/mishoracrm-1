@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 // Platform-owned WhatsApp sender (Meta Cloud API) used for billing / account
-// messages from Milan CRM itself to tenant owners. Separate from the
+// messages from Mishora CRM itself to tenant owners. Separate from the
 // per-tenant WhatsApp integration (WhatsappChatbotService) which uses each
 // tenant's own connected number. Configured in the superadmin Billing Profile.
 class PlatformWhatsappService

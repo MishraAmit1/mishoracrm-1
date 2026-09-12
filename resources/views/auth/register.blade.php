@@ -6,7 +6,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32.png') }}"/>
 <link rel="icon" type="image/png" sizes="64x64" href="{{ asset('favicon-64.png') }}"/>
 <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}"/>
-<title>Create workspace — Milan CRM</title>
+<title>Create workspace — Mishora CRM</title>
 <script>
 (function () {
   var saved = localStorage.getItem('crm_theme');
@@ -99,7 +99,7 @@
             <div class="subdomain-row">
               <span class="subdomain-pre">https://</span>
               <input name="subdomain" type="text" class="subdomain-input @error('subdomain') has-error @enderror" placeholder="yourcompany" id="subInput" value="{{ old('subdomain') }}" required/>
-              <span class="subdomain-suf">.milancrm.in</span>
+              <span class="subdomain-suf">.mishoracrm.in</span>
             </div>
             @error('subdomain') <p class="field-error">{{ $message }}</p> @enderror
           </div>
@@ -254,7 +254,7 @@
 
           <div class="terms-box" style="margin-bottom:16px">
             <input type="checkbox" name="terms" id="termsChk" required/>
-            <p>I agree to Milan CRM's <a href="/terms" target="_blank">Terms of Service</a> and <a href="/privacy" target="_blank">Privacy Policy</a>. Paid plans are billed after any free-trial period ends.</p>
+            <p>I agree to Mishora CRM's <a href="/terms" target="_blank">Terms of Service</a> and <a href="/privacy" target="_blank">Privacy Policy</a>. Paid plans are billed after any free-trial period ends.</p>
           </div>
 
           <div class="btn-row">
@@ -272,7 +272,7 @@
     </div>
 
     <div class="center-foot">
-      <span>© {{ now()->year }} Milan CRM</span>
+      <span>© {{ now()->year }} Mishora CRM</span>
       <span>·</span>
       <a href="/terms">Terms</a>
       <span>·</span>

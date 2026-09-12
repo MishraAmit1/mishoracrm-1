@@ -177,7 +177,7 @@
 }
 
 /* =========================================================
-   MilanCRM — Mobile Responsive UI Enhancement
+   MishoraCRM — Mobile Responsive UI Enhancement
    Keeps desktop layout intact; optimizes tablet + phone.
    ========================================================= */
 @media (max-width: 1000px) {

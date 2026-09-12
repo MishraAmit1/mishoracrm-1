@@ -80,13 +80,13 @@ class ContactEnquiryAdminTest extends TestCase
 
         $this->actingAs($admin)
             ->post(route('superadmin.contact-enquiries.settings'), [
-                'sales_email'    => 'sales@milancrm.test',
+                'sales_email'    => 'sales@mishoracrm.test',
                 'sales_phone'    => '+91 90000 00000',
                 'sales_whatsapp' => '+91 90000 00000',
             ])
             ->assertRedirect();
 
-        $this->assertSame('sales@milancrm.test', PlatformSetting::get('sales_email'));
+        $this->assertSame('sales@mishoracrm.test', PlatformSetting::get('sales_email'));
         $this->assertSame('+91 90000 00000', PlatformSetting::get('sales_phone'));
     }
 }

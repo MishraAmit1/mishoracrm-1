@@ -92,7 +92,7 @@
             <div class="qr-steps">
                 <div class="qr-step"><div class="qr-step-num">1</div><div class="qr-step-text">Open your phone camera and scan the QR code above</div></div>
                 <div class="qr-step"><div class="qr-step-num">2</div><div class="qr-step-text">Log in with the Instagram Professional account you want to connect</div></div>
-                <div class="qr-step"><div class="qr-step-num">3</div><div class="qr-step-text">Approve the Instagram permissions and MilanCRM will connect automatically</div></div>
+                <div class="qr-step"><div class="qr-step-num">3</div><div class="qr-step-text">Approve the Instagram permissions and MishoraCRM will connect automatically</div></div>
             </div>
         </div>
 
@@ -177,7 +177,7 @@
                     </svg>
                 </button>
             </div>
-            <p style="font-size:12px;color:var(--text-300);margin-top:8px;">Subscribe to: <strong>messages</strong>, <strong>comments</strong>. MilanCRM also subscribes your account automatically right after you connect.</p>
+            <p style="font-size:12px;color:var(--text-300);margin-top:8px;">Subscribe to: <strong>messages</strong>, <strong>comments</strong>. MishoraCRM also subscribes your account automatically right after you connect.</p>
         </div>
     </div>
 </div>

@@ -69,7 +69,7 @@ async function initPush() {
             notifications: [{
                 id: Date.now() % 2147483647,
                 channelId: NOTIFICATION_CHANNEL_ID,
-                title: notification.title || 'Milan CRM',
+                title: notification.title || 'Mishora CRM',
                 body: notification.body || '',
                 extra: notification.data || {}
             }]

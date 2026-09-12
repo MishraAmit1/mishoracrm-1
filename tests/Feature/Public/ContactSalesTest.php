@@ -56,13 +56,13 @@ class ContactSalesTest extends TestCase
 
     public function test_sales_email_setting_receives_a_copy(): void
     {
-        PlatformSetting::set('sales_email', 'sales@milancrm.test');
+        PlatformSetting::set('sales_email', 'sales@mishoracrm.test');
 
         $this->post(route('contact-sales.store'), $this->payload())->assertRedirect();
 
         $messages = app('mailer')->getSymfonyTransport()->messages();
         $this->assertCount(1, $messages);
-        $this->assertStringContainsString('sales@milancrm.test', $messages->first()->getOriginalMessage()->toString());
+        $this->assertStringContainsString('sales@mishoracrm.test', $messages->first()->getOriginalMessage()->toString());
     }
 
     public function test_no_mail_when_sales_email_is_unset(): void

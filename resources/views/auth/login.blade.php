@@ -6,7 +6,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32.png') }}"/>
 <link rel="icon" type="image/png" sizes="64x64" href="{{ asset('favicon-64.png') }}"/>
 <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}"/>
-<title>Sign In — Milan CRM</title>
+<title>Sign In — Mishora CRM</title>
 <script>
 (function () {
   var saved = localStorage.getItem('crm_theme');
@@ -122,13 +122,13 @@
       </form>
 
       <div class="form-foot">
-        New to Milan CRM? <a href="{{ route('register') }}" class="a-link">Create free account →</a>
+        New to Mishora CRM? <a href="{{ route('register') }}" class="a-link">Create free account →</a>
       </div>
 
     </div>
 
     <div class="center-foot">
-      <span>© {{ now()->year }} Milan CRM</span>
+      <span>© {{ now()->year }} Mishora CRM</span>
       <span>·</span>
       <a href="/terms">Terms</a>
       <span>·</span>

@@ -45,10 +45,10 @@ class PlatformInvoiceTest extends TestCase
 
     private function sellerProfile(string $state = 'Karnataka'): void
     {
-        PlatformSetting::set('billing_legal_name', 'Milan CRM Technologies Pvt. Ltd.');
+        PlatformSetting::set('billing_legal_name', 'Mishora CRM Technologies Pvt. Ltd.');
         PlatformSetting::set('billing_state', $state);
         PlatformSetting::set('billing_gstin', '29ABCDE1234F1Z5');
-        PlatformSetting::set('billing_email', 'billing@milancrm.test');
+        PlatformSetting::set('billing_email', 'billing@mishoracrm.test');
         PlatformSetting::set('invoice_prefix', 'MC');
     }
 
@@ -315,7 +315,7 @@ class PlatformInvoiceTest extends TestCase
         $super  = $this->makeUser($tenant, 'superadmin');
 
         $this->actingAs($super)->put(route('superadmin.billing-profile.update'), [
-            'billing_legal_name' => 'Milan CRM Technologies Pvt. Ltd.',
+            'billing_legal_name' => 'Mishora CRM Technologies Pvt. Ltd.',
             'billing_state'      => 'Karnataka',
             'billing_gstin'      => '29ABCDE1234F1Z5',
             'invoice_prefix'     => 'MC',
@@ -324,7 +324,7 @@ class PlatformInvoiceTest extends TestCase
             'platform_wa_access_token'    => 'tok_secret',
         ])->assertRedirect();
 
-        $this->assertSame('Milan CRM Technologies Pvt. Ltd.', PlatformSetting::get('billing_legal_name'));
+        $this->assertSame('Mishora CRM Technologies Pvt. Ltd.', PlatformSetting::get('billing_legal_name'));
         $this->assertSame('MC', PlatformSetting::get('invoice_prefix'));
         $this->assertSame('1', PlatformSetting::get('platform_wa_enabled'));
         $this->assertSame('tok_secret', PlatformSetting::get('platform_wa_access_token'));

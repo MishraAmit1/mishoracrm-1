@@ -6,7 +6,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32.png') }}"/>
 <link rel="icon" type="image/png" sizes="64x64" href="{{ asset('favicon-64.png') }}"/>
 <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}"/>
-<title>Contact Sales — Milan CRM</title>
+<title>Contact Sales — Mishora CRM</title>
 <script>
 (function () {
   var saved = localStorage.getItem('crm_theme');
@@ -167,7 +167,7 @@
 
   {{-- ── Footer ── --}}
   <footer class="pg-footer" style="margin-top:64px">
-    <div class="pg-footer-copy">© {{ now()->year }} Milan CRM. Built for Indian businesses.</div>
+    <div class="pg-footer-copy">© {{ now()->year }} Mishora CRM. Built for Indian businesses.</div>
     <div class="pg-footer-links">
       <a href="{{ route('pricing') }}">Pricing</a>
       <a href="{{ route('login') }}">Log in</a>

@@ -94,7 +94,7 @@ class AuthController extends Controller
  
             return response()->json([
                 'success' => true,
-                'message' => 'Registration successful! Welcome to Milan CRM 🎉',
+                'message' => 'Registration successful! Welcome to Mishora CRM 🎉',
                 'data'    => [
                     'token'      => $result['token'],
                     'token_type' => 'Bearer',

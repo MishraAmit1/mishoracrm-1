@@ -9,7 +9,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32.png') }}" />
     <link rel="icon" type="image/png" sizes="64x64" href="{{ asset('favicon-64.png') }}" />
     <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}" />
-    <title>@yield('title', 'Dashboard') — {{ Auth::user()?->tenant?->name ?? 'Milan CRM' }}</title>
+    <title>@yield('title', 'Dashboard') — {{ Auth::user()?->tenant?->name ?? 'Mishora CRM' }}</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link

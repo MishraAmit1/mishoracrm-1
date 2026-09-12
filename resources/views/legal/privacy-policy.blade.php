@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Privacy Policy — Milan CRM</title>
+<title>Privacy Policy — Mishora CRM</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
 <style>
@@ -36,11 +36,11 @@ a{ color:var(--accent); }
 <body>
 <div class="wrap">
 
-    <a href="{{ route('home') }}" class="back">← Milan CRM</a>
+    <a href="{{ route('home') }}" class="back">← Mishora CRM</a>
     <h1>Privacy Policy</h1>
     <div class="updated">Last updated: {{ now()->format('F d, Y') }}</div>
 
-    <p>This Privacy Policy explains how <strong>Milan CRM</strong> ("we", "us", "our") collects, uses, and protects
+    <p>This Privacy Policy explains how <strong>Mishora CRM</strong> ("we", "us", "our") collects, uses, and protects
     information when you use our CRM platform, including features that connect to your
     <strong>Instagram</strong> and <strong>WhatsApp Business</strong> accounts via the Meta Platform.</p>
 
@@ -101,7 +101,7 @@ a{ color:var(--accent); }
     </ul>
 
     <h2>8. Children's Privacy</h2>
-    <p>Milan CRM is a business tool and is not directed at, or knowingly used by, children under 16.</p>
+    <p>Mishora CRM is a business tool and is not directed at, or knowingly used by, children under 16.</p>
 
     <h2>9. Changes to This Policy</h2>
     <p>We may update this Privacy Policy from time to time. Material changes will be reflected by updating the "Last updated" date above.</p>

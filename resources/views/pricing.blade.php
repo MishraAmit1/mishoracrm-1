@@ -6,7 +6,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32.png') }}"/>
 <link rel="icon" type="image/png" sizes="64x64" href="{{ asset('favicon-64.png') }}"/>
 <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}"/>
-<title>Pricing — Milan CRM</title>
+<title>Pricing — Mishora CRM</title>
 <script>
 (function () {
   var saved = localStorage.getItem('crm_theme');
@@ -85,7 +85,7 @@
           @endif
 
           <div class="pg-plan-name">{{ $plan->name }}</div>
-          <div class="pg-plan-desc">{{ $plan->description ?: 'Everything you need to run a growing team on Milan CRM.' }}</div>
+          <div class="pg-plan-desc">{{ $plan->description ?: 'Everything you need to run a growing team on Mishora CRM.' }}</div>
 
           <div class="pg-plan-price">
             @if($isCustom)
@@ -264,7 +264,7 @@
   {{-- ── CTA band ── --}}
   <section class="pg-cta-band">
     <div class="pg-cta-inner">
-      <h2>Start growing with Milan CRM today</h2>
+      <h2>Start growing with Mishora CRM today</h2>
       <p>Set up your workspace in minutes. No credit card, no commitment.</p>
       <a href="{{ route('register') }}" class="pg-cta-btn">
         Create your workspace
@@ -275,7 +275,7 @@
 
   {{-- ── Footer ── --}}
   <footer class="pg-footer">
-    <div class="pg-footer-copy">© {{ now()->year }} Milan CRM. Built for Indian businesses.</div>
+    <div class="pg-footer-copy">© {{ now()->year }} Mishora CRM. Built for Indian businesses.</div>
     <div class="pg-footer-links">
       <a href="{{ route('contact-sales') }}">Contact sales</a>
       <a href="{{ route('login') }}">Log in</a>

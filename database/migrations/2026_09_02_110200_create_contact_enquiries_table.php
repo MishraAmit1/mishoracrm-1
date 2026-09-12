@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-// Platform-level (Milan CRM sales) enquiries submitted from the public
+// Platform-level (Mishora CRM sales) enquiries submitted from the public
 // /contact-sales page — the "Talk to sales" flow of the Enterprise plan.
 // Not tenant-scoped: these are leads for the platform owner, like `plans`.
 return new class extends Migration

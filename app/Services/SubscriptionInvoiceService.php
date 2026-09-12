@@ -132,7 +132,7 @@ class SubscriptionInvoiceService
             'total_amount'    => $amounts['total_amount'],
             'amount_in_words' => NumberToWords::convert($amounts['total_amount']) . ' Only',
             'payment' => [
-                'method'     => $subscription->razorpay_payment_id ? 'Razorpay (Online)' : 'Recorded by Milan CRM',
+                'method'     => $subscription->razorpay_payment_id ? 'Razorpay (Online)' : 'Recorded by Mishora CRM',
                 'reference'  => $subscription->razorpay_payment_id,
                 'order_id'   => $subscription->razorpay_order_id,
                 'paid_at'    => $subscription->started_at ?? $issuedAt,
@@ -312,7 +312,7 @@ class SubscriptionInvoiceService
     public function profile(): array
     {
         return [
-            'name'    => $this->setting('billing_legal_name', config('app.name', 'Milan CRM')),
+            'name'    => $this->setting('billing_legal_name', config('app.name', 'Mishora CRM')),
             'address' => $this->setting('billing_address', null),
             'city'    => $this->setting('billing_city', null),
             'state'   => $this->setting('billing_state', null),

@@ -6,7 +6,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32.png') }}"/>
 <link rel="icon" type="image/png" sizes="64x64" href="{{ asset('favicon-64.png') }}"/>
 <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}"/>
-<title>Reset Password — Milan CRM</title>
+<title>Reset Password — Mishora CRM</title>
 <script>
 (function () {
   var saved = localStorage.getItem('crm_theme');
@@ -179,7 +179,7 @@
 
         <div class="info-box">
           <div class="info-row"><div class="dot"></div><p>Check your spam or junk folder</p></div>
-          <div class="info-row"><div class="dot"></div><p>Email sent from <span style="font-family:var(--mono);font-size:11.5px;color:var(--accent)">noreply@milancrm.in</span></p></div>
+          <div class="info-row"><div class="dot"></div><p>Email sent from <span style="font-family:var(--mono);font-size:11.5px;color:var(--accent)">noreply@mishoracrm.in</span></p></div>
           <div class="info-row"><div class="dot"></div><p>Link is valid for 60 minutes only</p></div>
         </div>
 

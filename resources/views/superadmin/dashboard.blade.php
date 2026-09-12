@@ -58,7 +58,7 @@
         <div>
             <div class="dsh-eyebrow">Super Admin · {{ now()->format('l, d M Y') }}</div>
             <div class="dsh-title">Platform Overview</div>
-            <div class="dsh-sub">Tenants, subscriptions and revenue across Milan CRM.</div>
+            <div class="dsh-sub">Tenants, subscriptions and revenue across Mishora CRM.</div>
         </div>
         <div class="dsh-acts">
             <a href="{{ route('superadmin.plans.index') }}" class="dbtn">
