@@ -56,7 +56,7 @@
 
 /* Info banner */
 .info-banner {
-    background:var(--accent-dim); border:1.5px solid rgba(99,120,255,.2);
+    background:var(--accent-dim); border:1.5px solid rgba(255,122,89,.2);
     border-radius:var(--r-lg); padding:18px 22px; margin-bottom:24px;
     display:grid; grid-template-columns:auto 1fr auto; gap:16px; align-items:center;
 }

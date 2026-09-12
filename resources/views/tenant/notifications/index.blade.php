@@ -29,7 +29,7 @@
 }
 .notif-item:last-child { border-bottom:none; }
 .notif-item:hover { background:var(--bg-elevated); }
-.notif-item.unread { background:rgba(99,120,255,.04); }
+.notif-item.unread { background:rgba(255,122,89,.04); }
 .notif-item.unread::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--accent); border-radius:0 2px 2px 0; }
 
 .notif-icon { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }

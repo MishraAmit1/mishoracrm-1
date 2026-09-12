@@ -281,8 +281,8 @@ const ctx = document.getElementById('revenueChart').getContext('2d');
 
 // Gradient fill
 const grad = ctx.createLinearGradient(0,0,0,280);
-grad.addColorStop(0,'rgba(99,120,255,0.25)');
-grad.addColorStop(1,'rgba(99,120,255,0.0)');
+grad.addColorStop(0,'rgba(255,122,89,0.25)');
+grad.addColorStop(1,'rgba(255,122,89,0.0)');
 
 new Chart(ctx, {
     type: 'line',

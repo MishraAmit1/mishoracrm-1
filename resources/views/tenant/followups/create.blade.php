@@ -58,7 +58,7 @@
     display:flex; align-items:center; gap:12px;
     padding:12px 14px;
     background:var(--accent-dim);
-    border:1.5px solid rgba(99,120,255,0.2);
+    border:1.5px solid rgba(255,122,89,0.2);
     border-radius:var(--r-sm);
     margin-bottom:16px;
 }

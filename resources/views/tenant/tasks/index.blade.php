@@ -79,7 +79,7 @@
     transition: background .2s;
 }
 .k-drop-zone.drag-over {
-    background: rgba(99,120,255,.06);
+    background: rgba(255,122,89,.06);
     outline: 2px dashed var(--accent);
     outline-offset: -6px; border-radius: 6px;
 }

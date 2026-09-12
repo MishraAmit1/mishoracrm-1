@@ -82,7 +82,7 @@
 </div>
 
 {{-- Info box --}}
-<div style="padding:12px 16px;background:var(--accent-dim);border:1.5px solid rgba(99,120,255,.2);border-radius:var(--r-md);margin-bottom:20px;font-size:13px;color:var(--text-200)">
+<div style="padding:12px 16px;background:var(--accent-dim);border:1.5px solid rgba(255,122,89,.2);border-radius:var(--r-md);margin-bottom:20px;font-size:13px;color:var(--text-200)">
     <strong style="color:var(--accent)">Score Formula:</strong>
     Leads Created (×2) + Deals Won (×10) + Tasks Completed (×1) + Follow-ups Done (×2)
 </div>

@@ -185,6 +185,6 @@
     border-radius: 4px; padding: 1px 5px;
     font-family: var(--mono); letter-spacing: 0;
 }
-.notif-item.unread { background: rgba(99,120,255,0.04); }
+.notif-item.unread { background: rgba(255,122,89,0.04); }
 .notif-item.unread:hover { background: var(--bg-hover); }
 </style>

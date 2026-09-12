@@ -15,7 +15,7 @@
 .field-row:last-child { border-bottom:none; }
 .field-row:hover { background:var(--bg-elevated); }
 .field-row.is-disabled { opacity:.5; }
-.field-row.is-system { background:rgba(99,120,255,.03); }
+.field-row.is-system { background:rgba(255,122,89,.03); }
 
 .drag-handle { cursor:grab; color:var(--text-400); flex-shrink:0; }
 .drag-handle:hover { color:var(--text-200); }

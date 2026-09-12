@@ -30,7 +30,7 @@
 .em-tip-box {
     display:flex; gap:10px; padding:12px 14px; border-radius:var(--r-md);
     font-size:12.5px; line-height:1.6; margin-top:16px;
-    background:rgba(99,120,255,.06); border:1px solid rgba(99,120,255,.15); color:var(--text-200);
+    background:rgba(255,122,89,.06); border:1px solid rgba(255,122,89,.15); color:var(--text-200);
 }
 .em-tip-box svg { flex-shrink:0; margin-top:1px; width:16px; height:16px; color:var(--accent); }
 

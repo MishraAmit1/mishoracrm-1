@@ -260,7 +260,7 @@ new Chart(document.getElementById('monthlyChart'), {
     data: {
         labels: md.map(d => { const [y,m]=d.month.split('-'); return new Date(y,m-1).toLocaleString('default',{month:'short',year:'2-digit'}); }),
         datasets: [
-            { label:'Deals', data:md.map(d=>d.count), backgroundColor:'rgba(99,120,255,0.7)', borderRadius:4, yAxisID:'y' },
+            { label:'Deals', data:md.map(d=>d.count), backgroundColor:'rgba(255,122,89,0.7)', borderRadius:4, yAxisID:'y' },
             { label:'Value',  data:md.map(d=>parseFloat(d.total||0)), type:'line', borderColor:'var(--green)', backgroundColor:'rgba(29,158,117,0.1)', borderWidth:2.5, pointRadius:4, pointBackgroundColor:'var(--green)', tension:0.4, fill:true, yAxisID:'y1' }
         ]
     },

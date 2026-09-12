@@ -31,7 +31,7 @@
   content: '';
   position: absolute; inset: 0; z-index: 0;
   background:
-    radial-gradient(ellipse 50% 50% at 50% 30%, rgba(99,120,255,0.08) 0%, transparent 65%);
+    radial-gradient(ellipse 50% 50% at 50% 30%, rgba(255,122,89,0.08) 0%, transparent 65%);
   pointer-events: none;
 }
 .auth-form-panel > * { position: relative; z-index: 1; }
@@ -51,7 +51,7 @@
 .page-icon {
   width: 56px; height: 56px;
   background: var(--accent-dim);
-  border: 1px solid rgba(99,120,255,0.2);
+  border: 1px solid rgba(255,122,89,0.2);
   border-radius: var(--r-lg);
   display: flex; align-items: center; justify-content: center;
   margin-bottom: 20px;

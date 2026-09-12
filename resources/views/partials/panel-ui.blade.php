@@ -23,8 +23,8 @@
         top: -20px; left: -24px; right: -24px;
         height: 300px;
         background:
-            radial-gradient(760px 260px at 12% 0%, rgba(99, 120, 255, 0.10), transparent 70%),
-            radial-gradient(680px 240px at 92% 0%, rgba(167, 139, 250, 0.08), transparent 70%);
+            radial-gradient(760px 260px at 12% 0%, rgba(255, 122, 89, 0.10), transparent 70%),
+            radial-gradient(680px 240px at 92% 0%, rgba(124, 111, 239, 0.08), transparent 70%);
         pointer-events: none;
         z-index: 0;
     }

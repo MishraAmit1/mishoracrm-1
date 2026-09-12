@@ -68,7 +68,7 @@
 .sw-state.off { color:var(--text-400); }
 
 /* ── Select all row ──────────────────────────────────────────────── */
-.sel-all-row { display:flex; align-items:center; padding:10px 20px; background:rgba(99,120,255,.06); border-bottom:1px solid rgba(99,120,255,.12); gap:16px; }
+.sel-all-row { display:flex; align-items:center; padding:10px 20px; background:rgba(255,122,89,.06); border-bottom:1px solid rgba(255,122,89,.12); gap:16px; }
 .sel-all-label { flex:1; font-size:12.5px; font-weight:700; color:var(--accent); }
 .sel-all-channels { display:flex; gap:8px; flex-shrink:0; }
 .sel-btn { width:72px; padding:5px; border-radius:var(--r-sm); border:1.5px solid var(--accent); background:none; color:var(--accent); font-size:11px; font-weight:700; cursor:pointer; font-family:var(--font); transition:all .15s; }

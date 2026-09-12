@@ -43,7 +43,7 @@
 
 /* Info box */
 .info-box {
-    background:var(--accent-dim); border:1.5px solid rgba(99,120,255,.2);
+    background:var(--accent-dim); border:1.5px solid rgba(255,122,89,.2);
     border-radius:var(--r-lg); padding:20px 24px; margin-bottom:24px;
     display:flex; gap:16px; align-items:flex-start;
 }
