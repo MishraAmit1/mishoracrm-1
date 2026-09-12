@@ -112,9 +112,9 @@
 
         <div class="auth-trust">
           <div class="auth-trust-avs">
-            <span style="background:#6378ff">RS</span>
-            <span style="background:#2dd4a0">NK</span>
-            <span style="background:#f8b84e">AV</span>
+            <span style="background:#FF7A59">RS</span>
+            <span style="background:#00A38C">NK</span>
+            <span style="background:#F5B942">AV</span>
           </div>
           <div class="auth-trust-txt"><b>12,000+</b> teams · SSL secured</div>
         </div>

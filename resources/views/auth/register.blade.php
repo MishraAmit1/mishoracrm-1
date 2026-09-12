@@ -329,7 +329,7 @@ document.getElementById('subInput').addEventListener('input', function() {
 function checkPwd(v) {
   const checks = [v.length >= 8, /[A-Z]/.test(v), /[0-9]/.test(v), /[^A-Za-z0-9]/.test(v)];
   const score = checks.filter(Boolean).length;
-  const colors = ['','#ff5257','#f8b84e','#6378ff','#2dd4a0'];
+  const colors = ['','#E24C3F','#F5B942','#2FB6C4','#00A38C'];
   const labels = ['','Weak — add more characters','Fair — add uppercase or numbers','Good — add a symbol','Strong password ✓'];
   for (let i = 1; i <= 4; i++) {
     document.getElementById('sb'+i).style.background = i <= score ? colors[score] : 'var(--border-default)';

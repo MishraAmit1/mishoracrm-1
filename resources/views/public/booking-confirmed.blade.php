@@ -18,7 +18,7 @@ body {
 
 .bk-card { background:var(--bg-surface); border:1px solid var(--border-default); border-radius:var(--r-xl); overflow:hidden; box-shadow:0 30px 60px -20px rgba(20,20,45,.22), 0 8px 24px rgba(20,20,45,.06); }
 .bk-hero { position:relative; padding:36px 28px 54px; background:linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%); overflow:hidden; text-align:center; }
-.bk-hero.no { background:linear-gradient(135deg, var(--red) 0%, #ff7a7e 100%); }
+.bk-hero.no { background:linear-gradient(135deg, var(--red) 0%, #F1786B 100%); }
 .bk-hero::before { content:''; position:absolute; width:220px; height:220px; border-radius:50%; background:rgba(255,255,255,.08); top:-110px; right:-60px; }
 .bk-hero::after { content:''; position:absolute; width:160px; height:160px; border-radius:50%; background:rgba(255,255,255,.06); bottom:-100px; left:-40px; }
 .bk-icon { position:relative; z-index:1; width:54px; height:54px; margin:0 auto 14px; border-radius:50%; background:rgba(255,255,255,.2); border:1px solid rgba(255,255,255,.4); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; color:#fff; }
