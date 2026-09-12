@@ -159,8 +159,6 @@
     @else
         {{-- ════════════════ TENANT NAV ════════════════ --}}
         {{-- Main --}}
-        <div class="sb-section-label">Main</div>
-
         <a href="{{ route('tenant.dashboard') }}"
            class="sb-item {{ request()->routeIs('tenant.dashboard') ? 'active' : '' }}">
             <span class="sb-icon">
@@ -171,88 +169,125 @@
             <span class="sb-label">Dashboard</span>
         </a>
 
-        {{-- CRM --}}
-        <div class="sb-section-label">CRM</div>
-
-        <a href="{{ route('tenant.leads.index') }}"
-           class="sb-item {{ request()->routeIs('tenant.leads.*') ? 'active' : '' }}">
+        {{-- CRM (collapsible group — was 1 label + 5 flat items) --}}
+        <button type="button"
+                class="sb-item {{ request()->routeIs('tenant.leads.*','tenant.contacts.*','tenant.deals.*','tenant.followups.*','tenant.lead-integrations.*') ? 'sub-open' : '' }}"
+                onclick="toggleSub('sub-crm', this)">
             <span class="sb-icon">
                 <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.75 3.75 0 11-6.75 0 3.75 3.75 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/>
                 </svg>
             </span>
-            <span class="sb-label">Leads</span>
+            <span class="sb-label">CRM</span>
             @if(($newLeadsCount ?? 0) > 0)
                 <span class="sb-badge">{{ $newLeadsCount }}</span>
             @endif
-        </a>
-
-        <a href="{{ route('tenant.contacts.index') }}"
-           class="sb-item {{ request()->routeIs('tenant.contacts.*') ? 'active' : '' }}">
-            <span class="sb-icon">
-                <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z"/>
+            <span class="sb-arrow">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
                 </svg>
             </span>
-            <span class="sb-label">Contacts</span>
-        </a>
+        </button>
 
-        <a href="{{ route('tenant.deals.index') }}"
-           class="sb-item {{ request()->routeIs('tenant.deals.*') ? 'active' : '' }}">
-            <span class="sb-icon">
-                <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75"/>
-                </svg>
-            </span>
-            <span class="sb-label">Deals</span>
-        </a>
+        <div class="sb-sub {{ request()->routeIs('tenant.leads.*','tenant.contacts.*','tenant.deals.*','tenant.followups.*','tenant.lead-integrations.*') ? 'open' : '' }}"
+             id="sub-crm">
 
-        <a href="{{ route('tenant.followups.index') }}"
-           class="sb-item {{ request()->routeIs('tenant.followups.*') ? 'active' : '' }}">
-            <span class="sb-icon">
-                <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-            </span>
-            <span class="sb-label">Follow-ups</span>
-        </a>
+            <a href="{{ route('tenant.leads.index') }}"
+               class="sb-item {{ request()->routeIs('tenant.leads.*') ? 'active' : '' }}">
+                <span class="sb-icon">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.75 3.75 0 11-6.75 0 3.75 3.75 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/>
+                    </svg>
+                </span>
+                <span class="sb-label">Leads</span>
+                @if(($newLeadsCount ?? 0) > 0)
+                    <span class="sb-badge">{{ $newLeadsCount }}</span>
+                @endif
+            </a>
 
-        <a href="{{ route('tenant.lead-integrations.index') }}"
-           class="sb-item {{ request()->routeIs('tenant.lead-integrations.*') ? 'active' : '' }}">
-            <span class="sb-icon">
-                <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244"/>
-                </svg>
-            </span>
-            <span class="sb-label">Lead Sources</span>
-        </a>
+            <a href="{{ route('tenant.contacts.index') }}"
+               class="sb-item {{ request()->routeIs('tenant.contacts.*') ? 'active' : '' }}">
+                <span class="sb-icon">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                </span>
+                <span class="sb-label">Contacts</span>
+            </a>
 
-        {{-- Work --}}
-        <div class="sb-section-label">Work</div>
+            <a href="{{ route('tenant.deals.index') }}"
+               class="sb-item {{ request()->routeIs('tenant.deals.*') ? 'active' : '' }}">
+                <span class="sb-icon">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75"/>
+                    </svg>
+                </span>
+                <span class="sb-label">Deals</span>
+            </a>
 
-        <a href="{{ route('tenant.tasks.index') }}"
-           class="sb-item {{ request()->routeIs('tenant.tasks.*') ? 'active' : '' }}">
+            <a href="{{ route('tenant.followups.index') }}"
+               class="sb-item {{ request()->routeIs('tenant.followups.*') ? 'active' : '' }}">
+                <span class="sb-icon">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </span>
+                <span class="sb-label">Follow-ups</span>
+            </a>
+
+            <a href="{{ route('tenant.lead-integrations.index') }}"
+               class="sb-item {{ request()->routeIs('tenant.lead-integrations.*') ? 'active' : '' }}">
+                <span class="sb-icon">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244"/>
+                    </svg>
+                </span>
+                <span class="sb-label">Lead Sources</span>
+            </a>
+        </div>
+
+        {{-- Work (collapsible group — was 1 label + 2 flat items) --}}
+        <button type="button"
+                class="sb-item {{ request()->routeIs('tenant.tasks.*','tenant.calendar.*') ? 'sub-open' : '' }}"
+                onclick="toggleSub('sub-work', this)">
             <span class="sb-icon">
                 <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
             </span>
-            <span class="sb-label">Tasks</span>
-        </a>
-
-        <a href="{{ route('tenant.calendar.index') }}"
-           class="sb-item {{ request()->routeIs('tenant.calendar.*') ? 'active' : '' }}">
-            <span class="sb-icon">
-                <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/>
+            <span class="sb-label">Work</span>
+            <span class="sb-arrow">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
                 </svg>
             </span>
-            <span class="sb-label">Calendar</span>
-        </a>
+        </button>
 
-        {{-- Automation --}}
-        <div class="sb-section-label">Automation</div>
+        <div class="sb-sub {{ request()->routeIs('tenant.tasks.*','tenant.calendar.*') ? 'open' : '' }}"
+             id="sub-work">
 
+            <a href="{{ route('tenant.tasks.index') }}"
+               class="sb-item {{ request()->routeIs('tenant.tasks.*') ? 'active' : '' }}">
+                <span class="sb-icon">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </span>
+                <span class="sb-label">Tasks</span>
+            </a>
+
+            <a href="{{ route('tenant.calendar.index') }}"
+               class="sb-item {{ request()->routeIs('tenant.calendar.*') ? 'active' : '' }}">
+                <span class="sb-icon">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/>
+                    </svg>
+                </span>
+                <span class="sb-label">Calendar</span>
+            </a>
+        </div>
+
+        {{-- Automation (single item — no separate section label needed) --}}
         <a href="{{ route('tenant.automation.index') }}"
            class="sb-item {{ request()->routeIs('tenant.automation.*') ? 'active' : '' }}">
             <span class="sb-icon">
@@ -263,8 +298,7 @@
             <span class="sb-label">AI Automation</span>
         </a>
 
-        {{-- Finance --}}
-        <div class="sb-section-label">Finance</div>
+        {{-- Finance (collapsible group — trigger below doubles as the label) --}}
 
         <button type="button"
                 class="sb-item {{ request()->routeIs('quotations.*','invoices.*','products.*') ? 'sub-open' : '' }}"
@@ -380,8 +414,7 @@
             @endif
         </div>
 
-        {{-- Purchase --}}
-        <div class="sb-section-label">Purchase</div>
+        {{-- Purchase (collapsible group — trigger below doubles as the label) --}}
 
         <button type="button"
                 class="sb-item {{ request()->routeIs('purchase-requests.*','purchase-orders.*','vendors.*','vendor-bills.*','products.low-stock') ? 'sub-open' : '' }}"
@@ -460,8 +493,7 @@
             @endif
         </div>
 
-        {{-- Communication --}}
-        <div class="sb-section-label">Communication</div>
+        {{-- Communication (collapsible group — trigger below doubles as the label) --}}
 
         <button type="button"
                 class="sb-item {{ request()->routeIs('whatsapp.*','email.*','tenant.instagram.*') ? 'sub-open' : '' }}"
@@ -522,50 +554,65 @@
             @endif
         </div>
 
-        {{-- HR --}}
-        @canany(['departments.view', 'staff.view'])
-        <div class="sb-section-label">HR</div>
-        @endcanany
-
-        {{-- departments --}}
-        @can('departments.view')
-         <a href="{{ route('tenant.departments.index') }}"
-           class="sb-item {{ request()->routeIs('tenant.departments.*') ? 'active' : '' }}">
+        {{-- HR (collapsible group — Attendance has no permission gate, so the
+             group itself always renders; Departments/Staff keep their own
+             @can gates unchanged inside it) --}}
+        <button type="button"
+                class="sb-item {{ request()->routeIs('tenant.departments.*','tenant.staffs.*','tenant.attendances.*') ? 'sub-open' : '' }}"
+                onclick="toggleSub('sub-hr', this)">
             <span class="sb-icon">
                 <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/>
                 </svg>
             </span>
-            <span class="sb-label">Departments</span>
-          </a>
-        @endcan
-
-        @can('staff.view')
-        <a href="{{ route('tenant.staffs.index') }}"
-           class="sb-item {{ request()->routeIs('tenant.staffs.*') ? 'active' : '' }}">
-            <span class="sb-icon">
-                <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/>
+            <span class="sb-label">HR</span>
+            <span class="sb-arrow">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
                 </svg>
             </span>
-            <span class="sb-label">Staff</span>
-        </a>
-        @endcan
+        </button>
 
-        <a href="{{ route('tenant.attendances.index') }}"  
-           class="sb-item {{ request()->routeIs('tenant.attendances.*') ? 'active' : '' }}">
-            <span class="sb-icon">
-                <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12V15zm0 2.25h.008v.008H12v-.008zM9.75 15h.008v.008H9.75V15zm0 2.25h.008v.008H9.75v-.008zM7.5 15h.008v.008H7.5V15zm0 2.25h.008v.008H7.5v-.008zm6.75-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V15zm0 2.25h.008v.008h-.008v-.008zm2.25-4.5h.008v.008H16.5v-.008zm0 2.25h.008v.008H16.5V15z"/>
-                </svg>
-            </span>
-            <span class="sb-label">Attendance</span>
-        </a>
+        <div class="sb-sub {{ request()->routeIs('tenant.departments.*','tenant.staffs.*','tenant.attendances.*') ? 'open' : '' }}"
+             id="sub-hr">
 
-        {{-- Analytics --}}
-        <div class="sb-section-label">Analytics</div>
+            @can('departments.view')
+             <a href="{{ route('tenant.departments.index') }}"
+               class="sb-item {{ request()->routeIs('tenant.departments.*') ? 'active' : '' }}">
+                <span class="sb-icon">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/>
+                    </svg>
+                </span>
+                <span class="sb-label">Departments</span>
+              </a>
+            @endcan
 
-        <a href="{{ route('tenant.reports.overview') }}" 
+            @can('staff.view')
+            <a href="{{ route('tenant.staffs.index') }}"
+               class="sb-item {{ request()->routeIs('tenant.staffs.*') ? 'active' : '' }}">
+                <span class="sb-icon">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/>
+                    </svg>
+                </span>
+                <span class="sb-label">Staff</span>
+            </a>
+            @endcan
+
+            <a href="{{ route('tenant.attendances.index') }}"
+               class="sb-item {{ request()->routeIs('tenant.attendances.*') ? 'active' : '' }}">
+                <span class="sb-icon">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12V15zm0 2.25h.008v.008H12v-.008zM9.75 15h.008v.008H9.75V15zm0 2.25h.008v.008H9.75v-.008zM7.5 15h.008v.008H7.5V15zm0 2.25h.008v.008H7.5v-.008zm6.75-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V15zm0 2.25h.008v.008h-.008v-.008zm2.25-4.5h.008v.008H16.5v-.008zm0 2.25h.008v.008H16.5V15z"/>
+                    </svg>
+                </span>
+                <span class="sb-label">Attendance</span>
+            </a>
+        </div>
+
+        {{-- Analytics (single item — no separate section label needed) --}}
+        <a href="{{ route('tenant.reports.overview') }}"
            class="sb-item {{ request()->routeIs('reports*') ? 'active' : '' }}">
             <span class="sb-icon">
                 <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
@@ -575,10 +622,8 @@
             <span class="sb-label">Reports</span>
         </a>
 
-        {{-- System --}}
-        <div class="sb-section-label">System</div>
-
-        <a href="{{ route('tenant.settings.index') }}"  
+        {{-- System (single item — no separate section label needed) --}}
+        <a href="{{ route('tenant.settings.index') }}"
            class="sb-item {{ request()->routeIs('tenant.settings*') ? 'active' : '' }}">
             <span class="sb-icon">
                 <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
@@ -589,29 +634,47 @@
             <span class="sb-label">Settings</span>
         </a>
 
-        {{-- Admin (tenant_admin only) --}}
+        {{-- Admin (tenant_admin only, collapsible group) --}}
         @if(auth()->user()?->user_type === 'tenant_admin')
-            <div class="sb-section-label">Admin</div>
-
-            <a href="{{ route('tenant.roles.index') }}"
-               class="sb-item {{ request()->routeIs('tenant.roles.*') ? 'active' : '' }}">
+            <button type="button"
+                    class="sb-item {{ request()->routeIs('tenant.roles.*','tenant.audit-logs.*') ? 'sub-open' : '' }}"
+                    onclick="toggleSub('sub-admin', this)">
                 <span class="sb-icon">
                     <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/>
                     </svg>
                 </span>
-                <span class="sb-label">Roles & Permissions</span>
-            </a>
-
-            <a href="{{ route('tenant.audit-logs.index') }}"
-               class="sb-item {{ request()->routeIs('tenant.audit-logs.*') ? 'active' : '' }}">
-                <span class="sb-icon">
-                    <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/>
+                <span class="sb-label">Admin</span>
+                <span class="sb-arrow">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
                     </svg>
                 </span>
-                <span class="sb-label">Audit Logs</span>
-            </a>
+            </button>
+
+            <div class="sb-sub {{ request()->routeIs('tenant.roles.*','tenant.audit-logs.*') ? 'open' : '' }}"
+                 id="sub-admin">
+
+                <a href="{{ route('tenant.roles.index') }}"
+                   class="sb-item {{ request()->routeIs('tenant.roles.*') ? 'active' : '' }}">
+                    <span class="sb-icon">
+                        <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/>
+                        </svg>
+                    </span>
+                    <span class="sb-label">Roles & Permissions</span>
+                </a>
+
+                <a href="{{ route('tenant.audit-logs.index') }}"
+                   class="sb-item {{ request()->routeIs('tenant.audit-logs.*') ? 'active' : '' }}">
+                    <span class="sb-icon">
+                        <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/>
+                        </svg>
+                    </span>
+                    <span class="sb-label">Audit Logs</span>
+                </a>
+            </div>
         @endif
 
     @endif {{-- end superadmin/tenant conditional --}}
