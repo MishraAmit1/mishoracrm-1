@@ -192,15 +192,15 @@ new Chart(ctx, {
         responsive:true, maintainAspectRatio:false,
         plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: c=>'₹'+c.parsed.y.toLocaleString('en-IN') } } },
         scales:{
-            x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#9ca3af',font:{size:10}}},
-            y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#9ca3af',font:{size:11},callback:v=>'₹'+(v>=100000?(v/100000).toFixed(1)+'L':v>=1000?(v/1000).toFixed(0)+'K':v)},beginAtZero:true}
+            x:{grid:{color:'rgba(51,71,91,0.06)'},ticks:{color:'#7C98B6',font:{size:10}}},
+            y:{grid:{color:'rgba(51,71,91,0.06)'},ticks:{color:'#7C98B6',font:{size:11},callback:v=>'₹'+(v>=100000?(v/100000).toFixed(1)+'L':v>=1000?(v/1000).toFixed(0)+'K':v)},beginAtZero:true}
         }
     }
 });
 
 // ── Invoice status donut ──────────────────────────────────────────
 const statuses = @json($invoiceStatuses);
-const statusColors = {draft:'var(--amber)',sent:'#6378ff',paid:'var(--green)',partial:'#a78bfa',overdue:'#E05252'};
+const statusColors = {draft:'var(--amber)',sent:'#FF7A59',paid:'var(--green)',partial:'#a78bfa',overdue:'#E05252'};
 const keys = Object.keys(statusColors);
 new Chart(document.getElementById('statusChart'), {
     type:'doughnut',
@@ -212,7 +212,7 @@ new Chart(document.getElementById('statusChart'), {
             borderWidth:0, hoverOffset:4
         }]
     },
-    options:{ responsive:true, plugins:{legend:{labels:{color:'#9ca3af',font:{size:11}}}}, cutout:'65%' }
+    options:{ responsive:true, plugins:{legend:{labels:{color:'#7C98B6',font:{size:11}}}}, cutout:'65%' }
 });
 </script>
 @endpush

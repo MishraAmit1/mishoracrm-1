@@ -8,7 +8,7 @@
 
 /* ── Profile card ────────────────────────────────────────────────── */
 .profile-card { background:var(--bg-surface); border:1px solid var(--border-default); border-radius:var(--r-lg); overflow:hidden; }
-.profile-cover { height:90px; background:linear-gradient(135deg,var(--accent) 0%,#a78bfa 100%); }
+.profile-cover { height:90px; background:linear-gradient(135deg,var(--accent) 0%,var(--accent-hover) 100%); }
 .profile-body  { padding:0 20px 20px; }
 
 .profile-av-wrap { margin-top:-38px; margin-bottom:14px; }

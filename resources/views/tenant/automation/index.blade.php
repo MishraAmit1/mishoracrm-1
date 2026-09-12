@@ -5,7 +5,7 @@
 <style>
 /* ── Page hero ──────────────────────────────────────────────────── */
 .auto-hero {
-    background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+    background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-surface) 100%);
     border: 1px solid var(--border-subtle);
     border-radius: var(--r-xl);
     padding: 36px 32px;
@@ -26,7 +26,7 @@
 }
 .auto-hero-icon {
     width: 60px; height: 60px; border-radius: var(--r-lg);
-    background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    background: linear-gradient(135deg, var(--accent), var(--accent-hover));
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
 }
@@ -49,7 +49,7 @@
 
 /* ── Template card ──────────────────────────────────────────────── */
 .tmpl-card {
-    background: var(--bg-card);
+    background: var(--bg-surface);
     border: 1px solid var(--border-subtle);
     border-radius: var(--r-xl);
     padding: 22px;
@@ -105,7 +105,7 @@
 
 /* ── CTA banner ─────────────────────────────────────────────────── */
 .auto-cta-banner {
-    background: linear-gradient(135deg, var(--accent) 0%, #8b5cf6 100%);
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
     border-radius: var(--r-xl);
     padding: 28px 32px;
     display: flex; align-items: center; justify-content: space-between; gap: 20px;
@@ -167,7 +167,7 @@
     .automation-table-wrap{display:none}
     .automation-mobile-list{display:flex;flex-direction:column;gap:10px;padding:14px}
 }
-.au-card{background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:var(--r-md);padding:14px}
+.au-card{background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:var(--r-md);padding:14px}
 .au-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
 .au-title{font-size:13.5px;font-weight:700;color:var(--text-100);word-break:break-word}
 .au-sub{font-size:11.5px;color:var(--text-400);margin-top:2px}

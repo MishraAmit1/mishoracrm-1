@@ -79,7 +79,7 @@
     ];
     $curRange = $request->get('range','this_month');
     $stageColors = ['new'=>'var(--accent)','proposal'=>'var(--amber)','negotiation'=>'var(--purple)','won'=>'var(--green)','lost'=>'var(--red)'];
-    $sourceColors = ['facebook'=>'#1877f2','instagram'=>'#e1306c','google'=>'#ea4335','website'=>'#6378ff','whatsapp'=>'#25D366','referral'=>'#0f6e56','cold_call'=>'#854f0b','other'=>'#9ca3af'];
+    $sourceColors = ['facebook'=>'#1877f2','instagram'=>'#e1306c','google'=>'#ea4335','website'=>'#FF7A59','whatsapp'=>'#25D366','referral'=>'#0f6e56','cold_call'=>'#854f0b','other'=>'#9ca3af'];
     $avColors = [['var(--accent-dim)','var(--accent)'],['var(--green-dim)','var(--green)'],['var(--amber-dim)','var(--amber)'],['var(--purple-dim)','var(--purple)'],['#FEE2E2','#991B1B']];
 @endphp
 
@@ -291,11 +291,11 @@ new Chart(ctx, {
         datasets: [{
             label: 'Revenue (₹)',
             data: revenues,
-            borderColor: '#6378ff',
+            borderColor: '#FF7A59',
             backgroundColor: grad,
             borderWidth: 2.5,
             pointRadius: 4,
-            pointBackgroundColor: '#6378ff',
+            pointBackgroundColor: '#FF7A59',
             pointBorderColor: '#fff',
             pointBorderWidth: 2,
             tension: 0.4,
@@ -315,13 +315,13 @@ new Chart(ctx, {
         },
         scales: {
             x: {
-                grid: { color: 'rgba(255,255,255,0.05)' },
-                ticks: { color: '#9ca3af', font: { size: 11 } }
+                grid: { color: 'rgba(51,71,91,0.06)' },
+                ticks: { color: '#7C98B6', font: { size: 11 } }
             },
             y: {
-                grid: { color: 'rgba(255,255,255,0.05)' },
+                grid: { color: 'rgba(51,71,91,0.06)' },
                 ticks: {
-                    color: '#9ca3af',
+                    color: '#7C98B6',
                     font: { size: 11 },
                     callback: v => '₹' + (v >= 1000 ? (v/1000).toFixed(0)+'K' : v)
                 }

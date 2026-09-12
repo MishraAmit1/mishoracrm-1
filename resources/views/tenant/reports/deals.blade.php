@@ -266,11 +266,11 @@ new Chart(document.getElementById('monthlyChart'), {
     },
     options: {
         responsive:true, maintainAspectRatio:false,
-        plugins:{ legend:{labels:{color:'#9ca3af',font:{size:11}}} },
+        plugins:{ legend:{labels:{color:'#7C98B6',font:{size:11}}} },
         scales: {
-            x: { grid:{color:'rgba(255,255,255,0.04)'}, ticks:{color:'#9ca3af',font:{size:10}} },
-            y: { grid:{color:'rgba(255,255,255,0.04)'}, ticks:{color:'#9ca3af',font:{size:11}}, beginAtZero:true },
-            y1:{ position:'right', grid:{display:false}, ticks:{color:'#9ca3af',font:{size:10}, callback:v=>'₹'+(v/1000).toFixed(0)+'K'}, beginAtZero:true }
+            x: { grid:{color:'rgba(51,71,91,0.06)'}, ticks:{color:'#7C98B6',font:{size:10}} },
+            y: { grid:{color:'rgba(51,71,91,0.06)'}, ticks:{color:'#7C98B6',font:{size:11}}, beginAtZero:true },
+            y1:{ position:'right', grid:{display:false}, ticks:{color:'#7C98B6',font:{size:10}, callback:v=>'₹'+(v/1000).toFixed(0)+'K'}, beginAtZero:true }
         }
     }
 });
@@ -281,7 +281,7 @@ new Chart(document.getElementById('winChart'), {
     data:{
         datasets:[{
             data:[{{ $winRate }}, {{ 100 - $winRate }}],
-            backgroundColor:['var(--green)','rgba(255,255,255,0.05)'],
+            backgroundColor:['var(--green)','rgba(51,71,91,0.08)'],
             borderWidth:0, hoverOffset:0
         }]
     },

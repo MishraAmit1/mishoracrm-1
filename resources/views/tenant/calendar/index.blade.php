@@ -465,7 +465,7 @@ function toDateStr(d) { return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${p
 function eventDateStr(ev) { return (ev.start || '').slice(0, 10); }
 
 function hexToRgba(hex, alpha) {
-    hex = (hex || '#6378ff').replace('#', '');
+    hex = (hex || '#FF7A59').replace('#', '');
     if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
     const r = parseInt(hex.substring(0, 2), 16) || 0;
     const g = parseInt(hex.substring(2, 4), 16) || 0;
@@ -562,7 +562,7 @@ function renderMobileList() {
 
     let html = `<div class="magenda-list-head">${label} <span class="magenda-list-count">${dayEvents.length}</span></div>`;
     dayEvents.forEach(ev => {
-        const color = ev.color || '#6378ff';
+        const color = ev.color || '#FF7A59';
         const title = (ev.title || '').replace(/"/g, '&quot;');
         html += `
             <div class="magenda-event" style="--ev-color:${color};--ev-bg:${hexToRgba(color, .14)}" data-url="${ev.url || ''}" data-title="${title}">

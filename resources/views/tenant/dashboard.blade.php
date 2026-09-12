@@ -530,11 +530,11 @@
             return m ? `rgba(${m[0]}, ${m[1]}, ${m[2]}, ${alpha})` : color;
         }
 
-        const C_TEXT = resolveColor(cssVar('--text-100', '#0d0f1a'));
-        const C_MUTE = resolveColor(cssVar('--text-300', '#7b84a8'));
+        const C_TEXT = resolveColor(cssVar('--text-100', '#33475B'));
+        const C_MUTE = resolveColor(cssVar('--text-300', '#7C98B6'));
         const C_SURF = resolveColor(cssVar('--bg-surface', '#ffffff'));
-        const C_LINE = toRgba(cssVar('--text-400', '#b0b8d4'), 0.35);
-        const C_ACC  = resolveColor(cssVar('--accent', '#6378ff'));
+        const C_LINE = toRgba(cssVar('--text-400', '#A9BED4'), 0.35);
+        const C_ACC  = resolveColor(cssVar('--accent', '#FF7A59'));
         Chart.defaults.color = C_MUTE;
 
         /* ── Mini sparkline (KPI cards + pipeline columns) ─────────
