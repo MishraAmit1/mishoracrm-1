@@ -159,6 +159,8 @@
     @else
         {{-- ════════════════ TENANT NAV ════════════════ --}}
         {{-- Main --}}
+        <div class="sb-section-label">Main</div>
+
         <a href="{{ route('tenant.dashboard') }}"
            class="sb-item {{ request()->routeIs('tenant.dashboard') ? 'active' : '' }}">
             <span class="sb-icon">
@@ -169,7 +171,9 @@
             <span class="sb-label">Dashboard</span>
         </a>
 
-        {{-- CRM (collapsible group — was 1 label + 5 flat items) --}}
+        {{-- CRM (collapsible group) --}}
+        <div class="sb-section-label">CRM</div>
+
         <button type="button"
                 class="sb-item {{ request()->routeIs('tenant.leads.*','tenant.contacts.*','tenant.deals.*','tenant.followups.*','tenant.lead-integrations.*') ? 'sub-open' : '' }}"
                 onclick="toggleSub('sub-crm', this)">
@@ -246,7 +250,9 @@
             </a>
         </div>
 
-        {{-- Work (collapsible group — was 1 label + 2 flat items) --}}
+        {{-- Work (collapsible group) --}}
+        <div class="sb-section-label">Work</div>
+
         <button type="button"
                 class="sb-item {{ request()->routeIs('tenant.tasks.*','tenant.calendar.*') ? 'sub-open' : '' }}"
                 onclick="toggleSub('sub-work', this)">
@@ -287,7 +293,9 @@
             </a>
         </div>
 
-        {{-- Automation (single item — no separate section label needed) --}}
+        {{-- Automation --}}
+        <div class="sb-section-label">Automation</div>
+
         <a href="{{ route('tenant.automation.index') }}"
            class="sb-item {{ request()->routeIs('tenant.automation.*') ? 'active' : '' }}">
             <span class="sb-icon">
@@ -298,7 +306,8 @@
             <span class="sb-label">AI Automation</span>
         </a>
 
-        {{-- Finance (collapsible group — trigger below doubles as the label) --}}
+        {{-- Finance (collapsible group) --}}
+        <div class="sb-section-label">Finance</div>
 
         <button type="button"
                 class="sb-item {{ request()->routeIs('quotations.*','invoices.*','products.*') ? 'sub-open' : '' }}"
@@ -414,7 +423,8 @@
             @endif
         </div>
 
-        {{-- Purchase (collapsible group — trigger below doubles as the label) --}}
+        {{-- Purchase (collapsible group) --}}
+        <div class="sb-section-label">Purchase</div>
 
         <button type="button"
                 class="sb-item {{ request()->routeIs('purchase-requests.*','purchase-orders.*','vendors.*','vendor-bills.*','products.low-stock') ? 'sub-open' : '' }}"
@@ -493,7 +503,8 @@
             @endif
         </div>
 
-        {{-- Communication (collapsible group — trigger below doubles as the label) --}}
+        {{-- Communication (collapsible group) --}}
+        <div class="sb-section-label">Communication</div>
 
         <button type="button"
                 class="sb-item {{ request()->routeIs('whatsapp.*','email.*','tenant.instagram.*') ? 'sub-open' : '' }}"
@@ -557,6 +568,8 @@
         {{-- HR (collapsible group — Attendance has no permission gate, so the
              group itself always renders; Departments/Staff keep their own
              @can gates unchanged inside it) --}}
+        <div class="sb-section-label">HR</div>
+
         <button type="button"
                 class="sb-item {{ request()->routeIs('tenant.departments.*','tenant.staffs.*','tenant.attendances.*') ? 'sub-open' : '' }}"
                 onclick="toggleSub('sub-hr', this)">
@@ -611,7 +624,9 @@
             </a>
         </div>
 
-        {{-- Analytics (single item — no separate section label needed) --}}
+        {{-- Analytics --}}
+        <div class="sb-section-label">Analytics</div>
+
         <a href="{{ route('tenant.reports.overview') }}"
            class="sb-item {{ request()->routeIs('reports*') ? 'active' : '' }}">
             <span class="sb-icon">
@@ -622,7 +637,9 @@
             <span class="sb-label">Reports</span>
         </a>
 
-        {{-- System (single item — no separate section label needed) --}}
+        {{-- System --}}
+        <div class="sb-section-label">System</div>
+
         <a href="{{ route('tenant.settings.index') }}"
            class="sb-item {{ request()->routeIs('tenant.settings*') ? 'active' : '' }}">
             <span class="sb-icon">
@@ -636,6 +653,8 @@
 
         {{-- Admin (tenant_admin only, collapsible group) --}}
         @if(auth()->user()?->user_type === 'tenant_admin')
+            <div class="sb-section-label">Admin</div>
+
             <button type="button"
                     class="sb-item {{ request()->routeIs('tenant.roles.*','tenant.audit-logs.*') ? 'sub-open' : '' }}"
                     onclick="toggleSub('sub-admin', this)">
