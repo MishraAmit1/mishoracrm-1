@@ -10,7 +10,7 @@
 --}}
 @php($h = $h ?? 28)
 <span class="brand-logo" style="--brand-logo-h:{{ $h }}px">
-    <img src="{{ asset('logo/logo.png') }}" alt="Mishora CRM" class="brand-logo__wm brand-logo__wm--light" width="900" height="185">
-    <img src="{{ asset('logo/logo-dark.png') }}" alt="Mishora CRM" class="brand-logo__wm brand-logo__wm--dark" width="900" height="185">
+    <img src="{{ asset('logo/logo.png') }}" alt="Mishora CRM" class="brand-logo__wm brand-logo__wm--light" width="1544" height="200">
+    <img src="{{ asset('logo/logo-dark.png') }}" alt="Mishora CRM" class="brand-logo__wm brand-logo__wm--dark" width="1544" height="200">
     <img src="{{ asset('logo/logo-mark.png') }}" alt="" aria-hidden="true" class="brand-logo__mark" width="256" height="256">
 </span>
