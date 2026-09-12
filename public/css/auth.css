@@ -100,7 +100,7 @@ body::before {
   position: fixed; inset: 0; z-index: 0;
   background:
     radial-gradient(ellipse 60% 50% at 18% 12%, rgba(255,122,89,0.14), transparent 60%),
-    radial-gradient(ellipse 55% 55% at 82% 88%, rgba(45,212,160,0.05), transparent 60%);
+    radial-gradient(ellipse 55% 55% at 82% 88%, rgba(0,163,140,0.05), transparent 60%);
   pointer-events: none;
 }
 [data-theme="light"] body::before {
@@ -459,10 +459,10 @@ body::after {
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-xl);
   padding: 34px 32px;
-  box-shadow: 0 30px 70px -32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.02);
+  box-shadow: 0 30px 70px -34px rgba(51,71,91,0.18), inset 0 1px 0 rgba(255,255,255,0.6);
 }
 [data-theme="light"] .auth-card {
-  box-shadow: 0 30px 70px -34px rgba(60,70,130,0.18), inset 0 1px 0 rgba(255,255,255,0.6);
+  box-shadow: 0 30px 70px -32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.02);
 }
 .auth-card::before {
   content: '';
@@ -529,8 +529,8 @@ body::after {
   margin-bottom: 20px;
   border: 1px solid;
 }
-.alert-error { background: rgba(255,82,87,0.07); border-color: rgba(255,82,87,0.2); color: #ff7b7f; }
-.alert-success { background: rgba(45,212,160,0.07); border-color: rgba(45,212,160,0.2); color: var(--green); }
+.alert-error { background: rgba(226,76,63,0.07); border-color: rgba(226,76,63,0.2); color: var(--red); }
+.alert-success { background: rgba(0,163,140,0.07); border-color: rgba(0,163,140,0.2); color: var(--green); }
 .alert-icon { font-size: 14px; flex-shrink: 0; margin-top: 0px; }
 
 /* Form elements */
@@ -573,8 +573,8 @@ body::after {
 .field-input:focus ~ .field-icon { color: var(--accent); }
 .field-wrap:focus-within .field-icon { color: var(--accent); }
 
-.field-input.has-error { border-color: rgba(255,82,87,0.5); }
-.field-input.has-error:focus { box-shadow: 0 0 0 3px rgba(255,82,87,0.1); }
+.field-input.has-error { border-color: rgba(226,76,63,0.5); }
+.field-input.has-error:focus { box-shadow: 0 0 0 3px rgba(226,76,63,0.1); }
 
 .field-error { font-size: 12px; color: var(--red); margin-top: 6px; display: flex; align-items: center; gap: 4px; font-weight: 500; }
 
@@ -726,7 +726,7 @@ body::after {
   font-family: var(--mono);
 }
 .step-item.is-active .step-num { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); box-shadow: 0 0 0 3px var(--accent-dim); }
-.step-item.is-done .step-num { border-color: var(--green); background: rgba(45,212,160,0.12); color: var(--green); }
+.step-item.is-done .step-num { border-color: var(--green); background: rgba(0,163,140,0.12); color: var(--green); }
 .step-line { flex: 1; height: 1px; background: var(--border-default); margin: 0 8px; transition: background var(--t-med) var(--ease); }
 .step-item.is-done .step-line { background: var(--green); }
 .step-label { font-size: 11px; color: var(--text-300); margin-top: 5px; text-align: center; }
@@ -816,7 +816,7 @@ body::after {
   box-shadow: 0 0 8px var(--accent-glow);
 }
 .pg-toggle-switch input:checked + .pg-toggle-slider:before { transform: translateX(20px); }
-.pg-save-badge { background: rgba(45,212,160,0.15); color: var(--green); font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 100px; margin-left: 6px; }
+.pg-save-badge { background: rgba(0,163,140,0.15); color: var(--green); font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 100px; margin-left: 6px; }
 
 /* Plans grid */
 .pg-plans-wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
@@ -828,8 +828,8 @@ body::after {
   position: relative;
   transition: border-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
 }
-.pg-plan-card:hover { transform: translateY(-4px); border-color: var(--border-strong); box-shadow: 0 24px 50px -24px rgba(0,0,0,0.45); }
-[data-theme="light"] .pg-plan-card:hover { box-shadow: 0 24px 50px -26px rgba(60,70,130,0.25); }
+.pg-plan-card:hover { transform: translateY(-4px); border-color: var(--border-strong); box-shadow: 0 24px 50px -26px rgba(51,71,91,0.25); }
+[data-theme="light"] .pg-plan-card:hover { box-shadow: 0 24px 50px -24px rgba(0,0,0,0.45); }
 .pg-plan-card.popular {
   border-color: var(--accent);
   box-shadow: 0 0 0 1px var(--accent), 0 24px 60px -22px rgba(255,122,89,0.4);
@@ -849,7 +849,7 @@ body::after {
 .pg-price-original { font-size: 17px; font-weight: 500; color: var(--text-300); text-decoration: line-through; font-family: var(--mono); }
 .pg-price-period { font-size: 13.5px; color: var(--text-300); }
 .pg-price-yearly-note { font-size: 12px; color: var(--text-300); margin-bottom: 20px; }
-.pg-discount-badge { display: inline-block; background: rgba(45,212,160,0.14); color: var(--green); font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 100px; }
+.pg-discount-badge { display: inline-block; background: rgba(0,163,140,0.14); color: var(--green); font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 100px; }
 .pg-plan-cta { margin-bottom: 22px; text-decoration: none; }
 .pg-plan-cta.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
 .pg-feat-head { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-300); margin-bottom: 12px; }
