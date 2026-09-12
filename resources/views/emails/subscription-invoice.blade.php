@@ -1,10 +1,10 @@
 @php
     $seller  = $inv['seller'];
-    $accent  = $inv['accent_color'] ?? '#4f46e5';
-    $primary = $inv['primary_color'] ?? '#1e293b';
+    $accent  = $inv['accent_color'] ?? '#FF7A59';
+    $primary = $inv['primary_color'] ?? '#33475B';
     $cur     = $inv['currency'] ?? '₹';
 @endphp
-<div style="max-width:560px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#1e293b">
+<div style="max-width:560px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#33475B">
 
   <div style="background:{{ $primary }};padding:26px 28px;border-radius:10px 10px 0 0">
     <div style="color:#fff;font-size:19px;font-weight:700;letter-spacing:.2px">{{ $seller['name'] }}</div>

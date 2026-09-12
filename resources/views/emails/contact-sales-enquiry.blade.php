@@ -1,5 +1,5 @@
-<div style="max-width:520px;margin:0 auto;font-family:Arial,Helvetica,sans-serif;color:#1a1a2e">
-  <div style="background:#378ADD;padding:20px 24px;border-radius:8px 8px 0 0">
+<div style="max-width:520px;margin:0 auto;font-family:Arial,Helvetica,sans-serif;color:#33475B">
+  <div style="background:#FF7A59;padding:20px 24px;border-radius:8px 8px 0 0">
     <h2 style="color:#fff;margin:0;font-size:18px">New sales enquiry</h2>
   </div>
   <div style="background:#fff;padding:24px;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px">
