@@ -894,10 +894,13 @@ select.form-control option { background: var(--bg-elevated); color: var(--text-1
 .td-mono { font-family: var(--mono); font-size: 12.5px; }
 
 /* ── Table → card fallback on mobile ───────────────────────────────
-   Applies to .data-table (leads/contacts/invoices/etc.) and .di-table
-   (deals/tasks). <td> elements with a data-label="..." attribute get
-   that label rendered before their value; without one, the value just
-   shows on its own line. Desktop layout (>768px) is untouched. ──── */
+   Applies to .data-table (vendors/purchase-orders/work-orders/etc.,
+   wherever a page doesn't build its own bespoke mobile card markup)
+   and .di-table. Structure this relies on, per row: an optional
+   leading unlabeled <td> holding only a bulk-select checkbox, then
+   one or more <td data-label="..."> cells, then an optional trailing
+   unlabeled <td> holding action buttons. Desktop layout (>768px) is
+   untouched. ──────────────────────────────────────────────────── */
 @media(max-width:768px) {
   /* Some pages set an unconditional min-width/table-layout on their table
      to force desktop column widths — neutralize that so the card layout
@@ -914,24 +917,37 @@ select.form-control option { background: var(--bg-elevated); color: var(--text-1
   }
   .data-table thead, .di-table thead { display: none; }
   .data-table tbody, .di-table tbody { display: block; width: 100%; }
+
+  /* Each row is a card. Grid (not block) so the "secondary" labeled
+     cells below can auto-flow two-per-row instead of stacking one
+     full-width strip per field — that flat label/value list is what
+     read as an un-styled spreadsheet rather than a real mobile card. */
   .data-table tr, .di-table tr {
-    display: block;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
     width: 100%;
     background: var(--bg-surface);
     border: 1px solid var(--border-default);
-    border-radius: var(--r-md);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-sm);
     overflow: hidden;
     box-sizing: border-box;
   }
   .data-table tbody tr:hover td, .di-table tbody tr:hover td { background: none; }
+
+  /* Bulk-select checkboxes are a desktop power-user feature (multi-row
+     actions bar) with no equivalent affordance on a touch card list —
+     drop the column entirely rather than give it its own bare card row. */
+  .data-table td:not([data-label]):has(input[type="checkbox"]),
+  .di-table td:not([data-label]):has(input[type="checkbox"]) {
+    display: none !important;
+  }
+
   .data-table td, .di-table td {
-    display: flex; align-items: center;
-    gap: 12px;
-    border-bottom: 1px solid var(--border-subtle);
-    white-space: normal;
-    overflow-wrap: anywhere;
     min-width: 0;
     box-sizing: border-box;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
   /* An unbreakable token (email address, phone number, long slug — no
      spaces to wrap at) otherwise forces its flex-item ancestor to keep
@@ -939,23 +955,63 @@ select.form-control option { background: var(--bg-elevated); color: var(--text-1
      what pushes a row wider than the screen and creates the left-right
      scroll. Letting every level shrink + break-anywhere kills that. */
   .data-table td > *, .di-table td > * { min-width: 0; overflow-wrap: anywhere; }
-  .data-table td:last-child, .di-table td:last-child { border-bottom: none; }
-  /* Only cells that actually declare a data-label get the "label | value"
-     split row. Without this guard, an unlabeled cell (a decorative dot,
-     an icon-only actions column, …) still generated an empty ::before
-     flex item, and justify-content:space-between shoved the real content
-     off to the far edge — reading as if it were randomly placed. A cell
-     with no label should just show its value in place, nothing fancier. */
+
+  /* The FIRST data-label cell (Name/Title/... — whatever a given table's
+     primary column is called) becomes the card's header: full width,
+     no little uppercase tag above it, larger and bolder, like a title
+     rather than one more "field: value" strip. */
   .data-table td[data-label], .di-table td[data-label] {
-    justify-content: space-between; text-align: right;
+    grid-column: 1 / -1 !important;
+    display: flex !important; align-items: center;
+    gap: 10px;
+    padding: 13px 14px !important;
+    font-size: 14px !important; font-weight: 700 !important;
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-elevated);
   }
-  .data-table td[data-label]::before, .di-table td[data-label]::before {
+  .data-table td[data-label]::before, .di-table td[data-label]::before { content: none; }
+
+  /* Every data-label cell AFTER the first one (matched via the general
+     sibling combinator, so this works whether the header is the row's
+     very first cell or is preceded by a now-hidden checkbox column) is
+     secondary metadata: demote it back out of the header treatment into
+     a compact "small caps label, value below" chip, two per row. */
+  .data-table td[data-label] ~ td[data-label],
+  .di-table td[data-label] ~ td[data-label] {
+    grid-column: span 1 !important;
+    display: flex !important; flex-direction: column; gap: 3px;
+    padding: 10px 14px !important;
+    font-size: 13px !important; font-weight: 500 !important;
+    background: none;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .data-table td[data-label] ~ td[data-label]::before,
+  .di-table td[data-label] ~ td[data-label]::before {
     content: attr(data-label);
-    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
     letter-spacing: 0.4px; color: var(--text-400);
-    text-align: left; flex-shrink: 0;
   }
-  .data-table td:empty, .di-table td:empty { display: none; }
+
+  /* The trailing unlabeled cell (view/edit/delete icon buttons) becomes
+     a bottom action bar instead of an awkward, unlabeled middle row. */
+  .data-table td:not([data-label]), .di-table td:not([data-label]) {
+    grid-column: 1 / -1 !important;
+    display: flex !important; align-items: center; justify-content: flex-end;
+    gap: 6px;
+    padding: 9px 12px !important;
+    background: var(--bg-elevated);
+  }
+  /* Action buttons some desktop tables only reveal with :hover (a
+     button.row-acts-style wrapper with opacity:0) have no equivalent
+     gesture on a touchscreen — force them visible in the card view. */
+  .data-table td:not([data-label]) [style*="opacity:0"],
+  .data-table td:not([data-label]) [style*="opacity: 0"],
+  .data-table td:not([data-label]) .row-acts,
+  .di-table td:not([data-label]) .row-acts {
+    opacity: 1 !important;
+  }
+
+  .data-table td:empty, .di-table td:empty { display: none !important; }
 }
 
 /* ── Badges ─────────────────────────────────────────────────────── */
