@@ -948,6 +948,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
             Route::post('chatbot',                  [Tenant\WhatsappChatbotController::class, 'storeFlow'])->name('chatbot.store');
             Route::put('chatbot/{id}',              [Tenant\WhatsappChatbotController::class, 'updateFlow'])->name('chatbot.update');
             Route::post('chatbot/{id}/toggle',      [Tenant\WhatsappChatbotController::class, 'toggleFlow'])->name('chatbot.toggle');
+            Route::post('chatbot/{id}/position',    [Tenant\WhatsappChatbotController::class, 'updateFlowPosition'])->name('chatbot.position');
             Route::delete('chatbot/{id}',           [Tenant\WhatsappChatbotController::class, 'destroyFlow'])->name('chatbot.destroy');
             Route::get('api-settings',              [Tenant\WhatsappChatbotController::class, 'settings'])->name('api-settings');
             Route::post('api-settings',             [Tenant\WhatsappChatbotController::class, 'saveSettings'])->name('api-settings.save');

@@ -363,6 +363,21 @@ class WhatsappChatbotController extends Controller
         return $quickReplies ?: null;
     }
 
+    // ── Chatbot Flows — canvas position (drag save) ────────────────
+    public function updateFlowPosition(Request $request, int $id): JsonResponse
+    {
+        $request->validate([
+            'canvas_x' => ['required', 'integer'],
+            'canvas_y' => ['required', 'integer'],
+        ]);
+
+        WhatsappChatbotFlow::where('id', $id)
+            ->where('tenant_id', $this->tenantId())
+            ->update(['canvas_x' => $request->canvas_x, 'canvas_y' => $request->canvas_y]);
+
+        return response()->json(['success' => true]);
+    }
+
     // ── Chatbot Flows — toggle ────────────────────────────────────
     public function toggleFlow(int $id): JsonResponse
     {

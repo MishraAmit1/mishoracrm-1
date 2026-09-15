@@ -23,6 +23,8 @@ class WhatsappChatbotFlow extends Model
         'is_active',
         'triggered_count',
         'sort_order',
+        'canvas_x',
+        'canvas_y',
     ];
 
     protected $casts = [
@@ -31,6 +33,8 @@ class WhatsappChatbotFlow extends Model
         'is_default'       => 'boolean',
         'is_active'        => 'boolean',
         'triggered_count'  => 'integer',
+        'canvas_x'         => 'integer',
+        'canvas_y'         => 'integer',
     ];
 
     public function matches(string $text): bool
