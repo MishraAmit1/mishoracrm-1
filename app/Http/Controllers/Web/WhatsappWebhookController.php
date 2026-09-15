@@ -77,8 +77,22 @@ class WhatsappWebhookController extends Controller
         }
 
         $messageText = null;
+        $buttonId    = null;
         if ($messageType === 'text') {
             $messageText = $message['text']['body'] ?? null;
+        } elseif ($messageType === 'interactive') {
+            // Tapping a reply button/list option feeds its title back in as
+            // if the user had typed it (keyword-matching fallback); if the
+            // button was explicitly linked to a next flow, $buttonId lets the
+            // chatbot service jump straight there instead.
+            $interactiveType = $message['interactive']['type'] ?? null;
+            if ($interactiveType === 'button_reply') {
+                $messageText = $message['interactive']['button_reply']['title'] ?? null;
+                $buttonId    = $message['interactive']['button_reply']['id'] ?? null;
+            } elseif ($interactiveType === 'list_reply') {
+                $messageText = $message['interactive']['list_reply']['title'] ?? null;
+                $buttonId    = $message['interactive']['list_reply']['id'] ?? null;
+            }
         }
 
         // Log incoming message
@@ -99,7 +113,7 @@ class WhatsappWebhookController extends Controller
         // replies first, then the tenant's own flows.
         if ($messageText) {
             try {
-                (new WhatsappChatbotService($setting))->handleIncomingMessage($waId, $messageText, $contactName);
+                (new WhatsappChatbotService($setting))->handleIncomingMessage($waId, $messageText, $contactName, $buttonId);
             } catch (\Throwable $e) {
                 Log::error('WhatsApp inbound processing failed', ['error' => $e->getMessage()]);
             }

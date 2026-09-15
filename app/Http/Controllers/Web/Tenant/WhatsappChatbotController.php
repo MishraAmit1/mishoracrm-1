@@ -278,12 +278,15 @@ class WhatsappChatbotController extends Controller
     public function storeFlow(Request $request): RedirectResponse
     {
         $request->validate([
-            'name'             => ['required', 'string', 'max:255'],
-            'trigger_keywords' => ['required', 'string'],
-            'keyword_match'    => ['required', 'in:any,exact,contains'],
-            'response_message' => ['required', 'string', 'max:4096'],
-            'action'           => ['nullable', 'in:loyalty_join'],
-            'is_default'       => ['nullable'],
+            'name'                        => ['required', 'string', 'max:255'],
+            'trigger_keywords'            => ['required', 'string'],
+            'keyword_match'               => ['required', 'in:any,exact,contains'],
+            'response_message'            => ['required', 'string', 'max:4096'],
+            'action'                      => ['nullable', 'in:loyalty_join'],
+            'is_default'                  => ['nullable'],
+            'quick_replies'               => ['nullable', 'array', 'max:3'],
+            'quick_replies.*.title'       => ['nullable', 'string', 'max:20'],
+            'quick_replies.*.next_flow_id'=> ['nullable', 'integer'],
         ]);
 
         $keywords = array_map('trim', explode(',', $request->trigger_keywords));
@@ -295,6 +298,7 @@ class WhatsappChatbotController extends Controller
             'keyword_match'    => $request->keyword_match,
             'response_message' => $request->response_message,
             'action'           => $request->action ?: null,
+            'quick_replies'    => $this->buildQuickReplies($request),
             'is_default'       => (bool) $request->is_default,
             'is_active'        => true,
         ]);
@@ -309,12 +313,15 @@ class WhatsappChatbotController extends Controller
             ->where('tenant_id', $this->tenantId())->firstOrFail();
 
         $request->validate([
-            'name'             => ['required', 'string', 'max:255'],
-            'trigger_keywords' => ['required', 'string'],
-            'keyword_match'    => ['required', 'in:any,exact,contains'],
-            'response_message' => ['required', 'string', 'max:4096'],
-            'action'           => ['nullable', 'in:loyalty_join'],
-            'is_default'       => ['nullable'],
+            'name'                        => ['required', 'string', 'max:255'],
+            'trigger_keywords'            => ['required', 'string'],
+            'keyword_match'               => ['required', 'in:any,exact,contains'],
+            'response_message'            => ['required', 'string', 'max:4096'],
+            'action'                      => ['nullable', 'in:loyalty_join'],
+            'is_default'                  => ['nullable'],
+            'quick_replies'               => ['nullable', 'array', 'max:3'],
+            'quick_replies.*.title'       => ['nullable', 'string', 'max:20'],
+            'quick_replies.*.next_flow_id'=> ['nullable', 'integer'],
         ]);
 
         $keywords = array_map('trim', explode(',', $request->trigger_keywords));
@@ -325,10 +332,35 @@ class WhatsappChatbotController extends Controller
             'keyword_match'    => $request->keyword_match,
             'response_message' => $request->response_message,
             'action'           => $request->action ?: null,
+            'quick_replies'    => $this->buildQuickReplies($request),
             'is_default'       => (bool) $request->is_default,
         ]);
 
         return back()->with('success', 'Chatbot flow updated.');
+    }
+
+    // ── Chatbot Flows — build quick_replies payload ────────────────
+    // Drops empty rows and strips any next_flow_id that doesn't belong to
+    // this tenant (defends against a tampered/stale form submission).
+    private function buildQuickReplies(Request $request): ?array
+    {
+        $rows = $request->input('quick_replies', []);
+        if (!is_array($rows) || empty($rows)) return null;
+
+        $validFlowIds = WhatsappChatbotFlow::where('tenant_id', $this->tenantId())->pluck('id')->all();
+
+        $quickReplies = [];
+        foreach (array_slice($rows, 0, 3) as $row) {
+            $title = trim((string) ($row['title'] ?? ''));
+            if ($title === '') continue;
+
+            $nextFlowId = $row['next_flow_id'] ?? null;
+            $nextFlowId = ($nextFlowId && in_array((int) $nextFlowId, $validFlowIds, true)) ? (int) $nextFlowId : null;
+
+            $quickReplies[] = ['title' => $title, 'next_flow_id' => $nextFlowId];
+        }
+
+        return $quickReplies ?: null;
     }
 
     // ── Chatbot Flows — toggle ────────────────────────────────────

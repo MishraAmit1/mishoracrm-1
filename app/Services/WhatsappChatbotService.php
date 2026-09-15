@@ -177,7 +177,11 @@ class WhatsappChatbotService
     // replies (self-check + QR "join") run first — they have their own opt-in
     // switches and work even if the tenant hasn't enabled the full chatbot —
     // then the tenant's own chatbot flows.
-    public function handleIncomingMessage(string $waId, string $messageText, ?string $contactName = null): bool
+    // $buttonId is set only when the inbound message is a tap on a quick-reply
+    // button (see WhatsappWebhookController) — when that button was explicitly
+    // linked to a next flow (via the "next_flow_id" field in Quick Reply
+    // Buttons), we jump straight there instead of keyword-matching $messageText.
+    public function handleIncomingMessage(string $waId, string $messageText, ?string $contactName = null, ?string $buttonId = null): bool
     {
         $tenant = Tenant::find($this->settings->tenant_id);
 
@@ -195,24 +199,35 @@ class WhatsappChatbotService
         $session = WhatsappChatbotSession::getOrCreate($this->settings->tenant_id, $waId, $contactName);
         $session->update(['last_message_at' => now()]);
 
-        // Find matching flow
-        $flows = WhatsappChatbotFlow::where('tenant_id', $this->settings->tenant_id)
-            ->where('is_active', true)
-            ->orderBy('sort_order')
-            ->orderBy('is_default') // non-default first
-            ->get();
-
         $matchedFlow = null;
-        foreach ($flows as $flow) {
-            if (!$flow->is_default && $flow->matches($messageText)) {
-                $matchedFlow = $flow;
-                break;
-            }
+
+        // Direct jump — the tapped button was linked to a specific next flow.
+        if ($buttonId && str_starts_with($buttonId, 'flow_')) {
+            $matchedFlow = WhatsappChatbotFlow::where('tenant_id', $this->settings->tenant_id)
+                ->where('id', (int) substr($buttonId, 5))
+                ->where('is_active', true)
+                ->first();
         }
 
-        // Fallback to default
+        // Otherwise — keyword match against the typed text / button title, same as before.
         if (!$matchedFlow) {
-            $matchedFlow = $flows->firstWhere('is_default', true);
+            $flows = WhatsappChatbotFlow::where('tenant_id', $this->settings->tenant_id)
+                ->where('is_active', true)
+                ->orderBy('sort_order')
+                ->orderBy('is_default') // non-default first
+                ->get();
+
+            foreach ($flows as $flow) {
+                if (!$flow->is_default && $flow->matches($messageText)) {
+                    $matchedFlow = $flow;
+                    break;
+                }
+            }
+
+            // Fallback to default
+            if (!$matchedFlow) {
+                $matchedFlow = $flows->firstWhere('is_default', true);
+            }
         }
 
         if (!$matchedFlow) return false;
@@ -224,7 +239,15 @@ class WhatsappChatbotService
             $this->enrolFromWhatsapp($tenant, $waId, $contactName);
         }
 
-        return $this->sendMessage($waId, $this->resolveMessage($matchedFlow->response_message, $tenant, $waId));
+        $body = $this->resolveMessage($matchedFlow->response_message, $tenant, $waId);
+
+        // Flows with quick-reply buttons configured get sent as an interactive
+        // message; every other flow keeps sending plain text exactly as before.
+        if (!empty($matchedFlow->quick_replies)) {
+            return $this->sendInteractiveButtons($waId, $body, $matchedFlow->quick_replies);
+        }
+
+        return $this->sendMessage($waId, $body);
     }
 
     // Send WhatsApp message via Cloud API
@@ -241,6 +264,56 @@ class WhatsappChatbotService
 
         if ($response->failed()) {
             Log::error('WhatsApp message failed', [
+                'tenant_id' => $this->settings->tenant_id,
+                'to'        => $waId,
+                'error'     => $response->json(),
+            ]);
+            return false;
+        }
+
+        return true;
+    }
+
+    // Send a WhatsApp "reply buttons" interactive message — up to 3 tappable
+    // options under $body. Each entry in $buttons is ['title' => string,
+    // 'next_flow_id' => int|null]. When a button carries a next_flow_id we
+    // encode it into the reply id (flow_{id}) so the webhook can jump straight
+    // to that flow; otherwise the button title falls back to normal keyword
+    // matching, same as typed text (see handleIncomingMessage).
+    public function sendInteractiveButtons(string $waId, string $body, array $buttons): bool
+    {
+        $buttons = array_slice(array_values(array_filter(
+            $buttons,
+            fn($b) => trim((string) ($b['title'] ?? '')) !== ''
+        )), 0, 3);
+
+        if (empty($buttons)) {
+            return $this->sendMessage($waId, $body);
+        }
+
+        $response = Http::withToken($this->settings->access_token)
+            ->post(self::GRAPH_URL . '/' . $this->settings->phone_number_id . '/messages', [
+                'messaging_product' => 'whatsapp',
+                'recipient_type'    => 'individual',
+                'to'                => $waId,
+                'type'              => 'interactive',
+                'interactive'       => [
+                    'type' => 'button',
+                    'body' => ['text' => $body],
+                    'action' => [
+                        'buttons' => collect($buttons)->values()->map(fn($btn, $i) => [
+                            'type'  => 'reply',
+                            'reply' => [
+                                'id'    => !empty($btn['next_flow_id']) ? 'flow_' . $btn['next_flow_id'] : 'kw_' . $i,
+                                'title' => mb_substr((string) $btn['title'], 0, 20),
+                            ],
+                        ])->all(),
+                    ],
+                ],
+            ]);
+
+        if ($response->failed()) {
+            Log::error('WhatsApp interactive message failed', [
                 'tenant_id' => $this->settings->tenant_id,
                 'to'        => $waId,
                 'error'     => $response->json(),

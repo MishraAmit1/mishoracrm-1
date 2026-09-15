@@ -25,6 +25,12 @@ input:checked + .toggle-slider:before { transform:translateX(16px); }
 .sessions-table { width:100%; border-collapse:collapse; }
 .sessions-table th,.sessions-table td { padding:8px 10px; text-align:left; border-bottom:1px solid var(--border-subtle); font-size:12.5px; }
 .sessions-table th { font-weight:600; color:var(--text-300); font-size:11px; text-transform:uppercase; }
+.qr-row { display:flex; gap:6px; align-items:center; }
+.qr-row .qr-input { flex:1; min-width:0; }
+.qr-row .qr-next  { flex:1; min-width:0; }
+.qr-remove { background:none; border:none; color:var(--text-400); cursor:pointer; font-size:16px; padding:0 4px; flex-shrink:0; line-height:1; }
+.qr-remove:hover { color:var(--danger); }
+.qr-link-tag { display:inline-flex; align-items:center; gap:3px; background:var(--bg-subtle); border:1px solid #25d366; border-radius:99px; padding:1px 8px; font-size:11px; color:#128C4A; margin:1px; }
 </style>
 @endpush
 
@@ -89,6 +95,17 @@ input:checked + .toggle-slider:before { transform:translateX(16px); }
                         • Triggered {{ $flow->triggered_count }}x
                     </div>
                     <div class="flow-msg">{{ $flow->response_message }}</div>
+                    @if(!empty($flow->quick_replies))
+                    <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;">
+                        @foreach($flow->quick_replies as $btn)
+                        @php $linkedFlow = !empty($btn['next_flow_id']) ? $flows->firstWhere('id', $btn['next_flow_id']) : null; @endphp
+                        <span class="qr-link-tag">
+                            🔘 {{ $btn['title'] ?? $btn }}
+                            @if($linkedFlow) <span style="opacity:.7;">→ {{ $linkedFlow->name }}</span> @endif
+                        </span>
+                        @endforeach
+                    </div>
+                    @endif
                 </div>
                 <div class="flow-actions">
                     <label class="toggle-switch">
@@ -161,6 +178,12 @@ input:checked + .toggle-slider:before { transform:translateX(16px); }
                     <span class="form-hint">Loyalty placeholders: <code>@{{loyalty_points}}</code> <code>@{{loyalty_tier}}</code> <code>@{{loyalty_redeemable}}</code> <code>@{{loyalty_lifetime}}</code> <code>@{{contact_name}}</code> <code>@{{tenant_name}}</code> — filled with the sender's real data.</span>
                     @endif
                 </div>
+                <div class="form-group">
+                    <label class="form-label">Quick Reply Buttons <span style="font-weight:400;color:var(--text-400);">(optional, max 3)</span></label>
+                    <div id="quickReplyRows" style="display:flex;flex-direction:column;gap:6px;"></div>
+                    <button type="button" class="btn btn-ghost btn-sm" id="qrAddBtn" onclick="addQuickReplyRow()" style="margin-top:6px;">+ Add Button</button>
+                    <span class="form-hint">Sends as tappable WhatsApp buttons instead of plain text. Type the button label, then pick which flow should open when it's tapped — no keyword typing needed. Leave "Next Flow" as "— text match only —" to fall back to normal keyword matching instead.</span>
+                </div>
                 @if(auth()->user()->tenant?->hasModuleEnabled('loyalty'))
                 <div class="form-group">
                     <label class="form-label">Action</label>
@@ -195,14 +218,74 @@ const flowData = {
         match: @json($flow->keyword_match),
         response: @json($flow->response_message),
         action: @json($flow->action ?? ''),
+        quick_replies: @json($flow->quick_replies ?? []),
         is_default: {{ $flow->is_default ? 'true' : 'false' }},
     },
     @endforeach
 };
+// All flows this tenant has, for the "Next Flow" dropdown. Excludes nothing —
+// linking a flow to itself is allowed but pointless, left to the user to avoid.
+const allFlows = [
+    @foreach($flows as $flow)
+    { id: {{ $flow->id }}, name: @json($flow->name) },
+    @endforeach
+];
+let editingFlowId = null;
+let qrRowIndex = 0; // ever-increasing, so a row's title + dropdown always share the same array index on submit
+
+// ── Quick reply button rows — up to 3, each with a label + "next flow" pick ──
+function renderQuickReplyRows(values) {
+    const wrap = document.getElementById('quickReplyRows');
+    wrap.innerHTML = '';
+    qrRowIndex = 0;
+    (values && values.length ? values.slice(0, 3) : []).forEach(v => addQuickReplyRow(v));
+    updateAddButton();
+}
+function addQuickReplyRow(value) {
+    value = value || {};
+    const wrap = document.getElementById('quickReplyRows');
+    if (wrap.children.length >= 3) return;
+    const idx = qrRowIndex++;
+
+    const row = document.createElement('div');
+    row.className = 'qr-row';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.name = `quick_replies[${idx}][title]`;
+    input.className = 'form-input qr-input';
+    input.maxLength = 20;
+    input.placeholder = 'Button label, e.g. Tell me more';
+    input.value = typeof value === 'string' ? value : (value.title || '');
+
+    const select = document.createElement('select');
+    select.name = `quick_replies[${idx}][next_flow_id]`;
+    select.className = 'form-input qr-next';
+    select.innerHTML = '<option value="">— text match only —</option>' +
+        allFlows.map(f => `<option value="${f.id}">→ ${f.name}</option>`).join('');
+    select.value = (typeof value === 'object' && value.next_flow_id) ? String(value.next_flow_id) : '';
+
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'qr-remove';
+    removeBtn.innerHTML = '✕';
+    removeBtn.title = 'Remove button';
+    removeBtn.onclick = () => { row.remove(); updateAddButton(); };
+
+    row.append(input, select, removeBtn);
+    wrap.appendChild(row);
+    updateAddButton();
+}
+function updateAddButton() {
+    const wrap = document.getElementById('quickReplyRows');
+    const btn = document.getElementById('qrAddBtn');
+    if (btn) btn.style.display = wrap.children.length >= 3 ? 'none' : 'inline-flex';
+}
 
 function openEditModal(id) {
     const f = flowData[id];
     if (!f) return;
+    editingFlowId = id;
     document.getElementById('formTitle').textContent = 'Edit Flow';
     document.getElementById('formMethod').value = 'PUT';
     document.getElementById('chatbotForm').action = `/whatsapp/chatbot/${id}`;
@@ -212,14 +295,18 @@ function openEditModal(id) {
     document.getElementById('flowResponse').value = f.response;
     if (document.getElementById('flowAction')) document.getElementById('flowAction').value = f.action || '';
     document.getElementById('flowDefault').checked = f.is_default;
+    renderQuickReplyRows(f.quick_replies);
     document.getElementById('formCard').scrollIntoView({ behavior: 'smooth' });
 }
 function resetForm() {
+    editingFlowId = null;
     document.getElementById('formTitle').textContent = 'Add Chatbot Flow';
     document.getElementById('formMethod').value = 'POST';
     document.getElementById('chatbotForm').action = '{{ route("tenant.whatsapp.chatbot.store") }}';
     document.getElementById('chatbotForm').reset();
+    renderQuickReplyRows([]);
 }
+renderQuickReplyRows([]);
 function toggleFlow(id, checkbox) {
     fetch(`/whatsapp/chatbot/${id}/toggle`, {
         method: 'POST',
