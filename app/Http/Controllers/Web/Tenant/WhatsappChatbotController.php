@@ -191,6 +191,8 @@ class WhatsappChatbotController extends Controller
             $settings->access_token   = $longToken;
             $settings->waba_id        = $wabaId;
             $settings->phone_number_id= $phoneNumberId;
+            $settings->display_phone_number = $phoneRes['data'][0]['display_phone_number'] ?? null;
+            $settings->verified_name        = $phoneRes['data'][0]['verified_name'] ?? null;
             $settings->is_connected   = true;
             if (!$settings->webhook_verify_token) {
                 $settings->webhook_verify_token = Str::random(32);
@@ -246,7 +248,11 @@ class WhatsappChatbotController extends Controller
             }
 
             WhatsappSetting::where('tenant_id', $this->tenantId())
-                ->update(['is_connected' => true]);
+                ->update([
+                    'is_connected'          => true,
+                    'display_phone_number'  => $info['display_phone_number'] ?? null,
+                    'verified_name'         => $info['verified_name'] ?? null,
+                ]);
 
             return response()->json(['success' => true, 'account' => $info]);
         } catch (\Throwable $e) {

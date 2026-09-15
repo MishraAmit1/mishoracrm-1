@@ -176,6 +176,51 @@ class ReportController extends Controller
         ));
     }
 
+    // ── Recent Conversions report ───────────────────────────────────
+    public function conversions(Request $request): View
+    {
+        $this->requireViewAll();
+        [$from, $to] = $this->dateRange($request);
+
+        $sources   = Lead::sources();
+        $curSource = $request->get('source', 'all');
+
+        $baseQuery = Lead::where('status', 'converted')
+            ->whereBetween('converted_at', [$from, $to])
+            ->when($curSource !== 'all', fn($q) => $q->where('source', $curSource));
+
+        // By-source breakdown (within the date range, before the source filter is applied)
+        $bySource = Lead::where('status', 'converted')
+            ->whereBetween('converted_at', [$from, $to])
+            ->selectRaw('source, COUNT(*) as count')
+            ->groupBy('source')
+            ->orderByDesc('count')
+            ->get();
+
+        $totalConverted = (clone $baseQuery)->count();
+
+        $totalDealValue = (clone $baseQuery)
+            ->join('deals', 'deals.lead_id', '=', 'leads.id')
+            ->sum('deals.value');
+
+        $avgDaysToConvert = (clone $baseQuery)
+            ->whereNotNull('converted_at')
+            ->selectRaw('AVG(DATEDIFF(converted_at, created_at)) as avg_days')
+            ->value('avg_days');
+
+        $leads = (clone $baseQuery)
+            ->with(['assignedTo:id,name', 'deal:id,lead_id,value,stage'])
+            ->orderByDesc('converted_at')
+            ->paginate(20)
+            ->withQueryString();
+
+        return view('tenant.reports.conversions', compact(
+            'leads', 'sources', 'curSource', 'bySource',
+            'totalConverted', 'totalDealValue', 'avgDaysToConvert',
+            'from', 'to', 'request'
+        ));
+    }
+
     // ── Deals report ──────────────────────────────────────────────
     public function deals(Request $request): View
     {

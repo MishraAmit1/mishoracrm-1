@@ -983,6 +983,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
             Route::get('/deal-quotations', [Tenant\ReportController::class, 'dealQuotations'])->name('deal_quotations');
             Route::get('/revenue',  [Tenant\ReportController::class, 'revenue'])->name('revenue');
             Route::get('/staff',    [Tenant\ReportController::class, 'staff'])->name('staff');
+            Route::get('/conversions', [Tenant\ReportController::class, 'conversions'])->name('conversions');
             Route::get('/subscriptions', [Tenant\ReportController::class, 'subscriptions'])->name('subscriptions');
             Route::get('/appointments',  [Tenant\ReportController::class, 'appointments'])->name('appointments');
             Route::get('/tickets',       [Tenant\ReportController::class, 'tickets'])->name('tickets');

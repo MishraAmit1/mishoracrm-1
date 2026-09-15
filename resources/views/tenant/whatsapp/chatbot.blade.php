@@ -32,9 +32,15 @@ input:checked + .toggle-slider:before { transform:translateX(16px); }
 <div class="page-header">
     <div>
         <h1 class="page-title">WhatsApp Chatbot</h1>
-        <p class="page-sub">Keyword-based auto-replies to incoming WhatsApp messages</p>
+        <p class="page-sub">
+            Keyword-based auto-replies to incoming WhatsApp messages
+            @if($settings->is_connected)
+                &nbsp;·&nbsp; Connected number: <strong style="color:var(--text-100);">{{ $settings->display_phone_number ?? '—' }}</strong>
+            @endif
+        </p>
     </div>
     <div style="display:flex;gap:8px;">
+        <a href="{{ route('tenant.reports.conversions', ['source'=>'whatsapp']) }}" class="btn btn-ghost">Recent Conversions</a>
         <a href="{{ route('tenant.whatsapp.api-settings') }}" class="btn btn-ghost">API Settings</a>
         <a href="{{ route('tenant.whatsapp.index') }}" class="btn btn-ghost">Back</a>
     </div>

@@ -94,6 +94,7 @@
         <a href="{{ route('tenant.reports.deal_quotations') }}" class="btn btn-secondary">Deal Quotations</a>
         <a href="{{ route('tenant.reports.revenue') }}"  class="btn btn-secondary">Revenue</a>
         <a href="{{ route('tenant.reports.staff') }}"    class="btn btn-secondary">Staff</a>
+        <a href="{{ route('tenant.reports.conversions') }}" class="btn btn-secondary">Recent Conversions</a>
         @if(auth()->user()->tenant?->hasModuleEnabled('subscriptions'))
         <a href="{{ route('tenant.reports.subscriptions') }}" class="btn btn-secondary">Subscriptions</a>
         @endif

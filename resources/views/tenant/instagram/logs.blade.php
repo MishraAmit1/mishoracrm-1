@@ -95,7 +95,7 @@
                     <td data-label="Status"><span class="st-{{ $log->status }}">{{ ucfirst($log->status) }}</span></td>
                     <td class="msg-cell" style="color:var(--danger);" title="{{ $log->error_message }}" data-label="Error">
                         {{ $log->error_message ? Str::limit($log->error_message, 40) : '—' }}
-                        @if($log->raw_payload)
+                        @if($log->raw_payload || $log->error_message)
                             <button type="button" class="detail-btn" onclick='showLogDetail(@json($log->error_message), @json($log->raw_payload))'>view</button>
                         @endif
                     </td>

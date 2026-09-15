@@ -431,6 +431,8 @@
                 <h3>WhatsApp Business Connected</h3>
                 <p style="font-size:13px;color:var(--text-300);margin:0;">Coexistence mode — phone app + CRM automation dono kaam kar rahe hain.</p>
                 <div class="wa-meta-row">
+                    <div class="wa-meta-item"><strong>Connected Number</strong>{{ $settings->display_phone_number ?? 'Unknown — click Test Connection' }}</div>
+                    <div class="wa-meta-item"><strong>Verified Name</strong>{{ $settings->verified_name ?? '—' }}</div>
                     <div class="wa-meta-item"><strong>Phone Number ID</strong>{{ $settings->phone_number_id ?? '—' }}</div>
                     <div class="wa-meta-item"><strong>WABA ID</strong>{{ $settings->waba_id ?? '—' }}</div>
                 </div>
@@ -641,8 +643,12 @@ function testConnection() {
     })
     .then(r => r.json())
     .then(data => {
-        if (data.success) alert('Connected! ' + (data.account?.display_phone_number ?? ''));
-        else alert('Failed: ' + data.message);
+        if (data.success) {
+            alert('Connected! ' + (data.account?.display_phone_number ?? ''));
+            location.reload();
+        } else {
+            alert('Failed: ' + data.message);
+        }
     })
     .catch(() => alert('Request failed.'))
     .finally(() => { btn.textContent = 'Test Connection'; btn.disabled = false; });

@@ -10,6 +10,8 @@ class WhatsappSetting extends Model
         'tenant_id',
         'phone_number_id',
         'waba_id',
+        'display_phone_number',
+        'verified_name',
         'access_token',
         'webhook_verify_token',
         'chatbot_enabled',
