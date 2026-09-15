@@ -184,13 +184,31 @@ input:checked + .toggle-slider:before { transform:translateX(16px); }
                     <button type="button" class="btn btn-ghost btn-sm" id="qrAddBtn" onclick="addQuickReplyRow()" style="margin-top:6px;">+ Add Button</button>
                     <span class="form-hint">Sends as tappable WhatsApp buttons instead of plain text. Type the button label, then pick which flow should open when it's tapped — no keyword typing needed. Leave "Next Flow" as "— text match only —" to fall back to normal keyword matching instead.</span>
                 </div>
-                @if(auth()->user()->tenant?->hasModuleEnabled('loyalty'))
+                @php
+                    $tenant = auth()->user()->tenant;
+                    $hasLoyalty      = $tenant?->hasModuleEnabled('loyalty');
+                    $hasAppointments = $tenant?->hasModuleEnabled('appointments');
+                    $hasTickets      = $tenant?->hasModuleEnabled('tickets');
+                @endphp
+                @if($hasLoyalty || $hasAppointments || $hasTickets)
                 <div class="form-group">
                     <label class="form-label">Action</label>
                     <select name="action" id="flowAction" class="form-input">
                         <option value="">None — just send the message</option>
+                        @if($hasLoyalty)
                         <option value="loyalty_join">Enrol the sender in the loyalty programme (grants the welcome bonus)</option>
+                        <option value="loyalty_balance">Reply with their real loyalty points balance (live lookup)</option>
+                        @endif
+                        @if($hasAppointments)
+                        <option value="book_appointment">Send the real appointment booking link (live slots)</option>
+                        @endif
+                        @if($hasTickets)
+                        <option value="raise_ticket">Send the support ticket link (creates a ticket for your team)</option>
+                        @endif
                     </select>
+                    <span class="form-hint">
+                        For "balance"/"booking link"/"ticket link" actions: put <code>@{{loyalty_points}}</code> / <code>@{{booking_link}}</code> / <code>@{{support_link}}</code> in your Response Message where you want it — or just leave it out, it gets appended automatically.
+                    </span>
                 </div>
                 @endif
                 <div class="form-group">

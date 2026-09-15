@@ -124,7 +124,33 @@ class WhatsappChatbotService
             '{{loyalty_lifetime}}'   => number_format((int) ($contact->loyalty_lifetime_points ?? 0)),
             '{{loyalty_tier}}'       => $contact?->loyaltyTierLabel() ?? '—',
             '{{loyalty_redeemable}}' => '₹' . number_format($value, 0),
+            '{{booking_link}}'       => $tenant?->bookingPublicUrl() ?? '',
+            '{{support_link}}'       => $tenant?->supportPublicUrl() ?? '',
         ]);
+    }
+
+    // Shared by the "points"/"balance" self-check keyword AND the
+    // loyalty_balance flow action — a real, live lookup (not a placeholder
+    // fill), so it works even if the admin's flow text has no {{loyalty_*}}
+    // tokens in it, and it correctly handles "no account found" either way.
+    private function loyaltyBalanceReply(Tenant $tenant, string $waId): string
+    {
+        $contact = $this->findContactByWaId($tenant, $waId);
+
+        if (!$contact) {
+            return "We couldn't find a loyalty account for this number. Please ask our staff to add you on your next visit!";
+        }
+
+        $s     = $tenant->loyaltySettings();
+        $block = (int) $s['redeem_points_block'];
+        $value = $block > 0 ? floor((int) $contact->loyalty_points / $block) * (float) $s['redeem_value'] : 0;
+        $tier  = $contact->loyaltyTierLabel();
+
+        return "Hi {$contact->name}! 🎁\n"
+            . 'Loyalty points: ' . number_format((int) $contact->loyalty_points) . ($tier ? " ({$tier})" : '') . "\n"
+            . ($value > 0
+                ? 'Worth up to ₹' . number_format($value, 0) . " off your next bill at {$tenant->name}."
+                : "Keep visiting {$tenant->name} to earn rewards!");
     }
 
     // Loyalty self-check: a customer texts "points" / "balance" / "rewards" and
@@ -153,24 +179,7 @@ class WhatsappChatbotService
             return false;
         }
 
-        $contact = $this->findContactByWaId($tenant, $waId);
-
-        if (!$contact) {
-            return $this->sendMessage($waId, "We couldn't find a loyalty account for this number. Please ask our staff to add you on your next visit!");
-        }
-
-        $s     = $tenant->loyaltySettings();
-        $block = (int) $s['redeem_points_block'];
-        $value = $block > 0 ? floor((int) $contact->loyalty_points / $block) * (float) $s['redeem_value'] : 0;
-        $tier  = $contact->loyaltyTierLabel();
-
-        $reply = "Hi {$contact->name}! 🎁\n"
-            . 'Loyalty points: ' . number_format((int) $contact->loyalty_points) . ($tier ? " ({$tier})" : '') . "\n"
-            . ($value > 0
-                ? 'Worth up to ₹' . number_format($value, 0) . " off your next bill at {$tenant->name}."
-                : "Keep visiting {$tenant->name} to earn rewards!");
-
-        return $this->sendMessage($waId, $reply);
+        return $this->sendMessage($waId, $this->loyaltyBalanceReply($tenant, $waId));
     }
 
     // Single entry point for every inbound WhatsApp text. Loyalty's built-in
@@ -234,12 +243,39 @@ class WhatsappChatbotService
 
         $matchedFlow->incrementTriggered();
 
-        // Flow-attached side effect (e.g. enrol the sender in loyalty).
-        if ($matchedFlow->action === 'loyalty_join' && $tenant && $tenant->hasModuleEnabled('loyalty')) {
-            $this->enrolFromWhatsapp($tenant, $waId, $contactName);
-        }
-
         $body = $this->resolveMessage($matchedFlow->response_message, $tenant, $waId);
+
+        // Flow-attached actions — each does a real lookup/side-effect rather
+        // than trusting the admin got the {{placeholder}} syntax right.
+        switch ($matchedFlow->action) {
+            case 'loyalty_join':
+                if ($tenant && $tenant->hasModuleEnabled('loyalty')) {
+                    $this->enrolFromWhatsapp($tenant, $waId, $contactName);
+                }
+                break;
+
+            case 'loyalty_balance':
+                // Live balance lookup replaces whatever static text the admin
+                // wrote — reliable even without {{loyalty_*}} placeholders.
+                if ($tenant && $tenant->hasModuleEnabled('loyalty')) {
+                    $body = $this->loyaltyBalanceReply($tenant, $waId);
+                }
+                break;
+
+            case 'book_appointment':
+                // Real, live-availability booking page — safety net in case
+                // the admin's message text doesn't already have the link.
+                if ($tenant && $tenant->hasModuleEnabled('appointments') && !str_contains($body, $tenant->bookingPublicUrl())) {
+                    $body = rtrim($body) . "\n\n" . $tenant->bookingPublicUrl();
+                }
+                break;
+
+            case 'raise_ticket':
+                if ($tenant && $tenant->hasModuleEnabled('tickets') && !str_contains($body, $tenant->supportPublicUrl())) {
+                    $body = rtrim($body) . "\n\n" . $tenant->supportPublicUrl();
+                }
+                break;
+        }
 
         // Flows with quick-reply buttons configured get sent as an interactive
         // message; every other flow keeps sending plain text exactly as before.

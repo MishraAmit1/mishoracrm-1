@@ -9,7 +9,7 @@ class WhatsappChatbotFlow extends Model
 {
     use BelongsToTenant;
 
-    public const ACTIONS = ['loyalty_join'];
+    public const ACTIONS = ['loyalty_join', 'loyalty_balance', 'book_appointment', 'raise_ticket'];
 
     protected $fillable = [
         'tenant_id',
