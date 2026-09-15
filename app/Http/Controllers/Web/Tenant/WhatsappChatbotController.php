@@ -89,6 +89,7 @@ class WhatsappChatbotController extends Controller
         $scope = implode(',', [
             'whatsapp_business_management',
             'whatsapp_business_messaging',
+            'business_management',
         ]);
 
         $metaUrl = 'https://www.facebook.com/v19.0/dialog/oauth?' . http_build_query([
