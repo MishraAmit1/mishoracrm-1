@@ -349,10 +349,12 @@ class WhatsappChatbotService
 
     // Send a WhatsApp "reply buttons" interactive message — up to 3 tappable
     // options under $body. Each entry in $buttons is ['title' => string,
-    // 'next_flow_id' => int|null]. When a button carries a next_flow_id we
-    // encode it into the reply id (flow_{id}) so the webhook can jump straight
-    // to that flow; otherwise the button title falls back to normal keyword
-    // matching, same as typed text (see handleIncomingMessage).
+    // 'next_flow_id' => int|null, 'reply_id' => string|null]. An explicit
+    // 'reply_id' is used verbatim (e.g. "qacc_{token}" for a quotation
+    // accept/reject button handled directly in WhatsappWebhookController);
+    // otherwise a next_flow_id is encoded as flow_{id} so the webhook can
+    // jump straight to that flow, and with neither the button title falls
+    // back to normal keyword matching, same as typed text (see handleIncomingMessage).
     public function sendInteractiveButtons(string $waId, string $body, array $buttons): bool
     {
         $buttons = array_slice(array_values(array_filter(
@@ -377,7 +379,7 @@ class WhatsappChatbotService
                         'buttons' => collect($buttons)->values()->map(fn($btn, $i) => [
                             'type'  => 'reply',
                             'reply' => [
-                                'id'    => !empty($btn['next_flow_id']) ? 'flow_' . $btn['next_flow_id'] : 'kw_' . $i,
+                                'id'    => $btn['reply_id'] ?? (!empty($btn['next_flow_id']) ? 'flow_' . $btn['next_flow_id'] : 'kw_' . $i),
                                 'title' => mb_substr((string) $btn['title'], 0, 20),
                             ],
                         ])->all(),

@@ -395,6 +395,21 @@ class QuotationController extends Controller
 
         @unlink($tmpPath);
 
+        // Follow-up interactive message — lets the customer accept/reject right
+        // inside WhatsApp (see WhatsappWebhookController for the qacc_/qrej_ handling)
+        // instead of only linking out to the public page.
+        if ($ok && !$quotation->hasCustomerResponded()) {
+            $token = $quotation->ensurePublicToken();
+            $service->sendInteractiveButtons(
+                $waId,
+                "Do you accept quotation {$quotation->number}?",
+                [
+                    ['title' => 'Accept', 'reply_id' => "qacc_{$token}"],
+                    ['title' => 'Reject', 'reply_id' => "qrej_{$token}"],
+                ]
+            );
+        }
+
         WhatsappLog::create([
             'tenant_id'       => $quotation->tenant_id,
             'contact_id'      => $contact->id,
