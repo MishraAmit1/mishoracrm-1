@@ -468,6 +468,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
                 Route::post('/{id}/status', 'updateStatus')->name('update_status');
                 Route::get('/{id}/pdf', 'pdf')->name('pdf');
                 Route::post('/{id}/send', 'send')->name('send');
+                Route::post('/{id}/send-whatsapp', 'sendWhatsapp')->name('send_whatsapp');
                 Route::post('/{id}/convert', 'convertToInvoice')->name('convert');
                 Route::post('/{id}/new-version', 'newVersion')->name('new_version');
                 Route::get('/{id}/data', 'quotationData')->name('data');
@@ -502,6 +503,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
                 Route::post('/{id}/status', 'updateStatus')->name('update_status');
                 Route::get('/{id}/pdf', 'pdf')->name('pdf');
                 Route::post('/{id}/send', 'send')->name('send');
+                Route::post('/{id}/send-whatsapp', 'sendWhatsapp')->name('send_whatsapp');
                 Route::post('/{id}/record-payment', 'recordPayment')->name('record_payment');
 
                 // Loyalty points redemption + campaign coupons against an invoice.

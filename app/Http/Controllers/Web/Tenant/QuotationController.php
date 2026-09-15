@@ -14,8 +14,11 @@ use App\Models\Quotation;
 use App\Models\QuotationTermsTemplate;
 use App\Models\Service;
 use App\Models\User;
+use App\Models\WhatsappLog;
+use App\Models\WhatsappSetting;
 use App\Services\EmailService;
 use App\Services\QuotationService;
+use App\Services\WhatsappChatbotService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -346,6 +349,76 @@ class QuotationController extends Controller
         $ccNote = count($cc) ? ' (cc: ' . count($cc) . ')' : '';
 
         return back()->with('success', "Quotation sent to {$toEmail}{$ccNote}.");
+    }
+
+    // ── Send via WhatsApp ─────────────────────────────────────────
+    public function sendWhatsapp(int|string $id): RedirectResponse
+    {
+        $quotation = $this->findQuotation($id);
+        $this->authorize('view', $quotation);
+        abort_unless(auth()->user()->user_type === 'superadmin' || auth()->user()->can('quotations.send'), 403);
+        $quotation->load('contact');
+
+        $contact = $quotation->contact;
+        if (!$contact?->phone) {
+            return back()->with('error', 'Contact has no phone number.');
+        }
+
+        $settings = WhatsappSetting::forTenant($quotation->tenant_id);
+        if (!$settings->exists || !$settings->is_connected) {
+            return back()->with('error', 'WhatsApp is not connected. Please configure it in WhatsApp API Settings first.');
+        }
+
+        $service = WhatsappChatbotService::forTenant($quotation->tenant_id);
+        $waId    = preg_replace('/[^0-9]/', '', $contact->phone);
+        $tenant  = auth()->user()->tenant;
+
+        $message = "Hi {$contact->name}, please find your quotation {$quotation->number} from {$tenant->name} for "
+            . $quotation->currencySymbol() . number_format($quotation->total, 2)
+            . ". View and accept/reject here: {$quotation->publicUrl()}";
+
+        $pdfContent = Pdf::loadView('tenant.quotations.pdf', compact('quotation', 'tenant'))
+            ->setPaper('a4', 'portrait')
+            ->output();
+
+        $tmpPath = tempnam(sys_get_temp_dir(), 'quo') . '.pdf';
+        file_put_contents($tmpPath, $pdfContent);
+
+        $mediaId = $service->uploadMedia($tmpPath, 'application/pdf');
+        $ok      = false;
+        $error   = $service->lastError;
+
+        if ($mediaId) {
+            $ok    = $service->sendMediaMessage($waId, $mediaId, 'document', $message, "Quotation-{$quotation->number}.pdf");
+            $error = $ok ? null : ($service->lastError ?? 'WhatsApp API rejected the media message.');
+        }
+
+        @unlink($tmpPath);
+
+        WhatsappLog::create([
+            'tenant_id'       => $quotation->tenant_id,
+            'contact_id'      => $contact->id,
+            'sent_by'         => auth()->id(),
+            'to_phone'        => $contact->phone,
+            'to_name'         => $contact->name,
+            'message'         => $message,
+            'status'          => $ok ? 'sent' : 'failed',
+            'error_message'   => $error,
+            'media_type'      => 'document',
+            'media_id'        => $mediaId,
+            'attachment_name' => "Quotation-{$quotation->number}.pdf",
+            'sent_at'         => now(),
+        ]);
+
+        if (!$ok) {
+            return back()->with('error', 'Failed to send WhatsApp message' . ($error ? ": {$error}" : '.'));
+        }
+
+        if ($quotation->status === 'draft') {
+            $quotation->update(['status' => 'sent']);
+        }
+
+        return back()->with('success', "Quotation sent to {$contact->phone} via WhatsApp.");
     }
 
     // ── Convert to Invoice ────────────────────────────────────────

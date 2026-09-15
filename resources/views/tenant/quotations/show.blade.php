@@ -576,6 +576,19 @@
                 </form>
                 @endif
 
+                @if($quotation->contact?->phone)
+                <form method="POST" action="{{ route('tenant.quotations.send_whatsapp',$quotation->id) }}"
+                      onsubmit="return confirm('Send this quotation to {{ addslashes($quotation->contact->phone) }} via WhatsApp?')">
+                    @csrf
+                    <button type="submit" class="qs-action-btn" style="margin-top:7px">
+                        <div class="qs-act-icon" style="background:var(--green-dim)">
+                            <i class="ti ti-brand-whatsapp" style="font-size:15px;color:var(--green)"></i>
+                        </div>
+                        Send via WhatsApp
+                    </button>
+                </form>
+                @endif
+
                 @if($canEdit)
                 <a href="{{ route('tenant.quotations.edit',$quotation->id) }}" class="qs-action-btn" style="margin-top:7px">
                     <div class="qs-act-icon" style="background:var(--purple-dim)">

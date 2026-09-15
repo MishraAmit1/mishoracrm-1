@@ -10,6 +10,8 @@ use App\Models\Product;
 use App\Models\Quotation;
 use App\Models\Service;
 use App\Models\ServiceSubscription;
+use App\Models\WhatsappLog;
+use App\Models\WhatsappSetting;
 use App\Services\EmailService;
 use App\Services\InvoicePdfTemplateRenderer;
 use App\Services\LoyaltyCampaignService;
@@ -17,6 +19,7 @@ use App\Services\LoyaltyService;
 use App\Services\NotificationService;
 use App\Services\StockService;
 use App\Services\WebhookService;
+use App\Services\WhatsappChatbotService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -547,6 +550,71 @@ class InvoiceController extends Controller
         $ccNote = count($cc) ? ' (cc: ' . count($cc) . ')' : '';
 
         return back()->with('success', "Invoice sent to {$email}{$ccNote}.");
+    }
+
+    // ── Send via WhatsApp ─────────────────────────────────────────
+    public function sendWhatsapp(int|string $id): RedirectResponse
+    {
+        $invoice = $this->findInvoice($id);
+        $invoice->load('contact');
+
+        $contact = $invoice->contact;
+        if (!$contact?->phone) {
+            return back()->with('error', 'Contact has no phone number.');
+        }
+
+        $settings = WhatsappSetting::forTenant($invoice->tenant_id);
+        if (!$settings->exists || !$settings->is_connected) {
+            return back()->with('error', 'WhatsApp is not connected. Please configure it in WhatsApp API Settings first.');
+        }
+
+        $service = WhatsappChatbotService::forTenant($invoice->tenant_id);
+        $waId    = preg_replace('/[^0-9]/', '', $contact->phone);
+        $tenant  = auth()->user()->tenant;
+
+        $message = "Hi {$contact->name}, please find your invoice {$invoice->number} from {$tenant->name} for "
+            . "₹" . number_format($invoice->total, 2) . ", due on {$invoice->due_date?->format('d M Y')}.";
+
+        $pdfContent = $this->buildInvoicePdf($invoice)->output();
+
+        $tmpPath = tempnam(sys_get_temp_dir(), 'inv') . '.pdf';
+        file_put_contents($tmpPath, $pdfContent);
+
+        $mediaId = $service->uploadMedia($tmpPath, 'application/pdf');
+        $ok      = false;
+        $error   = $service->lastError;
+
+        if ($mediaId) {
+            $ok    = $service->sendMediaMessage($waId, $mediaId, 'document', $message, "Invoice-{$invoice->number}.pdf");
+            $error = $ok ? null : ($service->lastError ?? 'WhatsApp API rejected the media message.');
+        }
+
+        @unlink($tmpPath);
+
+        WhatsappLog::create([
+            'tenant_id'       => $invoice->tenant_id,
+            'contact_id'      => $contact->id,
+            'sent_by'         => auth()->id(),
+            'to_phone'        => $contact->phone,
+            'to_name'         => $contact->name,
+            'message'         => $message,
+            'status'          => $ok ? 'sent' : 'failed',
+            'error_message'   => $error,
+            'media_type'      => 'document',
+            'media_id'        => $mediaId,
+            'attachment_name' => "Invoice-{$invoice->number}.pdf",
+            'sent_at'         => now(),
+        ]);
+
+        if (!$ok) {
+            return back()->with('error', 'Failed to send WhatsApp message' . ($error ? ": {$error}" : '.'));
+        }
+
+        if ($invoice->status === 'draft') {
+            $invoice->update(['status' => 'sent']);
+        }
+
+        return back()->with('success', "Invoice sent to {$contact->phone} via WhatsApp.");
     }
 
     // ── Record payment(s) — one or more line items in a single submit ─
