@@ -67,6 +67,7 @@
                     <th>Sent By</th>
                     <th>Time</th>
                     <th>Status</th>
+                    <th>Error</th>
                     <th></th>
                 </tr>
             </thead>
@@ -105,6 +106,18 @@
                         <span style="background:var(--{{ $sc[0] }}-dim);color:var(--{{ $sc[0] }});font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px">
                             {{ $sc[1] }}
                         </span>
+                    </td>
+                    <td style="max-width:220px" data-label="Error">
+                        @if($log->status === 'failed' && $log->error_message)
+                        <span style="font-size:11.5px;color:var(--red);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:help;"
+                              title="{{ $log->error_message }}">
+                            ⚠️ {{ Str::limit($log->error_message, 45) }}
+                        </span>
+                        @elseif($log->status === 'failed')
+                        <span style="font-size:11.5px;color:var(--text-400);">No error detail captured</span>
+                        @else
+                        <span style="color:var(--text-400);">—</span>
+                        @endif
                     </td>
                     <td>
                         @if($log->to_phone)
