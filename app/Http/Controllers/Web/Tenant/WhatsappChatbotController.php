@@ -24,14 +24,21 @@ class WhatsappChatbotController extends Controller
     }
 
     // ── Settings — show ───────────────────────────────────────────
-    public function settings(): View
+    public function settings(): Response
     {
         $settings = WhatsappSetting::forTenant($this->tenantId());
 
         $metaAppId  = PlatformSetting::get('meta_app_id');
         $metaConfigId = PlatformSetting::get('meta_wa_embedded_config_id');
 
-        return view('tenant.whatsapp.chatbot-settings', compact('settings', 'metaAppId', 'metaConfigId'));
+        $view = view('tenant.whatsapp.chatbot-settings', compact('settings', 'metaAppId', 'metaConfigId'));
+
+        // Chrome's FedCM auto-intercepts the Facebook Login popup on this page,
+        // silently swapping our WhatsApp Embedded Signup request (config_id,
+        // business scopes) for a generic openid/token identity check — which
+        // then fails "URL blocked" since that isn't a whitelisted redirect.
+        // Opting the page out of FedCM forces the normal OAuth popup instead.
+        return response($view)->header('Permissions-Policy', 'identity-credentials-get=()');
     }
 
     // ── Settings — save ───────────────────────────────────────────
