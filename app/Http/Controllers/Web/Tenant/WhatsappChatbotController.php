@@ -27,7 +27,11 @@ class WhatsappChatbotController extends Controller
     public function settings(): View
     {
         $settings = WhatsappSetting::forTenant($this->tenantId());
-        return view('tenant.whatsapp.chatbot-settings', compact('settings'));
+
+        $metaAppId  = PlatformSetting::get('meta_app_id');
+        $metaConfigId = PlatformSetting::get('meta_wa_embedded_config_id');
+
+        return view('tenant.whatsapp.chatbot-settings', compact('settings', 'metaAppId', 'metaConfigId'));
     }
 
     // ── Settings — save ───────────────────────────────────────────
@@ -235,6 +239,87 @@ class WhatsappChatbotController extends Controller
         }
 
         return response()->json(['connected' => false]);
+    }
+
+    // ── Embedded Signup — Connect (authenticated, called from CRM tab) ──
+    // Tenant clicks "Connect WhatsApp" → FB.login() embedded-signup popup
+    // runs in this same browser → JS posts the resulting `code` (+ the
+    // waba_id/phone_number_id captured from the popup's postMessage) here.
+    public function embeddedSignupConnect(Request $request): JsonResponse
+    {
+        $request->validate([
+            'code'            => ['required', 'string'],
+            'waba_id'         => ['required', 'string'],
+            'phone_number_id' => ['required', 'string'],
+        ]);
+
+        $appId     = PlatformSetting::get('meta_app_id');
+        $appSecret = PlatformSetting::get('meta_app_secret');
+
+        if (!$appId || !$appSecret) {
+            return response()->json(['success' => false, 'message' => 'Meta App credentials not configured yet. Please ask your administrator.']);
+        }
+
+        try {
+            // Embedded Signup issues its code via the JS SDK popup, not a
+            // redirect — no redirect_uri is used (or expected) in this exchange.
+            $tokenRes = Http::get('https://graph.facebook.com/v19.0/oauth/access_token', [
+                'client_id'     => $appId,
+                'client_secret' => $appSecret,
+                'code'          => $request->code,
+            ])->json();
+
+            if (empty($tokenRes['access_token'])) {
+                throw new \Exception($tokenRes['error']['message'] ?? 'Failed to get access token.');
+            }
+
+            $accessToken   = $tokenRes['access_token'];
+            $wabaId        = $request->waba_id;
+            $phoneNumberId = $request->phone_number_id;
+
+            // Subscribe our app to this WABA so Meta sends webhook events for it
+            Http::post("https://graph.facebook.com/v19.0/{$wabaId}/subscribed_apps", [
+                'access_token' => $accessToken,
+            ]);
+
+            // Register the number on Cloud API (required before it can send/receive
+            // via the API). Benign if it's already registered — ignore that case.
+            $pin = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            $registerRes = Http::withToken($accessToken)
+                ->post("https://graph.facebook.com/v19.0/{$phoneNumberId}/register", [
+                    'messaging_product' => 'whatsapp',
+                    'pin'               => $pin,
+                ])->json();
+
+            $registerError = $registerRes['error']['message'] ?? null;
+            if ($registerError && !str_contains(strtolower($registerError), 'already')) {
+                throw new \Exception($registerError);
+            }
+
+            // Pull display info for the connected number
+            $phoneInfo = Http::get("https://graph.facebook.com/v19.0/{$phoneNumberId}", [
+                'access_token' => $accessToken,
+                'fields'       => 'display_phone_number,verified_name',
+            ])->json();
+
+            $settings = WhatsappSetting::forTenant($this->tenantId());
+            $settings->tenant_id             = $this->tenantId();
+            $settings->access_token          = $accessToken;
+            $settings->waba_id               = $wabaId;
+            $settings->phone_number_id       = $phoneNumberId;
+            $settings->display_phone_number  = $phoneInfo['display_phone_number'] ?? $settings->display_phone_number;
+            $settings->verified_name         = $phoneInfo['verified_name'] ?? $settings->verified_name;
+            $settings->registration_pin      = $registerError ? $settings->registration_pin : $pin;
+            $settings->is_connected          = true;
+            if (!$settings->webhook_verify_token) {
+                $settings->webhook_verify_token = Str::random(32);
+            }
+            $settings->save();
+
+            return response()->json(['success' => true]);
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+        }
     }
 
     // ── Settings — test connection ────────────────────────────────

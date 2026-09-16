@@ -957,6 +957,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
             Route::post('api-settings/test',        [Tenant\WhatsappChatbotController::class, 'testConnection'])->name('api-settings.test');
             Route::get('oauth/qr',                  [Tenant\WhatsappChatbotController::class, 'oauthGenerateQr'])->name('oauth.qr');
             Route::get('oauth/status',              [Tenant\WhatsappChatbotController::class, 'oauthStatus'])->name('oauth.status');
+            Route::post('embedded-signup/connect',  [Tenant\WhatsappChatbotController::class, 'embeddedSignupConnect'])->name('embedded-signup.connect');
         });
 
         // Email

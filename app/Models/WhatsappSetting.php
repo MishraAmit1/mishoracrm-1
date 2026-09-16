@@ -13,6 +13,7 @@ class WhatsappSetting extends Model
         'display_phone_number',
         'verified_name',
         'access_token',
+        'registration_pin',
         'webhook_verify_token',
         'chatbot_enabled',
         'is_connected',
@@ -23,7 +24,7 @@ class WhatsappSetting extends Model
         'is_connected'    => 'boolean',
     ];
 
-    protected $hidden = ['access_token'];
+    protected $hidden = ['access_token', 'registration_pin'];
 
     public static function forTenant(int $tenantId): self
     {
