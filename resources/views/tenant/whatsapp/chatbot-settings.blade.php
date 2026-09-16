@@ -841,6 +841,7 @@ window.addEventListener('message', function (event) {
 });
 
 function connectWhatsAppEmbedded() {
+    console.log('[WA Connect] button clicked, typeof FB =', typeof FB);
     if (typeof FB === 'undefined') {
         alert('Facebook SDK abhi load ho raha hai, thodi der mein dobara try karein.');
         return;
@@ -848,9 +849,12 @@ function connectWhatsAppEmbedded() {
     esWabaId = null;
     esPhoneId = null;
 
+    console.log('[WA Connect] calling FB.login with config_id={{ $metaConfigId }}');
     FB.login(function (response) {
+        console.log('[WA Connect] FB.login callback fired:', JSON.stringify(response));
         if (!response.authResponse || !response.authResponse.code) {
-            return; // user cancelled or closed the popup
+            alert('Facebook login poora nahi hua (status: ' + response.status + '). Popup blocked hua ho sakta hai, ya aapne cancel kiya. Browser ke address bar mein "popup blocked" icon check karein.');
+            return;
         }
         if (!esWabaId || !esPhoneId) {
             alert('WhatsApp account create/select nahi ho paya. Dobara try karein.');
