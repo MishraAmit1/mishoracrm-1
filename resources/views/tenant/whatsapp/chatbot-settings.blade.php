@@ -819,7 +819,10 @@
 @if($metaAppId && $metaConfigId)
 <script>
 window.fbAsyncInit = function () {
-    FB.init({ appId: '{{ $metaAppId }}', xfbml: false, version: 'v21.0' });
+    // status:false — skip the SDK's automatic login-status check on load.
+    // That check can get intercepted by Chrome's FedCM flow and pop a
+    // generic "Sign in" dialog unrelated to our WhatsApp connect button.
+    FB.init({ appId: '{{ $metaAppId }}', xfbml: false, version: 'v21.0', status: false });
 };
 </script>
 <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
