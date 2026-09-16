@@ -248,7 +248,6 @@
 @endpush
 
 @section('content')
-<div id="fb-root"></div>
 <div class="page-header">
     <div>
         <h1 class="page-title">WhatsApp Business API</h1>
@@ -622,15 +621,6 @@
             </button>
         </div>
         <div id="qrReconnectArea" style="display:none;padding:0 24px 24px;">
-            @if($metaAppId && $metaConfigId)
-            <div style="margin-bottom:16px;">
-                <button type="button" class="btn btn-primary" id="esConnectBtn" onclick="connectWhatsAppEmbedded()"
-                    style="gap:8px;display:inline-flex;align-items:center;background:#25d366;border-color:#25d366;">
-                    Connect WhatsApp (Instant)
-                </button>
-                <span style="font-size:11px;color:var(--text-400);margin-left:10px;">— ya neeche QR se connect karein</span>
-            </div>
-            @endif
             <div style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap;">
                 <div class="wa-qr-col">
                     <div class="wa-qr-frame"><img id="qrImg" src="" alt="QR Code"></div>
@@ -707,38 +697,18 @@
                     </div>
                 </div>
 
-                @if($metaAppId && $metaConfigId)
-                <div style="margin-bottom:14px;">
-                    <button type="button" class="btn btn-primary" id="esConnectBtn" onclick="connectWhatsAppEmbedded()"
-                        style="gap:8px;display:inline-flex;align-items:center;background:#25d366;border-color:#25d366;">
-                        <svg viewBox="0 0 24 24" fill="#fff" style="width:16px;height:16px;">
-                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-                            <path d="M12.004 2C6.477 2 2 6.477 2 12.004c0 1.773.465 3.48 1.348 4.985L2 22l5.13-1.34A9.953 9.953 0 0012.004 22C17.527 22 22 17.523 22 12c0-5.522-4.473-10-9.996-10z" fill-rule="evenodd" clip-rule="evenodd"/>
-                        </svg>
-                        Connect WhatsApp
-                    </button>
-                    <p style="font-size:11px;color:var(--text-400);margin-top:8px;line-height:1.5;">
-                        Ek click mein — popup ke andar hi Business/WABA/number create ya select ho jayega, alag se kahin jaana nahi padega.
-                    </p>
-                </div>
-                <div style="display:flex;align-items:center;gap:10px;margin:14px 0;">
-                    <div style="flex:1;height:1px;background:var(--border-subtle);"></div>
-                    <span style="font-size:11px;color:var(--text-400);">YA agar existing WABA hai</span>
-                    <div style="flex:1;height:1px;background:var(--border-subtle);"></div>
-                </div>
-                @endif
-
                 <div id="qrGenerateBtn">
-                    <button type="button" class="btn btn-ghost" onclick="startQrFlow()" style="gap:8px;display:inline-flex;align-items:center;">
+                    <button type="button" class="btn btn-primary" onclick="startQrFlow()" style="gap:8px;display:inline-flex;align-items:center;">
                         <svg viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px;">
                             <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm2 2V5h1v1H5zM3 13a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1v-3zm2 2v-1h1v1H5zM13 3a1 1 0 00-1 1v3a1 1 0 001 1h3a1 1 0 001-1V4a1 1 0 00-1-1h-3zm1 2v1h1V5h-1z" clip-rule="evenodd"/>
                             <path d="M11 4a1 1 0 10-2 0v1a1 1 0 002 0V4zM10 7a1 1 0 011 1v1h2a1 1 0 110 2h-3a1 1 0 01-1-1V8a1 1 0 011-1zM16 9a1 1 0 100 2 1 1 0 000-2zM9 13a1 1 0 011-1h1a1 1 0 110 2v2a1 1 0 11-2 0v-3zM7 11a1 1 0 100-2H4a1 1 0 100 2h3zM17 13a1 1 0 01-1 1h-2a1 1 0 110-2h2a1 1 0 011 1zM16 17a1 1 0 100-2h-3a1 1 0 100 2h3z"/>
                         </svg>
-                        Connect via QR Code
+                        Connect Now
                     </button>
                 </div>
                 <p style="font-size:11px;color:var(--text-400);margin-top:10px;line-height:1.5;">
-                    Coexistence rakhna hai (phone app + CRM dono saath) toh pehle upar wala <strong>Coexistence setup</strong> complete karein.
+                    Pehle upar wala <strong>Coexistence setup</strong> complete karein, tab connect karein.
+                    Existing WABA nahi hai? Isi QR flow ke andar hi naya WhatsApp Business account bhi ban sakta hai.
                 </p>
             </div>
         </div>
@@ -816,89 +786,6 @@
 @endsection
 
 @push('scripts')
-@if($metaAppId && $metaConfigId)
-<script>
-window.fbAsyncInit = function () {
-    // status:false — skip the SDK's automatic login-status check on load.
-    // That check can get intercepted by Chrome's FedCM flow and pop a
-    // generic "Sign in" dialog unrelated to our WhatsApp connect button.
-    FB.init({ appId: '{{ $metaAppId }}', xfbml: false, version: 'v21.0', status: false });
-};
-</script>
-<script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
-<script>
-// ── WhatsApp Embedded Signup — one-click connect ───────────────
-let esWabaId = null, esPhoneId = null;
-
-window.addEventListener('message', function (event) {
-    if (typeof event.origin !== 'string' || !event.origin.endsWith('facebook.com')) return;
-    let data;
-    try { data = JSON.parse(event.data); } catch (e) { return; }
-    if (data.type === 'WA_EMBEDDED_SIGNUP' && data.event === 'FINISH' && data.data) {
-        esWabaId  = data.data.waba_id || null;
-        esPhoneId = data.data.phone_number_id || null;
-    }
-});
-
-function connectWhatsAppEmbedded() {
-    console.log('[WA Connect] button clicked, typeof FB =', typeof FB);
-    if (typeof FB === 'undefined') {
-        alert('Facebook SDK abhi load ho raha hai, thodi der mein dobara try karein.');
-        return;
-    }
-    esWabaId = null;
-    esPhoneId = null;
-
-    console.log('[WA Connect] calling FB.login with config_id={{ $metaConfigId }}');
-    FB.login(function (response) {
-        console.log('[WA Connect] FB.login callback fired:', JSON.stringify(response));
-        if (!response.authResponse || !response.authResponse.code) {
-            alert('Facebook login poora nahi hua (status: ' + response.status + '). Popup blocked hua ho sakta hai, ya aapne cancel kiya. Browser ke address bar mein "popup blocked" icon check karein.');
-            return;
-        }
-        if (!esWabaId || !esPhoneId) {
-            alert('WhatsApp account create/select nahi ho paya. Dobara try karein.');
-            return;
-        }
-
-        const btn = document.getElementById('esConnectBtn');
-        if (btn) { btn.disabled = true; btn.textContent = 'Connecting…'; }
-
-        fetch('{{ route("tenant.whatsapp.embedded-signup.connect") }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Accept': 'application/json',
-            },
-            body: JSON.stringify({
-                code: response.authResponse.code,
-                waba_id: esWabaId,
-                phone_number_id: esPhoneId,
-            }),
-        })
-        .then(function (r) { return r.json(); })
-        .then(function (data) {
-            if (data.success) {
-                location.reload();
-            } else {
-                alert('Connect failed: ' + data.message);
-                if (btn) { btn.disabled = false; btn.textContent = 'Connect WhatsApp'; }
-            }
-        })
-        .catch(function () {
-            alert('Request failed.');
-            if (btn) { btn.disabled = false; btn.textContent = 'Connect WhatsApp'; }
-        });
-    }, {
-        config_id: '{{ $metaConfigId }}',
-        response_type: 'code',
-        override_default_response_type: true,
-        extras: { setup: {} },
-    });
-}
-</script>
-@endif
 <script>
 // ── Coexistence guide toggle ───────────────────────────────────
 function toggleCoex() {
