@@ -9,8 +9,8 @@
 
 /* ── Coexistence banner ───────────────────────────────────────── */
 .coex-banner {
-    background:linear-gradient(135deg,rgba(240,253,244,0.14) 0%,rgba(239,246,255,0.14) 100%);
-    border:1.5px solid rgba(134,239,172,0.35);
+    background:var(--green-dim);
+    border:1.5px solid rgba(45,212,160,0.35);
     border-radius:var(--r-lg);
     padding:0;
     margin-bottom:20px;
@@ -24,15 +24,15 @@
 }
 .coex-banner-title {
     display:flex; align-items:center; gap:10px;
-    font-weight:700; font-size:14px; color:#73E89F;
+    font-weight:700; font-size:14px; color:var(--green);
 }
-.coex-banner-sub { font-size:12px; color:#79E2A1; font-weight:400; margin-top:2px; }
-.coex-chevron { color:#6FEC9D; transition:transform .25s; flex-shrink:0; }
+.coex-banner-sub { font-size:12px; color:var(--text-200); font-weight:400; margin-top:2px; }
+.coex-chevron { color:var(--green); transition:transform .25s; flex-shrink:0; }
 .coex-chevron.open { transform:rotate(180deg); }
 
 .coex-body {
     padding:0 20px 20px;
-    border-top:1px solid rgba(187,247,208,0.35);
+    border-top:1px solid rgba(45,212,160,0.35);
 }
 
 /* ── Method tabs ──────────────────────────────────────────────── */
@@ -42,7 +42,7 @@
     color:var(--text-300); border-bottom:2px solid transparent; margin-bottom:-2px;
     transition:all .15s;
 }
-.method-tab.active { color:#73E89F; border-bottom-color:#25d366; }
+.method-tab.active { color:var(--green); border-bottom-color:#25d366; }
 
 .method-panel { display:none; }
 .method-panel.active { display:block; }
@@ -67,11 +67,75 @@
 
 .coex-note {
     display:flex; gap:8px; align-items:flex-start;
-    background:rgba(240,253,244,0.14); border:1px solid rgba(187,247,208,0.35);
+    background:var(--green-dim); border:1px solid rgba(45,212,160,0.35);
     border-radius:var(--r-md); padding:10px 14px;
-    font-size:12px; color:#79E2A1; line-height:1.5;
+    font-size:12px; color:var(--text-200); line-height:1.5;
     margin-top:14px;
 }
+
+/* ── Warning / prerequisite boxes ─────────────────────────────── */
+.coex-warn {
+    display:flex; gap:10px; align-items:flex-start;
+    background:var(--amber-dim); border:1px solid rgba(248,184,78,0.4);
+    border-radius:var(--r-md); padding:14px 16px;
+    margin-top:16px;
+}
+.coex-warn > svg { color:var(--amber); margin-top:2px; }
+.coex-warn-title { font-size:12.5px; font-weight:700; color:var(--amber); margin-bottom:6px; }
+.coex-warn-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:5px; }
+.coex-warn-list li { display:flex; gap:7px; align-items:flex-start; font-size:12px; color:var(--text-200); line-height:1.5; }
+.coex-warn-list li::before { content:'!'; flex-shrink:0; width:14px; height:14px; margin-top:1px; border-radius:50%; background:rgba(248,184,78,0.35); color:var(--text-200); font-size:9.5px; font-weight:800; display:flex; align-items:center; justify-content:center; }
+.coex-warn-list strong { color:var(--text-100); }
+
+/* ── Prerequisites checklist ─────────────────────────────────── */
+.coex-prereq-title {
+    font-size:12px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+    color:var(--text-300); margin-bottom:10px;
+}
+.coex-prereq-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:22px; }
+@media(max-width:640px){ .coex-prereq-grid { grid-template-columns:1fr; } }
+.coex-prereq-card {
+    display:flex; gap:10px; align-items:flex-start;
+    background:var(--bg-surface); border:1px solid var(--border-subtle);
+    border-radius:var(--r-md); padding:12px 14px;
+}
+.coex-prereq-icon {
+    width:26px; height:26px; border-radius:8px; flex-shrink:0;
+    background:rgba(37,211,102,0.12); color:#25d366;
+    display:flex; align-items:center; justify-content:center;
+}
+.coex-prereq-text { font-size:12.5px; color:var(--text-200); line-height:1.5; }
+.coex-prereq-text strong { color:var(--text-100); display:block; font-size:13px; margin-bottom:1px; }
+.coex-prereq-card { flex-direction:column; align-items:stretch; }
+.coex-prereq-card-head { display:flex; gap:10px; align-items:flex-start; }
+.coex-prereq-link {
+    display:inline-flex; align-items:center; gap:5px;
+    margin-top:9px; align-self:flex-start;
+    font-size:12px; font-weight:600; color:var(--accent);
+    text-decoration:none; padding:5px 10px;
+    background:var(--accent-dim); border-radius:20px;
+    transition:background .15s;
+}
+.coex-prereq-link:hover { background:var(--accent-glow); }
+.coex-prereq-link svg { width:11px; height:11px; }
+
+/* ── Section divider label (Part 1 / Part 2) ────────────────────── */
+.coex-section-label {
+    display:flex; align-items:center; gap:10px;
+    margin:22px 0 12px;
+}
+.coex-section-label:first-of-type { margin-top:0; }
+.coex-section-label .pill {
+    flex-shrink:0; display:flex; align-items:center; gap:6px;
+    background:rgba(37,211,102,0.12); color:#1FA463;
+    border-radius:20px; padding:4px 12px 4px 8px;
+    font-size:12px; font-weight:700;
+}
+.coex-section-label .pill .num {
+    width:18px; height:18px; border-radius:50%; background:#25d366; color:#fff;
+    font-size:10px; font-weight:800; display:flex; align-items:center; justify-content:center;
+}
+.coex-section-label .line { flex:1; height:1px; background:var(--border-subtle); }
 
 /* ── Connect wizard card ──────────────────────────────────────── */
 .wa-connect-card {
@@ -90,8 +154,8 @@
     display:flex; align-items:center; gap:10px;
     font-weight:700; font-size:15px; color:var(--text-100);
 }
-.wa-badge-connected    { background:rgba(220,252,231,0.14); color:#73E89F; border-radius:20px; padding:3px 10px; font-size:12px; font-weight:600; }
-.wa-badge-disconnected { background:rgba(254,226,226,0.14); color:#EA7171; border-radius:20px; padding:3px 10px; font-size:12px; font-weight:600; }
+.wa-badge-connected    { background:var(--green-dim); color:var(--green); border-radius:20px; padding:3px 10px; font-size:12px; font-weight:600; }
+.wa-badge-disconnected { background:var(--red-dim); color:var(--red); border-radius:20px; padding:3px 10px; font-size:12px; font-weight:600; }
 
 /* ── Steps bar ────────────────────────────────────────────────── */
 .wa-steps {
@@ -116,10 +180,10 @@
     transition:all .2s;
 }
 .wa-step.active .wa-step-dot { background:#25d366; border-color:#25d366; color:#fff; }
-.wa-step.done   .wa-step-dot { background:rgba(220,252,231,0.14); border-color:#22c55e; color:#6FEC9D; }
+.wa-step.done   .wa-step-dot { background:var(--green-dim); border-color:var(--green); color:var(--green); }
 .wa-step-label { font-size:11px; color:var(--text-400); text-align:center; line-height:1.3; max-width:80px; }
-.wa-step.active .wa-step-label { color:#6FEC9D; font-weight:600; }
-.wa-step.done   .wa-step-label { color:#6FEC9D; }
+.wa-step.active .wa-step-label { color:var(--green); font-weight:600; }
+.wa-step.done   .wa-step-label { color:var(--green); }
 
 /* ── QR body ──────────────────────────────────────────────────── */
 .wa-connect-body { padding:24px; display:flex; gap:32px; align-items:flex-start; flex-wrap:wrap; }
@@ -145,8 +209,8 @@
 .wa-how-item { display:flex; align-items:flex-start; gap:10px; }
 .wa-how-num {
     min-width:22px; height:22px; border-radius:50%;
-    background:rgba(240,253,244,0.14); border:1.5px solid #22c55e;
-    color:#6FEC9D; font-size:11px; font-weight:700;
+    background:var(--green-dim); border:1.5px solid var(--green);
+    color:var(--green); font-size:11px; font-weight:700;
     display:flex; align-items:center; justify-content:center; margin-top:1px;
 }
 .wa-how-text { font-size:13px; color:var(--text-200); line-height:1.45; }
@@ -155,21 +219,21 @@
 /* ── Status indicators ────────────────────────────────────────── */
 .wa-status-waiting {
     display:flex; align-items:center; gap:8px;
-    padding:10px 14px; background:rgba(255,251,235,0.14); border:1px solid #fde68a;
-    border-radius:var(--r-md); font-size:13px; color:#F19D6A;
+    padding:10px 14px; background:var(--amber-dim); border:1px solid rgba(248,184,78,0.4);
+    border-radius:var(--r-md); font-size:13px; color:var(--amber);
 }
-.wa-pulse { width:8px; height:8px; border-radius:50%; background:#f59e0b; animation:waPulse 1.4s ease-in-out infinite; flex-shrink:0; }
+.wa-pulse { width:8px; height:8px; border-radius:50%; background:var(--amber); animation:waPulse 1.4s ease-in-out infinite; flex-shrink:0; }
 .wa-status-success {
     display:flex; align-items:center; gap:8px;
-    padding:10px 14px; background:rgba(240,253,244,0.14); border:1px solid #86efac;
-    border-radius:var(--r-md); font-size:13px; color:#73E89F; font-weight:600;
+    padding:10px 14px; background:var(--green-dim); border:1px solid rgba(45,212,160,0.4);
+    border-radius:var(--r-md); font-size:13px; color:var(--green); font-weight:600;
 }
 
 /* ── Connected state ──────────────────────────────────────────── */
 .wa-connected-body { padding:24px; display:flex; gap:24px; align-items:center; flex-wrap:wrap; }
-.wa-connected-icon { width:64px; height:64px; border-radius:50%; background:rgba(220,252,231,0.14); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.wa-connected-icon { width:64px; height:64px; border-radius:50%; background:var(--green-dim); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 .wa-connected-info { flex:1; min-width:200px; }
-.wa-connected-info h3 { font-weight:700; font-size:16px; color:#6FEC9D; margin:0 0 6px; }
+.wa-connected-info h3 { font-weight:700; font-size:16px; color:var(--green); margin:0 0 6px; }
 .wa-meta-row { display:flex; gap:20px; flex-wrap:wrap; margin-top:10px; }
 .wa-meta-item { font-size:12px; color:var(--text-300); }
 .wa-meta-item strong { color:var(--text-200); display:block; font-size:11px; margin-bottom:2px; letter-spacing:.03em; text-transform:uppercase; }
@@ -203,7 +267,7 @@
     <div class="coex-banner-header" onclick="toggleCoex()" id="coexHeader">
         <div>
             <div class="coex-banner-title">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" style="width:20px;height:20px;flex-shrink:0;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" style="width:20px;height:20px;flex-shrink:0;">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
                 Coexistence Mode — Same Number: Phone App + CRM dono ek saath
@@ -222,28 +286,93 @@
 
         {{-- What coexistence means --}}
         <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;padding-top:4px;">
-            <div style="flex:1;min-width:200px;background:rgba(240,253,244,0.14);border:1px solid rgba(187,247,208,0.35);border-radius:var(--r-md);padding:14px 16px;">
-                <div style="font-size:12px;font-weight:700;color:#73E89F;margin-bottom:6px;">
+            <div style="flex:1;min-width:200px;background:var(--green-dim);border:1px solid rgba(45,212,160,0.35);border-radius:var(--r-md);padding:14px 16px;">
+                <div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:6px;">
                     <svg viewBox="0 0 20 20" fill="#25d366" style="width:14px;height:14px;display:inline;margin-right:4px;vertical-align:middle;"><path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z"/><path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z"/></svg>
                     WhatsApp Business App (Phone)
                 </div>
-                <div style="font-size:12px;color:#79E2A1;line-height:1.5;">
+                <div style="font-size:12px;color:var(--text-200);line-height:1.5;">
                     ✓ Manual chats as usual<br>
                     ✓ Incoming messages dikhenge<br>
                     ✓ Manually reply kar sakte hain<br>
                     ✓ App normally kaam karta hai
                 </div>
             </div>
-            <div style="display:flex;align-items:center;font-size:20px;color:#6FEC9D;padding:0 4px;">+</div>
-            <div style="flex:1;min-width:200px;background:rgba(240,253,244,0.14);border:1px solid rgba(187,247,208,0.35);border-radius:var(--r-md);padding:14px 16px;">
-                <div style="font-size:12px;font-weight:700;color:#73E89F;margin-bottom:6px;">
-                    <svg viewBox="0 0 20 20" fill="#6366f1" style="width:14px;height:14px;display:inline;margin-right:4px;vertical-align:middle;"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/></svg>
+            <div style="display:flex;align-items:center;font-size:20px;color:var(--green);padding:0 4px;">+</div>
+            <div style="flex:1;min-width:200px;background:var(--green-dim);border:1px solid rgba(45,212,160,0.35);border-radius:var(--r-md);padding:14px 16px;">
+                <div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:6px;">
+                    <svg viewBox="0 0 20 20" fill="var(--accent)" style="width:14px;height:14px;display:inline;margin-right:4px;vertical-align:middle;"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/></svg>
                     CRM (WhatsApp Cloud API)
                 </div>
-                <div style="font-size:12px;color:#79E2A1;line-height:1.5;">
+                <div style="font-size:12px;color:var(--text-200);line-height:1.5;">
                     ✓ Chatbot auto-reply karta hai<br>
                     ✓ Incoming messages webhook pe aate hain<br>
                     ✓ CRM se messages bhejna
+                </div>
+            </div>
+        </div>
+
+        {{-- Prerequisites --}}
+        <div class="coex-section-label" style="margin-top:0;">
+            <span class="pill"><span class="num">0</span> Pehle ye accounts ready karein</span>
+            <span class="line"></span>
+        </div>
+        <div class="coex-prereq-title" style="margin-top:-4px;">Neeche diye link se direct login ya naya account bana sakte hain</div>
+        <div class="coex-prereq-grid">
+            <div class="coex-prereq-card">
+                <div class="coex-prereq-card-head">
+                    <div class="coex-prereq-icon">
+                        <svg viewBox="0 0 20 20" fill="currentColor" style="width:14px;height:14px;"><path d="M10 8a3 3 0 100-6 3 3 0 000 6zM3.465 14.493a1.23 1.23 0 00.41 1.412A9.957 9.957 0 0010 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 00-13.074.003z"/></svg>
+                    </div>
+                    <div class="coex-prereq-text">
+                        <strong>Facebook (personal) account</strong>
+                        Isi se aage login karke permissions allow karni hain — nahi hai toh yahin se bana lein.
+                    </div>
+                </div>
+                <a href="https://www.facebook.com/" target="_blank" rel="noopener" class="coex-prereq-link">
+                    Facebook par login/create karein
+                    <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.293 4.293a1 1 0 011.414 0l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414-1.414L15.586 11H4a1 1 0 110-2h11.586l-3.293-3.293a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                </a>
+            </div>
+            <div class="coex-prereq-card">
+                <div class="coex-prereq-card-head">
+                    <div class="coex-prereq-icon">
+                        <svg viewBox="0 0 20 20" fill="currentColor" style="width:14px;height:14px;"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 01-1.447.894L10 15.118l-4.553 1.776A1 1 0 014 16V4z" clip-rule="evenodd"/></svg>
+                    </div>
+                    <div class="coex-prereq-text">
+                        <strong>Meta Business Manager</strong>
+                        Aapka account uska Admin ho. Nahi hai toh chinta mat karein — "WhatsApp Business App se" tarike mein Meta khud ek bana deta hai, ya yahan se manually bana lein.
+                    </div>
+                </div>
+                <a href="https://business.facebook.com/" target="_blank" rel="noopener" class="coex-prereq-link">
+                    Business Manager login/create karein
+                    <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.293 4.293a1 1 0 011.414 0l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414-1.414L15.586 11H4a1 1 0 110-2h11.586l-3.293-3.293a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                </a>
+            </div>
+            <div class="coex-prereq-card">
+                <div class="coex-prereq-card-head">
+                    <div class="coex-prereq-icon">
+                        <svg viewBox="0 0 20 20" fill="currentColor" style="width:14px;height:14px;"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2H6zm2 12a1 1 0 100 2h4a1 1 0 100-2H8z" clip-rule="evenodd"/></svg>
+                    </div>
+                    <div class="coex-prereq-text">
+                        <strong>WhatsApp Business App</strong>
+                        Phone par installed ho, latest version tak updated — normal WhatsApp nahi, "Business" wala app chahiye.
+                    </div>
+                </div>
+                <a href="https://www.whatsapp.com/business/download" target="_blank" rel="noopener" class="coex-prereq-link">
+                    App download/update karein
+                    <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.293 4.293a1 1 0 011.414 0l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414-1.414L15.586 11H4a1 1 0 110-2h11.586l-3.293-3.293a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                </a>
+            </div>
+            <div class="coex-prereq-card">
+                <div class="coex-prereq-card-head">
+                    <div class="coex-prereq-icon">
+                        <svg viewBox="0 0 20 20" fill="currentColor" style="width:14px;height:14px;"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/></svg>
+                    </div>
+                    <div class="coex-prereq-text">
+                        <strong>Active number</strong>
+                        Jo number connect karna hai wo abhi WhatsApp Business App par active ho, kisi aur WABA/API se juda na ho.
+                    </div>
                 </div>
             </div>
         </div>
@@ -264,6 +393,10 @@
 
         {{-- Method A: Via WhatsApp Business App --}}
         <div class="method-panel active" id="panel-app">
+            <div class="coex-section-label">
+                <span class="pill"><span class="num">1</span> Phone par coexistence link karein</span>
+                <span class="line"></span>
+            </div>
             <ul class="coex-steps">
                 <li class="coex-step">
                     <div class="coex-step-num">1</div>
@@ -274,41 +407,87 @@
                 <li class="coex-step">
                     <div class="coex-step-num">2</div>
                     <div class="coex-step-text">
-                        Top-right mein <strong>3 dots (⋮)</strong> → <span class="path">Settings</span> → <span class="path">Business Tools</span>
+                        <strong>Business Tools</strong> tak pahunchein — naye app version mein bottom mein ek alag <span class="path">Tools</span> tab (camera icon ki jagah) direct de deta hai; purane version mein <strong>3 dots (⋮)</strong>/<strong>Settings gear</strong> → <span class="path">Settings</span> → <span class="path">Business Tools</span> se milega
                     </div>
                 </li>
                 <li class="coex-step">
                     <div class="coex-step-num">3</div>
                     <div class="coex-step-text">
-                        <span class="path">WhatsApp Business API</span> pe tap karein
+                        <span class="path">WhatsApp Business Platform</span> (kahin-kahin abhi bhi <span class="path">WhatsApp Business API</span> naam se dikhta hai) pe tap karein
                     </div>
                 </li>
                 <li class="coex-step">
                     <div class="coex-step-num">4</div>
                     <div class="coex-step-text">
-                        <strong>"Continue using WhatsApp Business App"</strong> option select karein
-                        — yahi coexistence mode hai
+                        <strong>"Connect your existing WhatsApp Business app account"</strong> ya
+                        <strong>"Continue using WhatsApp Business App"</strong> option select karein — <strong>naya account ya naya number CREATE mat karein</strong>, apna existing number hi link karna hai
                     </div>
                 </li>
                 <li class="coex-step">
                     <div class="coex-step-num">5</div>
                     <div class="coex-step-text">
-                        Apne <strong>Facebook Business account</strong> se login karein aur permissions allow karein
-                    </div>
-                </li>
-                <li class="coex-step">
-                    <div class="coex-step-num">6</div>
-                    <div class="coex-step-text">
-                        Setup complete hone ke baad — <strong>neeche CRM connect karein</strong> (QR code se)
+                        Apne <strong>Facebook account</strong> se login karein → jo Business Manager aapko dikhe usko select karein (ya naya bana lein) → permissions allow karein
                     </div>
                 </li>
             </ul>
+
+            <div class="coex-section-label">
+                <span class="pill"><span class="num">2</span> CRM se QR scan karke connect karein</span>
+                <span class="line"></span>
+            </div>
+            <ul class="coex-steps">
+                <li class="coex-step">
+                    <div class="coex-step-num">6</div>
+                    <div class="coex-step-text">
+                        Neeche <strong>"Generate QR"</strong> button dabayein — CRM ek QR code dikhayega
+                    </div>
+                </li>
+                <li class="coex-step">
+                    <div class="coex-step-num">7</div>
+                    <div class="coex-step-text">
+                        WhatsApp Business App mein wahi flow (Step 3-5) se dobara jayein — ab app camera khol dega, isse <strong>CRM wala QR code scan karein</strong>
+                    </div>
+                </li>
+                <li class="coex-step">
+                    <div class="coex-step-num">8</div>
+                    <div class="coex-step-text">
+                        Phone par ek message/prompt aayega — <strong>"Connect"</strong> pe tap karein
+                    </div>
+                </li>
+                <li class="coex-step">
+                    <div class="coex-step-num">9</div>
+                    <div class="coex-step-text">
+                        Uske baad <strong>"Confirm"</strong> screen aayegi jisme chat history CRM/partner ke saath share karne ka option milega — apni marzi se allow ya skip karein (isse coexistence connect hona nahi rukta)
+                    </div>
+                </li>
+                <li class="coex-step">
+                    <div class="coex-step-num">10</div>
+                    <div class="coex-step-text">
+                        Confirm karte hi CRM ki screen apne aap <strong>"Connected"</strong> dikha degi — number, dono jagah (phone + CRM) ek saath kaam karne lagega
+                    </div>
+                </li>
+            </ul>
+
             <div class="coex-note">
-                <svg viewBox="0 0 20 20" fill="currentColor" style="width:15px;height:15px;flex-shrink:0;margin-top:1px;color:#6FEC9D;"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+                <svg viewBox="0 0 20 20" fill="currentColor" style="width:15px;height:15px;flex-shrink:0;margin-top:1px;color:var(--green);"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
                 <span>
-                    Agar <span class="path">WhatsApp Business API</span> option nahi dikh raha, toh app update karein.
-                    WhatsApp Business App version 2.23+ mein ye option available hai.
+                    Agar ye option nahi dikh raha, toh app update karein — Play Store/App Store se latest WhatsApp Business App version lein.
+                    Meta samay-samay pe menu ka naam/jagah badalta rehta hai, par matlab wahi rehta hai: "connect to WhatsApp Business Platform / API".
                 </span>
+            </div>
+
+            <div class="coex-warn">
+                <svg viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px;flex-shrink:0;"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                <div style="flex:1;">
+                    <div class="coex-warn-title">Connect karne se pehle ye jaan lein — Meta khud ye karta hai, CRM ki wajah se nahi</div>
+                    <ul class="coex-warn-list">
+                        <li><span><strong>Linked/companion devices</strong> (WhatsApp Web, Desktop app) automatically unlink ho jaayenge — connect hone ke baad dobara link karne honge</span></li>
+                        <li><span><strong>Disappearing messages</strong> sab 1:1 chats mein off ho jaayengi</span></li>
+                        <li><span><strong>View-once messages</strong> disable ho jaayenge</span></li>
+                        <li><span><strong>Broadcast lists</strong> read-only ho jaayengi — nayi broadcast list nahi bana sakenge</span></li>
+                        <li><span>Agar number <strong>Meta-verified (green tick)</strong> hai toh badge temporarily hat sakta hai — baad mein dobara apply kiya ja sakta hai</span></li>
+                    </ul>
+                </div>
             </div>
         </div>
 
@@ -353,7 +532,7 @@
                 </li>
             </ul>
             <div class="coex-note">
-                <svg viewBox="0 0 20 20" fill="currentColor" style="width:15px;height:15px;flex-shrink:0;margin-top:1px;color:#6FEC9D;"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                <svg viewBox="0 0 20 20" fill="currentColor" style="width:15px;height:15px;flex-shrink:0;margin-top:1px;color:var(--green);"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
                 <span>
                     Agar aapne pehle number ko API pe migrate kar diya tha (without coexistence), toh WhatsApp Business App pe wapas laane ke liye Meta Business Manager mein number re-register karna hoga.
                 </span>
@@ -423,7 +602,7 @@
         {{-- CONNECTED --}}
         <div class="wa-connected-body">
             <div class="wa-connected-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" style="width:32px;height:32px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" style="width:32px;height:32px;">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
                 </svg>
             </div>
@@ -754,7 +933,7 @@ function startPolling() {
                 const r = document.getElementById('qrRefreshBtn');
                 if (r) r.style.display = 'none';
                 setStep(4);
-                document.getElementById('waConnectCard').style.borderColor = '#22c55e';
+                document.getElementById('waConnectCard').style.borderColor = 'var(--green)';
                 setTimeout(function() { location.reload(); }, 1800);
             }
         })

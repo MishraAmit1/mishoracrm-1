@@ -36,6 +36,19 @@ class AppServiceProvider extends ServiceProvider
         // of what scheme the request actually arrived on.
         if (str_starts_with(config('app.url'), 'https://')) {
             URL::forceScheme('https');
+
+            // Also pin the host itself. Meta's OAuth token exchange (WhatsApp
+            // and Instagram coexistence connect) rejects the request unless
+            // the redirect_uri sent when swapping the code for a token is
+            // byte-for-byte identical to the one used in the original
+            // authorize redirect. Those are two separate HTTP requests
+            // (oauthStart, then oauthCallback); if the proxy ever forwards a
+            // different Host header between them, route() would build two
+            // different URLs and Meta throws "Error validating verification
+            // code. Please make sure your redirect_uri is identical...".
+            // Forcing the root URL makes every route()/url() call use the
+            // fixed APP_URL host, independent of the incoming request.
+            URL::forceRootUrl(rtrim(config('app.url'), '/'));
         }
 
         // App CSS has no Tailwind utilities, so Laravel's default pagination
