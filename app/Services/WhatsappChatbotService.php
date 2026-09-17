@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Log;
 
 class WhatsappChatbotService
 {
-    private const GRAPH_URL = 'https://graph.facebook.com/v21.0';
+    private const GRAPH_URL = 'https://graph.facebook.com/v26.0';
 
     private WhatsappSetting $settings;
 

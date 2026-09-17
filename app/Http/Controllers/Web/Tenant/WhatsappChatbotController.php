@@ -109,7 +109,7 @@ class WhatsappChatbotController extends Controller
             ]);
         }
 
-        $metaUrl = 'https://www.facebook.com/v19.0/dialog/oauth?' . http_build_query($params);
+        $metaUrl = 'https://www.facebook.com/v26.0/dialog/oauth?' . http_build_query($params);
 
         return redirect($metaUrl);
     }
@@ -138,7 +138,7 @@ class WhatsappChatbotController extends Controller
         try {
             $callbackUrl = route('whatsapp.oauth.callback');
 
-            $tokenRes = Http::get('https://graph.facebook.com/v19.0/oauth/access_token', [
+            $tokenRes = Http::get('https://graph.facebook.com/v26.0/oauth/access_token', [
                 'client_id'     => $data['app_id'],
                 'client_secret' => $data['app_secret'],
                 'redirect_uri'  => $callbackUrl,
@@ -149,7 +149,7 @@ class WhatsappChatbotController extends Controller
                 throw new \Exception($tokenRes['error']['message'] ?? 'Failed to get access token.');
             }
 
-            $longRes = Http::get('https://graph.facebook.com/v19.0/oauth/access_token', [
+            $longRes = Http::get('https://graph.facebook.com/v26.0/oauth/access_token', [
                 'grant_type'        => 'fb_exchange_token',
                 'client_id'         => $data['app_id'],
                 'client_secret'     => $data['app_secret'],
@@ -159,7 +159,7 @@ class WhatsappChatbotController extends Controller
             $longToken = $longRes['access_token'] ?? $tokenRes['access_token'];
 
             // Get Businesses this user administers
-            $businessRes = Http::get('https://graph.facebook.com/v19.0/me/businesses', [
+            $businessRes = Http::get('https://graph.facebook.com/v26.0/me/businesses', [
                 'access_token' => $longToken,
             ])->json();
 
@@ -171,7 +171,7 @@ class WhatsappChatbotController extends Controller
             $wabaId = null;
             foreach ($businessRes['data'] as $business) {
                 foreach (['owned_whatsapp_business_accounts', 'client_whatsapp_business_accounts'] as $edge) {
-                    $wabaRes = Http::get("https://graph.facebook.com/v19.0/{$business['id']}/{$edge}", [
+                    $wabaRes = Http::get("https://graph.facebook.com/v26.0/{$business['id']}/{$edge}", [
                         'access_token' => $longToken,
                     ])->json();
 
@@ -187,7 +187,7 @@ class WhatsappChatbotController extends Controller
             }
 
             // Get Phone Numbers under this WABA
-            $phoneRes = Http::get("https://graph.facebook.com/v19.0/{$wabaId}/phone_numbers", [
+            $phoneRes = Http::get("https://graph.facebook.com/v26.0/{$wabaId}/phone_numbers", [
                 'access_token' => $longToken,
             ])->json();
 
@@ -202,7 +202,7 @@ class WhatsappChatbotController extends Controller
             // Benign no-op if it's already registered (existing WABA case).
             $pin = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
             $registerRes = Http::withToken($longToken)
-                ->post("https://graph.facebook.com/v19.0/{$phoneNumberId}/register", [
+                ->post("https://graph.facebook.com/v26.0/{$phoneNumberId}/register", [
                     'messaging_product' => 'whatsapp',
                     'pin'               => $pin,
                 ])->json();
@@ -227,7 +227,7 @@ class WhatsappChatbotController extends Controller
             $settings->save();
 
             // Subscribe our app to this WABA so Meta actually sends webhook events for it
-            Http::post("https://graph.facebook.com/v19.0/{$wabaId}/subscribed_apps", [
+            Http::post("https://graph.facebook.com/v26.0/{$wabaId}/subscribed_apps", [
                 'access_token' => $longToken,
             ]);
 
