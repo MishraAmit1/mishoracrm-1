@@ -67,7 +67,6 @@ class WhatsappChatbotController extends Controller
             'tenant_id'  => $this->tenantId(),
             'app_id'     => $appId,
             'app_secret' => $appSecret,
-            'config_id'  => PlatformSetting::get('meta_wa_embedded_config_id'),
         ], now()->addMinutes(10));
 
         return response()->json([
@@ -87,29 +86,19 @@ class WhatsappChatbotController extends Controller
             return response('QR code has expired. Please generate a new one in the CRM.', 400);
         }
 
-        $params = [
+        $scope = implode(',', [
+            'whatsapp_business_management',
+            'whatsapp_business_messaging',
+            'business_management',
+        ]);
+
+        $metaUrl = 'https://www.facebook.com/v26.0/dialog/oauth?' . http_build_query([
             'client_id'     => $data['app_id'],
             'redirect_uri'  => route('whatsapp.oauth.callback'),
             'state'         => $state,
+            'scope'         => $scope,
             'response_type' => 'code',
-        ];
-
-        if (!empty($data['config_id'])) {
-            // A Configuration (Facebook Login for Business → Configurations)
-            // encodes its own permission set — passing config_id shows Meta's
-            // WhatsApp Embedded Signup wizard (create/select WABA + number)
-            // instead of a plain permission-approval screen. Don't also send
-            // `scope` here — the Configuration already defines it.
-            $params['config_id'] = $data['config_id'];
-        } else {
-            $params['scope'] = implode(',', [
-                'whatsapp_business_management',
-                'whatsapp_business_messaging',
-                'business_management',
-            ]);
-        }
-
-        $metaUrl = 'https://www.facebook.com/v26.0/dialog/oauth?' . http_build_query($params);
+        ]);
 
         return redirect($metaUrl);
     }
