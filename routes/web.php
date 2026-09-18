@@ -947,6 +947,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
 
             // WhatsApp Chatbot & Business API settings
             Route::get('chatbot',                   [Tenant\WhatsappChatbotController::class, 'flows'])->name('chatbot');
+            Route::get('conversations',             [Tenant\WhatsappChatbotController::class, 'conversations'])->name('conversations');
             Route::post('chatbot',                  [Tenant\WhatsappChatbotController::class, 'storeFlow'])->name('chatbot.store');
             Route::put('chatbot/{id}',              [Tenant\WhatsappChatbotController::class, 'updateFlow'])->name('chatbot.update');
             Route::post('chatbot/{id}/toggle',      [Tenant\WhatsappChatbotController::class, 'toggleFlow'])->name('chatbot.toggle');

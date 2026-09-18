@@ -290,6 +290,25 @@ class WhatsappChatbotController extends Controller
         return view('tenant.whatsapp.chatbot', compact('settings', 'flows', 'sessions'));
     }
 
+    // ── Recent Conversations — full list ────────────────────────────
+    public function conversations(Request $request): View
+    {
+        $sessions = WhatsappChatbotSession::where('tenant_id', $this->tenantId())
+            ->with('flow')
+            ->when($request->filled('search'), function ($q) use ($request) {
+                $term = $request->input('search');
+                $q->where(function ($q) use ($term) {
+                    $q->where('wa_id', 'like', "%{$term}%")
+                      ->orWhere('contact_name', 'like', "%{$term}%");
+                });
+            })
+            ->latest('last_message_at')
+            ->paginate(25)
+            ->withQueryString();
+
+        return view('tenant.whatsapp.conversations', compact('sessions'));
+    }
+
     // ── Chatbot Flows — store ─────────────────────────────────────
     public function storeFlow(Request $request): RedirectResponse
     {

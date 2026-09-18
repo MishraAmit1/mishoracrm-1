@@ -116,6 +116,7 @@ input:checked + .toggle-slider:before { transform:translateX(16px); }
         <button type="button" class="btn btn-ghost btn-sm" id="conversationsToggle" onclick="toggleConversations()">
             Recent Conversations ({{ $sessions->count() }})
         </button>
+        <a href="{{ route('tenant.whatsapp.conversations') }}" class="btn btn-ghost btn-sm">View All Conversations</a>
     </div>
 </div>
 
