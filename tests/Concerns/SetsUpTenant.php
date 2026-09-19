@@ -17,7 +17,12 @@ trait SetsUpTenant
     {
         $this->seed(RolesAndPermissionsSeeder::class);
 
-        return Tenant::factory()->create();
+        $tenant = Tenant::factory()->create();
+
+        // Web routes are subscription-gated, so tenants start on a live plan.
+        $this->giveActiveSubscription($tenant);
+
+        return $tenant;
     }
 
     // A live paid subscription so subscription-gated entry points (API key
