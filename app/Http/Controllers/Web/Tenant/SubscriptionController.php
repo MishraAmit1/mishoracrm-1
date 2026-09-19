@@ -82,6 +82,11 @@ class SubscriptionController extends Controller
                 ->with('info', 'Free plan already active hai.');
         }
 
+        // Monthly billing is switched off platform-wide → yearly is the only option.
+        if ($cycle === 'monthly' && PlatformSetting::get('monthly_billing_enabled', '0') !== '1') {
+            return redirect()->route('tenant.subscription.checkout', [$plan->slug, 'yearly']);
+        }
+
         $originalAmount = $cycle === 'yearly' ? (int) $plan->yearly_price : (int) $plan->monthly_price;
         $amount         = $cycle === 'yearly'
             ? (int) $plan->discountedYearlyPrice()
@@ -303,8 +308,16 @@ class SubscriptionController extends Controller
     // ── Expired page ──────────────────────────────────────────────
     public function expired(): View
     {
-        $plans = Plan::where('is_active', true)->where('monthly_price', '>', 0)->orderBy('sort_order')->get();
+        // Every purchasable plan (incl. Enterprise "talk to sales"), same cards
+        // and billing-cycle rules as the regular plans page.
+        $plans = Plan::where('is_active', true)
+            ->where(fn ($q) => $q->where('monthly_price', '>', 0)->orWhere('is_custom', true))
+            ->orderBy('sort_order')
+            ->get();
 
-        return view('tenant.subscription.expired', compact('plans'));
+        $currentSub            = Auth::user()->tenant?->subscription;
+        $monthlyBillingEnabled = PlatformSetting::get('monthly_billing_enabled', '0') === '1';
+
+        return view('tenant.subscription.expired', compact('plans', 'currentSub', 'monthlyBillingEnabled'));
     }
 }

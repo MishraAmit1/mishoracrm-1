@@ -32,6 +32,39 @@ class SubscriptionGateTest extends TestCase
         $this->actingAs($user)->get(route('tenant.subscription.plans'))->assertOk();
     }
 
+    public function test_expired_page_shows_yearly_only_when_monthly_billing_is_off(): void
+    {
+        $tenant = $this->setUpTenant();
+        $tenant->subscriptions()->update(['status' => 'expired', 'ends_at' => now()->subDay()]);
+        $plan = \App\Models\Plan::create([
+            'name' => 'Gold Tier', 'slug' => 'gold', 'monthly_price' => 1500, 'yearly_price' => 15000,
+            'features' => ['users' => 5], 'is_active' => true, 'is_custom' => false,
+            'trial_days' => 0, 'sort_order' => 1,
+        ]);
+        $user = $this->makeUser($tenant, 'tenant_admin');
+
+        $res = $this->actingAs($user)->get(route('tenant.subscription.expired'))->assertOk();
+
+        $res->assertSee('Gold Tier');
+        $res->assertSee(route('tenant.subscription.checkout', ['gold', 'yearly']), false);
+        // The monthly price block is rendered hidden, never as the visible option.
+        $res->assertSee('class="monthly-price" style="display:none"', false);
+    }
+
+    public function test_monthly_checkout_redirects_to_yearly_when_monthly_billing_is_off(): void
+    {
+        $tenant = $this->setUpTenant();
+        $plan = \App\Models\Plan::create([
+            'name' => 'Gold Tier', 'slug' => 'gold', 'monthly_price' => 1500, 'yearly_price' => 15000,
+            'features' => ['users' => 5], 'is_active' => true, 'is_custom' => false,
+            'trial_days' => 0, 'sort_order' => 1,
+        ]);
+        $user = $this->makeUser($tenant, 'tenant_admin');
+
+        $this->actingAs($user)->get(route('tenant.subscription.checkout', ['gold', 'monthly']))
+            ->assertRedirect(route('tenant.subscription.checkout', ['gold', 'yearly']));
+    }
+
     public function test_tenant_without_any_subscription_is_locked(): void
     {
         $tenant = Tenant::factory()->create();
