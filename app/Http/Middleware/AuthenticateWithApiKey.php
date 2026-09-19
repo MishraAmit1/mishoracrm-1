@@ -36,6 +36,15 @@ class AuthenticateWithApiKey
             ], 401);
         }
 
+        // Lapsed / unpaid workspaces get no API access either.
+        $subscription = $apiKey->tenant?->subscription;
+        if (!$subscription || $subscription->isExpired()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Subscription expired. Please renew your plan.',
+            ], 402);
+        }
+
         // Bind tenant context — same pattern as IdentifyTenant middleware
         app()->instance('tenant',    $apiKey->tenant);
         app()->instance('tenant_id', $apiKey->tenant_id);

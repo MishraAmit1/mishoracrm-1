@@ -81,7 +81,9 @@
         Aapka subscription khatam ho gaya hai. Apna CRM access waapis paane ke liye neeche se koi ek plan select karein.
     </p>
 
-    @if($plans->count())
+    @if(auth()->user()?->user_type !== 'tenant_admin')
+    <p>Sirf workspace owner plan purchase kar sakta hai. Kripya apne owner se contact karein.</p>
+    @elseif($plans->count())
     <div class="plans-mini">
         @foreach($plans->where('monthly_price', '>', 0) as $plan)
         <div class="plan-mini-card">

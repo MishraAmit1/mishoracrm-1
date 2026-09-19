@@ -105,7 +105,63 @@ class RegistrationTrialTest extends TestCase
 
         $sub = Subscription::firstOrFail();
         $this->assertSame('trial', $sub->status);
-        $this->assertTrue($sub->trial_ends_at->lessThanOrEqualTo(now()->addMinute()));
+        // Unpaid paid-plan signup is locked out from the first request.
+        $this->assertTrue($sub->isExpired());
+    }
+
+    public function test_signup_with_no_free_plan_and_no_plan_chosen_is_locked(): void
+    {
+        $this->plan(['slug' => 'pro', 'monthly_price' => 999]);
+
+        $this->post(route('register.store'), [
+            'company_name' => 'Acme', 'subdomain' => 'acmenoplan',
+            'first_name' => 'A', 'last_name' => 'B', 'email' => 'np@acme.test',
+            'password' => 'Password1', 'password_confirmation' => 'Password1', 'terms' => 'on',
+        ])->assertRedirect();
+
+        $tenant = \App\Models\Tenant::where('subdomain', 'acmenoplan')->firstOrFail();
+        $this->assertNull($tenant->subscription);
+    }
+
+    // ── Lockout: opening checkout / failed payment must never unlock ──
+
+    public function test_pending_or_failed_checkout_rows_do_not_grant_access(): void
+    {
+        $plan   = $this->plan(['monthly_price' => 1999]);
+        $tenant = $this->setUpTenant();
+        $tenant->subscriptions()->create([
+            'plan_id' => $plan->id, 'status' => 'expired', 'billing_cycle' => 'monthly',
+            'started_at' => now()->subMonths(2), 'ends_at' => now()->subMonth(),
+        ]);
+
+        foreach (['pending_payment', 'past_due'] as $status) {
+            $tenant->subscriptions()->create([
+                'plan_id' => $plan->id, 'status' => $status, 'billing_cycle' => 'monthly',
+                'started_at' => now(), 'ends_at' => now()->addMonth(),
+            ]);
+        }
+
+        $sub = $tenant->fresh()->subscription;
+        $this->assertSame('expired', $sub->status);
+        $this->assertTrue($sub->isExpired());
+
+        // Even if such a row were evaluated directly, it is locked.
+        $this->assertTrue($tenant->subscriptions()->where('status', 'pending_payment')->first()->isExpired());
+        $this->assertTrue($tenant->subscriptions()->where('status', 'past_due')->first()->isExpired());
+    }
+
+    public function test_expired_tenant_api_key_gets_402(): void
+    {
+        $plan   = $this->plan(['monthly_price' => 1999]);
+        $tenant = $this->setUpTenant();
+        $admin  = $this->makeUser($tenant, 'tenant_admin');
+        $tenant->subscriptions()->create([
+            'plan_id' => $plan->id, 'status' => 'expired', 'billing_cycle' => 'monthly',
+            'started_at' => now()->subMonths(2), 'ends_at' => now()->subMonth(),
+        ]);
+        $key = \App\Models\ApiKey::generate($tenant->id, $admin->id, 'k')->key;
+
+        $this->withHeader('X-API-Key', $key)->getJson('/api/v1/tenant/leads')->assertStatus(402);
     }
 
     // ── Pricing page wording ─────────────────────────────────────

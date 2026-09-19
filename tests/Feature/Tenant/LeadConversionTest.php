@@ -76,6 +76,7 @@ class LeadConversionTest extends TestCase
         $admin->givePermissionTo('leads.convert');
         $lead   = Lead::factory()->create(['tenant_id' => $tenant->id, 'assigned_to' => $admin->id]);
 
+        $this->giveActiveSubscription($tenant);
         $apiKey = ApiKey::generate($tenant->id, $admin->id, 'test-key');
 
         $response = $this->withHeader('X-API-Key', $apiKey->key)

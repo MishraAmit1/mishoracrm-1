@@ -34,7 +34,13 @@ class Tenant extends Model
 
     public function subscription()
     {
-        return $this->hasOne(Subscription::class)->latestOfMany();
+        // The entitlement row. Unpaid checkout attempts (pending_payment /
+        // past_due) are not a subscription — they must never shadow the real
+        // one, or merely opening the checkout page would unlock the CRM.
+        return $this->hasOne(Subscription::class)->ofMany(
+            ['id' => 'max'],
+            fn ($q) => $q->whereNotIn('status', Subscription::UNPAID_STATUSES)
+        );
     }
 
     public function subscriptions()

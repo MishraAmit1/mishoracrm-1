@@ -104,25 +104,33 @@ class Subscription extends Model
         return $this->status === 'trial' && $this->trial_ends_at?->isFuture();
     }
 
+    // Statuses that represent an unpaid checkout attempt, never an entitlement.
+    public const UNPAID_STATUSES = ['pending_payment', 'past_due'];
+
+    // Allow-list: only a live active / trial / paid-cancelled term grants
+    // access. Any other status (expired, pending_payment, past_due, unknown)
+    // is locked out — fail closed.
     public function isExpired(): bool
     {
         // Free plan tenants are never locked out.
         if ($this->isFree()) return false;
 
-        if ($this->status === 'expired') return true;
+        switch ($this->status) {
+            case 'active':
+                return $this->ends_at !== null && $this->ends_at->isPast();
 
-        // Cancelled still has access until the paid term actually runs out.
-        if ($this->status === 'cancelled') {
-            return !$this->ends_at || $this->ends_at->isPast();
+            case 'trial':
+                $deadline = $this->trial_ends_at ?? $this->ends_at;
+                return !$deadline || $deadline->isPast()
+                    || ($this->ends_at && $this->ends_at->isPast());
+
+            // Cancelled still has access until the paid term actually runs out.
+            case 'cancelled':
+                return !$this->ends_at || $this->ends_at->isPast();
+
+            default:
+                return true;
         }
-
-        // ends_at past ho gayi
-        if ($this->ends_at && $this->ends_at->isPast()) return true;
-
-        // Trial khatam ho gayi
-        if ($this->status === 'trial' && $this->trial_ends_at?->isPast()) return true;
-
-        return false;
     }
 
     public function daysLeft(): int

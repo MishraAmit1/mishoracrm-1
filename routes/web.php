@@ -28,6 +28,8 @@ use Illuminate\Support\Facades\Route;
 Route::redirect('/', '/login', 301)->name('home');
 Route::get('/pricing', [PricingController::class, 'index'])->name('pricing');
 Route::get('/privacy-policy', fn() => view('legal.privacy-policy'))->name('privacy-policy');
+Route::get('/terms', fn() => view('legal.terms'))->name('terms');
+Route::get('/data-deletion', fn() => view('legal.data-deletion'))->name('data-deletion');
 
 // PUBLIC — "Talk to sales" flow behind the Enterprise plan
 Route::get('/contact-sales', [ContactSalesController::class, 'show'])->name('contact-sales');
