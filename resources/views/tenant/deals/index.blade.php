@@ -135,6 +135,8 @@
     border: 1px solid var(--border-subtle);
     border-radius: 12px;
     overflow: hidden;
+    max-height: calc(100vh - 300px);
+    min-height: 260px;
 }
 @media(max-width:768px) {
     .kanban-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; scroll-snap-type: x proximity; }
@@ -144,6 +146,7 @@
 .k-col-head {
     display: flex; align-items: center; justify-content: space-between;
     padding: 12px 14px; border-bottom: 1px solid var(--border-subtle);
+    flex-shrink: 0;
 }
 .k-col-head-l  { display: flex; align-items: center; gap: 8px; }
 .k-col-title   { font-size: 13px; font-weight: 600; }
@@ -151,9 +154,19 @@
 .k-col-amt     { font-size: 11.5px; font-family: 'DM Mono', monospace; font-weight: 500; }
 
 .k-drop-zone {
-    flex: 1; min-height: 200px; padding: 10px;
+    flex: 1; min-height: 0; padding: 10px;
     display: flex; flex-direction: column; gap: 8px; transition: background .2s;
+    overflow-y: auto;
 }
+.k-view-all-btn {
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    margin-top: 2px; padding: 9px; background: var(--bg-surface);
+    border: 1px solid var(--border-default); border-radius: 8px;
+    font-size: 11.5px; font-weight: 600; color: var(--accent); cursor: pointer;
+    font-family: 'DM Sans', var(--font), sans-serif; transition: all .15s; text-decoration: none;
+    flex-shrink: 0;
+}
+.k-view-all-btn:hover { border-color: var(--accent); background: rgba(55,138,221,.06); }
 .k-drop-zone.drag-over {
     background: rgba(55,138,221,.06);
     outline: 2px dashed var(--accent);
@@ -434,14 +447,20 @@ $allTotal = $stageSummary->sum('total');
 <div class="kanban-scroll">
 <div class="kanban-board" id="kanbanBoard" style="grid-template-columns: repeat({{ count($cfgStages) }}, 1fr)">
 @foreach($cfgStages as $slug => $stage)
-@php $colDeals=$kanbanDeals->get($slug,collect()); $colTotal=$colDeals->sum('value'); @endphp
+@php
+    $colDeals  = $kanbanDeals->get($slug,collect());
+    $stAgg     = $kanbanStageCounts->get($slug);
+    $colCount  = $stAgg->count ?? 0;
+    $colTotal  = $stAgg->total ?? 0;
+    $hasMore   = $colCount > $colDeals->count();
+@endphp
 <div class="k-col" data-stage="{{ $slug }}">
 
     {{-- Header with top color bar --}}
     <div class="k-col-head" style="border-top:3px solid {{ $stage['color'] }}">
         <div class="k-col-head-l">
             <span class="k-col-title" style="color:{{ $stage['text_color'] }}">{{ $stage['label'] }}</span>
-            <span class="k-col-count" style="background:{{ $stage['color'] }}">{{ $colDeals->count() }}</span>
+            <span class="k-col-count" data-total="{{ $colCount }}" style="background:{{ $stage['color'] }}">{{ $colCount }}</span>
         </div>
         <span class="k-col-amt" style="color:{{ $stage['text_color'] }}">
             ₹{{ number_format($colTotal/100000,1) }}L
@@ -552,6 +571,13 @@ $allTotal = $stageSummary->sum('total');
             </div>
         </div>
         @endforeach
+
+        @if($hasMore)
+        <a href="{{ route('tenant.deals.index',array_merge(request()->except(['page']),['stage'=>$slug,'view'=>'list'])) }}"
+           class="k-view-all-btn">
+            View all {{ number_format($colCount) }} in list <i class="ti ti-arrow-right" style="font-size:11px"></i>
+        </a>
+        @endif
     </div>
 
     <a href="{{ route('tenant.deals.create',['stage'=>$slug]) }}" class="k-add-btn">
@@ -890,8 +916,8 @@ window.handleDrop = async function(e){
     if(oldEmpty && oldCards?.length === 0) oldEmpty.style.display = 'block';
 
     /* Update column counts */
-    updateColCount(oldStage);
-    updateColCount(newStage);
+    updateColCount(oldStage, -1);
+    updateColCount(newStage, 1);
 
     /* Toast */
     showToast(`"${card.dataset.title}" moved to ${STAGES[newStage]?.label ?? newStage}`);
@@ -921,13 +947,14 @@ window.handleDrop = async function(e){
     }
 };
 
-function updateColCount(stage){
-    const zone   = document.getElementById('zone_' + stage);
-    const col    = zone?.closest('.k-col');
-    if(!col) return;
-    const count  = zone.querySelectorAll('.deal-card').length;
-    const countEl = col.querySelector('.k-col-count');
-    if(countEl) countEl.textContent = count;
+function updateColCount(stage, delta){
+    const zone    = document.getElementById('zone_' + stage);
+    const col     = zone?.closest('.k-col');
+    const countEl = col?.querySelector('.k-col-count');
+    if(!countEl) return;
+    const next = Math.max(0, (parseInt(countEl.dataset.total, 10) || 0) + delta);
+    countEl.dataset.total  = next;
+    countEl.textContent    = next;
 }
 
 function showToast(msg, isErr = false){

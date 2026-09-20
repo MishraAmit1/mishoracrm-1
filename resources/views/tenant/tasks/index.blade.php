@@ -63,10 +63,12 @@
     width: 290px; flex-shrink: 0; display: flex; flex-direction: column;
     background: var(--bg-elevated); border: 1px solid var(--border-subtle);
     border-radius: 12px; overflow: hidden;
+    max-height: calc(100vh - 300px); min-height: 260px;
 }
 .k-col-head {
     display: flex; align-items: center; justify-content: space-between;
     padding: 12px 14px; border-bottom: 1px solid var(--border-subtle);
+    flex-shrink: 0;
 }
 .k-col-head-l { display: flex; align-items: center; gap: 8px; }
 .k-col-title  { font-size: 13px; font-weight: 600; }
@@ -74,10 +76,20 @@
 
 /* Drop zone */
 .k-drop-zone {
-    flex: 1; min-height: 200px; padding: 10px;
+    flex: 1; min-height: 0; padding: 10px;
     display: flex; flex-direction: column; gap: 8px;
     transition: background .2s;
+    overflow-y: auto;
 }
+.k-view-all-btn {
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    margin-top: 2px; padding: 9px; background: var(--bg-surface);
+    border: 1px solid var(--border-default); border-radius: 8px;
+    font-size: 11.5px; font-weight: 600; color: var(--accent); cursor: pointer;
+    font-family: var(--font); transition: all .15s; text-decoration: none;
+    flex-shrink: 0;
+}
+.k-view-all-btn:hover { border-color: var(--accent); background: var(--accent-dim); }
 .k-drop-zone.drag-over {
     background: rgba(255,122,89,.06);
     outline: 2px dashed var(--accent);
@@ -386,7 +398,12 @@
         <div class="kanban-board" id="kanbanBoard">
 
             @foreach($cfgStages as $slug => $stage)
-            @php $colTasks = $kanbanTasks->get($slug, collect()); @endphp
+            @php
+                $colTasks = $kanbanTasks->get($slug, collect());
+                $ss       = $stageSummary->get($slug);
+                $colCount = is_object($ss) ? ($ss->count ?? 0) : (int) ($ss ?? 0);
+                $hasMore  = $colCount > $colTasks->count();
+            @endphp
 
             <div class="k-col" data-stage="{{ $slug }}"
                  ondragover="taskDragOver(event)"
@@ -400,9 +417,9 @@
                         <span class="k-col-title" style="color:{{ $stage['text_color'] }}">
                             {{ $stage['label'] }}
                         </span>
-                        <span class="k-col-count" id="count_{{ $slug }}"
+                        <span class="k-col-count" id="count_{{ $slug }}" data-total="{{ $colCount }}"
                               style="background:{{ $stage['color'] }}">
-                            {{ $colTasks->count() }}
+                            {{ $colCount }}
                         </span>
                     </div>
                 </div>
@@ -505,6 +522,13 @@
                         </div>
                     </div>
                     @endforeach
+
+                    @if($hasMore)
+                    <a href="{{ route('tenant.tasks.index',array_merge(request()->except(['page']),['stage'=>$slug,'view'=>'list'])) }}"
+                       class="k-view-all-btn">
+                        View all {{ number_format($colCount) }} in list <i class="ti ti-arrow-right" style="font-size:11px"></i>
+                    </a>
+                    @endif
                 </div>
 
                 {{-- Add task to this stage --}}
@@ -890,8 +914,8 @@
 
         updateEmptyState(newZone, newStage);
         if (oldZone) updateEmptyState(oldZone, oldStage);
-        updateCount(oldStage);
-        updateCount(newStage);
+        updateCount(oldStage, -1);
+        updateCount(newStage, 1);
 
         showToast('"' + cardTitle + '" moved to ' + (cfg?.label ?? newStage));
 
@@ -934,8 +958,8 @@
                 if (sel) sel.value = oldStage;
                 updateEmptyState(oldZone, oldStage);
                 updateEmptyState(newZone, newStage);
-                updateCount(oldStage);
-                updateCount(newStage);
+                updateCount(oldStage, 1);
+                updateCount(newStage, -1);
             }
 
             showToast(err.message || 'Failed to update. Please try again.', true);
@@ -957,11 +981,12 @@
         empty.style.display = zone.querySelectorAll('.task-card').length === 0 ? 'block' : 'none';
     }
 
-    function updateCount(stage) {
-        const zone  = document.getElementById('zone_' + stage);
+    function updateCount(stage, delta) {
         const badge = document.getElementById('count_' + stage);
-        if (!zone || !badge) return;
-        badge.textContent = zone.querySelectorAll('.task-card').length;
+        if (!badge) return;
+        const next = Math.max(0, (parseInt(badge.dataset.total, 10) || 0) + delta);
+        badge.dataset.total  = next;
+        badge.textContent    = next;
     }
 
     function showToast(msg, isError = false) {

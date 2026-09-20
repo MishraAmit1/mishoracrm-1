@@ -10,7 +10,7 @@ class GymServiceSeeder extends Seeder
 {
     public function run(): void
     {
-        $tenant = Tenant::first();
+        $tenant = Tenant::find(12);
         if (!$tenant) {
             $this->command->error('No tenant found. Create a tenant first.');
             return;

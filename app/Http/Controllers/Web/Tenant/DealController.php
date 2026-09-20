@@ -54,7 +54,11 @@ class DealController extends Controller
     // ── Index ─────────────────────────────────────────────────────
     public function index(Request $request)
     {
-        $query = self::filteredQuery(auth()->user()->tenant_id, $request->all(), auth()->user())
+        $tenantId = auth()->user()->tenant_id;
+        $user     = auth()->user();
+        $filters  = $request->all();
+
+        $query = self::filteredQuery($tenantId, $filters, $user)
             ->with(['contact', 'assignedTo'])
             ->withCount(['tasks', 'followups']);
 
@@ -73,17 +77,32 @@ class DealController extends Controller
             $query->orderBy($sort, $dir === 'asc' ? 'asc' : 'desc');
         }
 
-        // ── Kanban data ────────────────────────────
-        $kanbanDeals = (clone $query)
+        // ── Kanban data ─────────────────────────────
+        // Cap cards per column so a stage with hundreds/thousands of deals
+        // doesn't render them all into the DOM at once (huge scroll, slow
+        // drag & drop, sluggish page). Real per-stage counts/totals are
+        // fetched separately (unaffected by the cap) so headers stay accurate
+        // and columns can offer a "view all in list" link when truncated.
+        $kanbanLimit = 30;
+
+        $kanbanStageCounts = self::filteredQuery($tenantId, $filters, $user)
+            ->selectRaw('stage, COUNT(*) as count, SUM(value) as total')
+            ->groupBy('stage')
             ->get()
-            ->groupBy('stage');
+            ->keyBy('stage');
+
+        $kanbanDeals = collect();
+        foreach (array_keys(Deal::stages()) as $slug) {
+            $kanbanDeals[$slug] = (clone $query)
+                ->where('stage', $slug)
+                ->limit($kanbanLimit)
+                ->get();
+        }
 
         // ── List view data ─────────────────────────
         $deals = (clone $query)
             ->paginate(20)
             ->withQueryString();
-
-       
 
         // ── Summary ────────────────────────────────
         $stageSummary = ViewScope::apply(Deal::where('tenant_id', auth()->user()->tenant_id), 'deals', auth()->user())
@@ -95,11 +114,13 @@ class DealController extends Controller
         $view      = $request->get('view', 'kanban');
         $staffList = $this->getStaffList();
         $stages    = Deal::stages();
-        
+
 
         return view('tenant.deals.index', compact(
             'deals',
             'kanbanDeals',
+            'kanbanStageCounts',
+            'kanbanLimit',
             'stageSummary',
             'staffList',
             'stages',

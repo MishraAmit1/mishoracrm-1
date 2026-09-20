@@ -209,15 +209,24 @@ class TaskController extends Controller
             ]);
         }
 
-        // Kanban view — load all for drag-and-drop
-        $allTasks   = $query->latest()->get();
-        $kanbanData = collect();
+        // Kanban view — cap cards per column so a status with hundreds/thousands
+        // of tasks doesn't get loaded and rendered into the DOM all at once
+        // (huge scroll, slow drag & drop). $summary (unaffected by the cap)
+        // still carries the real per-status counts for accurate headers and
+        // a "view all in list" link when a column is truncated.
+        $kanbanLimit = 30;
+        $kanbanData  = collect();
         foreach (array_keys($statuses) as $status) {
-            $kanbanData[$status] = $allTasks->where('status', $status)->values();
+            $kanbanData[$status] = (clone $query)
+                ->where('status', $status)
+                ->latest()
+                ->limit($kanbanLimit)
+                ->get();
         }
 
         return view('tenant.tasks.index', [
             'kanbanTasks'  => $kanbanData,
+            'kanbanLimit'  => $kanbanLimit,
             'stageSummary' => $summary,
             'cfgStatuses'  => $statuses,
             'staffList'    => $staffList,
