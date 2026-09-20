@@ -12,6 +12,13 @@
 .pg-btn:hover { border-color:var(--accent); color:var(--accent); }
 .pg-btn.active { background:var(--accent); border-color:var(--accent); color:#fff; }
 .pg-btn.disabled { opacity:.4; pointer-events:none; }
+.err-view-btn { background:none; border:none; color:var(--accent); font-size:11px; text-decoration:underline; padding:0; margin-left:6px; cursor:pointer; }
+.log-modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1000; align-items:center; justify-content:center; padding:20px; }
+.log-modal-backdrop.open { display:flex; }
+.log-modal { background:var(--bg-surface); border-radius:12px; max-width:560px; width:100%; max-height:80vh; display:flex; flex-direction:column; }
+.log-modal-header { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid var(--border-subtle); }
+.log-modal-header h3 { font-size:15px; margin:0; color:var(--red); }
+.log-modal-body { padding:16px 18px; overflow:auto; font-size:13.5px; color:var(--text-100); line-height:1.5; white-space:pre-wrap; word-break:break-word; }
 </style>
 @endpush
 
@@ -67,6 +74,7 @@
                     <th>Sent By</th>
                     <th>Time</th>
                     <th>Status</th>
+                    <th>Error</th>
                     <th></th>
                 </tr>
             </thead>
@@ -106,6 +114,18 @@
                             {{ $sc[1] }}
                         </span>
                     </td>
+                    <td style="max-width:220px" data-label="Error">
+                        @if($log->status === 'failed' && $log->error_message)
+                        <span style="font-size:11.5px;color:var(--red);display:inline-flex;align-items:center;max-width:100%;">
+                            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">⚠️ {{ Str::limit($log->error_message, 30) }}</span>
+                            <button type="button" class="err-view-btn" onclick='showErrorDetail(@json($log->error_message), @json($log->to_phone))'>view</button>
+                        </span>
+                        @elseif($log->status === 'failed')
+                        <span style="font-size:11.5px;color:var(--text-400);">No error detail captured</span>
+                        @else
+                        <span style="color:var(--text-400);">—</span>
+                        @endif
+                    </td>
                     <td>
                         @if($log->to_phone)
                         <a href="{{ $log->wa_url }}" target="_blank"
@@ -135,5 +155,26 @@
     @endif
     @endif
 </div>
+
+<div class="log-modal-backdrop" id="errModalBackdrop" onclick="if(event.target===this) closeErrorDetail()">
+    <div class="log-modal">
+        <div class="log-modal-header">
+            <h3>⚠️ Send failed — <span id="errModalPhone" style="color:var(--text-300);font-weight:400;"></span></h3>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="closeErrorDetail()">Close</button>
+        </div>
+        <div class="log-modal-body" id="errModalBody"></div>
+    </div>
+</div>
+
+<script>
+function showErrorDetail(message, phone) {
+    document.getElementById('errModalPhone').textContent = phone || '';
+    document.getElementById('errModalBody').textContent = message || 'No further detail available.';
+    document.getElementById('errModalBackdrop').classList.add('open');
+}
+function closeErrorDetail() {
+    document.getElementById('errModalBackdrop').classList.remove('open');
+}
+</script>
 
 @endsection

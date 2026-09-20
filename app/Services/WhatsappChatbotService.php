@@ -6,15 +6,22 @@ use App\Models\Contact;
 use App\Models\Tenant;
 use App\Models\WhatsappChatbotFlow;
 use App\Models\WhatsappChatbotSession;
+use App\Models\WhatsappLog;
 use App\Models\WhatsappSetting;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class WhatsappChatbotService
 {
-    private const GRAPH_URL = 'https://graph.facebook.com/v21.0';
+    private const GRAPH_URL = 'https://graph.facebook.com/v26.0';
 
     private WhatsappSetting $settings;
+
+    // The real reason the last send*() call failed — Meta's own error
+    // message when available, so a failed send in WhatsApp Logs says WHY
+    // (expired token, template not approved, number not reachable, etc.)
+    // instead of a generic "rejected" string. Null after a successful send.
+    public ?string $lastError = null;
 
     public function __construct(WhatsappSetting $settings)
     {
@@ -51,8 +58,8 @@ class WhatsappChatbotService
 
         if ($contact = $this->findContactByWaId($tenant, $waId)) {
             // Already known — don't re-gift, just acknowledge.
-            return $this->sendMessage($waId, "You're already a {$tenant->name} member, {$contact->name}! You have "
-                . number_format((int) $contact->loyalty_points) . ' points.');
+            return $this->sendAndLog($waId, "You're already a {$tenant->name} member, {$contact->name}! You have "
+                . number_format((int) $contact->loyalty_points) . ' points.', $contact->name);
         }
 
         $contact = $this->enrolFromWhatsapp($tenant, $waId, $profileName);
@@ -63,7 +70,7 @@ class WhatsappChatbotService
             '{{tenant_name}}'  => $tenant->name,
         ]);
 
-        return $this->sendMessage($waId, $message);
+        return $this->sendAndLog($waId, $message, $contact->name);
     }
 
     // Match a Contact by the last 10 digits of a WhatsApp id, ignoring
@@ -124,7 +131,33 @@ class WhatsappChatbotService
             '{{loyalty_lifetime}}'   => number_format((int) ($contact->loyalty_lifetime_points ?? 0)),
             '{{loyalty_tier}}'       => $contact?->loyaltyTierLabel() ?? '—',
             '{{loyalty_redeemable}}' => '₹' . number_format($value, 0),
+            '{{booking_link}}'       => $tenant?->bookingPublicUrl() ?? '',
+            '{{support_link}}'       => $tenant?->supportPublicUrl() ?? '',
         ]);
+    }
+
+    // Shared by the "points"/"balance" self-check keyword AND the
+    // loyalty_balance flow action — a real, live lookup (not a placeholder
+    // fill), so it works even if the admin's flow text has no {{loyalty_*}}
+    // tokens in it, and it correctly handles "no account found" either way.
+    private function loyaltyBalanceReply(Tenant $tenant, string $waId): string
+    {
+        $contact = $this->findContactByWaId($tenant, $waId);
+
+        if (!$contact) {
+            return "We couldn't find a loyalty account for this number. Please ask our staff to add you on your next visit!";
+        }
+
+        $s     = $tenant->loyaltySettings();
+        $block = (int) $s['redeem_points_block'];
+        $value = $block > 0 ? floor((int) $contact->loyalty_points / $block) * (float) $s['redeem_value'] : 0;
+        $tier  = $contact->loyaltyTierLabel();
+
+        return "Hi {$contact->name}! 🎁\n"
+            . 'Loyalty points: ' . number_format((int) $contact->loyalty_points) . ($tier ? " ({$tier})" : '') . "\n"
+            . ($value > 0
+                ? 'Worth up to ₹' . number_format($value, 0) . " off your next bill at {$tenant->name}."
+                : "Keep visiting {$tenant->name} to earn rewards!");
     }
 
     // Loyalty self-check: a customer texts "points" / "balance" / "rewards" and
@@ -153,31 +186,18 @@ class WhatsappChatbotService
             return false;
         }
 
-        $contact = $this->findContactByWaId($tenant, $waId);
-
-        if (!$contact) {
-            return $this->sendMessage($waId, "We couldn't find a loyalty account for this number. Please ask our staff to add you on your next visit!");
-        }
-
-        $s     = $tenant->loyaltySettings();
-        $block = (int) $s['redeem_points_block'];
-        $value = $block > 0 ? floor((int) $contact->loyalty_points / $block) * (float) $s['redeem_value'] : 0;
-        $tier  = $contact->loyaltyTierLabel();
-
-        $reply = "Hi {$contact->name}! 🎁\n"
-            . 'Loyalty points: ' . number_format((int) $contact->loyalty_points) . ($tier ? " ({$tier})" : '') . "\n"
-            . ($value > 0
-                ? 'Worth up to ₹' . number_format($value, 0) . " off your next bill at {$tenant->name}."
-                : "Keep visiting {$tenant->name} to earn rewards!");
-
-        return $this->sendMessage($waId, $reply);
+        return $this->sendAndLog($waId, $this->loyaltyBalanceReply($tenant, $waId));
     }
 
     // Single entry point for every inbound WhatsApp text. Loyalty's built-in
     // replies (self-check + QR "join") run first — they have their own opt-in
     // switches and work even if the tenant hasn't enabled the full chatbot —
     // then the tenant's own chatbot flows.
-    public function handleIncomingMessage(string $waId, string $messageText, ?string $contactName = null): bool
+    // $buttonId is set only when the inbound message is a tap on a quick-reply
+    // button (see WhatsappWebhookController) — when that button was explicitly
+    // linked to a next flow (via the "next_flow_id" field in Quick Reply
+    // Buttons), we jump straight there instead of keyword-matching $messageText.
+    public function handleIncomingMessage(string $waId, string $messageText, ?string $contactName = null, ?string $buttonId = null): bool
     {
         $tenant = Tenant::find($this->settings->tenant_id);
 
@@ -195,36 +215,110 @@ class WhatsappChatbotService
         $session = WhatsappChatbotSession::getOrCreate($this->settings->tenant_id, $waId, $contactName);
         $session->update(['last_message_at' => now()]);
 
-        // Find matching flow
-        $flows = WhatsappChatbotFlow::where('tenant_id', $this->settings->tenant_id)
-            ->where('is_active', true)
-            ->orderBy('sort_order')
-            ->orderBy('is_default') // non-default first
-            ->get();
-
         $matchedFlow = null;
-        foreach ($flows as $flow) {
-            if (!$flow->is_default && $flow->matches($messageText)) {
-                $matchedFlow = $flow;
-                break;
-            }
+
+        // Direct jump — the tapped button was linked to a specific next flow.
+        if ($buttonId && str_starts_with($buttonId, 'flow_')) {
+            $matchedFlow = WhatsappChatbotFlow::where('tenant_id', $this->settings->tenant_id)
+                ->where('id', (int) substr($buttonId, 5))
+                ->where('is_active', true)
+                ->first();
         }
 
-        // Fallback to default
+        // Otherwise — keyword match against the typed text / button title, same as before.
         if (!$matchedFlow) {
-            $matchedFlow = $flows->firstWhere('is_default', true);
+            $flows = WhatsappChatbotFlow::where('tenant_id', $this->settings->tenant_id)
+                ->where('is_active', true)
+                ->orderBy('sort_order')
+                ->orderBy('is_default') // non-default first
+                ->get();
+
+            foreach ($flows as $flow) {
+                if (!$flow->is_default && $flow->matches($messageText)) {
+                    $matchedFlow = $flow;
+                    break;
+                }
+            }
+
+            // Fallback to default
+            if (!$matchedFlow) {
+                $matchedFlow = $flows->firstWhere('is_default', true);
+            }
         }
 
         if (!$matchedFlow) return false;
 
         $matchedFlow->incrementTriggered();
 
-        // Flow-attached side effect (e.g. enrol the sender in loyalty).
-        if ($matchedFlow->action === 'loyalty_join' && $tenant && $tenant->hasModuleEnabled('loyalty')) {
-            $this->enrolFromWhatsapp($tenant, $waId, $contactName);
+        $body = $this->resolveMessage($matchedFlow->response_message, $tenant, $waId);
+
+        // Flow-attached actions — each does a real lookup/side-effect rather
+        // than trusting the admin got the {{placeholder}} syntax right.
+        switch ($matchedFlow->action) {
+            case 'loyalty_join':
+                if ($tenant && $tenant->hasModuleEnabled('loyalty')) {
+                    $this->enrolFromWhatsapp($tenant, $waId, $contactName);
+                }
+                break;
+
+            case 'loyalty_balance':
+                // Live balance lookup replaces whatever static text the admin
+                // wrote — reliable even without {{loyalty_*}} placeholders.
+                if ($tenant && $tenant->hasModuleEnabled('loyalty')) {
+                    $body = $this->loyaltyBalanceReply($tenant, $waId);
+                }
+                break;
+
+            case 'book_appointment':
+                // Real, live-availability booking page — safety net in case
+                // the admin's message text doesn't already have the link.
+                if ($tenant && $tenant->hasModuleEnabled('appointments') && !str_contains($body, $tenant->bookingPublicUrl())) {
+                    $body = rtrim($body) . "\n\n" . $tenant->bookingPublicUrl();
+                }
+                break;
+
+            case 'raise_ticket':
+                if ($tenant && $tenant->hasModuleEnabled('tickets') && !str_contains($body, $tenant->supportPublicUrl())) {
+                    $body = rtrim($body) . "\n\n" . $tenant->supportPublicUrl();
+                }
+                break;
         }
 
-        return $this->sendMessage($waId, $this->resolveMessage($matchedFlow->response_message, $tenant, $waId));
+        // Flows with quick-reply buttons configured get sent as an interactive
+        // message; every other flow keeps sending plain text exactly as before.
+        if (!empty($matchedFlow->quick_replies)) {
+            $ok = $this->sendInteractiveButtons($waId, $body, $matchedFlow->quick_replies);
+            $this->recordLog($waId, $contactName, $body, $ok);
+            return $ok;
+        }
+
+        return $this->sendAndLog($waId, $body, $contactName);
+    }
+
+    // Sends a plain-text message and records it in WhatsApp Logs — the single
+    // choke point for every automated reply (loyalty welcome/self-check,
+    // chatbot flows), so a failed auto-reply shows up in Logs with the real
+    // reason, not just silently in the server log. Manual sends from the
+    // "Send Message" / bulk-send screens log separately (WhatsappController),
+    // since those carry extra context (lead/contact/template/sent_by).
+    private function sendAndLog(string $waId, string $message, ?string $contactName = null): bool
+    {
+        $ok = $this->sendMessage($waId, $message);
+        $this->recordLog($waId, $contactName, $message, $ok);
+        return $ok;
+    }
+
+    private function recordLog(string $waId, ?string $contactName, string $message, bool $ok): void
+    {
+        WhatsappLog::create([
+            'tenant_id'     => $this->settings->tenant_id,
+            'to_phone'      => $waId,
+            'to_name'       => $contactName,
+            'message'       => $message,
+            'status'        => $ok ? 'sent' : 'failed',
+            'error_message' => $ok ? null : $this->lastError,
+            'sent_at'       => now(),
+        ]);
     }
 
     // Send WhatsApp message via Cloud API
@@ -240,6 +334,7 @@ class WhatsappChatbotService
             ]);
 
         if ($response->failed()) {
+            $this->lastError = $this->extractApiError($response);
             Log::error('WhatsApp message failed', [
                 'tenant_id' => $this->settings->tenant_id,
                 'to'        => $waId,
@@ -248,6 +343,61 @@ class WhatsappChatbotService
             return false;
         }
 
+        $this->lastError = null;
+        return true;
+    }
+
+    // Send a WhatsApp "reply buttons" interactive message — up to 3 tappable
+    // options under $body. Each entry in $buttons is ['title' => string,
+    // 'next_flow_id' => int|null, 'reply_id' => string|null]. An explicit
+    // 'reply_id' is used verbatim (e.g. "qacc_{token}" for a quotation
+    // accept/reject button handled directly in WhatsappWebhookController);
+    // otherwise a next_flow_id is encoded as flow_{id} so the webhook can
+    // jump straight to that flow, and with neither the button title falls
+    // back to normal keyword matching, same as typed text (see handleIncomingMessage).
+    public function sendInteractiveButtons(string $waId, string $body, array $buttons): bool
+    {
+        $buttons = array_slice(array_values(array_filter(
+            $buttons,
+            fn($b) => trim((string) ($b['title'] ?? '')) !== ''
+        )), 0, 3);
+
+        if (empty($buttons)) {
+            return $this->sendMessage($waId, $body);
+        }
+
+        $response = Http::withToken($this->settings->access_token)
+            ->post(self::GRAPH_URL . '/' . $this->settings->phone_number_id . '/messages', [
+                'messaging_product' => 'whatsapp',
+                'recipient_type'    => 'individual',
+                'to'                => $waId,
+                'type'              => 'interactive',
+                'interactive'       => [
+                    'type' => 'button',
+                    'body' => ['text' => $body],
+                    'action' => [
+                        'buttons' => collect($buttons)->values()->map(fn($btn, $i) => [
+                            'type'  => 'reply',
+                            'reply' => [
+                                'id'    => $btn['reply_id'] ?? (!empty($btn['next_flow_id']) ? 'flow_' . $btn['next_flow_id'] : 'kw_' . $i),
+                                'title' => mb_substr((string) $btn['title'], 0, 20),
+                            ],
+                        ])->all(),
+                    ],
+                ],
+            ]);
+
+        if ($response->failed()) {
+            $this->lastError = $this->extractApiError($response);
+            Log::error('WhatsApp interactive message failed', [
+                'tenant_id' => $this->settings->tenant_id,
+                'to'        => $waId,
+                'error'     => $response->json(),
+            ]);
+            return false;
+        }
+
+        $this->lastError = null;
         return true;
     }
 
@@ -263,6 +413,7 @@ class WhatsappChatbotService
             ]);
 
         if ($response->failed()) {
+            $this->lastError = $this->extractApiError($response);
             Log::error('WhatsApp media upload failed', [
                 'tenant_id' => $this->settings->tenant_id,
                 'error'     => $response->json(),
@@ -270,6 +421,7 @@ class WhatsappChatbotService
             return null;
         }
 
+        $this->lastError = null;
         return $response->json('id');
     }
 
@@ -291,6 +443,7 @@ class WhatsappChatbotService
             ->post(self::GRAPH_URL . '/' . $this->settings->phone_number_id . '/messages', $payload);
 
         if ($response->failed()) {
+            $this->lastError = $this->extractApiError($response);
             Log::error('WhatsApp media message failed', [
                 'tenant_id' => $this->settings->tenant_id,
                 'to'        => $waId,
@@ -299,7 +452,20 @@ class WhatsappChatbotService
             return false;
         }
 
+        $this->lastError = null;
         return true;
+    }
+
+    // Meta's error payload shape: {"error":{"message":"...","error_user_msg":"...",...}}.
+    // Prefer the user-facing message when Meta provides one (clearer for a
+    // non-technical admin reading the Logs page), else the technical message,
+    // else just the HTTP status so there's always something to show.
+    private function extractApiError($response): string
+    {
+        $error = $response->json('error') ?? [];
+        $message = $error['error_user_msg'] ?? $error['message'] ?? null;
+
+        return $message ? mb_substr($message, 0, 250) : ('WhatsApp API error (HTTP ' . $response->status() . ')');
     }
 
     // WhatsApp Cloud API only distinguishes "image" from "document" for the

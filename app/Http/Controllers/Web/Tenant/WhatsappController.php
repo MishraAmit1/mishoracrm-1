@@ -185,7 +185,7 @@ class WhatsappController extends Controller
     {
         if ($preUploadedMediaId) {
             $ok = $service->sendMediaMessage($waId, $preUploadedMediaId, $preMediaType, $message, $preAttachmentName);
-            return [$ok, $ok ? null : 'WhatsApp API rejected the media message.', $preMediaType, $preUploadedMediaId, $preAttachmentName];
+            return [$ok, $ok ? null : ($service->lastError ?? 'WhatsApp API rejected the media message.'), $preMediaType, $preUploadedMediaId, $preAttachmentName];
         }
 
         if ($file) {
@@ -194,15 +194,15 @@ class WhatsappController extends Controller
             $mediaId = $service->uploadMedia($file->getRealPath(), $file->getMimeType());
 
             if (!$mediaId) {
-                return [false, 'Media upload failed.', $mediaType, null, $attachmentName];
+                return [false, $service->lastError ?? 'Media upload failed.', $mediaType, null, $attachmentName];
             }
 
             $ok = $service->sendMediaMessage($waId, $mediaId, $mediaType, $message, $attachmentName);
-            return [$ok, $ok ? null : 'WhatsApp API rejected the media message.', $mediaType, $mediaId, $attachmentName];
+            return [$ok, $ok ? null : ($service->lastError ?? 'WhatsApp API rejected the media message.'), $mediaType, $mediaId, $attachmentName];
         }
 
         $ok = $service->sendMessage($waId, $message);
-        return [$ok, $ok ? null : 'WhatsApp API rejected the message.', null, null, null];
+        return [$ok, $ok ? null : ($service->lastError ?? 'WhatsApp API rejected the message.'), null, null, null];
     }
 
     // ── Bulk send form ────────────────────────────────────────────

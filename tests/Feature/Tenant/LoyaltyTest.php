@@ -879,6 +879,7 @@ class LoyaltyTest extends TestCase
         $contact = $this->contact($tenant);
         $this->givePoints($contact, 640);
 
+        $this->giveActiveSubscription($tenant);
         $key = ApiKey::generate($tenant->id, $admin->id, 'test')->key;
 
         $this->withHeader('X-API-Key', $key)
@@ -892,6 +893,7 @@ class LoyaltyTest extends TestCase
     {
         $tenant = $this->enableLoyalty($this->setUpTenant());
         $admin  = $this->makeUser($tenant, 'tenant_admin');
+        $this->giveActiveSubscription($tenant);
         $key    = ApiKey::generate($tenant->id, $admin->id, 'test')->key;
 
         $this->withHeader('X-API-Key', $key)

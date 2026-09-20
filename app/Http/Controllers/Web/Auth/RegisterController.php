@@ -123,7 +123,7 @@ class RegisterController extends Controller
      * Status / trial window for a brand-new subscription on $plan.
      *   trial_days > 0            → N-day trial, then expires until paid
      *   trial_days = 0, ₹0 plan   → permanent free, no expiry, no lockout
-     *   trial_days = 0, paid plan → trial that ends now (register redirects to checkout)
+     *   trial_days = 0, paid plan → locked immediately until purchase
      */
     private function subscriptionWindow(Plan $plan): array
     {
@@ -136,6 +136,9 @@ class RegisterController extends Controller
             return ['status' => 'active', 'trial_ends_at' => null, 'ends_at' => null];
         }
 
-        return ['status' => 'trial', 'trial_ends_at' => now(), 'ends_at' => now()];
+        // Paid plan, not yet paid: locked to the purchase page from the very
+        // first request until payment activates the plan.
+        $past = now()->subMinute();
+        return ['status' => 'trial', 'trial_ends_at' => $past, 'ends_at' => $past];
     }
 }

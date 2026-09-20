@@ -28,6 +28,8 @@ use Illuminate\Support\Facades\Route;
 Route::redirect('/', '/login', 301)->name('home');
 Route::get('/pricing', [PricingController::class, 'index'])->name('pricing');
 Route::get('/privacy-policy', fn() => view('legal.privacy-policy'))->name('privacy-policy');
+Route::get('/terms', fn() => view('legal.terms'))->name('terms');
+Route::get('/data-deletion', fn() => view('legal.data-deletion'))->name('data-deletion');
 
 // PUBLIC — "Talk to sales" flow behind the Enterprise plan
 Route::get('/contact-sales', [ContactSalesController::class, 'show'])->name('contact-sales');
@@ -468,6 +470,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
                 Route::post('/{id}/status', 'updateStatus')->name('update_status');
                 Route::get('/{id}/pdf', 'pdf')->name('pdf');
                 Route::post('/{id}/send', 'send')->name('send');
+                Route::post('/{id}/send-whatsapp', 'sendWhatsapp')->name('send_whatsapp');
                 Route::post('/{id}/convert', 'convertToInvoice')->name('convert');
                 Route::post('/{id}/new-version', 'newVersion')->name('new_version');
                 Route::get('/{id}/data', 'quotationData')->name('data');
@@ -502,6 +505,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
                 Route::post('/{id}/status', 'updateStatus')->name('update_status');
                 Route::get('/{id}/pdf', 'pdf')->name('pdf');
                 Route::post('/{id}/send', 'send')->name('send');
+                Route::post('/{id}/send-whatsapp', 'sendWhatsapp')->name('send_whatsapp');
                 Route::post('/{id}/record-payment', 'recordPayment')->name('record_payment');
 
                 // Loyalty points redemption + campaign coupons against an invoice.
@@ -945,9 +949,11 @@ Route::middleware(['tenant', 'auth', 'subscription'])
 
             // WhatsApp Chatbot & Business API settings
             Route::get('chatbot',                   [Tenant\WhatsappChatbotController::class, 'flows'])->name('chatbot');
+            Route::get('conversations',             [Tenant\WhatsappChatbotController::class, 'conversations'])->name('conversations');
             Route::post('chatbot',                  [Tenant\WhatsappChatbotController::class, 'storeFlow'])->name('chatbot.store');
             Route::put('chatbot/{id}',              [Tenant\WhatsappChatbotController::class, 'updateFlow'])->name('chatbot.update');
             Route::post('chatbot/{id}/toggle',      [Tenant\WhatsappChatbotController::class, 'toggleFlow'])->name('chatbot.toggle');
+            Route::post('chatbot/{id}/position',    [Tenant\WhatsappChatbotController::class, 'updateFlowPosition'])->name('chatbot.position');
             Route::delete('chatbot/{id}',           [Tenant\WhatsappChatbotController::class, 'destroyFlow'])->name('chatbot.destroy');
             Route::get('api-settings',              [Tenant\WhatsappChatbotController::class, 'settings'])->name('api-settings');
             Route::post('api-settings',             [Tenant\WhatsappChatbotController::class, 'saveSettings'])->name('api-settings.save');
@@ -983,6 +989,7 @@ Route::middleware(['tenant', 'auth', 'subscription'])
             Route::get('/deal-quotations', [Tenant\ReportController::class, 'dealQuotations'])->name('deal_quotations');
             Route::get('/revenue',  [Tenant\ReportController::class, 'revenue'])->name('revenue');
             Route::get('/staff',    [Tenant\ReportController::class, 'staff'])->name('staff');
+            Route::get('/conversions', [Tenant\ReportController::class, 'conversions'])->name('conversions');
             Route::get('/subscriptions', [Tenant\ReportController::class, 'subscriptions'])->name('subscriptions');
             Route::get('/appointments',  [Tenant\ReportController::class, 'appointments'])->name('appointments');
             Route::get('/tickets',       [Tenant\ReportController::class, 'tickets'])->name('tickets');

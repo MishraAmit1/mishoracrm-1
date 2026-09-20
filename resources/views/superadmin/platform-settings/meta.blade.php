@@ -184,6 +184,21 @@
                         </div>
                     </div>
 
+                    <div style="border-top:1px solid var(--border-subtle);padding-top:16px;margin-bottom:16px;">
+                        <div class="section-label" style="padding:0 0 8px;">WhatsApp Embedded Signup</div>
+                        <p style="font-size:12px;color:var(--text-300);margin-bottom:14px;">
+                            <span class="tag tag-wa">WhatsApp</span>
+                            From <strong>App → Facebook Login for Business → Configurations</strong> — the "WhatsApp Embedded Signup" configuration you created.
+                            Lets tenants create/connect their WABA in one click, no Business Manager visit needed.
+                        </p>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label class="form-label">Configuration ID</label>
+                            <input type="text" name="wa_config_id" class="form-input"
+                                value="{{ old('wa_config_id', $wa_config_id) }}"
+                                placeholder="e.g. 1386088050385199">
+                        </div>
+                    </div>
+
                     <button type="submit" class="btn btn-primary" style="width:100%;">Save Credentials</button>
                 </form>
 

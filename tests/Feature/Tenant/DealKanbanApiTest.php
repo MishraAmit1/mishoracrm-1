@@ -17,6 +17,7 @@ class DealKanbanApiTest extends TestCase
 
     private function apiKeyFor(\App\Models\Tenant $tenant, \App\Models\User $user): string
     {
+        $this->giveActiveSubscription($tenant);
         return ApiKey::generate($tenant->id, $user->id, 'test key')->key;
     }
 

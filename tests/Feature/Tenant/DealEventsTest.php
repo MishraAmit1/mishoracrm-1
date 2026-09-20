@@ -162,6 +162,7 @@ class DealEventsTest extends TestCase
     {
         $tenant = $this->setUpTenant();
         $admin  = $this->makeUser($tenant, 'tenant_admin');
+        $this->giveActiveSubscription($tenant);
         $apiKey = ApiKey::generate($tenant->id, $admin->id, 'test key');
         $deal   = Deal::factory()->create(['tenant_id' => $tenant->id, 'stage' => 'negotiation']);
         $quotation = $this->makePendingQuotation($tenant->id, $deal->id);

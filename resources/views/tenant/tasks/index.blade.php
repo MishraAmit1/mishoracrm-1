@@ -7,57 +7,93 @@
 /* ── Base ───────────────────────────────────────────────────────── */
 .di { font-family: var(--font), sans-serif; }
 
+/* ── Page header ────────────────────────────────────────────────── */
+.tk-page-icon {
+    width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--accent); font-size: 18px;
+}
+
 /* ── Summary cards ──────────────────────────────────────────────── */
 .di-summary {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 10px;
-    margin-bottom: 16px;
+    gap: 12px;
+    margin-bottom: 18px;
 }
 @media(max-width:1100px) { .di-summary { grid-template-columns: repeat(3,1fr); } }
 @media(max-width:600px)  { .di-summary { grid-template-columns: repeat(2,1fr); } }
 
 .di-sum {
-    background: var(--bg-surface); border: 1px solid var(--border-default);
-    border-radius: 10px; padding: 13px 15px; text-decoration: none;
-    display: block; position: relative; overflow: hidden;
-    transition: border-color .15s, transform .15s; cursor: pointer;
+    --s-clr: var(--accent);
+    background: var(--bg-surface); border: 1px solid var(--border-subtle);
+    border-radius: 12px; padding: 14px 16px; text-decoration: none;
+    display: flex; align-items: center; gap: 12px; position: relative; overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0,0,0,.03);
+    transition: border-color .15s, transform .15s, box-shadow .15s, background .15s; cursor: pointer;
 }
-.di-sum:hover { border-color: var(--accent); transform: translateY(-1px); }
-.di-sum.active { border-color: var(--accent); background: var(--accent-dim); }
-.di-sum-val { font-size: 22px; font-weight: 700; color: var(--text-100); font-family: var(--mono); letter-spacing: -.5px; line-height: 1; }
-.di-sum.active .di-sum-val { color: var(--accent); }
-.di-sum-lbl { font-size: 11px; color: var(--text-300); margin-top: 3px; font-weight: 500; }
-.di-sum-bar { position: absolute; bottom: 0; left: 0; height: 3px; border-radius: 0 2px 0 0; }
+.di-sum:hover { border-color: color-mix(in srgb, var(--s-clr) 45%, var(--border-subtle)); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,0,0,.06); }
+.di-sum.active { border-color: var(--s-clr); background: color-mix(in srgb, var(--s-clr) 8%, var(--bg-surface)); }
+.di-sum::before { content:''; position:absolute; top:0; left:0; bottom:0; width:3px; background: var(--s-clr); opacity:0; transition: opacity .15s; }
+.di-sum.active::before { opacity: 1; }
+.di-sum-icon {
+    width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 15px;
+    background: color-mix(in srgb, var(--s-clr) 14%, transparent); color: var(--s-clr);
+}
+.di-sum-txt { min-width: 0; }
+.di-sum-val { font-size: 20px; font-weight: 700; color: var(--text-100); font-family: var(--mono); letter-spacing: -.5px; line-height: 1.15; }
+.di-sum.active .di-sum-val { color: var(--s-clr); }
+.di-sum-lbl { font-size: 11.5px; color: var(--text-300); margin-top: 3px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ── Toolbar ────────────────────────────────────────────────────── */
-.di-toolbar { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
-.di-fi {
-    padding: 8px 11px; height: 36px;
-    background: var(--bg-surface); border: 1px solid var(--border-default);
-    border-radius: 8px; font-size: 12.5px; color: var(--text-100);
-    font-family: var(--font); outline: none;
-    transition: border-color .15s, box-shadow .15s;
-    -webkit-appearance: none; cursor: pointer;
+.di-toolbar {
+    display:flex; align-items:center; gap:9px; flex-wrap:wrap;
+    background: var(--bg-surface); border: 1px solid var(--border-subtle);
+    border-radius: 12px; padding: 10px; margin-bottom:18px;
 }
-.di-fi:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
-.di-sw  { position: relative; flex: 1; min-width: 180px; max-width: 260px; }
-.di-sw svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; }
-.di-fi-s { width: 100%; padding-left: 32px; }
+.di-fi {
+    padding: 8px 12px; height: 36px;
+    background: var(--bg-elevated); border: 1px solid var(--border-subtle);
+    border-radius: 8px; font-size: 12.5px; color: var(--text-100); font-weight: 500;
+    font-family: var(--font); outline: none;
+    transition: border-color .15s, box-shadow .15s, background .15s;
+    -webkit-appearance: none; appearance: none; cursor: pointer;
+}
+select.di-fi {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239aa0ac' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 11px center; padding-right: 28px;
+}
+.di-fi:hover  { background: var(--bg-surface); border-color: var(--border-default); }
+.di-fi:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); background: var(--bg-surface); }
+.di-sw  { position: relative; flex: 1; min-width: 190px; max-width: 280px; }
+.di-sw svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); pointer-events: none; }
+.di-fi-s { width: 100%; padding-left: 33px; }
 
-.view-toggle { display:flex; border:1px solid var(--border-default); border-radius:8px; overflow:hidden; margin-left:auto; }
+.view-toggle { display:flex; border:1px solid var(--border-subtle); border-radius:8px; overflow:hidden; margin-left:auto; background: var(--bg-elevated); }
 .vt-btn {
-    padding: 7px 13px; background: transparent; border: none;
+    padding: 7px 14px; background: transparent; border: none;
     cursor: pointer; color: var(--text-300);
-    transition: all .15s; display: flex; align-items: center; gap: 5px;
-    font-size: 12.5px; font-family: var(--font); font-weight: 500; text-decoration: none;
+    transition: all .15s; display: flex; align-items: center; gap: 6px;
+    font-size: 12.5px; font-family: var(--font); font-weight: 600; text-decoration: none;
 }
 .vt-btn.active { background: var(--accent); color: #fff; }
-.vt-btn:not(.active):hover { background: var(--bg-elevated); color: var(--text-100); }
+.vt-btn:not(.active):hover { background: var(--bg-surface); color: var(--text-100); }
 
-/* ── Kanban ─────────────────────────────────────────────────────── */
-.kanban-scroll { overflow-x: auto; padding-bottom: 8px; -webkit-overflow-scrolling: touch; }
-.kanban-board  { display: flex; gap: 14px; min-width: max-content; padding: 2px 0 6px; align-items: stretch; }
+/* ── Kanban — "Soft & Friendly" board ──────────────────────────── */
+.kanban-scroll {
+    overflow-x: auto; padding-bottom: 10px; -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin; scrollbar-color: var(--border-default) transparent;
+}
+.kanban-scroll::-webkit-scrollbar { height: 8px; }
+.kanban-scroll::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 20px; }
+.kanban-scroll::-webkit-scrollbar-track { background: transparent; }
+.kanban-board  {
+    display: flex; gap: 12px; align-items: stretch;
+    background: color-mix(in srgb, var(--accent) 5%, var(--bg-elevated));
+    border-radius: 20px; padding: 16px;
+}
 
 .k-col {
     width: 290px; flex-shrink: 0; display: flex; flex-direction: column;
@@ -74,7 +110,7 @@
 .k-col-title  { font-size: 13px; font-weight: 600; }
 .k-col-count  { font-size: 11px; font-family: var(--mono); padding: 2px 7px; border-radius: 10px; font-weight: 600; color: #fff; }
 
-/* Drop zone */
+/* Drop zone — scrolls internally so one busy column never stretches the whole page */
 .k-drop-zone {
     flex: 1; min-height: 0; padding: 10px;
     display: flex; flex-direction: column; gap: 8px;
@@ -93,57 +129,65 @@
 .k-drop-zone.drag-over {
     background: rgba(255,122,89,.06);
     outline: 2px dashed var(--accent);
-    outline-offset: -6px; border-radius: 6px;
+    outline-offset: -4px;
 }
 
 /* Task card */
 .task-card {
-    background: var(--bg-surface); border: 1px solid var(--border-default);
-    border-radius: 10px; padding: 14px; cursor: grab;
-    transition: border-color .15s, box-shadow .15s, opacity .15s, transform .15s;
+    background: var(--bg-surface); border: 1px solid color-mix(in srgb, var(--text-100) 6%, transparent);
+    border-radius: 13px; padding: 13px 14px; cursor: grab;
+    box-shadow: 0 2px 8px rgba(20,20,50,.06);
+    transition: box-shadow .15s, transform .15s, opacity .15s;
     user-select: none; position: relative;
-    border-left: 3px solid transparent;
 }
-.task-card:hover  { border-color: var(--border-strong); box-shadow: 0 2px 12px rgba(0,0,0,.08); }
-.task-card.is-dragging { opacity: .35; cursor: grabbing; transform: scale(.97); }
+.task-card:hover  { box-shadow: 0 8px 20px rgba(20,20,50,.12); transform: translateY(-2px); }
+.task-card.is-dragging { opacity: .45; cursor: grabbing; transform: scale(.97) rotate(-1deg); box-shadow: 0 12px 26px rgba(20,20,50,.18); }
 
-.tc-top     { display:flex; align-items:flex-start; justify-content:space-between; gap:6px; margin-bottom:6px; }
-.tc-title   { font-size: 13px; font-weight: 600; color: var(--text-100); line-height: 1.35; flex: 1; }
+.tc-chip { display:inline-block; font-size:10px; font-weight:700; color:#fff; padding:3px 9px; border-radius:6px; margin-bottom:9px; letter-spacing:.1px; }
+.tc-top     { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:4px; }
+.tc-title   { font-size: 13.5px; font-weight: 700; color: var(--text-100); line-height: 1.42; flex: 1; }
 .tc-grip    { width:16px; height:20px; flex-shrink:0; opacity:0; transition:opacity .15s; display:flex; align-items:center; justify-content:center; color:var(--text-400); cursor:grab; }
 .task-card:hover .tc-grip { opacity: 1; }
-.tc-desc    { font-size: 11.5px; color: var(--text-300); margin-bottom: 10px; line-height: 1.4; }
-.tc-sep     { height: 1px; background: var(--border-subtle); margin: 10px 0; }
-.tc-foot    { display:flex; align-items:center; justify-content:space-between; }
+.tc-desc    { font-size: 11.5px; color: var(--text-300); margin-bottom: 4px; line-height: 1.5; }
+.tc-foot    { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:10px; }
 .tc-cnts    { display:flex; gap:8px; }
-.tc-cnt     { display:inline-flex; align-items:center; gap:3px; font-size:11px; color:var(--text-400); }
-.tc-right   { display:flex; align-items:center; gap:5px; }
+.tc-cnt     { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600; color: var(--text-300); }
+.tc-right   { display:flex; align-items:center; gap:6px; }
 .tc-date    { font-size: 11px; color: var(--text-400); font-family: var(--mono); }
-.tc-av      { width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; }
+.tc-av      {
+    width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:9.5px; font-weight:700; box-shadow: 0 0 0 2px var(--bg-surface);
+}
 .tc-view-btn {
-    width: 22px; height: 22px; border-radius: 5px;
-    background: var(--bg-elevated); display: flex; align-items: center; justify-content: center;
+    width: 24px; height: 24px; border-radius: 8px;
+    background: color-mix(in srgb, var(--text-100) 5%, transparent); display: flex; align-items: center; justify-content: center;
     color: var(--text-400); text-decoration: none; transition: all .15s; flex-shrink: 0;
 }
-.tc-view-btn:hover { background: var(--accent); color: #fff; }
-.k-empty { text-align:center; padding:24px 12px; font-size:12px; color:var(--text-400); line-height:1.5; }
+.tc-view-btn:hover { background: var(--accent); color: #fff; transform: translateX(1px); }
+.k-empty { text-align:center; padding:30px 14px; font-size:12px; color:var(--text-400); line-height:1.6; }
+.k-empty i { opacity: .5; }
 
-/* Per-card status picker — works on touch / desktop / webview without drag */
-.tc-status-row { margin-top: 10px; }
+/* Per-card status picker — soft ghost control, no boxed border by default */
+.tc-status-row { margin-top: 9px; }
 .tc-status-select {
-    width: 100%; padding: 6px 8px; font-size: 11.5px;
-    background: var(--bg-elevated); border: 1px solid var(--border-default);
-    border-radius: 6px; color: var(--text-200); font-family: var(--font);
-    cursor: pointer; outline: none;
+    width: 100%; padding: 7px 10px; font-size: 11.5px; font-weight: 600;
+    background: color-mix(in srgb, var(--text-100) 4%, transparent); border: 1px solid transparent;
+    border-radius: 8px; color: var(--text-200); font-family: var(--font);
+    cursor: pointer; outline: none; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239aa0ac' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 10px center;
+    transition: background .15s, border-color .15s, box-shadow .15s;
 }
-.tc-status-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+.tc-status-select:hover  { background: color-mix(in srgb, var(--text-100) 7%, transparent); }
+.tc-status-select:focus { background: var(--bg-surface); border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
 .k-add-btn {
-    display:flex; align-items:center; justify-content:center; gap:5px;
-    margin: 0 10px 10px; padding: 8px;
-    border: 1px dashed var(--border-default); border-radius: 8px;
-    font-size: 12px; color: var(--text-400); cursor: pointer;
+    display:flex; align-items:center; justify-content:center; gap:6px; flex-shrink:0;
+    margin: 2px 4px 4px; padding: 10px;
+    border: 1.5px dashed color-mix(in srgb, var(--text-100) 14%, transparent); border-radius: 12px;
+    font-size: 12px; font-weight: 600; color: var(--text-400); cursor: pointer;
     font-family: var(--font); transition: all .15s; text-decoration: none; background: transparent;
 }
-.k-add-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+.k-add-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); border-style: solid; }
 
 /* Toast */
 .move-toast {
@@ -161,47 +205,48 @@
 .move-toast.error { background: var(--red); }
 
 /* ── List view ──────────────────────────────────────────────────── */
-.list-wrap { background:var(--bg-surface); border:1px solid var(--border-default); border-radius:12px; overflow:hidden; }
-.list-head { display:flex; align-items:center; justify-content:space-between; padding:12px 18px; border-bottom:1px solid var(--border-subtle); background:var(--bg-elevated); }
+.list-wrap { background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:12px; overflow:hidden; box-shadow: 0 1px 3px rgba(0,0,0,.03); }
+.list-head { display:flex; align-items:center; justify-content:space-between; padding:13px 18px; border-bottom:1px solid var(--border-subtle); background:var(--bg-elevated); }
 .list-count { font-size:12px; color:var(--text-300); }
-.list-count strong { color:var(--text-100); font-weight:600; }
+.list-count strong { color:var(--text-100); font-weight:700; }
 
 .di-table { width:100%; border-collapse:collapse; min-width:700px; }
 .di-table thead tr { background:var(--bg-elevated); }
-.di-table th { padding:9px 14px; text-align:left; font-size:11px; font-weight:600; color:var(--text-300); text-transform:uppercase; letter-spacing:.5px; border-bottom:1px solid var(--border-subtle); white-space:nowrap; }
+.di-table th { padding:11px 14px; text-align:left; font-size:10.5px; font-weight:700; color:var(--text-300); text-transform:uppercase; letter-spacing:.6px; border-bottom:1px solid var(--border-subtle); white-space:nowrap; }
 .di-table th a { display:inline-flex; align-items:center; gap:4px; color:inherit; text-decoration:none; }
 .di-table th a:hover { color:var(--text-100); }
 .di-table th a i { font-size:12px; opacity:.6; }
 .di-table th a.sorted i { opacity:1; color:var(--accent); }
-.di-table td { padding:11px 14px; font-size:13px; color:var(--text-100); border-bottom:1px solid var(--border-subtle); vertical-align:middle; }
+.di-table td { padding:12px 14px; font-size:13px; color:var(--text-100); border-bottom:1px solid var(--border-subtle); vertical-align:middle; }
 .di-table tr:last-child td { border-bottom:none; }
+.di-table tbody tr { transition: background .12s; }
 .di-table tbody tr:hover td { background:var(--bg-elevated); }
 
-.st-badge { display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:600; white-space:nowrap; }
+.st-badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; white-space:nowrap; }
 
-.row-actions { display:flex; align-items:center; gap:3px; opacity:0; transition:opacity .15s; }
+.row-actions { display:flex; align-items:center; gap:4px; opacity:0; transition:opacity .15s; }
 .di-table tbody tr:hover .row-actions { opacity:1; }
 .act-btn {
     width:28px; height:28px; display:flex; align-items:center; justify-content:center;
-    border-radius:6px; border:1px solid var(--border-subtle);
-    background:transparent; cursor:pointer; color:var(--text-300); text-decoration:none; transition:all .15s;
+    border-radius:7px; border:1px solid var(--border-subtle);
+    background:var(--bg-surface); cursor:pointer; color:var(--text-300); text-decoration:none; transition:all .15s;
 }
-.act-btn:hover     { background:var(--bg-elevated); color:var(--text-100); border-color:var(--border-default); }
+.act-btn:hover     { background:var(--bg-elevated); color:var(--text-100); border-color:var(--border-default); transform: translateY(-1px); }
 .act-btn.del:hover { background:var(--red-dim); border-color:var(--red); color:var(--red); }
 
 .pag-wrap { display:flex; align-items:center; justify-content:space-between; padding:13px 18px; border-top:1px solid var(--border-subtle); background:var(--bg-elevated); flex-wrap:wrap; gap:8px; }
 .pag-info { font-size:12px; color:var(--text-300); }
 .pag-info strong { color:var(--text-100); font-weight:600; }
 .pag-btns { display:flex; gap:4px; }
-.pg-btn { min-width:32px; height:32px; padding:0 9px; display:inline-flex; align-items:center; justify-content:center; border-radius:7px; border:1px solid var(--border-default); background:var(--bg-surface); font-size:13px; font-weight:500; cursor:pointer; color:var(--text-200); text-decoration:none; transition:all .15s; font-family:var(--font); }
-.pg-btn:hover  { background:var(--bg-elevated); color:var(--text-100); }
+.pg-btn { min-width:32px; height:32px; padding:0 9px; display:inline-flex; align-items:center; justify-content:center; border-radius:7px; border:1px solid var(--border-subtle); background:var(--bg-surface); font-size:13px; font-weight:500; cursor:pointer; color:var(--text-200); text-decoration:none; transition:all .15s; font-family:var(--font); }
+.pg-btn:hover  { background:var(--bg-elevated); color:var(--text-100); border-color:var(--border-default); }
 .pg-btn.active { background:var(--accent); border-color:var(--accent); color:#fff; }
 .pg-btn.disabled { opacity:.35; pointer-events:none; }
 
-.di-empty { text-align:center; padding:56px 24px; }
-.di-empty-icon { width:46px; height:46px; border-radius:12px; background:var(--bg-elevated); display:flex; align-items:center; justify-content:center; margin:0 auto 12px; }
-.di-empty-title { font-size:14px; font-weight:600; color:var(--text-100); margin-bottom:5px; }
-.di-empty-sub   { font-size:13px; color:var(--text-300); margin-bottom:16px; }
+.di-empty { text-align:center; padding:64px 24px; }
+.di-empty-icon { width:52px; height:52px; border-radius:14px; background: color-mix(in srgb, var(--accent) 10%, var(--bg-elevated)); display:flex; align-items:center; justify-content:center; margin:0 auto 14px; }
+.di-empty-title { font-size:14.5px; font-weight:700; color:var(--text-100); margin-bottom:5px; }
+.di-empty-sub   { font-size:13px; color:var(--text-300); margin-bottom:18px; }
 
 /* ── MOBILE TASK CARDS (list view, <768px) ────────────────────── */
 .tk-mobile-list{display:none}
@@ -245,16 +290,26 @@
         collect(explode(' ', $name))->map(fn($p) => strtoupper($p[0] ?? ''))->join('');
 
     $allCount = $stageSummary->sum();
+
+    $stageIcons = [
+        'pending'     => 'ti-clock',
+        'in_progress' => 'ti-loader-2',
+        'completed'   => 'ti-circle-check',
+        'cancelled'   => 'ti-circle-x',
+    ];
 @endphp
 
 <div class="di">
 
     {{-- Page header --}}
     <div class="page-head">
-        <div>
-            <div class="page-title">Tasks</div>
-            <div style="font-size:12px;color:var(--text-300);margin-top:2px">
-                Track and manage all tasks
+        <div style="display:flex;align-items:center;gap:12px">
+            <div class="tk-page-icon"><i class="ti ti-checklist"></i></div>
+            <div>
+                <div class="page-title">Tasks</div>
+                <div style="font-size:12px;color:var(--text-300);margin-top:2px">
+                    Track and manage all tasks
+                </div>
             </div>
         </div>
         <div style="display:flex;gap:8px">
@@ -277,22 +332,25 @@
     {{-- Summary --}}
     <div class="di-summary">
         <a href="{{ route('tenant.tasks.index', array_merge(request()->except(['stage','page']), ['view'=>$currentView])) }}"
-           class="di-sum {{ $currentStage === '' ? 'active' : '' }}">
-            <div class="di-sum-val">{{ $allCount }}</div>
-            <div class="di-sum-lbl">All Tasks</div>
-            <div class="di-sum-bar" style="width:100%;background:var(--accent)"></div>
+           class="di-sum {{ $currentStage === '' ? 'active' : '' }}" style="--s-clr:var(--accent)">
+            <div class="di-sum-icon"><i class="ti ti-list-check"></i></div>
+            <div class="di-sum-txt">
+                <div class="di-sum-val">{{ $allCount }}</div>
+                <div class="di-sum-lbl">All Tasks</div>
+            </div>
         </a>
         @foreach($cfgStages as $slug => $stage)
         @php
             $ss   = $stageSummary->get($slug);
             $sc   = is_object($ss) ? ($ss->count ?? 0) : (int) ($ss ?? 0);
-            $pct  = $allCount > 0 ? round(($sc / $allCount) * 100) : 0;
         @endphp
         <a href="{{ route('tenant.tasks.index', array_merge(request()->except(['stage','page']), ['stage'=>$slug,'view'=>$currentView])) }}"
-           class="di-sum {{ $currentStage === $slug ? 'active' : '' }}">
-            <div class="di-sum-val">{{ $sc }}</div>
-            <div class="di-sum-lbl">{{ $stage['label'] }}</div>
-            <div class="di-sum-bar" style="width:{{ $pct }}%;background:{{ $stage['color'] }}"></div>
+           class="di-sum {{ $currentStage === $slug ? 'active' : '' }}" style="--s-clr:{{ $stage['color'] }}">
+            <div class="di-sum-icon"><i class="ti {{ $stageIcons[$slug] ?? 'ti-circle' }}"></i></div>
+            <div class="di-sum-txt">
+                <div class="di-sum-val">{{ $sc }}</div>
+                <div class="di-sum-lbl">{{ $stage['label'] }}</div>
+            </div>
         </a>
         @endforeach
     </div>
@@ -452,9 +510,12 @@
                          data-task-id="{{ $task->id }}"
                          data-stage="{{ $slug }}"
                          data-title="{{ e($task->title) }}"
-                         style="border-left-color:{{ $stage['color'] }}"
                          ondragstart="taskDragStart(event)"
                          ondragend="taskDragEnd(event)">
+
+                        @if($priority)
+                        <span class="tc-chip" style="background:{{ $priority['color'] }}">{{ $priority['label'] }}</span>
+                        @endif
 
                         <div class="tc-top">
                             <div class="tc-title">
@@ -474,16 +535,6 @@
                         </div>
                         @endif
 
-                        @if($priority)
-                        <div style="margin-top:6px">
-                            <span class="st-badge"
-                                  style="background:{{ $priority['bg'] }};color:{{ $priority['color'] }};border:1px solid {{ $priority['color'] }}30">
-                                <i class="ti ti-flag" style="font-size:10px"></i>
-                                {{ $priority['label'] }}
-                            </span>
-                        </div>
-                        @endif
-
                         {{-- Status picker — reliable alternative to drag (touch / webview) --}}
                         <div class="tc-status-row">
                             <select class="tc-status-select no-select2" aria-label="Change status"
@@ -495,8 +546,6 @@
                                 @endforeach
                             </select>
                         </div>
-
-                        <div class="tc-sep"></div>
 
                         <div class="tc-foot">
                             <div class="tc-cnts">
@@ -909,7 +958,6 @@
         // ── Optimistic UI update ──────────────────────────────────
         newZone.insertBefore(card, newZone.querySelector('.k-empty'));
         card.dataset.stage = newStage;
-        if (cfg) card.style.borderLeftColor = cfg.color;
         if (sel) sel.value = newStage;
 
         updateEmptyState(newZone, newStage);
@@ -953,8 +1001,6 @@
             if (oldZone) {
                 oldZone.insertBefore(card, oldZone.querySelector('.k-empty'));
                 card.dataset.stage = oldStage;
-                const oldConfig = STAGES[oldStage];
-                if (oldConfig) card.style.borderLeftColor = oldConfig.color;
                 if (sel) sel.value = oldStage;
                 updateEmptyState(oldZone, oldStage);
                 updateEmptyState(newZone, newStage);

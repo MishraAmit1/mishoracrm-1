@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Log;
 // tenant's own connected number. Configured in the superadmin Billing Profile.
 class PlatformWhatsappService
 {
-    private const GRAPH_URL = 'https://graph.facebook.com/v21.0';
+    private const GRAPH_URL = 'https://graph.facebook.com/v26.0';
 
     public static function enabled(): bool
     {

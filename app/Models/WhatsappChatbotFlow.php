@@ -9,7 +9,7 @@ class WhatsappChatbotFlow extends Model
 {
     use BelongsToTenant;
 
-    public const ACTIONS = ['loyalty_join'];
+    public const ACTIONS = ['loyalty_join', 'loyalty_balance', 'book_appointment', 'raise_ticket'];
 
     protected $fillable = [
         'tenant_id',
@@ -23,6 +23,8 @@ class WhatsappChatbotFlow extends Model
         'is_active',
         'triggered_count',
         'sort_order',
+        'canvas_x',
+        'canvas_y',
     ];
 
     protected $casts = [
@@ -31,6 +33,8 @@ class WhatsappChatbotFlow extends Model
         'is_default'       => 'boolean',
         'is_active'        => 'boolean',
         'triggered_count'  => 'integer',
+        'canvas_x'         => 'integer',
+        'canvas_y'         => 'integer',
     ];
 
     public function matches(string $text): bool

@@ -17,7 +17,28 @@ trait SetsUpTenant
     {
         $this->seed(RolesAndPermissionsSeeder::class);
 
-        return Tenant::factory()->create();
+        $tenant = Tenant::factory()->create();
+
+        // Web routes are subscription-gated, so tenants start on a live plan.
+        $this->giveActiveSubscription($tenant);
+
+        return $tenant;
+    }
+
+    // A live paid subscription so subscription-gated entry points (API key
+    // auth) let the tenant in.
+    protected function giveActiveSubscription(Tenant $tenant): void
+    {
+        $plan = \App\Models\Plan::create([
+            'name' => 'Paid', 'slug' => 'paid-' . uniqid(), 'monthly_price' => 999, 'yearly_price' => 9999,
+            'features' => ['users' => 5], 'is_active' => true, 'is_custom' => false,
+            'trial_days' => 0, 'sort_order' => 1,
+        ]);
+
+        $tenant->subscriptions()->create([
+            'plan_id' => $plan->id, 'status' => 'active', 'billing_cycle' => 'monthly',
+            'started_at' => now(), 'ends_at' => now()->addMonth(),
+        ]);
     }
 
     protected function makeUser(Tenant $tenant, string $role, array $permissions = []): User

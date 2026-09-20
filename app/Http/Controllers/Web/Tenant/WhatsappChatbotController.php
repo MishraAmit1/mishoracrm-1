@@ -89,9 +89,10 @@ class WhatsappChatbotController extends Controller
         $scope = implode(',', [
             'whatsapp_business_management',
             'whatsapp_business_messaging',
+            'business_management',
         ]);
 
-        $metaUrl = 'https://www.facebook.com/v19.0/dialog/oauth?' . http_build_query([
+        $metaUrl = 'https://www.facebook.com/v26.0/dialog/oauth?' . http_build_query([
             'client_id'     => $data['app_id'],
             'redirect_uri'  => route('whatsapp.oauth.callback'),
             'state'         => $state,
@@ -126,7 +127,7 @@ class WhatsappChatbotController extends Controller
         try {
             $callbackUrl = route('whatsapp.oauth.callback');
 
-            $tokenRes = Http::get('https://graph.facebook.com/v19.0/oauth/access_token', [
+            $tokenRes = Http::get('https://graph.facebook.com/v26.0/oauth/access_token', [
                 'client_id'     => $data['app_id'],
                 'client_secret' => $data['app_secret'],
                 'redirect_uri'  => $callbackUrl,
@@ -137,7 +138,7 @@ class WhatsappChatbotController extends Controller
                 throw new \Exception($tokenRes['error']['message'] ?? 'Failed to get access token.');
             }
 
-            $longRes = Http::get('https://graph.facebook.com/v19.0/oauth/access_token', [
+            $longRes = Http::get('https://graph.facebook.com/v26.0/oauth/access_token', [
                 'grant_type'        => 'fb_exchange_token',
                 'client_id'         => $data['app_id'],
                 'client_secret'     => $data['app_secret'],
@@ -147,7 +148,7 @@ class WhatsappChatbotController extends Controller
             $longToken = $longRes['access_token'] ?? $tokenRes['access_token'];
 
             // Get Businesses this user administers
-            $businessRes = Http::get('https://graph.facebook.com/v19.0/me/businesses', [
+            $businessRes = Http::get('https://graph.facebook.com/v26.0/me/businesses', [
                 'access_token' => $longToken,
             ])->json();
 
@@ -159,7 +160,7 @@ class WhatsappChatbotController extends Controller
             $wabaId = null;
             foreach ($businessRes['data'] as $business) {
                 foreach (['owned_whatsapp_business_accounts', 'client_whatsapp_business_accounts'] as $edge) {
-                    $wabaRes = Http::get("https://graph.facebook.com/v19.0/{$business['id']}/{$edge}", [
+                    $wabaRes = Http::get("https://graph.facebook.com/v26.0/{$business['id']}/{$edge}", [
                         'access_token' => $longToken,
                     ])->json();
 
@@ -175,7 +176,7 @@ class WhatsappChatbotController extends Controller
             }
 
             // Get Phone Numbers under this WABA
-            $phoneRes = Http::get("https://graph.facebook.com/v19.0/{$wabaId}/phone_numbers", [
+            $phoneRes = Http::get("https://graph.facebook.com/v26.0/{$wabaId}/phone_numbers", [
                 'access_token' => $longToken,
             ])->json();
 
@@ -185,12 +186,29 @@ class WhatsappChatbotController extends Controller
 
             $phoneNumberId = $phoneRes['data'][0]['id'];
 
+            // Register the number on Cloud API — required before a freshly
+            // created (Embedded Signup) number can send/receive via the API.
+            // Benign no-op if it's already registered (existing WABA case).
+            $pin = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            $registerRes = Http::withToken($longToken)
+                ->post("https://graph.facebook.com/v26.0/{$phoneNumberId}/register", [
+                    'messaging_product' => 'whatsapp',
+                    'pin'               => $pin,
+                ])->json();
+            $registerError = $registerRes['error']['message'] ?? null;
+            $registeredNow = !$registerError;
+
             // Save to DB
             $settings = WhatsappSetting::firstOrNew(['tenant_id' => $data['tenant_id']]);
             $settings->tenant_id      = $data['tenant_id'];
             $settings->access_token   = $longToken;
             $settings->waba_id        = $wabaId;
             $settings->phone_number_id= $phoneNumberId;
+            $settings->display_phone_number = $phoneRes['data'][0]['display_phone_number'] ?? null;
+            $settings->verified_name        = $phoneRes['data'][0]['verified_name'] ?? null;
+            if ($registeredNow) {
+                $settings->registration_pin = $pin;
+            }
             $settings->is_connected   = true;
             if (!$settings->webhook_verify_token) {
                 $settings->webhook_verify_token = Str::random(32);
@@ -198,7 +216,7 @@ class WhatsappChatbotController extends Controller
             $settings->save();
 
             // Subscribe our app to this WABA so Meta actually sends webhook events for it
-            Http::post("https://graph.facebook.com/v19.0/{$wabaId}/subscribed_apps", [
+            Http::post("https://graph.facebook.com/v26.0/{$wabaId}/subscribed_apps", [
                 'access_token' => $longToken,
             ]);
 
@@ -246,7 +264,11 @@ class WhatsappChatbotController extends Controller
             }
 
             WhatsappSetting::where('tenant_id', $this->tenantId())
-                ->update(['is_connected' => true]);
+                ->update([
+                    'is_connected'          => true,
+                    'display_phone_number'  => $info['display_phone_number'] ?? null,
+                    'verified_name'         => $info['verified_name'] ?? null,
+                ]);
 
             return response()->json(['success' => true, 'account' => $info]);
         } catch (\Throwable $e) {
@@ -268,16 +290,38 @@ class WhatsappChatbotController extends Controller
         return view('tenant.whatsapp.chatbot', compact('settings', 'flows', 'sessions'));
     }
 
+    // ── Recent Conversations — full list ────────────────────────────
+    public function conversations(Request $request): View
+    {
+        $sessions = WhatsappChatbotSession::where('tenant_id', $this->tenantId())
+            ->with('flow')
+            ->when($request->filled('search'), function ($q) use ($request) {
+                $term = $request->input('search');
+                $q->where(function ($q) use ($term) {
+                    $q->where('wa_id', 'like', "%{$term}%")
+                      ->orWhere('contact_name', 'like', "%{$term}%");
+                });
+            })
+            ->latest('last_message_at')
+            ->paginate(25)
+            ->withQueryString();
+
+        return view('tenant.whatsapp.conversations', compact('sessions'));
+    }
+
     // ── Chatbot Flows — store ─────────────────────────────────────
     public function storeFlow(Request $request): RedirectResponse
     {
         $request->validate([
-            'name'             => ['required', 'string', 'max:255'],
-            'trigger_keywords' => ['required', 'string'],
-            'keyword_match'    => ['required', 'in:any,exact,contains'],
-            'response_message' => ['required', 'string', 'max:4096'],
-            'action'           => ['nullable', 'in:loyalty_join'],
-            'is_default'       => ['nullable'],
+            'name'                        => ['required', 'string', 'max:255'],
+            'trigger_keywords'            => ['required', 'string'],
+            'keyword_match'               => ['required', 'in:any,exact,contains'],
+            'response_message'            => ['required', 'string', 'max:4096'],
+            'action'                      => ['nullable', 'in:loyalty_join,loyalty_balance,book_appointment,raise_ticket'],
+            'is_default'                  => ['nullable'],
+            'quick_replies'               => ['nullable', 'array', 'max:3'],
+            'quick_replies.*.title'       => ['nullable', 'string', 'max:20'],
+            'quick_replies.*.next_flow_id'=> ['nullable', 'integer'],
         ]);
 
         $keywords = array_map('trim', explode(',', $request->trigger_keywords));
@@ -289,6 +333,7 @@ class WhatsappChatbotController extends Controller
             'keyword_match'    => $request->keyword_match,
             'response_message' => $request->response_message,
             'action'           => $request->action ?: null,
+            'quick_replies'    => $this->buildQuickReplies($request),
             'is_default'       => (bool) $request->is_default,
             'is_active'        => true,
         ]);
@@ -303,12 +348,15 @@ class WhatsappChatbotController extends Controller
             ->where('tenant_id', $this->tenantId())->firstOrFail();
 
         $request->validate([
-            'name'             => ['required', 'string', 'max:255'],
-            'trigger_keywords' => ['required', 'string'],
-            'keyword_match'    => ['required', 'in:any,exact,contains'],
-            'response_message' => ['required', 'string', 'max:4096'],
-            'action'           => ['nullable', 'in:loyalty_join'],
-            'is_default'       => ['nullable'],
+            'name'                        => ['required', 'string', 'max:255'],
+            'trigger_keywords'            => ['required', 'string'],
+            'keyword_match'               => ['required', 'in:any,exact,contains'],
+            'response_message'            => ['required', 'string', 'max:4096'],
+            'action'                      => ['nullable', 'in:loyalty_join,loyalty_balance,book_appointment,raise_ticket'],
+            'is_default'                  => ['nullable'],
+            'quick_replies'               => ['nullable', 'array', 'max:3'],
+            'quick_replies.*.title'       => ['nullable', 'string', 'max:20'],
+            'quick_replies.*.next_flow_id'=> ['nullable', 'integer'],
         ]);
 
         $keywords = array_map('trim', explode(',', $request->trigger_keywords));
@@ -319,10 +367,50 @@ class WhatsappChatbotController extends Controller
             'keyword_match'    => $request->keyword_match,
             'response_message' => $request->response_message,
             'action'           => $request->action ?: null,
+            'quick_replies'    => $this->buildQuickReplies($request),
             'is_default'       => (bool) $request->is_default,
         ]);
 
         return back()->with('success', 'Chatbot flow updated.');
+    }
+
+    // ── Chatbot Flows — build quick_replies payload ────────────────
+    // Drops empty rows and strips any next_flow_id that doesn't belong to
+    // this tenant (defends against a tampered/stale form submission).
+    private function buildQuickReplies(Request $request): ?array
+    {
+        $rows = $request->input('quick_replies', []);
+        if (!is_array($rows) || empty($rows)) return null;
+
+        $validFlowIds = WhatsappChatbotFlow::where('tenant_id', $this->tenantId())->pluck('id')->all();
+
+        $quickReplies = [];
+        foreach (array_slice($rows, 0, 3) as $row) {
+            $title = trim((string) ($row['title'] ?? ''));
+            if ($title === '') continue;
+
+            $nextFlowId = $row['next_flow_id'] ?? null;
+            $nextFlowId = ($nextFlowId && in_array((int) $nextFlowId, $validFlowIds, true)) ? (int) $nextFlowId : null;
+
+            $quickReplies[] = ['title' => $title, 'next_flow_id' => $nextFlowId];
+        }
+
+        return $quickReplies ?: null;
+    }
+
+    // ── Chatbot Flows — canvas position (drag save) ────────────────
+    public function updateFlowPosition(Request $request, int $id): JsonResponse
+    {
+        $request->validate([
+            'canvas_x' => ['required', 'integer'],
+            'canvas_y' => ['required', 'integer'],
+        ]);
+
+        WhatsappChatbotFlow::where('id', $id)
+            ->where('tenant_id', $this->tenantId())
+            ->update(['canvas_x' => $request->canvas_x, 'canvas_y' => $request->canvas_y]);
+
+        return response()->json(['success' => true]);
     }
 
     // ── Chatbot Flows — toggle ────────────────────────────────────

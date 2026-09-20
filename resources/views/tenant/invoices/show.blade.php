@@ -51,6 +51,20 @@
             </button>
             @endif
 
+            @if($invoice->contact?->phone)
+            <form method="POST" action="{{ route('tenant.invoices.send_whatsapp', $invoice->id) }}"
+                  onsubmit="return confirm('Send this invoice to {{ addslashes($invoice->contact->phone) }} via WhatsApp?')">
+                @csrf
+                <button type="submit" class="btn btn-success">
+                    Send via WhatsApp
+                </button>
+            </form>
+            @else
+            <button class="btn btn-success" disabled title="Contact has no phone number">
+                Send via WhatsApp
+            </button>
+            @endif
+
         </div>
 
     </div>

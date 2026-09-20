@@ -74,7 +74,9 @@ class AuthController extends Controller
                     } elseif ($isFree) {
                         $window = ['status' => 'active', 'trial_ends_at' => null, 'ends_at' => null];
                     } else {
-                        $window = ['status' => 'trial', 'trial_ends_at' => now(), 'ends_at' => now()];
+                        // Unpaid paid plan: locked until purchase.
+                        $past   = now()->subMinute();
+                        $window = ['status' => 'trial', 'trial_ends_at' => $past, 'ends_at' => $past];
                     }
 
                     $tenant->subscriptions()->create(array_merge(

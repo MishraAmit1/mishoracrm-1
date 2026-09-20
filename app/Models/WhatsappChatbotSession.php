@@ -20,6 +20,11 @@ class WhatsappChatbotSession extends Model
         'last_message_at' => 'datetime',
     ];
 
+    public function flow()
+    {
+        return $this->belongsTo(WhatsappChatbotFlow::class, 'chatbot_flow_id');
+    }
+
     public static function getOrCreate(int $tenantId, string $waId, ?string $name = null): self
     {
         return static::firstOrCreate(
