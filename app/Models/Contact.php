@@ -32,8 +32,8 @@ class Contact extends Model
         'anniversary',
     ];
 
-    // loyalty_* + referral_code + *_greeted_on columns are deliberately NOT
-    // fillable — LoyaltyService / model boot own them.
+    // loyalty_* + referral_code + *_greeted_on + phone_normalized columns are
+    // deliberately NOT fillable — LoyaltyService / model boot own them.
     protected $casts = [
         'loyalty_points'          => 'integer',
         'loyalty_lifetime_points' => 'integer',
@@ -42,6 +42,12 @@ class Contact extends Model
         'anniversary'             => 'date',
         'birthday_greeted_on'     => 'date',
         'anniversary_greeted_on'  => 'date',
+        'phone_verified'          => 'boolean',
+        'link_flagged_at'         => 'datetime',
+        'stamp_count'             => 'integer',
+        'stamps_lifetime'         => 'integer',
+        'stamp_rewards_earned'    => 'integer',
+        'stamp_updated_at'        => 'datetime',
     ];
 
     protected static function booted(): void
@@ -49,6 +55,18 @@ class Contact extends Model
         static::creating(function (Contact $contact) {
             if (empty($contact->referral_code)) {
                 $contact->referral_code = static::generateReferralCode($contact->tenant_id);
+            }
+        });
+
+        static::saving(function (Contact $contact) {
+            if ($contact->isDirty('phone')) {
+                $digits = preg_replace('/\D/', '', (string) $contact->phone);
+                $contact->phone_normalized = $digits === '' ? null : substr($digits, -10);
+
+                // Correcting the number is how a tenant resolves a "not me" flag.
+                if ($contact->exists && $contact->link_flagged_at && !$contact->isDirty('link_flagged_at')) {
+                    $contact->link_flagged_at = null;
+                }
             }
         });
     }
@@ -136,6 +154,16 @@ class Contact extends Model
     public function loyaltyTransactions(): HasMany
     {
         return $this->hasMany(LoyaltyTransaction::class)->latest()->latest('id');
+    }
+
+    public function loyaltyCampaignRecipients(): HasMany
+    {
+        return $this->hasMany(LoyaltyCampaignRecipient::class);
+    }
+
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class);
     }
 
     public function referredBy(): BelongsTo

@@ -304,6 +304,17 @@ class Tenant extends Model
             && (bool) ($this->loyaltySettings()['public_lookup'] ?? false);
     }
 
+    // Where customers sign in to their wallet. The portal lives on the base
+    // domain (not a shop subdomain), so print/QR material must point there.
+    public static function portalLoginUrl(): string
+    {
+        $base = config('app.base_domain');
+
+        return $base
+            ? request()->getScheme() . '://' . $base . '/wallet/login'
+            : url('/wallet/login');
+    }
+
     // The wa.me link a customer follows to auto-join the loyalty programme,
     // or null when the tenant hasn't set up the QR welcome feature.
     public function loyaltyWelcomeUrl(): ?string
@@ -379,6 +390,13 @@ class Tenant extends Model
         'welcome_keyword'      => 'JOIN',  // the wa.me prefill text customers send
         'welcome_wa_number'    => '',      // the tenant's WhatsApp Business number (digits)
         'welcome_message'      => 'Welcome to {{tenant_name}} rewards, {{contact_name}}! 🎉 You have {{points}} points to start.',
+        // ── Stamp card (customer portal) ───────────────────────────
+        'mode'              => 'points',   // points | stamps | both — what the customer's card leads with
+        'stamps_required'   => 5,          // stamps to fill one card
+        'stamp_reward'      => '',         // what a full card earns, e.g. "Free regular coffee"
+        'stamp_per'         => 'visit',    // visit | invoice | amount
+        'stamp_amount'      => 100,        // stamp_per=amount: one stamp per this much paid
+        'stamp_expiry_days' => 0,          // a part-filled card resets after N idle days (0 = never)
     ];
 
     public function loyaltySettings(): array

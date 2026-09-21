@@ -164,6 +164,7 @@ class RolesAndPermissionsSeeder extends Seeder
             // ── Customer Loyalty ──────────────────────────────────
             'loyalty.view',           // See members, points, tiers, ledger
             'loyalty.manage',         // Edit rules, manually adjust points
+            'loyalty.stamp',          // Counter: scan a customer's wallet QR, add stamps, redeem
 
             // ── Staff ─────────────────────────────────────────────
             'staff.view',

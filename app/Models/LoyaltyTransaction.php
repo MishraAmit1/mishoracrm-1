@@ -21,6 +21,11 @@ class LoyaltyTransaction extends Model
     public const TYPE_EXPIRE = 'expire';
     public const TYPE_ADJUST = 'adjust';
 
+    // Stamp-card rows share this ledger but never touch the points balance:
+    // `points` holds the signed STAMP delta, `balance_after` the card progress.
+    public const TYPE_STAMP        = 'stamp';        // +n earned / -n expired or reversed
+    public const TYPE_STAMP_REWARD = 'stamp_reward'; // +1 card completed / -1 reward claimed
+
     protected $fillable = [
         'tenant_id',
         'contact_id',

@@ -336,6 +336,14 @@ return [
             'channels' => ['in_app', 'email'],
             'message'  => '{{count}} loyalty customer(s) haven\'t visited in {{days}}+ days — send them a win-back offer',
         ],
+        'loyalty.wrong_number' => [
+            'label'    => 'Possible Wrong Number',
+            'icon'     => 'alert-triangle',
+            'color'    => 'red',
+            'group'    => 'Loyalty',
+            'channels' => ['in_app'],
+            'message'  => 'A customer said contact #{{contact_id}} ({{contact_name}}) isn\'t their account — needs review.',
+        ],
 
         // ── System ────────────────────────────────────────────────
         'system.announcement' => [

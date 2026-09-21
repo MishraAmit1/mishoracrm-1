@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Web\Tenant;
 
 use App\Http\Controllers\Controller;
 use App\Models\Contact;
+use App\Models\Invoice;
+use App\Models\LoyaltyTransaction;
 use App\Models\Tenant;
 use App\Services\LoyaltyService;
 use Illuminate\Http\RedirectResponse;
@@ -43,7 +45,59 @@ class LoyaltyController extends Controller
                 ->pluck('c', 'loyalty_tier'),
         ];
 
-        return view('tenant.loyalty.index', compact('tenant', 'members', 'stats'));
+        $overview = $this->overview($tenant);
+
+        return view('tenant.loyalty.index', compact('tenant', 'members', 'stats', 'overview'));
+    }
+
+    // Stampzo-style overview: paid-visit trend + recent ledger activity for every
+    // loyalty shop, plus the customer-portal / stamp-card numbers when that
+    // module is on (docs/customer-portal-loyalty.txt §6).
+    private function overview(Tenant $tenant): array
+    {
+        $since = now()->subDays(29)->startOfDay();
+
+        $perDay = Invoice::query()
+            ->where('status', 'paid')
+            ->whereNotNull('contact_id')
+            ->where('paid_at', '>=', $since)
+            ->selectRaw('DATE(paid_at) as d, count(*) as c')
+            ->groupBy('d')
+            ->pluck('c', 'd');
+
+        $trend = collect(range(29, 0))->map(function (int $ago) use ($perDay) {
+            $date = now()->subDays($ago)->toDateString();
+
+            return ['date' => $date, 'count' => (int) ($perDay[$date] ?? 0)];
+        });
+
+        $overview = [
+            'trend'    => $trend,
+            'visits'   => $trend->sum('count'),
+            'activity' => LoyaltyTransaction::query()
+                ->with('contact:id,name')
+                ->latest('id')
+                ->limit(20)
+                ->get(),
+            'portal'   => null,
+        ];
+
+        if ($tenant->hasModuleEnabled('customer_portal')) {
+            $mode = $tenant->loyaltySettings()['mode'] ?? 'points';
+
+            $overview['portal'] = [
+                'linked'  => Contact::whereNotNull('customer_id')->where('phone_verified', true)->count(),
+                'pending' => Contact::whereNotNull('customer_id')->where('phone_verified', false)->count(),
+                'stamps'  => in_array($mode, ['stamps', 'both'], true) ? [
+                    'active_cards' => Contact::where('stamp_count', '>', 0)->count(),
+                    'unclaimed'    => (int) Contact::sum('stamp_rewards_earned'),
+                    'unlocked'     => (int) LoyaltyTransaction::where('type', LoyaltyTransaction::TYPE_STAMP_REWARD)->where('points', '>', 0)->sum('points'),
+                    'claimed'      => (int) abs(LoyaltyTransaction::where('type', LoyaltyTransaction::TYPE_STAMP_REWARD)->where('points', '<', 0)->sum('points')),
+                ] : null,
+            ];
+        }
+
+        return $overview;
     }
 
     // ── Counter lookup — "type a phone, see their points" ────────
@@ -111,6 +165,30 @@ class LoyaltyController extends Controller
         return view('tenant.loyalty.win-back', compact('members', 'days'));
     }
 
+    // ── Contacts a customer disowned ("Not me" in their wallet) ──
+    // Likely a wrong number typed at the counter — fix the phone, or merge.
+    public function needsReview(): View
+    {
+        abort_unless(auth()->user()->tenant->hasModuleEnabled('customer_portal'), 403);
+
+        $contacts = Contact::query()
+            ->whereNotNull('link_flagged_at')
+            ->orderByDesc('link_flagged_at')
+            ->paginate(25);
+
+        return view('tenant.loyalty.needs-review', compact('contacts'));
+    }
+
+    // The number is actually right — stop flagging it.
+    public function dismissReview(Contact $contact): RedirectResponse
+    {
+        abort_unless(auth()->user()->tenant->hasModuleEnabled('customer_portal'), 403);
+
+        $contact->forceFill(['link_flagged_at' => null])->save();
+
+        return redirect()->route('tenant.loyalty.needs-review')->with('success', 'Dismissed.');
+    }
+
     // ── Rules ────────────────────────────────────────────────────
     public function settings(): View
     {
@@ -157,7 +235,22 @@ class LoyaltyController extends Controller
             'welcome_keyword'          => ['nullable', 'string', 'max:30'],
             'welcome_wa_number'        => ['nullable', 'string', 'max:20'],
             'welcome_message'          => ['nullable', 'string', 'max:1000'],
+            'mode'                     => ['nullable', 'in:points,stamps,both'],
+            'stamps_required'          => ['nullable', 'integer', 'min:1', 'max:30'],
+            'stamp_reward'             => ['nullable', 'string', 'max:120'],
+            'stamp_per'                => ['nullable', 'in:visit,invoice,amount'],
+            'stamp_amount'             => ['nullable', 'numeric', 'min:1', 'max:1000000'],
+            'stamp_expiry_days'        => ['nullable', 'integer', 'min:0', 'max:3650'],
         ]);
+
+        // The stamp fields are only on the form for portal-enabled shops. This
+        // save REPLACES settings['loyalty'], so a missing field must keep the
+        // shop's current value — not silently fall back to the default.
+        $current = auth()->user()->tenant->loyaltySettings();
+        foreach (['mode', 'stamps_required', 'stamp_reward', 'stamp_per', 'stamp_amount', 'stamp_expiry_days'] as $k) {
+            $data[$k] = $data[$k] ?? $current[$k];
+        }
+        $data['stamp_reward'] = trim((string) $data['stamp_reward']);
 
         // Engagement fields default to their sensible values if the form
         // didn't carry them (keeps older callers / partial saves working).

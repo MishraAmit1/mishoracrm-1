@@ -108,6 +108,36 @@ Route::prefix('/rewards')->name('public.rewards.')->controller(\App\Http\Control
 });
 
 // ══════════════════════════════════════════════════════════════════
+// PUBLIC — Customer wallet portal (global customer login, /wallet path).
+// Not tenant-scoped: a Customer spans shops, so no `tenant` middleware here.
+// Declared before any /wallet/{tenant} route so /wallet/login etc. win.
+// ══════════════════════════════════════════════════════════════════
+
+Route::prefix('/wallet')->name('portal.')->controller(\App\Http\Controllers\Portal\CustomerAuthController::class)->group(function () {
+    Route::get('/login', 'showLogin')->name('login');
+    // Prefixed so each endpoint has its own per-IP bucket instead of sharing
+    // Laravel's default one with every other public throttled route.
+    Route::post('/login/request-otp', 'requestOtp')->middleware('throttle:5,10,portal-otp')->name('login.request-otp');
+    Route::post('/login/verify', 'verify')->middleware('throttle:10,10,portal-verify')->name('login.verify');
+    Route::post('/login/pin', 'loginWithPin')->middleware('throttle:5,10,portal-pin')->name('login.pin');
+    Route::middleware('customer.auth')->group(function () {
+        Route::get('/pin', 'showSetPin')->name('pin.setup');
+        Route::post('/pin', 'setPin')->name('pin.set');
+        Route::post('/logout', 'logout')->name('logout');
+    });
+});
+
+Route::prefix('/wallet')->name('portal.')->middleware('customer.auth')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Portal\WalletController::class, 'index'])->name('wallet.index');
+    Route::get('/profile', [\App\Http\Controllers\Portal\ProfileController::class, 'edit'])->name('profile.edit');
+    Route::post('/profile', [\App\Http\Controllers\Portal\ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/account/delete', [\App\Http\Controllers\Portal\AccountController::class, 'destroy'])->name('account.delete');
+    Route::get('/{tenant}', [\App\Http\Controllers\Portal\WalletController::class, 'show'])->whereNumber('tenant')->name('wallet.show');
+    Route::get('/{tenant}/qr', [\App\Http\Controllers\Portal\WalletController::class, 'qr'])->whereNumber('tenant')->middleware('throttle:30,1,portal-qr')->name('wallet.qr');
+    Route::post('/{tenant}/confirm', [\App\Http\Controllers\Portal\WalletController::class, 'confirm'])->whereNumber('tenant')->name('wallet.confirm');
+});
+
+// ══════════════════════════════════════════════════════════════════
 // RAZORPAY WEBHOOK (no CSRF, no auth — Razorpay se aata hai)
 // ══════════════════════════════════════════════════════════════════
 
@@ -170,6 +200,13 @@ Route::prefix('superadmin')
             Route::post('/{tenant}/seat-limit/clear', 'clearSeatLimit')->name('clear-seat-limit');
             Route::get('/{tenant}/invoices/{subscription}',        'invoiceDownload')->name('invoice-download');
             Route::post('/{tenant}/invoices/{subscription}/resend', 'invoiceResend')->name('invoice-resend');
+        });
+
+        // Customer-portal accounts (platform-level — never exposed to tenants)
+        Route::prefix('customers')->name('customers.')->controller(SuperAdmin\CustomerController::class)->group(function () {
+            Route::get('/',                    'index')->name('index');
+            Route::post('/{customer}/block',   'block')->name('block');
+            Route::post('/{customer}/unblock', 'unblock')->name('unblock');
         });
 
         // Plan management
@@ -677,6 +714,8 @@ Route::middleware(['tenant', 'auth', 'subscription'])
                     Route::get('/top-customers', 'topCustomers')->name('top-customers');
                 });
                 Route::middleware('permission:loyalty.manage')->group(function () {
+                    Route::get('/needs-review', 'needsReview')->name('needs-review');
+                    Route::post('/needs-review/{contact}/dismiss', 'dismissReview')->name('needs-review.dismiss');
                     Route::get('/settings', 'settings')->name('settings');
                     Route::post('/settings', 'updateSettings')->name('settings.update');
                     Route::post('/contacts/{contact}/adjust', 'adjustPoints')->name('adjust');
@@ -693,6 +732,32 @@ Route::middleware(['tenant', 'auth', 'subscription'])
                     Route::post('/{campaign}/launch', 'launch')->name('launch');
                     Route::post('/{campaign}/end', 'end')->name('end');
                     Route::delete('/{campaign}', 'destroy')->name('destroy');
+                });
+
+            // Printable QR posters / counter stand / table tent (customer portal).
+            Route::middleware(['module:customer_portal', 'permission:loyalty.manage'])
+                ->prefix('qr-kit')->name('qr-kit.')
+                ->controller(Tenant\LoyaltyQrKitController::class)->group(function () {
+                    Route::get('/', 'index')->name('index');
+                    Route::get('/{template}', 'show')->name('show');
+                });
+
+            // Counter for shops that don't raise a bill: scan a customer's wallet
+            // QR (or type their phone), then stamp / redeem in a tap. Needs the
+            // customer portal ON as well as loyalty.
+            Route::middleware(['module:customer_portal', 'permission:loyalty.stamp|loyalty.manage'])
+                ->prefix('counter')->name('counter.')
+                ->controller(Tenant\LoyaltyCounterController::class)->group(function () {
+                    Route::get('/', 'index')->name('index');
+                    Route::post('/resolve', 'resolvePhone')->name('resolve');
+                    Route::post('/stamp', 'stamp')->name('stamp');
+                    Route::post('/checkout', 'checkout')->name('checkout');
+                    // Relative signature: the QR carries just the path, so it works
+                    // on whichever shop subdomain the staff member is signed in to.
+                    Route::get('/scan/{customer}', 'scanQr')
+                        ->whereNumber('customer')
+                        ->middleware(['signed:relative', 'throttle:60,1,portal-scan'])
+                        ->name('scan-qr');
                 });
         });
 

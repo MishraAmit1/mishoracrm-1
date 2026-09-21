@@ -1,0 +1,12 @@
+{
+  "name": "My Rewards Wallet",
+  "short_name": "Wallet",
+  "start_url": "/wallet",
+  "scope": "/wallet",
+  "display": "standalone",
+  "background_color": "#0f1020",
+  "theme_color": "#6378ff",
+  "icons": [
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}

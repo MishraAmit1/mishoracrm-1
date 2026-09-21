@@ -75,4 +75,11 @@ return [
         'icon'  => 'gift',
         'tier'  => 'business',
     ],
+    'customer_portal' => [
+        'label' => 'Customer Portal / Wallet',
+        'desc'  => 'Global customer login + cross-shop loyalty wallet, QR counter redemption. Requires the Customer Loyalty module to also be ON.',
+        'blurb' => "One login, every shop's points & stamps in one wallet",
+        'icon'  => 'wallet',
+        'tier'  => 'business',
+    ],
 ];

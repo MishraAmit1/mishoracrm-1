@@ -30,6 +30,37 @@
             <span class="cs-dl-key">Lifetime points</span>
             <span class="cs-dl-val">{{ number_format($contact->loyalty_lifetime_points) }}</span>
         </div>
+        @php $stampRules = auth()->user()->tenant->loyaltySettings(); @endphp
+        @if(in_array($stampRules['mode'] ?? 'points', ['stamps', 'both'], true))
+        <div class="cs-dl-row">
+            <span class="cs-dl-key">Stamp card</span>
+            <span class="cs-dl-val">
+                {{ (int) $contact->stamp_count }}/{{ (int) $stampRules['stamps_required'] }}
+                @if($contact->stamp_rewards_earned > 0)
+                <span style="color:var(--green);font-weight:600">· {{ $contact->stamp_rewards_earned }} reward{{ $contact->stamp_rewards_earned === 1 ? '' : 's' }} unclaimed</span>
+                @endif
+            </span>
+        </div>
+        @endif
+        @if(auth()->user()->tenant->hasModuleEnabled('customer_portal'))
+        <div class="cs-dl-row">
+            <span class="cs-dl-key">Customer account</span>
+            <span class="cs-dl-val">
+                @if($contact->customer_id && $contact->phone_verified)
+                    Linked
+                    @if($contact->customer?->last_login_at)
+                    <span style="color:var(--text-400)">· last login {{ $contact->customer->last_login_at->diffForHumans() }}</span>
+                    @endif
+                @elseif($contact->customer_id)
+                    <span style="color:var(--amber)">Pending — customer confirmation</span>
+                @elseif($contact->link_flagged_at)
+                    <span style="color:var(--red)">Flagged — customer said "not me"</span>
+                @else
+                    <span style="color:var(--text-400)">Not linked</span>
+                @endif
+            </span>
+        </div>
+        @endif
         @if($contact->referral_code)
         <div class="cs-dl-row">
             <span class="cs-dl-key">Referral code</span>

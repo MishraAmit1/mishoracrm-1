@@ -64,3 +64,9 @@ Schedule::command('loyalty:occasion-offers')->dailyAt('07:15');
 
 // ── Loyalty win-back digest to tenant admins — weekly (Monday) ─────
 Schedule::command('loyalty:win-back-digest')->weeklyOn(1, '08:00');
+
+// ── Customer portal — soft-delete junk accounts (never logged in, no shop link) — weekly
+Schedule::command('customers:prune')->weekly();
+
+// ── Loyalty stamp cards — reset part-filled cards idle past the tenant window — daily
+Schedule::command('loyalty:expire-stamps')->dailyAt('02:30');

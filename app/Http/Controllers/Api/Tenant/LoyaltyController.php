@@ -33,10 +33,7 @@ class LoyaltyController extends Controller
         } else {
             $digits = preg_replace('/\D/', '', $identifier);
             $last10 = strlen($digits) >= 10 ? substr($digits, -10) : $digits;
-            $contact = $q->whereRaw(
-                "RIGHT(REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '+', ''), 10) = ?",
-                [$last10]
-            )->first();
+            $contact = $q->where('phone_normalized', $last10)->first();
         }
 
         if (!$contact) {

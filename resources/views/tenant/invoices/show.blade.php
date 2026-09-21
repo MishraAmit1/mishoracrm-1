@@ -330,6 +330,34 @@
 
             </div>
 
+            {{-- SCAN CUSTOMER — read their wallet QR instead of typing points / a code --}}
+            @if($tenant->hasModuleEnabled('loyalty') && $tenant->hasModuleEnabled('customer_portal') && $invoice->contact && $invoice->status !== 'paid'
+                && (auth()->user()->can('loyalty.stamp') || auth()->user()->can('loyalty.manage')))
+            <div class="card mt-4" id="inv-scan" data-contact="{{ $invoice->contact_id }}" data-contact-name="{{ $invoice->contact->name }}">
+                <div class="card-head">Scan Customer</div>
+                <div class="card-body">
+                    <button type="button" class="btn btn-secondary" id="inv-scan-btn">Scan wallet QR</button>
+                    <button type="button" class="btn btn-secondary" id="inv-scan-stop" hidden>Stop camera</button>
+                    <video id="inv-video" playsinline muted hidden style="width:100%;max-height:260px;border-radius:8px;background:#000;margin-top:10px;object-fit:cover"></video>
+                    <div id="inv-scan-msg" style="font-size:13px;margin-top:10px" role="status" aria-live="polite"></div>
+                    <div id="inv-scan-actions" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"></div>
+                    <form id="inv-redeem-form" method="POST" action="{{ route('tenant.invoices.redeem_loyalty', $invoice->id) }}" hidden>
+                        @csrf
+                        <input type="hidden" name="use_max" value="1"/>
+                    </form>
+                    <form id="inv-coupon-form" method="POST" action="{{ route('tenant.invoices.apply_coupon', $invoice->id) }}" hidden>
+                        @csrf
+                        <input type="hidden" name="code" id="inv-coupon-code"/>
+                    </form>
+                </div>
+            </div>
+            @push('scripts')
+            <script src="{{ asset('js/jsQR.js') }}"></script>
+            <script src="{{ asset('js/loyalty-counter.js') }}"></script>
+            <script src="{{ asset('js/invoice-scan.js') }}"></script>
+            @endpush
+            @endif
+
             {{-- LOYALTY REDEMPTION --}}
             @if($invoice->hasLoyaltyRedemption() && $invoice->status !== 'paid')
             <div class="card mt-4">

@@ -154,10 +154,7 @@ class RewardsController extends Controller
         $digits = preg_replace('/\D/', '', $identifier);
         $last10 = strlen($digits) >= 10 ? substr($digits, -10) : $digits;
 
-        return $q->whereRaw(
-            "RIGHT(REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '+', ''), 10) = ?",
-            [$last10]
-        )->first();
+        return $q->where('phone_normalized', $last10)->first();
     }
 
     private function channelFor(Contact $contact, string $identifier): ?string

@@ -30,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'subscription' => \App\Http\Middleware\CheckSubscription::class,
             'api.key'      => \App\Http\Middleware\AuthenticateWithApiKey::class,
             'module'       => \App\Http\Middleware\EnsureModuleEnabled::class,
+            'customer.auth' => \App\Http\Middleware\AuthenticateCustomer::class,
 
             // Spatie — yeh teeno register karne zaroori hain
             'role'               => \Spatie\Permission\Middleware\RoleMiddleware::class,

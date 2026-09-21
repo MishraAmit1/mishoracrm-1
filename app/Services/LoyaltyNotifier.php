@@ -48,6 +48,22 @@ class LoyaltyNotifier
         self::viaEmail($contact, "You earned loyalty points at {$tenant->name}", $message);
     }
 
+    // "Your stamp card is full" nudge. Opt-in via notify_customers, same as
+    // the points-earned message.
+    public static function stampCardFull(Contact $contact, string $reward): void
+    {
+        $tenant = $contact->tenant;
+        if (!$tenant || !($tenant->loyaltySettings()['notify_customers'] ?? false)) {
+            return;
+        }
+
+        $prize   = $reward !== '' ? $reward : 'a free reward';
+        $message = "Hi {$contact->name}! Your {$tenant->name} card is full 🎉 — {$prize} is unlocked. Show this message or your wallet QR at the counter.";
+
+        self::viaWhatsapp($contact, $message);
+        self::viaEmail($contact, "Your {$tenant->name} card is full!", $message);
+    }
+
     // "Your points expire soon" nudge. Always sends (configuring
     // expiry_reminder_days is the opt-in).
     public static function expiryReminder(Contact $contact, int $points, \Carbon\CarbonInterface $on): void

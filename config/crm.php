@@ -117,6 +117,8 @@ return [
             'redeem' => ['label' => 'Redeemed',  'color' => 'accent'],
             'expire' => ['label' => 'Expired',   'color' => 'red'],
             'adjust' => ['label' => 'Adjusted',  'color' => 'amber'],
+            'stamp'        => ['label' => 'Stamp',        'color' => 'accent'],
+            'stamp_reward' => ['label' => 'Stamp reward', 'color' => 'green'],
         ],
     ],
 

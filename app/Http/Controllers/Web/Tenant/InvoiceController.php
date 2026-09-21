@@ -406,6 +406,7 @@ class InvoiceController extends Controller
         // Status moved back off "paid" — claw back any loyalty points earned.
         if ($wasPaid && !$nowPaid) {
             app(LoyaltyService::class)->reverseForInvoice($invoice);
+            app(LoyaltyService::class)->reverseStampForInvoice($invoice);
         }
 
         return back()->with('success', 'Invoice status updated.');
@@ -679,8 +680,9 @@ class InvoiceController extends Controller
                 );
             }
 
-            // Award loyalty points (idempotent, no-op if the module is off).
+            // Award loyalty points + a stamp (idempotent, no-op if the module is off).
             app(LoyaltyService::class)->awardForInvoice($invoice);
+            app(LoyaltyService::class)->awardStampForInvoice($invoice);
         }
 
         $count = count($rows);
@@ -823,5 +825,6 @@ class InvoiceController extends Controller
         ]);
 
         app(LoyaltyService::class)->awardForInvoice($invoice);
+        app(LoyaltyService::class)->awardStampForInvoice($invoice);
     }
 }

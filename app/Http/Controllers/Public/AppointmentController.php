@@ -8,6 +8,7 @@ use App\Models\Contact;
 use App\Models\Service;
 use App\Models\Tenant;
 use App\Services\AppointmentJobService;
+use App\Services\CustomerLinkService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -116,6 +117,8 @@ class AppointmentController extends Controller
                 'phone'     => $data['phone'],
                 'email'     => $data['email'] ?? null,
             ]);
+
+            app(CustomerLinkService::class)->attachContactToCustomer($contact);
         }
 
         $appointment = Appointment::create([

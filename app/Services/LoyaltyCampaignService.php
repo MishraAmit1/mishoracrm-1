@@ -125,6 +125,24 @@ class LoyaltyCampaignService
         $campaign->update(['status' => 'ended']);
     }
 
+    // Offers a customer could still use right now — same active / cap / per-
+    // customer-limit rules applyCoupon() enforces. Explicit tenant + contact
+    // scoping so it's safe from the customer portal (no tenant user in context).
+    public function activeOffersFor(Contact $contact): \Illuminate\Support\Collection
+    {
+        return LoyaltyCampaignRecipient::withoutGlobalScopes()
+            ->where('tenant_id', $contact->tenant_id)
+            ->where('contact_id', $contact->id)
+            ->with(['campaign' => fn ($q) => $q->withoutGlobalScopes()])
+            ->latest('id')
+            ->get()
+            ->filter(fn (LoyaltyCampaignRecipient $r) => $r->campaign
+                && $r->campaign->isActive()
+                && !$r->campaign->isCapReached()
+                && $r->redeemed_count < max(1, (int) $r->campaign->usage_limit_per_customer))
+            ->values();
+    }
+
     // ── Apply a code to an invoice ─────────────────────────────
 
     // ['ok'=>bool, 'message'=>string, 'value'=>float, 'note'=>?string]

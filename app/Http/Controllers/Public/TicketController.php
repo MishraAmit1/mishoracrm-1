@@ -9,6 +9,7 @@ use App\Models\Tenant;
 use App\Models\Ticket;
 use App\Models\TicketAttachment;
 use App\Models\User;
+use App\Services\CustomerLinkService;
 use App\Services\NotificationService;
 use App\Services\TicketNotificationService;
 use Illuminate\Http\RedirectResponse;
@@ -72,6 +73,8 @@ class TicketController extends Controller
                 'phone'     => $data['phone'],
                 'email'     => $data['email'] ?? null,
             ]);
+
+            app(CustomerLinkService::class)->attachContactToCustomer($contact);
         }
 
         $ticket = Ticket::create([

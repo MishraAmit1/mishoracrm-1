@@ -83,6 +83,10 @@ body { background:var(--bg-base); background-image:radial-gradient(circle at 15%
         </div>
     </div>
 
+    @if($tenant->hasModuleEnabled('customer_portal'))
+    <div class="rw-foot"><a href="{{ route('portal.login') }}" style="color:var(--accent);text-decoration:none">Log in to see all your rewards in one place →</a></div>
+    @endif
+
     <div class="rw-foot">Powered by {{ config('app.name') }}</div>
 </div>
 </body>

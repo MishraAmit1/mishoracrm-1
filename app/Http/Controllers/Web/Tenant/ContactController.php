@@ -12,6 +12,7 @@ use App\Models\Deal;
 use App\Models\Invoice;
 use App\Models\Lead;
 use App\Models\Quotation;
+use App\Services\CustomerLinkService;
 use App\Services\DuplicateMatcher;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -96,6 +97,8 @@ class ContactController extends Controller
 
         $contact = Contact::create($data);
 
+        app(CustomerLinkService::class)->attachContactToCustomer($contact);
+
         $this->applyReferral($contact, $request->input('referred_by_code'));
         $this->saveContactAttachments($request, $contact);
         $this->syncEmployees($request, $contact);
@@ -149,6 +152,8 @@ class ContactController extends Controller
     {
         $contact = $this->findContact($id);
         $contact->update($request->validated());
+
+        app(CustomerLinkService::class)->attachContactToCustomer($contact);
 
         $this->applyReferral($contact, $request->input('referred_by_code'));
         $this->saveContactAttachments($request, $contact);

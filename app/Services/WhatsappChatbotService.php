@@ -82,7 +82,7 @@ class WhatsappChatbotService
 
         return Contact::withoutGlobalScopes()
             ->where('tenant_id', $tenant->id)
-            ->whereRaw("RIGHT(REPLACE(REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '+', ''), '(', ''), 10) = ?", [$last10])
+            ->where('phone_normalized', $last10)
             ->first();
     }
 
@@ -100,6 +100,8 @@ class WhatsappChatbotService
             'name'      => $profileName ?: 'WhatsApp Customer',
             'phone'     => $waId,
         ]);
+
+        app(\App\Services\CustomerLinkService::class)->attachContactToCustomer($contact);
 
         $bonus = (int) $tenant->loyaltySettings()['welcome_bonus_points'];
         if ($bonus > 0) {

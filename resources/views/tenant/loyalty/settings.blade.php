@@ -250,6 +250,61 @@
             </div>
         </div>
 
+        @if($tenant->hasModuleEnabled('customer_portal'))
+        <div class="pf-sec">
+            <div class="pf-sec-h">Customer Portal</div>
+            <div class="fh">
+                Customer Portal is <strong style="color:var(--green)">ON</strong> for your shop. Customers who share their phone number with you can sign in at
+                <code style="color:var(--accent)">{{ \App\Models\Tenant::portalLoginUrl() }}</code> and see their points, tier and offers here in one wallet alongside other shops.
+                Your customers' data stays yours — other shops never see it.
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <a href="{{ route('tenant.loyalty.qr-kit.index') }}" class="btn btn-secondary btn-sm">Print QR Kit</a>
+                <a href="{{ route('tenant.loyalty.needs-review') }}" class="btn btn-secondary btn-sm">Contacts needing review</a>
+            </div>
+        </div>
+
+        <div class="pf-sec">
+            <div class="pf-sec-h">Stamp card</div>
+            <div class="fh">Prefer "buy 5, get the 6th free" over points? Choose how the customer's wallet card works. Stamps are added at the counter (or automatically when a bill is paid).</div>
+            <div class="field">
+                <label class="fl">Card type</label>
+                <select name="mode" class="fi">
+                    @foreach(['points' => 'Points only', 'stamps' => 'Stamp card only', 'both' => 'Stamp card + points'] as $value => $label)
+                    <option value="{{ $value }}" @selected(old('mode', $settings['mode'] ?? 'points') === $value)>{{ $label }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="fg2">
+                <div class="field">
+                    <label class="fl">Stamps to fill a card</label>
+                    <input type="number" name="stamps_required" class="fi" min="1" max="30" value="{{ old('stamps_required', $settings['stamps_required'] ?? 5) }}"/>
+                </div>
+                <div class="field">
+                    <label class="fl">Reward for a full card</label>
+                    <input type="text" name="stamp_reward" class="fi" maxlength="120" placeholder="e.g. Free regular coffee" value="{{ old('stamp_reward', $settings['stamp_reward'] ?? '') }}"/>
+                </div>
+            </div>
+            <div class="fg3">
+                <div class="field">
+                    <label class="fl">A stamp is earned</label>
+                    <select name="stamp_per" class="fi">
+                        <option value="visit" @selected(in_array(old('stamp_per', $settings['stamp_per'] ?? 'visit'), ['visit', 'invoice'], true))>Once per paid bill / visit</option>
+                        <option value="amount" @selected(old('stamp_per', $settings['stamp_per'] ?? 'visit') === 'amount')>Per amount spent</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label class="fl">Amount per stamp <span class="fh">(₹)</span></label>
+                    <input type="number" name="stamp_amount" class="fi" min="1" step="1" value="{{ old('stamp_amount', $settings['stamp_amount'] ?? 100) }}"/>
+                </div>
+                <div class="field">
+                    <label class="fl">Reset idle cards after <span class="fh">(days, 0 = never)</span></label>
+                    <input type="number" name="stamp_expiry_days" class="fi" min="0" value="{{ old('stamp_expiry_days', $settings['stamp_expiry_days'] ?? 0) }}"/>
+                </div>
+            </div>
+        </div>
+        @endif
+
     </div>
     <div class="pf-foot">
         <a href="{{ route('tenant.loyalty.index') }}" class="btn btn-secondary">Cancel</a>

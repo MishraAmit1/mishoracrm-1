@@ -60,12 +60,16 @@ class LoyaltyService
             ? floor((int) $contact->loyalty_points / $block) * (float) $s['redeem_value']
             : 0.0;
 
-        $recent = $contact->loyaltyTransactions()->limit(10)->get()->map(fn ($t) => [
+        // Scoped by contact_id already; skipping the tenant scope keeps this
+        // correct for customer-portal requests that have no tenant user.
+        $recent = $contact->loyaltyTransactions()->withoutGlobalScopes()->limit(10)->get()->map(fn ($t) => [
             'type'        => $t->type,
             'points'      => (int) $t->points,
             'description' => $t->description,
             'date'        => $t->created_at->toDateString(),
         ])->all();
+
+        $mode = $s['mode'] ?? 'points';
 
         return [
             'name'             => $contact->name,
@@ -75,6 +79,12 @@ class LoyaltyService
             'tier_label'       => $contact->loyaltyTierLabel(),
             'redeemable_value' => round($redeemableValue, 2),
             'recent'           => $recent,
+            // Stamp-card fields (customer-portal wallet). Zero/points-mode until a tenant opts in.
+            'stamp_count'      => (int) ($contact->stamp_count ?? 0),
+            'stamps_required'  => max(1, (int) ($s['stamps_required'] ?? 5)),
+            'stamp_reward'     => (string) ($s['stamp_reward'] ?? ''),
+            'mode'             => in_array($mode, ['points', 'stamps', 'both'], true) ? $mode : 'points',
+            'rewards_unlocked' => (int) ($contact->stamp_rewards_earned ?? 0),
         ];
     }
 
@@ -680,6 +690,344 @@ class LoyaltyService
 
         if ($tier !== $contact->loyalty_tier) {
             $contact->forceFill(['loyalty_tier' => $tier])->save();
+        }
+    }
+
+    // ── Stamp card ──────────────────────────────────────────────
+    // Stamps live in the same ledger (TYPE_STAMP / TYPE_STAMP_REWARD rows) but
+    // never touch the points balance. Accrual is gated by the loyalty module
+    // only — like points, it keeps running quietly even if the customer portal
+    // is off; only the counter UI and wallet visibility need the portal.
+
+    public function stampsEnabled(Tenant $tenant): bool
+    {
+        return $tenant->hasModuleEnabled('loyalty')
+            && in_array($tenant->loyaltySettings()['mode'] ?? 'points', ['stamps', 'both'], true);
+    }
+
+    // Stamp(s) for a fully-paid invoice — one per invoice, or one per
+    // `stamp_amount` paid, per the tenant's rule. Idempotent per invoice; a
+    // free (fully redeemed) visit earns nothing. Returns the ledger row or null.
+    public function awardStampForInvoice(Invoice $invoice): ?LoyaltyTransaction
+    {
+        $tenant = $invoice->tenant;
+
+        if (!$tenant || !$invoice->contact_id || !$this->stampsEnabled($tenant)) {
+            return null;
+        }
+
+        if ($this->stampRowForInvoice($invoice)) {
+            return null;
+        }
+
+        $s        = $tenant->loyaltySettings();
+        $per      = $s['stamp_per'] ?? 'visit';
+        $cashPaid = max(0.0, (float) $invoice->total - (float) $invoice->loyalty_discount - (float) $invoice->campaign_discount);
+
+        if ($cashPaid <= 0) {
+            return null;
+        }
+
+        $count = $per === 'amount'
+            ? (int) floor($cashPaid / max(0.01, (float) $s['stamp_amount']))
+            : 1;
+
+        if ($count <= 0) {
+            return null;
+        }
+
+        $result = DB::transaction(function () use ($invoice, $tenant, $per, $count) {
+            $contact = Contact::withoutGlobalScopes()->lockForUpdate()->find($invoice->contact_id);
+            if (!$contact) {
+                return null;
+            }
+
+            // Per-visit rules allow one stamp a day; per-amount is self-limiting.
+            if ($per !== 'amount' && $this->stampedToday($contact)) {
+                return null;
+            }
+
+            return $this->addStamps($contact, $tenant, $count, "Invoice {$invoice->number}", Invoice::class, $invoice->id, null);
+        });
+
+        if (!$result) {
+            return null;
+        }
+
+        $this->afterStamps($result);
+
+        return $result['row'];
+    }
+
+    // Manual "+1 stamp" from the counter. ['ok' => bool, 'message' => string, 'unlocked' => int]
+    public function awardStamp(Contact $contact, ?int $userId = null, string $source = 'Counter'): array
+    {
+        $tenant = $contact->tenant;
+
+        if (!$tenant || !$this->stampsEnabled($tenant)) {
+            return ['ok' => false, 'message' => 'Stamp cards are not enabled for this shop.', 'unlocked' => 0];
+        }
+
+        $result = DB::transaction(function () use ($contact, $tenant, $userId, $source) {
+            $locked = Contact::withoutGlobalScopes()->lockForUpdate()->find($contact->id);
+            if (!$locked || $this->stampedToday($locked)) {
+                return null;
+            }
+
+            return $this->addStamps($locked, $tenant, 1, "{$source} stamp", null, null, $userId);
+        });
+
+        if (!$result) {
+            return ['ok' => false, 'message' => 'This customer already got a stamp today.', 'unlocked' => 0];
+        }
+
+        $this->afterStamps($result);
+
+        return [
+            'ok'       => true,
+            'message'  => $result['unlocked'] > 0
+                ? 'Card complete! A free reward is unlocked.'
+                : "Stamp added — {$result['count']}/{$result['required']}.",
+            'unlocked' => $result['unlocked'],
+        ];
+    }
+
+    // Claim one unlocked stamp reward. When an invoice is given, the freebie is
+    // noted on it so staff add the item to the order. ['ok' => bool, 'message' => string]
+    public function redeemStampReward(Contact $contact, ?Invoice $invoice = null, ?int $userId = null): array
+    {
+        $tenant = $contact->tenant;
+
+        if (!$tenant || !$this->stampsEnabled($tenant)) {
+            return ['ok' => false, 'message' => 'Stamp cards are not enabled for this shop.'];
+        }
+
+        $reward = trim((string) ($tenant->loyaltySettings()['stamp_reward'] ?? '')) ?: 'Free reward';
+
+        $ok = DB::transaction(function () use ($contact, $invoice, $userId, $reward) {
+            $locked = Contact::withoutGlobalScopes()->lockForUpdate()->find($contact->id);
+            if (!$locked || (int) $locked->stamp_rewards_earned < 1) {
+                return false;
+            }
+
+            $remaining = (int) $locked->stamp_rewards_earned - 1;
+
+            LoyaltyTransaction::create([
+                'tenant_id'        => $locked->tenant_id,
+                'contact_id'       => $locked->id,
+                'type'             => LoyaltyTransaction::TYPE_STAMP_REWARD,
+                'points'           => -1,
+                'balance_after'    => $remaining,
+                'remaining_points' => 0,
+                'description'      => "Reward claimed: {$reward}" . ($invoice ? " — Invoice {$invoice->number}" : ''),
+                'source_type'      => $invoice ? Invoice::class : null,
+                'source_id'        => $invoice?->id,
+                'created_by'       => $userId,
+            ]);
+
+            $locked->forceFill(['stamp_rewards_earned' => $remaining])->save();
+
+            if ($invoice) {
+                $note = "Loyalty: {$reward} (stamp card) — add the item to the order.";
+                $invoice->forceFill([
+                    'loyalty_reward' => $reward,
+                    'notes'          => trim(($invoice->notes ? $invoice->notes . "\n" : '') . $note),
+                ])->save();
+            }
+
+            return true;
+        });
+
+        return $ok
+            ? ['ok' => true, 'message' => "{$reward} claimed — give the customer their free item."]
+            : ['ok' => false, 'message' => 'This customer has no unclaimed stamp reward.'];
+    }
+
+    // Take back the stamp an invoice earned when it stops being paid. Only what
+    // is still on the current card can be clawed back; a stamp already turned
+    // into a reward stays (same trade-off as points already spent).
+    public function reverseStampForInvoice(Invoice $invoice): void
+    {
+        $earn = $this->stampRowForInvoice($invoice);
+        if (!$earn) {
+            return;
+        }
+
+        $alreadyReversed = LoyaltyTransaction::withoutGlobalScopes()
+            ->where('type', LoyaltyTransaction::TYPE_STAMP)
+            ->where('source_type', Invoice::class)
+            ->where('source_id', $invoice->id)
+            ->where('description', 'like', 'Stamp reversed%')
+            ->exists();
+
+        if ($alreadyReversed) {
+            return;
+        }
+
+        DB::transaction(function () use ($earn, $invoice) {
+            $contact = Contact::withoutGlobalScopes()->lockForUpdate()->find($earn->contact_id);
+            if (!$contact) {
+                return;
+            }
+
+            $take     = min((int) $earn->points, (int) $contact->stamp_count);
+            $newCount = (int) $contact->stamp_count - $take;
+
+            LoyaltyTransaction::create([
+                'tenant_id'        => $contact->tenant_id,
+                'contact_id'       => $contact->id,
+                'type'             => LoyaltyTransaction::TYPE_STAMP,
+                'points'           => -$take,
+                'balance_after'    => $newCount,
+                'remaining_points' => 0,
+                'description'      => "Stamp reversed — Invoice {$invoice->number} no longer paid",
+                'source_type'      => Invoice::class,
+                'source_id'        => $invoice->id,
+            ]);
+
+            $contact->forceFill([
+                'stamp_count'     => $newCount,
+                'stamps_lifetime' => max(0, (int) $contact->stamps_lifetime - (int) $earn->points),
+            ])->save();
+        });
+    }
+
+    // Reset part-filled cards that have sat idle past the tenant's window.
+    // Returns the number of cards reset.
+    public function expireDueStamps(?int $tenantId = null): int
+    {
+        $tenants = Tenant::query()
+            ->when($tenantId, fn ($q) => $q->where('id', $tenantId))
+            ->get()
+            ->filter(fn (Tenant $t) => $this->stampsEnabled($t) && (int) ($t->loyaltySettings()['stamp_expiry_days'] ?? 0) > 0);
+
+        $reset = 0;
+
+        foreach ($tenants as $tenant) {
+            $days   = (int) $tenant->loyaltySettings()['stamp_expiry_days'];
+            $cutoff = now()->subDays($days);
+
+            $ids = Contact::withoutGlobalScopes()
+                ->where('tenant_id', $tenant->id)
+                ->where('stamp_count', '>', 0)
+                ->where('stamp_updated_at', '<', $cutoff)
+                ->pluck('id');
+
+            foreach ($ids as $id) {
+                DB::transaction(function () use ($id, $days, $cutoff, &$reset) {
+                    $contact = Contact::withoutGlobalScopes()->lockForUpdate()->find($id);
+
+                    // Re-check under the lock — a stamp may have landed since.
+                    if (!$contact || (int) $contact->stamp_count < 1 || !$contact->stamp_updated_at || $contact->stamp_updated_at->gte($cutoff)) {
+                        return;
+                    }
+
+                    LoyaltyTransaction::create([
+                        'tenant_id'        => $contact->tenant_id,
+                        'contact_id'       => $contact->id,
+                        'type'             => LoyaltyTransaction::TYPE_STAMP,
+                        'points'           => -(int) $contact->stamp_count,
+                        'balance_after'    => 0,
+                        'remaining_points' => 0,
+                        'description'      => "Stamp card expired (idle {$days} days)",
+                    ]);
+
+                    $contact->forceFill(['stamp_count' => 0])->save();
+                    $reset++;
+                });
+            }
+        }
+
+        return $reset;
+    }
+
+    // Roll $n stamps onto the card, completing cards (and unlocking rewards) as
+    // it fills. Assumes a transaction with the contact locked.
+    private function addStamps(Contact $contact, Tenant $tenant, int $n, string $description, ?string $sourceType, ?int $sourceId, ?int $userId): array
+    {
+        $s        = $tenant->loyaltySettings();
+        $required = max(1, (int) ($s['stamps_required'] ?? 5));
+
+        $total    = (int) $contact->stamp_count + $n;
+        $unlocked = intdiv($total, $required);
+        $count    = $total % $required;
+
+        $row = LoyaltyTransaction::create([
+            'tenant_id'        => $contact->tenant_id,
+            'contact_id'       => $contact->id,
+            'type'             => LoyaltyTransaction::TYPE_STAMP,
+            'points'           => $n,
+            'balance_after'    => $count,
+            'remaining_points' => 0,
+            'description'      => $description,
+            'source_type'      => $sourceType,
+            'source_id'        => $sourceId,
+            'created_by'       => $userId,
+        ]);
+
+        $rewards = (int) $contact->stamp_rewards_earned + $unlocked;
+
+        if ($unlocked > 0) {
+            LoyaltyTransaction::create([
+                'tenant_id'        => $contact->tenant_id,
+                'contact_id'       => $contact->id,
+                'type'             => LoyaltyTransaction::TYPE_STAMP_REWARD,
+                'points'           => $unlocked,
+                'balance_after'    => $rewards,
+                'remaining_points' => 0,
+                'description'      => 'Stamp card complete — reward unlocked',
+                'source_type'      => $sourceType,
+                'source_id'        => $sourceId,
+                'created_by'       => $userId,
+            ]);
+        }
+
+        $contact->forceFill([
+            'stamp_count'          => $count,
+            'stamps_lifetime'      => (int) $contact->stamps_lifetime + $n,
+            'stamp_rewards_earned' => $rewards,
+            'stamp_updated_at'     => now(),
+        ])->save();
+
+        return [
+            'row'        => $row,
+            'contact_id' => $contact->id,
+            'count'      => $count,
+            'required'   => $required,
+            'unlocked'   => $unlocked,
+            'reward'     => trim((string) ($s['stamp_reward'] ?? '')),
+        ];
+    }
+
+    private function stampedToday(Contact $contact): bool
+    {
+        return (int) LoyaltyTransaction::withoutGlobalScopes()
+            ->where('contact_id', $contact->id)
+            ->where('type', LoyaltyTransaction::TYPE_STAMP)
+            ->whereDate('created_at', now()->toDateString())
+            ->sum('points') > 0;
+    }
+
+    private function stampRowForInvoice(Invoice $invoice): ?LoyaltyTransaction
+    {
+        return LoyaltyTransaction::withoutGlobalScopes()
+            ->where('type', LoyaltyTransaction::TYPE_STAMP)
+            ->where('source_type', Invoice::class)
+            ->where('source_id', $invoice->id)
+            ->where('points', '>', 0)
+            ->first();
+    }
+
+    // Post-commit: tell the customer their card just filled (opt-in per tenant).
+    private function afterStamps(array $result): void
+    {
+        if ($result['unlocked'] < 1) {
+            return;
+        }
+
+        $contact = Contact::withoutGlobalScopes()->find($result['contact_id']);
+        if ($contact) {
+            LoyaltyNotifier::stampCardFull($contact, $result['reward']);
         }
     }
 
