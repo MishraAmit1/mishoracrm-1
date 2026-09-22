@@ -13,6 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
 
+        // Render ke proxy ke peeche HTTPS detect karne ke liye — warna asset/vite URLs http:// bante hain aur mixed-content block hota hai
+        $middleware->trustProxies(at: '*');
+
         // Webhook routes CSRF se exempt — each has its own signature/token verification
         $middleware->validateCsrfTokens(except: [
             'webhook/razorpay',
